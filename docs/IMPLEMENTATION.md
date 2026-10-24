@@ -278,3 +278,29 @@ Validation: scripts/validate-production-workloads.py --self-test passes the curr
 Added Linux PR verification with read-only workflow permissions and pinned Actions. The complete `pnpm check` gate now includes Python formatting, read-only specification validation, workload invariants, bundled app builds, and the Station Explorer type/build/hosting smoke test. The Linux image installs all gate dependencies; setup is exercised twice and the completion hook runs offline as a non-root user. Added OpenHands bootstrap/completion configuration, a PR template, bounded follow-up tasks, and human review rules. These controls do not grant production access or enforce GitHub branch protection.
 
 Local validation: the complete pnpm check gate passed in a fresh short-path Windows copy with Node 24.19.0, pnpm 11.25.0, and Python 3.12.14: 87 runtime tests, zero failures/skips, formatting, SDK/type checks, Python validators, both app builds, and the starter smoke check. The deeply nested workspace failed native Windows path-length limits. Native Windows development support has been dropped; Linux is the supported development and hosting target. The earlier Windows run is historical evidence only. CI pins Python 3.11. Linux verification passed at revision 1f18c1a in [Quality run 40127887482](https://github.com/gcsequino/Moria/actions/runs/40127887482): image build, repeated bootstrap, and the complete offline non-root gate with 87 passing tests. Actual OpenHands-session integration remains unverified; CI exercises the setup and hook scripts directly. No production changes or capacity claims are included.
+
+## PERF-01a calibration validation — October 24, 2026
+
+Issue #23 adds reusable read-only v0.2 calibration parsing and explicit external-operation
+capability checks in `benchmarks/workloads.py`. The existing document CLI delegates to the
+same implementation. Structural errors identify fields before cross-field indexing;
+provisional approval and accounting flags remain enforced. Full-profile operation coverage
+requires all six API classes. Capability-scoped selection reports omitted classes, original
+weight, and effective mix, without claiming certification. Usage is in
+`docs/production/WORKLOADS.md`. Neither historical v0.1 nor provisional v0.2 calibration
+values were changed. This is calibration input validation, not a complete run manifest.
+
+Validation environment: non-root Debian Linux, Node 24.21.0, pnpm 11.25.0, Python 3.11.17
+in `.venv`. The first setup invocation used the host's Python 3.13; Python 3.11 was then
+provisioned locally, `.venv` recreated, and `PATH="$PWD/.venv/bin:$PATH" bash .openhands/setup.sh`
+passed. The installed Docker CLI had no daemon, so validation used the non-root host.
+`pnpm format`, Black on the changed Python files, and
+`.venv/bin/python -m unittest benchmarks.test_workloads` passed (14 deterministic tests).
+The final complete `pnpm check` gate passed with 87 runtime tests, zero failures/skips,
+all 14 calibration tests, Python validation, both app builds, and starter verification.
+The independent PR Linux quality result is recorded in the PR evidence.
+
+Scope remains bounded to #23; parent #20 remains open. No load generator, traffic experiment,
+new model invocation, migration, production access, deployment, or authorization/publication/
+retention behavior change. Capability declarations do not prove runtime support or capacity;
+background/data workloads, resolved run inputs, and approved gates remain future obligations.

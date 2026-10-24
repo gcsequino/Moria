@@ -6,6 +6,7 @@ for (const args of [
   ['-m', 'black', '--check', 'workers', 'benchmarks', 'docs/spec/schemas', 'scripts'],
   ['docs/spec/schemas/validate.py', '--check'],
   ['scripts/validate-production-workloads.py', '--self-test'],
+  ['-m', 'unittest', 'benchmarks.test_workloads'],
 ]) {
   const result = spawnSync(python, args, {
     stdio: 'inherit',
