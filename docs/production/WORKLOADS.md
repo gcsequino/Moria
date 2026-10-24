@@ -141,3 +141,94 @@ them. The calibration is not a complete benchmark run manifest; required run-inp
 and unresolved decisions are declarations, not resolved values. Passing these checks supplies
 neither runtime/capacity evidence nor approval of provisional targets, and does not certify
 any card or deployment.
+
+
+## Deterministic arrival accounting (PERF-01b)
+
+`benchmarks.arrivals.ArrivalLedger` is an offline, in-memory accounting API. It
+accepts a fixed iterable of `(arrival_id, scheduled_ms)` pairs, an explicit
+`drain_deadline_ms`, and a callable `clock`. IDs are caller-assigned nonempty
+strings, unique within the ledger. Attempt IDs are unique within their arrival;
+the pair `(arrival_id, attempt_id)` identifies an attempt. All times are
+nonnegative integer milliseconds in the same caller-defined monotonic epoch.
+There is no default clock, traffic, scheduler, or implicit deadline processing.
+The schedule is copied at construction, must end at or before the drain deadline,
+and cannot subsequently grow. Schedule order determines record and sample order.
+
+```python
+from benchmarks.arrivals import ArrivalLedger
+
+now = 0
+ledger = ArrivalLedger([("read-1", 10)], drain_deadline_ms=100, clock=lambda: now)
+now = 25
+ledger.dispatch("read-1", "attempt-1")
+now = 30
+ledger.finish_attempt("read-1", "attempt-1", "error", retry=True)
+now = 40
+ledger.dispatch("read-1", "attempt-2")
+now = 50
+ledger.finish_attempt("read-1", "attempt-2", "success")
+now = 100
+result = ledger.drain()
+assert result["successful_latency_ms"] == [40]  # Includes dispatch and retry delay.
+assert result["logical"]["success"] == 1
+assert result["attempts"]["started"] == 2
+```
+
+Every scheduled arrival starts outstanding, including arrivals scheduled in the
+future. `dispatch` starts one attempt. Attempts are sequential, with at most one
+active attempt per arrival. `finish_attempt` accepts `success`, `rejection`,
+`timeout`, or `error`; by default it also terminates the logical arrival with that
+outcome. `retry=True` is allowed only for an unsuccessful attempt and leaves the
+logical arrival outstanding, waiting for another dispatch or timeout. A retry
+never creates a scheduled arrival. An unsuccessful attempt followed by success
+contributes one logical success and retains the failed attempt counter.
+
+`miss_dispatch` terminates an arrival that has never dispatched, retaining it in
+the scheduled denominator. `mark_saturated` records one saturation observation
+per arrival without changing its outcome; a saturated arrival can later succeed,
+miss dispatch, or time out. The observation timestamp is retained even after
+completion. Saturation counts arrivals with observations, not duration, repeated
+episodes, or measured resource utilization. Callers must report observations;
+this module cannot detect generator saturation.
+
+`timeout` terminates any outstanding arrival at the injected clock time and
+marks its active attempt, if any, timed out. At or after the declared deadline,
+`drain()` terminates every remaining arrival as `timeout` with reason
+`drain_incomplete`, timestamps completion at the deadline, and seals the ledger.
+It also times out active attempts, without inventing attempts for never-dispatched
+arrivals or arrivals awaiting retry. Events exactly at the deadline are accepted
+before drain; after drain all mutation calls, including another drain, fail.
+Events after the deadline fail even before drain and instruct the caller to drain.
+Late responses never replace a timeout or increase successes. The caller must
+retain rejected late-event errors separately if needed; this API has no late-event
+log. Equal timestamps are ordered by call order. Earlier timestamps, events before
+the scheduled arrival, unknown references, duplicate IDs/completions, and invalid
+transitions raise `AccountingError` without changing ledger state.
+
+`snapshot()` reads no clock and returns detached records and counters:
+
+- `logical.scheduled = success + rejection + timeout + error + missed_dispatch + outstanding`.
+  `unsuccessful` is the sum of the four terminal non-success categories;
+  outstanding work is separate until explicitly timed out or drained.
+  `drain_incomplete` is a subset of `timeout`; `saturated` overlaps outcomes and
+  must not be added to the reconciliation equation.
+- `attempts.started = success + rejection + timeout + error + outstanding`.
+  `attempts.retries` counts dispatched attempts after each arrival's first attempt,
+  not retry intentions. An explicit or drain timeout ends an active attempt.
+- `successful_latency_ms` includes only logical successes, measured from scheduled
+  arrival to final completion, including dispatch delay and all retries.
+  Per-attempt `dispatch_delay_ms` also uses the original scheduled timestamp.
+  Arrival and attempt records retain timestamps, outcomes, and completion reasons;
+  unsuccessful durations can be derived from those records but are never inserted
+  into the successful latency sample list.
+
+Run `.venv/bin/python -m unittest benchmarks.test_arrivals` for the fake-clock
+fixtures; the normal `pnpm check` includes them. This module does not implement
+measurement windows, authorization/negative-probe denominators, automatic per-request
+timeouts, parallel/hedged attempts, persistent event ingestion, percentile/rate
+aggregation, or runtime correctness oracles. Use one explicitly declared schedule
+per ledger; future harness integration must supply those missing contracts and
+collect real evidence. Calibration values and approval flags remain unchanged.
+This offline foundation does not complete #20 or certify a benchmark, runtime,
+workload card, or capacity claim.
