@@ -2,7 +2,7 @@
 
 Run `pnpm start` from the repository root. Open the loopback URL printed in the terminal; the fragment is your local operator access key. The app binds only to `127.0.0.1:3210` and starts its own PostgreSQL cluster on `127.0.0.1:55432`. No Docker, external account, or model endpoint is required.
 
-Prerequisites: Node 24+, pnpm dependencies (`pnpm install --frozen-lockfile`), and the Python environment from the root README. `MORIA_PYTHON` can override the Python executable. On Linux, run as an ordinary user because PostgreSQL cannot run as root.
+Prerequisites: Linux, Node 24, pnpm dependencies (`pnpm install --frozen-lockfile`), and the Python environment from the root README. `MORIA_PYTHON` can override the Python executable. Run as an ordinary user because PostgreSQL cannot run as root. Windows hosts must use a Linux container or WSL2 Linux filesystem; native Windows development is unsupported.
 
 ## Try the complete workflow
 

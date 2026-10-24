@@ -7,6 +7,8 @@ USER node
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY --chown=node:node workers/iceberg/requirements.txt workers/iceberg/constraints.txt workers/iceberg/
-RUN python3 -m venv .venv && .venv/bin/python -m pip install --no-cache-dir -r workers/iceberg/requirements.txt
+COPY --chown=node:node requirements-dev.txt ./
+COPY --chown=node:node docs/spec/schemas/requirements.txt docs/spec/schemas/
+RUN python3 -m venv .venv && .venv/bin/python -m pip install --no-cache-dir -r workers/iceberg/requirements.txt -r requirements-dev.txt -r docs/spec/schemas/requirements.txt
 COPY --chown=node:node . .
 CMD ["pnpm", "check"]

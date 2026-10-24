@@ -3,6 +3,7 @@
 Usage: python schemas/validate.py (install schemas/requirements.txt first).
 """
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -393,5 +394,9 @@ Install `schemas/requirements.txt`, then run `python schemas/validate.py` from t
 
 Not tested: SQL policy enforcement, transaction races, worker isolation, model integrations, performance, installation or restore. Full expression typing, current grants, dependency packages, ownership and server-side execution checks are future compiler/runtime work. No Foundry reference conformance was executed.
 """
-(ROOT / "validation-report.md").write_text(report, encoding="utf-8")
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--check", action="store_true", help="Validate without rewriting the report")
+args = parser.parse_args()
+if not args.check:
+    (ROOT / "validation-report.md").write_text(report, encoding="utf-8")
 print(report)

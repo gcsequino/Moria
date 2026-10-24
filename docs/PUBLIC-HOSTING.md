@@ -1,5 +1,10 @@
 # Public HTTPS hosting
 
+Legacy installation runbook: these Windows instructions are retained for the
+existing installation only. Linux is now the supported development and target
+hosting OS. This policy change does not migrate or retire the existing instance;
+production migration remains separately gated by the production roadmap.
+
 The current local instance is published through a dedicated Cloudflare Tunnel:
 
 - Management: https://moria.gsequino.dev/

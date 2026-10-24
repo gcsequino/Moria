@@ -2,5 +2,5 @@ packages:
   - '.'
 allowBuilds:
   '@embedded-postgres/linux-x64': true
-  '@embedded-postgres/windows-x64': true
+  '@embedded-postgres/windows-x64': set this to true or false
   esbuild: true
