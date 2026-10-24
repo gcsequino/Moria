@@ -1,6 +1,6 @@
 # Production architecture and authority boundaries
 
-Version 0.1. Target direction is accepted; detailed mechanisms below are proposed and require proof.
+Version 0.2, October 24, 2026. Target direction is accepted; detailed mechanisms below are proposed and require proof. This document extends first-slice deployment decisions without superseding C01-C08, S01-S08, or R01-R06. [Acceptance traceability](ACCEPTANCE.md) identifies proof owners and delivery gates; documentation reconciliation is not runtime certification.
 
 ## Components and state ownership
 
@@ -33,9 +33,9 @@ Keep the existing environment revision lock until a replacement ordering and vis
 
 A cell is a fault/capacity boundary, not an implicit global transaction boundary. Initially place a whole environment in one cell. Routing and migration are authenticated and fenced; a move must not produce concurrent authoritative writers.
 
-Installation-wide UID uniqueness and permanent reservations survive cells. Design either a shared allocation authority with bounded reservation batches or collision-proof allocated namespaces with audited ownership; neither may require a global network lookup on every object read. The implementation choice remains open. Restored or moved environments preserve identity lineage and cannot reuse reservations.
+Installation-wide UID uniqueness, canonical-key idempotence, and permanent reservations survive cells (C02/D01). Provisionally keep one durable logical identity registry with partitioned ownership by identity domain. Route resolutions to the authoritative domain owner; random UUID generation alone cannot satisfy the contract. Reservation batching may optimize allocation only if concurrent resolution of the same canonical key returns the same UID and uniqueness is enforced. Domain transfer fences the previous owner and preserves mappings, aliases, and unused reservations. Ordinary reads need no global allocation lookup. Alternative mechanisms require the same proofs. Restored or moved environments preserve identity lineage and cannot reuse reservations.
 
-Policy authority is cell-local for operational decisions with an explicit routing/epoch contract. A global directory must not become a per-request dependency for all healthy cells. Changes to cross-cell identity/security synchronization require separate review of revocation guarantees.
+An environment remains wholly within one cell initially. Local policy authority is valid only while ownership/fencing and current security state can be established. Global membership, attribute, session, and marking changes must reach every affected environment under S01/S06; partitioned cells cannot continue from indefinitely cached authority. The routing/epoch protocol must specify bounded validity and fail-closed behavior before M7 can claim isolated availability. A global directory need not be consulted on every healthy request, but eliminating that lookup cannot weaken revocation. Cross-cell transactions and cross-installation identity federation remain unsupported. Moving an environment inside an installation preserves resource IDs and object identities; import into a different installation still requires explicit binding and contract-package regeneration.
 
 ## Storage and worker security
 
@@ -68,4 +68,18 @@ For the current installation: capture a verified backup; rehearse import/restore
 | runtime-contracts.md worker protocol | Versioned execution adapters extend it; arbitrary code remains isolated and cannot publish independently |
 | implementation-plan.md phases | Historical first-slice sequence; GitHub M0-M9 is the long-term delivery sequence |
 
-This table records required reconciliation, not blanket completion of spec updates. Final approved ADRs must update affected contracts and acceptance cases together.
+First-slice deployment decisions are reconciled in architecture.md and review-decisions.md. Later semantic changes must update affected contracts and acceptance cases together; provisional mechanism choices do not authorize such changes.
+
+## Authorization timing and engine admission
+
+Preserve S01/S06: native permission changes take effect at security-epoch commit; external identity-provider changes take effect at synchronization commit, with the initial at-most-60-second polling/staleness bound and fail-closed behavior after that bound. Emergency platform disable applies at the next protected operation. These distinct events are not universal instantaneous revocation.
+
+Bounded responses recheck the current epoch after evaluation and immediately before release; a race requires retry or denial. An operation that linearized before revocation may finish delivery. Actions serialize security checks with commit. Workers reauthorize data reads, output commits, tool calls, and external dispatch; each emitted stream batch checks current authority. Cancellation is best effort; release/publication denial is authoritative.
+
+Trusted engine direct reads require whole-Dataset authorization; RestrictedView access never supplies that grant. Direct I/O must preserve the bounded-read authorization boundary and protect cached results, spill files, and downloads. Credentials scope access but their expiry cannot substitute for revocation checks. Until M2 proves this protocol against S06, mediated reads remain the supported boundary. Trusting an engine includes controlling plugins, executable plans, UDFs, credentials, and network destinations. User code sharing privileged engine credentials is outside the supported isolation boundary.
+
+## Pinned reads and analytical projections
+
+C05 cursors pin an environment revision and compatible generation map, with query/contract/identity/security context. Their 15-minute lifetime starts at page one and never extends. Replicas and cell migration must retain and validate that state without a transaction held between pages. Expiry returns `CURSOR_EXPIRED`; changed security epochs return `CURSOR_INVALIDATED`. Current and pinned canonical row policies both apply; currently deleted objects remain hidden. Security tightening may reduce old-page results. Never substitute the latest revision or silently restart pagination.
+
+An action commit token cannot advance an existing cursor. New operational reads honor that token or, for a future asynchronous index, return `CONSISTENCY_TIMEOUT` after the requested wait. Snapshot-pinned Iceberg analytics are a separate capability with explicit freshness; they do not automatically provide operational pagination or action read-your-writes guarantees. Engines must declare their supported consistency capabilities.

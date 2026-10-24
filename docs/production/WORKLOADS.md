@@ -1,12 +1,12 @@
 # Workloads and benchmark contract
 
-Version 0.1. All numerical targets are proposed calibration points, not measured ServiceNow equivalents or accepted production SLAs.
+Version 0.2. All numerical targets are provisional calibration points, not measured ServiceNow equivalents, approved requirements, or accepted production SLAs. [workloads.v0.2.json](workloads.v0.2.json) is the current machine-readable companion; v0.1 is retained unchanged as history. Neither file is an executable load generator or a complete run manifest.
 
-## Units
+## Units and scope
 
-Report these separately: external API request, logical business action, database transaction attempt/commit, mutated object, background execution, source event, source byte, transformed byte, and physical stored byte. A single action can mutate several objects and trigger background work. Retries count as attempts, not additional logical successes.
+Report separately: external API request, logical business action, database transaction attempt/commit, mutated object, background execution, source event, source byte, transformed byte, and physical stored byte. One action can mutate several objects and trigger background work. Retries count as attempts, not additional logical successes. Input volume uses decimal bytes; memory and logical payload sizes use binary bytes.
 
-Latency is scheduled-arrival-to-complete-response and includes queueing; time spent waiting in the load generator is reported separately. Also report commit latency, application/database time, and asynchronous completion delay. Acknowledgment of enqueue is not completion of a business workflow. Input volume uses decimal bytes; memory uses binary units.
+The transaction, data-processing, and deployment profiles are independent axes. A run names its combination explicitly; T-E does not imply D-L or HA. An environment is initially the transactional isolation and placement unit. Multi-environment distributions must be declared separately from a single large-environment run.
 
 ## Transactional calibration ladder
 
@@ -16,61 +16,74 @@ Latency is scheduled-arrival-to-complete-response and includes queueing; time sp
 | T-B: bursty enterprise calibration | 10m | 500 | 1,000 | 2,000 |
 | T-E: large-enterprise calibration | 50m, repeat at 100m | 2,000 | 4,000 | 10,000 |
 
-These are load-generator settings selected for exploration, not evidence that a bank uses these rates. Ramp through intermediate rates to find the capacity boundary; do not treat success at T-S as success at T-E.
+These are synthetic load-generator settings, not evidence of bank traffic. Ramp through intermediate rates to find the capacity boundary. Success at a smaller tier does not certify a larger tier.
 
-T-E assumes 4 KiB mean logical object payload, with separate 1 KiB and 16 KiB sensitivity runs. Fifty million 4-KiB payloads total about 204.8 GB before indexes, history, database overhead, replicas, and backups. Seed 20% of objects with overlays, 2 retained source generations, and 10 historical edits per edited object. Exercise relation fan-out 0, 5, and 50, with an explicitly capped high-fan-out stress case.
+The following fixture and external-request mix apply to **all three cards** unless a separately named sensitivity run overrides them. Use 4 KiB mean logical object payload; repeat sensitivity trials at 1 KiB and 16 KiB. Fifty million 4-KiB payloads total 204.8 GB before indexes, history, overhead, replicas, and backups. Seed 20% of objects with overlays, 2 retained source generations, and 10 historical edits per edited object. Exercise relation fan-out 0, 5, and 50 as distinct trials. A high-fan-out stress run must supply its cap before execution.
 
-External request mix: 35% detail reads; 30% pages (50 rows, projected response cap 256 KiB); 15% filtered/sorted lists; 10% single-object actions; 5% multi-object actions (mean 5, maximum 100 objects); 5% bounded aggregates/relationship reads. These classes sum to 100%. A business action maps to one action request in this generator. T-E steady therefore offers 300 logical actions/s; retries and internal database work are additional. Unsupported operations are reported as coverage gaps, never relabeled successes.
+External request mix: 35% detail reads; 30% pages (50 rows, projected response cap 256 KiB); 15% filtered/sorted lists; 10% single-object actions; 5% multi-object actions (mean 5, maximum 100 objects); 5% bounded aggregates/relationship reads. Each logical business action maps to one action request. Steady offered action rates are therefore 3/s, 75/s, and 300/s for T-S, T-B, and T-E; retries/internal work are additional. Pagination follow-up requests count as offered API requests, not free work outside the mix. A run must specify query selectivity, aggregate bounds, and the aggregate/relationship split.
 
-Use two identity mixes (80% human/20% integration, then 20%/80%). Include three region attributes, at least two markings, property restrictions, denied requests, and current permission changes. Apply production authentication/session checks. Vary visible fractions across 1%, 10%, and 100%.
+Use two identity-mix trials (80% human/20% integration, then 20%/80%). These labels describe principals and policy, not load-generator pacing. Include three region attributes, at least two markings, property restrictions, and current permission changes. Apply production authentication/session checks. Vary visible fractions across 1%, 10%, and 100% in separate trials; define the principal population and policy distribution in the run manifest.
 
-Distribute 80% of normal traffic across the full population and 20% across a 1% hot set. Add a contention trial that targets 1% of actions at the same 100 objects. Report serialization retries and rejected conditions separately from infrastructure errors.
+Distribute 80% of normal traffic across the full population and 20% across a 1% hot set. Add a separate contention trial in which 1% of action arrivals target the same 100 objects. Report condition conflicts and serialization retries separately from infrastructure errors.
 
-Background load is not included in external request rates: offer 50 executions/s at T-E steady (each proposes two object updates and one simulated outbox delivery), doubling during busy-hour, plus a 100,000-object hourly bulk update. Record resulting internal requests/mutations and backlog. Use deterministic local writeback fixtures; do not contact production destinations.
+### Background execution
+
+Background work is additional to the external rate. The provisional steady execution rates are T-S 0.5/s, T-B 12.5/s, and T-E 50/s. These synthetic values scale with steady external load; they are not inferred ServiceNow behavior. Each execution proposes two object updates and one simulated outbox delivery. Busy-hour doubles the execution rate; peak multiplies it by that card's peak/steady external ratio. Warmup, recovery, and soak return to the steady rate.
+
+The hourly bulk update sizes are respectively 1,000, 25,000, and 100,000 objects. Schedule the first update at minute 15 of each measured trial, then every 60 minutes, so short trials include the event. Record actual mutations, internal requests, completion delay, and backlog rather than counting only accepted jobs. Use deterministic local writeback fixtures; never contact production destinations.
+
+## Offered-load accounting
+
+Use an open-loop rate schedule with recorded scheduled timestamps, deterministic seed, explicit arrival distribution, bounded outstanding work, and timeouts. Human principal labels do not add think time to this schedule. A closed-loop session/think-time test is a separate named experiment and cannot substitute for offered-rate capacity evidence.
+
+For every measurement window, reconcile scheduled logical arrivals into terminal outcomes or outstanding work. Missed generator arrivals remain in the offered denominator. After a declared drain deadline, unresolved requests are timeout/incomplete outcomes. Retries belong to the original logical arrival and are also counted in attempt metrics. Do not inject retries as replacements for new scheduled arrivals.
+
+Report both all-arrival and valid authorized arrival denominators. Expected negative probes (denied/invalid requests and intentionally failing conditions) have a separately declared schedule and expected outcomes; they are additional to the 100% primary request mix. Their rate and expected-result checks must be fixed before a run. A successful negative probe is not a successful business operation. Unplanned conflicts in ordinary valid traffic are unsuccessful business outcomes even if the API correctly rejects them.
+
+The provisional valid-arrival unsuccessful fraction is <=0.1% at a claimed supported rate. Its numerator includes admission rejection (including deliberate 429), unexpected errors, timeouts, unresolved work, and business operations that did not complete successfully by their deadline. Report these categories individually; background workflow completion is measured separately. Unexpected server/transport errors also have a separate <=0.1% attempt-rate target, including retry attempts. These two denominators must never be substituted for each other.
+
+Latency runs from scheduled arrival to complete response and includes generator delay and server queueing. Also report generator dispatch delay, database commit latency, application time, and asynchronous workflow completion delay. Publish successful-operation percentiles alongside outcome fractions and timeout counts; percentiles alone cannot establish success. Enqueue acknowledgment is not business-workflow completion.
 
 ## Provisional service targets
 
 | Dimension | Proposed engineering target |
 |---|---|
-| Indexed detail/list queries | p95 <=500 ms; p99 <=2 s |
-| Single/multi-object actions within supported limits | p95 <=1 s; p99 <=3 s |
-| Unexpected errors at the declared supported rate | <=0.1%; all attempts included |
+| Indexed detail/page/filtered-list queries | p95 <=500 ms; p99 <=2 s, per operation |
+| Single/multi-object actions within supported limits | p95 <=1 s; p99 <=3 s, per operation |
+| Valid authorized arrivals not completed successfully | <=0.1% of logical arrivals |
+| Unexpected server/transport errors | <=0.1% of attempts, including retries |
 | Safety | zero observed invariant violations; any violation fails the run |
-| HA operational API availability | candidate 99.95% monthly, definition/exclusions pending review |
-| Small deployment | no HA availability promise; declared maintenance/cold-start behavior |
-| HA single-failure-domain acknowledged action loss | candidate RPO 0 under the declared synchronous durability boundary |
+| HA operational API availability | candidate 99.95% monthly; denominator/exclusions pending review |
+| Small deployment | no HA promise; declared maintenance/cold-start behavior |
+| HA acknowledged action loss after one failure-domain loss | candidate RPO 0 within the declared synchronous durability boundary |
 | HA database failover | candidate RTO <=5 min |
-| Disaster recovery | candidate RPO <=15 min, RTO <=4 h; end-to-end recovery must include storage and keys |
-| Burst recovery | oldest operational backlog back within baseline limit <=30 min after peak |
-| Scheduled/bulk processing freshness | completion deadline per pipeline; do not substitute API latency |
-| Continuous processing freshness | candidate p95 <=60 s, p99 <=5 min source-to-published result |
+| Disaster recovery | candidate RPO <=15 min, RTO <=4 h using surviving compatible durable storage; includes metadata and keys |
+| Burst recovery | oldest operational backlog returns within its declared baseline bound <=30 min after peak |
+| Scheduled/bulk freshness | completion deadline per pipeline, pending workload selection |
+| Continuous freshness | candidate p95 <=60 s, p99 <=5 min source-to-published result |
 
-Condition failures, expected authorization denials, and invalid inputs have separate categories; they cannot conceal infrastructure errors. A deliberate 429 is an admission rejection and counts against offered-load acceptance at a claimed supported rate. A cold-start profile must publish its startup latency and cannot inherit the warm target.
-
-No global sub-second streaming SLA is assumed. Exact budgets and availability/error denominators are unresolved product decisions. RPO 0 does not cover arbitrary simultaneous loss of all synchronous copies.
+Aggregate/relationship deadlines, negative-probe rate, baseline backlog bound, and cost ceilings remain unset. A trial may measure them, but cannot claim to pass an undefined gate. Cold-start trials publish startup latency and do not inherit warm targets. No global sub-second streaming SLA is assumed. RPO 0 excludes simultaneous loss of all synchronous copies. The 4-hour DR target does not cover copying or rebuilding a petabyte warehouse; that scenario requires a separate measured recovery tier. RTO starts at fault time and ends after correct service probes pass, as specified in DELIVERY.md. Monthly availability requires separate operational evidence and cannot be certified by a short benchmark.
 
 ## Independent data-processing ladder
 
-D-S: 100 GB/day input, 30-day input retention. D-M: 1 PB per 30 days, 30-day input retention. D-L: 1 PB/day, 30-day input retention. D-L is a planning scenario; the user's ingestion rate is not yet selected. Keep raw-input bytes separate from compressed lakehouse bytes and derived materializations.
+D-S: 100 GB/day input. D-M: 1 PB per 30 days. D-L: 1 PB/day. Each assumes 30-day input retention. D-L is a planning scenario; the user's ingestion rate is not yet selected. Separate raw-input bytes from compressed bytes and derived materializations.
 
-At D-L the average incoming payload is about 11.57 GB/s (92.59 Gbit/s), excluding protocol overhead, replication, reads, shuffle, and retries. For a 4x 15-minute burst, model explicit buffer capacity and drain rate; equal-to-average processing capacity cannot clear backlog.
+At D-L average payload bandwidth is about 11.57 GB/s (92.59 Gbit/s), before overhead, replication, reads, shuffle, and retries. For a 4x 15-minute burst, declare buffer capacity, source replay behavior, and drain capacity. Equal-to-average processing capacity cannot clear backlog. The same burst experiment applies independently to each data card.
 
-Exercise append, keyed merge, schema evolution, full refresh, incremental indexing, wide join, skewed join, group aggregation, compaction, snapshot planning, and expiration. Compare 16 MiB, 256 MiB, and 1 GiB file layouts at equivalent logical volume; record file counts and planning cost. Values are experimental layouts, not universal optimal sizes.
+Exercise append, keyed merge, schema evolution, full refresh, incremental indexing, wide/skewed joins, grouped aggregation, compaction, snapshot planning, and expiration. Compare 16 MiB, 256 MiB, and 1 GiB file layouts at equivalent logical volume. Record file counts and planning cost; these experimental sizes are not universal optima.
 
-Analytical load: start at 5, 20, and 50 concurrent queries; separate partition-pruned aggregates, wide scans, and joins. Query deadlines and maximum bytes scanned are workload-specific. Run Spark transformations, Trino queries, compaction, and serving concurrently when certifying the combined profile.
+Analytical trials start at 5, 20, and 50 concurrent queries. Separate partition-pruned aggregates, wide scans, and joins. Declare queries, deadlines, scanned-byte limits, dataset distributions, and transformation expansion/shuffle factors before running. Combined certification runs transformations, queries, compaction, and serving concurrently. Dataset records are not ontology objects: every pipeline declares materialization fraction and incremental indexing rate.
 
-Do not equate dataset records with ontology objects. Specify materialization fraction and incremental update rate for each pipeline; benchmark indexing separately.
+## Reproducible harness and acceptance
 
-## Reproducible harness specification
+1. Use isolated infrastructure. Pin source revision, images/dependencies, schema/policy, engine/storage versions, seed, topology/failure domains, quotas, and failure script. Record generation commands and exit status. Fill every required run-specific input in the JSON companion; null means unresolved, not unlimited or zero.
+2. Seed population/history separately from measurement. Verify counts, identity uniqueness, source/overlay checksums, and authorization fixtures.
+3. Record generator saturation, missed arrivals, outstanding work, and coordinated-omission exposure. A generator-limited run is invalid for capacity certification, even if achieved latency appears good.
+4. Run a 10-minute warmup, 30-minute steady window, 15-minute peak, and at least 30-minute recovery. Repeat independently three times. Run separate 60-minute busy-hour, 24-hour soak, cold-cache, and wider-than-memory trials. Certifying petabyte tiers requires sufficient actual scale/duration beyond this minimum.
+5. Publish per-operation p50/p95/p99, logical outcomes, attempts/retries, achieved/offered rates, concurrency, queue age, resource saturation, network/storage bytes, and costs. Preserve raw histograms and time series; do not average percentiles.
+6. Continuously check idempotency, source/overlay preservation, unauthorized-read sentinels, pagination, publication/checkpoint pairing, and outbox state. Exercise DELIVERY.md faults and isolated restore with dispatch disabled.
+7. Preserve run-manifest.json, summary.json, histograms, time series, correctness results, cost ledger, and commands. Invalid or failed runs remain recorded.
+8. Label evidence as exploratory, capability-scoped, or full-profile. A capability-scoped run may exercise a declared subset but must publish missing operation classes and its modified mix; it cannot certify the original card. Unsupported operations never count as successes.
+9. Full-profile certification requires all operation classes, all selected concurrent background/data workloads, approved numeric gates, no unresolved required inputs, and every repetition passing safety, service, recovery, and cost gates. Report the capacity boundary and uncertainty rather than selecting only the best run.
 
-1. Isolated environment only. Pin source revision, container/dependency digests, schema, policy, engine/storage versions, seed, topology, quotas, and failure script. Record the generation command and its exit status.
-2. Seed the full population/history independently from measurement. Verify expected counts, identity uniqueness, source/overlay checksums, and authorization fixtures.
-3. Use an open-loop offered-rate generator with bounded outstanding work and recorded scheduled timestamps. Account for missed arrivals, generator saturation, and coordinated omission; never infer throughput from a closed-loop concurrency number alone.
-4. Establish a 10-minute warmup, a 30-minute steady measurement, 15-minute peak, and at least 30-minute recovery window. Perform three independent repetitions. Run a separate 60-minute busy-hour trial, 24-hour soak, and cold-cache/wider-than-memory trial. Certifying petabyte tiers requires sufficient actual scale/duration, not extrapolation from this minimum.
-5. Report per-operation p50/p95/p99, successes/failures/timeouts/rejections, achieved/offered rates, retry amplification, in-flight concurrency, queue age, resource saturation, network/storage bytes, and costs. Publish raw histograms and time series, not averaged percentiles.
-6. Run correctness oracles continuously: idempotency receipts, source/overlay preservation, unauthorized-read sentinels, pagination consistency, publication/checkpoint pairing, and outbox state.
-7. Perform deterministic fault trials from DELIVERY.md. Restore in a separate target with dispatch disabled. Preserve logs of expected versus observed outcomes.
-8. Produce run-manifest.json, summary.json, per-operation histograms, queue/resource series, correctness results, cost ledger, and commands. Invalid/generator-limited runs remain recorded but cannot certify capacity.
-9. Require every repetition at the claimed tier to meet safety and defined service/cost gates. Report the capacity boundary and uncertainty; do not select only the best run.
-
-The v0.1 JSON declares calibration inputs. It is not an executable load generator. Building the harness is tracked separately; existing benchmark kernels cannot claim full coverage of this specification.
+Harness implementation is tracked separately. Existing benchmark kernels do not establish coverage of this contract. M0 can produce reviewable provisional contracts without certifying production capacity; approving assumptions and producing capacity evidence are distinct decisions.

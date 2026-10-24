@@ -2,6 +2,21 @@
 
 Status: reviewed defaults accepted, with Iceberg revision and the terminal restricted-view boundary finalized. October 14, 2026. Sources below were consulted for component capabilities. No benchmarks, deployment or interoperability tests have been performed. Version selection means a supported stable release pinned in a lockfile/image digest during Phase 0, not floating `latest` tags.
 
+## Production evolution accepted October 24, 2026
+
+Revision 0.2 reconciliation. A01-A08 below retain the October 14 first-slice rationale, not a limit on the accepted production architecture or evidence of current implementation. The [production architecture](../production/ARCHITECTURE.md) and [acceptance mapping](../production/ACCEPTANCE.md) extend those deployment decisions:
+
+| First-slice decision | Production disposition |
+|---|---|
+| A01: modules in one API process | M1 separates API serving, scheduling, execution, and static hosting into independent lifecycles; TypeScript remains usable. No mandatory language rewrite. |
+| A02: one PostgreSQL cluster, database leases | PostgreSQL remains the initial authority with independent lifecycle, roles, and budgets. Later cells partition environments; global serializable transactions are not implied. Alternative mechanisms require equivalent action/publication proofs. |
+| A03: filesystem warehouse, DuckDB | M2 establishes governed object storage/catalog; M3 adds distributed Spark transforms. C04 atomic publication remains unchanged. Trusted-engine direct I/O requires S06/S07 proof. |
+| A04/A05: retrieval/framework defaults | Retain adapter contracts; additional engines require capability/security evidence. These choices do not prescribe the bulk analytics engine. |
+| A06/D12: Compose on one host | Linux containers and Kubernetes/Helm are the production target. Compose remains a development/small option without an HA claim. Infrastructure trust and hostile-tenant isolation remain distinct. |
+| A07: 1m/10m gates and sequential scale-out | Retain historical evidence; production workload profiles add larger populations, independent ingest throughput, mixed loads, elasticity, and cost. Packaging can proceed alongside recovery work; HA certification requires verified recovery. |
+
+The original direction to defer Kubernetes manifests until single-host recovery is complete no longer blocks production packaging work. Recovery remains a release gate rather than a prerequisite to hardening the disposable local deployment. Phase 0 below means the first-slice experiment phase, not production M0. This reconciliation claims no new runtime proof.
+
 ## A01 — deploy a modular service and separate worker supervisor
 
 Use TypeScript on a supported Node LTS for the management/operational API, compiler, CLI and generated SDK runtime. Fastify handles routing and fixed platform request schemas. User resource declarations are validated as data, not installed as Fastify route schemas: its documentation explicitly treats schema compilation as application code. [Fastify validation documentation](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/).

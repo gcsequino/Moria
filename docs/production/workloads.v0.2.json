@@ -1,0 +1,206 @@
+{
+  "contractVersion": "0.2",
+  "status": "proposed-calibration-not-certified",
+  "referenceWorkload": "Large-bank ServiceNow-instance class; no measured equivalence",
+  "approval": { "numericTargetsApproved": false, "productionClaimsAllowed": false },
+  "units": {
+    "externalRates": "scheduled logical API arrivals per second",
+    "inputVolume": "decimal bytes",
+    "payloadAndMemory": "binary bytes"
+  },
+  "profiles": [
+    {
+      "id": "T-S",
+      "objects": 1000000,
+      "repeatObjects": [],
+      "steadyRps": 20,
+      "busyHourRps": 50,
+      "peakRps": 100,
+      "backgroundSteadyPerSecond": 0.5,
+      "hourlyBulkUpdateObjects": 1000
+    },
+    {
+      "id": "T-B",
+      "objects": 10000000,
+      "repeatObjects": [],
+      "steadyRps": 500,
+      "busyHourRps": 1000,
+      "peakRps": 2000,
+      "backgroundSteadyPerSecond": 12.5,
+      "hourlyBulkUpdateObjects": 25000
+    },
+    {
+      "id": "T-E",
+      "objects": 50000000,
+      "repeatObjects": [100000000],
+      "steadyRps": 2000,
+      "busyHourRps": 4000,
+      "peakRps": 10000,
+      "backgroundSteadyPerSecond": 50,
+      "hourlyBulkUpdateObjects": 100000
+    }
+  ],
+  "sharedFixture": {
+    "appliesTo": ["T-S", "T-B", "T-E"],
+    "meanObjectBytes": 4096,
+    "sensitivityMeanObjectBytes": [1024, 16384],
+    "overlayFraction": 0.2,
+    "retainedGenerations": 2,
+    "editsPerEditedObject": 10,
+    "relationFanoutTrials": [0, 5, 50],
+    "pageRows": 50,
+    "projectedPageResponseCapBytes": 262144,
+    "multiActionMeanObjects": 5,
+    "multiActionMaximumObjects": 100,
+    "humanPrincipalFractionTrials": [0.8, 0.2],
+    "regionAttributeCount": 3,
+    "minimumMarkings": 2,
+    "visibleFractionTrials": [0.01, 0.1, 1],
+    "normalTrafficHotFraction": 0.2,
+    "hotPopulationFraction": 0.01,
+    "contentionTrialActionFraction": 0.01,
+    "contentionTrialObjects": 100
+  },
+  "mixPercent": {
+    "detail": 35,
+    "page": 30,
+    "filteredSorted": 15,
+    "singleObjectAction": 10,
+    "multiObjectAction": 5,
+    "aggregateOrRelation": 5
+  },
+  "background": {
+    "updatesPerExecution": 2,
+    "simulatedDeliveriesPerExecution": 1,
+    "busyHourMultiplier": 2,
+    "peakMultiplier": "profile.peakRps / profile.steadyRps",
+    "warmupRecoverySoakRate": "profile.backgroundSteadyPerSecond",
+    "bulkFirstOffsetSeconds": 900,
+    "bulkIntervalSeconds": 3600,
+    "destinations": "deterministic local fixtures only"
+  },
+  "loadModel": {
+    "mode": "open-loop",
+    "humanIdentityAddsThinkTime": false,
+    "negativeProbes": "additional separately scheduled arrivals outside primary mix",
+    "retryAccounting": "same logical arrival; separate attempt counter; no replacement arrivals",
+    "latencyOrigin": "scheduled arrival",
+    "incompleteAtDrainDeadline": "unsuccessful logical outcome",
+    "generatorLimitedRunCanCertify": false
+  },
+  "windowsSeconds": {
+    "warmup": 600,
+    "steady": 1800,
+    "peak": 900,
+    "recoveryMinimum": 1800,
+    "busyHour": 3600,
+    "soak": 86400
+  },
+  "repetitions": 3,
+  "proposedTargets": {
+    "queryOperations": ["detail", "page", "filteredSorted"],
+    "queryP95Ms": 500,
+    "queryP99Ms": 2000,
+    "actionP95Ms": 1000,
+    "actionP99Ms": 3000,
+    "unsuccessfulValidArrivalFraction": 0.001,
+    "unexpectedErrorAttemptFraction": 0.001,
+    "haAvailabilityPercent": 99.95,
+    "haFailureDomainRpoSeconds": 0,
+    "haFailoverRtoSeconds": 300,
+    "drRpoSeconds": 900,
+    "drRtoSeconds": 14400,
+    "drScope": "surviving compatible durable storage; full warehouse copy/rebuild requires separate measured recovery tier",
+    "burstRecoveryMaximumSeconds": 1800,
+    "continuousFreshnessP95Seconds": 60,
+    "continuousFreshnessP99Seconds": 300
+  },
+  "ingestionScenarios": [
+    {
+      "id": "D-S",
+      "inputBytes": 100000000000,
+      "intervalSeconds": 86400,
+      "retentionSeconds": 2592000
+    },
+    {
+      "id": "D-M",
+      "inputBytes": 1000000000000000,
+      "intervalSeconds": 2592000,
+      "retentionSeconds": 2592000
+    },
+    {
+      "id": "D-L",
+      "inputBytes": 1000000000000000,
+      "intervalSeconds": 86400,
+      "retentionSeconds": 2592000
+    }
+  ],
+  "dataExperiments": {
+    "burstMultiplier": 4,
+    "burstSeconds": 900,
+    "fileSizeBytesTrials": [16777216, 268435456, 1073741824],
+    "analyticalConcurrencyTrials": [5, 20, 50],
+    "operations": [
+      "append",
+      "keyedMerge",
+      "schemaEvolution",
+      "fullRefresh",
+      "incrementalIndexing",
+      "wideJoin",
+      "skewedJoin",
+      "groupAggregation",
+      "compaction",
+      "snapshotPlanning",
+      "expiration"
+    ]
+  },
+  "requiredRunInputs": [
+    "sourceRevision",
+    "dependencyAndImageDigests",
+    "engineAndStorageVersions",
+    "generationCommandsAndExitStatus",
+    "seed",
+    "topologyAndFailureDomains",
+    "environmentDistribution",
+    "schemaAndPolicy",
+    "quotas",
+    "failureScript",
+    "profileCombination",
+    "trialSelections",
+    "principalPopulation",
+    "policyDistribution",
+    "arrivalDistribution",
+    "maximumOutstanding",
+    "requestTimeoutSeconds",
+    "drainDeadlineSeconds",
+    "negativeProbeRateAndExpectedOutcomes",
+    "querySelectivity",
+    "aggregateBoundsAndRelationshipSplit",
+    "pipelineDefinitions",
+    "materializationFraction",
+    "incrementalIndexingRate",
+    "transformExpansionAndShuffle",
+    "analyticalQueries",
+    "analyticalDeadlinesAndScanLimits",
+    "bufferCapacityAndDrainRate",
+    "sourceReplayBehavior",
+    "coldCacheAndMemoryConditions"
+  ],
+  "unresolvedDecisions": {
+    "selectedTransactionAndIngestionCards": null,
+    "highFanoutStressCap": null,
+    "baselineBacklogAgeSeconds": null,
+    "aggregateAndRelationshipDeadlinesMs": null,
+    "scheduledPipelineDeadlinesSeconds": null,
+    "availabilityDenominatorAndExclusions": null,
+    "costCeilings": null
+  },
+  "acceptance": {
+    "safetyViolationsAllowed": 0,
+    "evidenceKinds": ["exploratory", "capability-scoped", "full-profile"],
+    "unsupportedOperationsAreSuccesses": false,
+    "allRepetitionsMustPass": true,
+    "fullProfileRequiresAllOperationClasses": true,
+    "fullProfileRequiresApprovedTargetsAndResolvedInputs": true
+  }
+}

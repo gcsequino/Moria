@@ -1,6 +1,6 @@
 # Production architecture program
 
-Version: 0.1, October 24, 2026. Status: proposed engineering contract; no production capacity or SLA certification.
+Version: 0.2, October 24, 2026. Status: reviewed engineering draft with unresolved product targets; no production capacity or SLA certification.
 
 System of record: [goal #1](https://github.com/gcsequino/Moria/issues/1), [M0 #2](https://github.com/gcsequino/Moria/issues/2). Issue acceptance gates track progress. These source documents define the proposed contract; evidence must identify its exact revision.
 
@@ -9,7 +9,10 @@ System of record: [goal #1](https://github.com/gcsequino/Moria/issues/1), [M0 #2
 - [Workloads and benchmark contract](WORKLOADS.md)
 - [Architecture, authority, and compatibility](ARCHITECTURE.md)
 - [Delivery, failures, cost, and decision register](DELIVERY.md)
-- [Machine-readable calibration profiles](workloads.v0.1.json)
+- [Current machine-readable calibration profiles](workloads.v0.2.json)
+- [Historical v0.1 calibration profiles](workloads.v0.1.json)
+- [Acceptance traceability](ACCEPTANCE.md)
+- [Review findings and decision disposition](REVIEW.md)
 
 ## Accepted direction versus assumptions
 
@@ -29,4 +32,4 @@ The old first-slice Phase 0 and this roadmap's M0 are different milestones. Hist
 
 The October 24 source baseline contains the current implementation and this contract package. Prior local history remains retained separately; historical commit IDs in evidence may refer to that earlier local history. Runtime data, credentials, dependency installations, and build outputs are excluded. See [source baseline](../SOURCE-BASELINE.md) for publication scope and verification.
 
-M0 stays open until contract review, explicit assumption disposition, and backlog readiness gates are complete.
+M0 stays open until the reviewed contract is merged, required assumptions have an explicit disposition, and backlog readiness gates are complete. Validation of this document package is distinct from implementing the workload generator in PERF-01 or certifying any production capacity. M1 configuration/lifecycle work can proceed independently of final numeric sizing; see REVIEW.md for the decision boundaries.
