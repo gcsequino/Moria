@@ -304,3 +304,40 @@ Scope remains bounded to #23; parent #20 remains open. No load generator, traffi
 new model invocation, migration, production access, deployment, or authorization/publication/
 retention behavior change. Capability declarations do not prove runtime support or capacity;
 background/data workloads, resolved run inputs, and approved gates remain future obligations.
+
+## PERF-01b deterministic arrival accounting — October 24, 2026
+
+Issue #25 builds on merged PERF-01a (#24), baseline
+`7633bc20e67abd9fdaa7855d3976e364980e1fd4`. Added `benchmarks/arrivals.py` with a
+fixed schedule, caller-owned stable IDs, an injected millisecond clock, sequential
+attempts/retries, explicit logical outcomes, saturation observations, and exact
+reconciliation snapshots. Drain seals outstanding arrivals as timeout/incomplete
+at the declared deadline; late events and invalid transitions raise errors without
+changing totals. Successful latency includes dispatch and retry delay. The API,
+state transitions, counter definitions, and limitations are documented in
+`docs/production/WORKLOADS.md`. Profile values and provisional flags are unchanged.
+
+Ten fake-clock synthetic tests cover completion, retries, missed dispatch,
+saturation, rejection/errors, timeouts, draining, late events, malformed inputs,
+atomic rejection, snapshot detachment, replay, and exact reconciliation. They run
+alongside the 14 calibration tests through `scripts/check-python.mjs`. Setup used
+the worktree's own Python 3.11.17 `.venv`, created with the supplied interpreter
+before `.openhands/setup.sh`, with `.venv/bin` first on PATH. Non-root Linux,
+Node 24.21.0, pnpm 11.25.0, and the configured human Git identity were verified.
+Setup, `pnpm format`, `python -m black workers benchmarks docs/spec/schemas`, and
+`python -m unittest benchmarks.test_workloads benchmarks.test_arrivals` passed
+(24 tests). Full-gate and final-revision CI results are recorded below and in the PR.
+
+This is an offline foundation only. No traffic/load generator, real-time scheduler,
+infrastructure provisioning, new model calls, production access, migrations,
+deployment, cost exports, or capacity certification were added or performed.
+Measurement windows, negative-probe/authorization denominators, automatic timeouts,
+parallel attempts, runtime oracles, and other harness integrations remain outside
+this slice. Parent #20 remains open; no scope deviations or acceptance changes.
+
+The complete `PATH="$PWD/.venv/bin:$PATH" pnpm check` passed: 87 runtime tests,
+zero failures/skips, all 24 Python unit tests, formatting/SDK/type checks,
+specification and calibration validation, both application builds, and starter
+verification. Existing database and isolation tests ran; none were disabled.
+Independent Linux quality CI on the final PR revision is a required delivery gate;
+its revision and result are recorded in the PR rather than inferred from this run.
