@@ -19,6 +19,20 @@ User review: all unchallenged defaults are accepted. D02 now adopts Iceberg as r
 | D13 | Exact filtered vector search first; no approximate retrieval claims. Text fixtures with deterministic chunking first. | Slower at scale, but predictable authorization and recall. ANN indexing is gated on filtered-retrieval benchmarks later. |
 | D14 | Project name: **Moria**. Original platform code: **Apache-2.0** (accepted default). | Name rationale: a dwarven civilization of foundries; digging too deeply and greedily risks awakening a Balrog. Dependency and model-weight licenses remain separate. Add the license/notice files when creating the implementation repository. |
 
+## Production continuation accepted October 24, 2026
+
+Revision 0.2 reconciliation. D01-D14 retain their first-slice semantics. D02, D11, and D12 describe initial implementation/deployment choices rather than permanent limits. Accepted production direction includes portable cloud/on-premises operation, independently scalable services and processing, tens of millions of objects, a large-bank ServiceNow-instance class of transactional workload, and separately scaled potentially petabyte-scale ingestion/analytics. No universal ServiceNow transaction rate is assumed.
+
+| Continuation | Disposition and proof gate |
+|---|---|
+| D15: deployment and engines | Linux containers and Kubernetes/Helm for production; smaller profiles remain possible. PostgreSQL, Iceberg, and bounded DuckDB remain initial foundations; Spark/Trino provide the distributed processing/analytics direction, with Kafka/Flink only for continuous-streaming needs. Exact versions and optional engines require conformance evidence. |
+| D16: authority | C04 remains one PostgreSQL authority transaction across all promised catalog pointers, output heads, lineage, and checkpoints. Per-table commits cannot replace it. C06 retains atomic edits/audit/outbox/receipts. |
+| D17: storage trust | S07 prohibits raw warehouse/control-DB access for user workers. Controlled trusted engines may use scoped direct storage only after current-authorization/isolation proof. Arbitrary code sharing credentials is not isolated. Restricted views remain terminal. |
+| D18: cells | Initially keep a whole environment in one cell. Preserve installation-wide canonical identity resolution and reservations. Fenced migration, security freshness during partitions, and UID ownership require proof before M7 scale-out. Cross-cell transactions are not promised. |
+| D19: numerical targets | Production workload rates, freshness, availability, recovery, and budgets remain calibration assumptions until explicitly accepted and evidenced. Population size alone is not throughput. |
+
+The [acceptance mapping](../production/ACCEPTANCE.md) identifies existing obligations and unresolved proof owners. Routine mechanism choices belong to accountable implementation roles. Changes to permanent identity, authorization, or transaction semantics require explicit contract review. This continuation is design direction, not implementation or capacity certification.
+
 ## Explicit initial limitations
 
 - Scalar values plus one-dimensional scalar arrays; no geospatial/media/time-series-specialized APIs yet.
