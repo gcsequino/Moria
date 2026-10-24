@@ -142,7 +142,7 @@ function exact(value: unknown, path: string): Rational {
   if (typeof value !== 'string' || !/^(?:0|[1-9]\d*)(?:\.\d+|\/[1-9]\d*)?$/.test(value)) {
     fail(
       path,
-      'Expected a nonnegative decimal or integer fraction string (at most 161 characters); no numbers, signs or exponents.',
+      'Expected a nonnegative decimal or integer fraction string; no numbers, signs or exponents.',
     );
   }
   if (value.includes('/')) {
@@ -502,9 +502,15 @@ export function summarizeCostLedger(input: unknown): LedgerResult {
   };
 }
 /** Display only: exact half-up rounding, never used by validation or aggregation. */
-export function formatCost(value: Exact, decimalPlaces = 2): string {
+export function formatCost(value: Exact, decimalPlaces = 2, maxInputLength = 161): string {
   if (!Number.isInteger(decimalPlaces) || decimalPlaces < 0 || decimalPlaces > 20) {
     throw new RangeError('decimalPlaces must be an integer from 0 through 20.');
+  }
+  if (!Number.isSafeInteger(maxInputLength) || maxInputLength < 1) {
+    throw new RangeError('maxInputLength must be a positive safe integer.');
+  }
+  if (typeof value === 'string' && value.length > maxInputLength) {
+    fail('value', `Exact input strings must have at most ${maxInputLength} characters.`);
   }
   const amount = exact(value, 'value');
   const scale = 10n ** BigInt(decimalPlaces);

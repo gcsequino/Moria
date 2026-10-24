@@ -437,3 +437,64 @@ test('display rounding is separate from exact arithmetic', () => {
   assert.throws(() => formatCost('1', -1), RangeError);
   assert.throws(() => formatCost('1', 21), RangeError);
 });
+
+test('display formatting enforces the exact input length boundary by default', () => {
+  const boundary = '1'.repeat(161);
+  assert.equal(formatCost(boundary, 0), boundary);
+  for (const oversized of ['1'.repeat(162), '0.' + '1'.repeat(160), '1/' + '1'.repeat(160)]) {
+    assert.throws(() => formatCost(oversized), /at most 161 characters/);
+  }
+});
+
+test('an explicit formatting limit supports aggregate and ratio growth', () => {
+  const input = fixture();
+  const boundary = '9'.repeat(161);
+  input.charges = input.charges.slice(0, 2);
+  for (const row of input.charges) {
+    row.usage = boundary;
+    row.rate = '1';
+    row.amount = boundary;
+  }
+  input.ratios = [input.ratios[2]];
+  input.ratios[0].denominator.value = `0.${'0'.repeat(158)}7`;
+  const output = summary(input);
+  const total = 2n * BigInt(boundary);
+  assert.equal(output.platform.total, String(total));
+  assert.equal(output.platform.total.length, 162);
+  assert.throws(() => formatCost(output.platform.total!), /at most 161 characters/);
+  assert.equal(formatCost(output.platform.total, 2, 162), `${total}.00`);
+
+  const numerator = total * 10n ** 159n;
+  const ratio = output.ratios[0].value!;
+  assert.equal(ratio, `${numerator}/7`);
+  assert.ok(ratio.length > 161);
+  const scaled = numerator * 100n;
+  const rounded = scaled / 7n + (scaled % 7n >= 4n ? 1n : 0n);
+  assert.throws(() => formatCost(ratio), /at most 161 characters/);
+  assert.throws(() => formatCost(ratio, 2, ratio.length - 1), /at most/);
+  assert.equal(
+    formatCost(ratio, 2, ratio.length),
+    `${rounded / 100n}.${String(rounded % 100n).padStart(2, '0')}`,
+  );
+
+  input.charges[0].usage = String(total);
+  rejected(input, 'charges[0].usage');
+});
+
+test('display formatting still rejects malformed exact values', () => {
+  for (const value of ['', '-1', '1e2', '01', '1/0', 'NaN', 'Infinity', ' 1', '1.2/3']) {
+    assert.throws(() => formatCost(value), /Expected a nonnegative decimal or integer fraction/);
+    assert.throws(
+      () => formatCost(value, 2, 1000),
+      /Expected a nonnegative decimal or integer fraction/,
+    );
+  }
+});
+
+test('display formatting validates the configurable input length limit', () => {
+  for (const limit of [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => formatCost('1', 2, limit), RangeError);
+  }
+  assert.equal(formatCost('1', 2, 1), '1.00');
+  assert.throws(() => formatCost('10', 2, 1), /at most 1 characters/);
+});

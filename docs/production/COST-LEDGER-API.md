@@ -18,9 +18,16 @@ from `benchmarks/cost-ledger.ts` (`.js` in NodeNext imports).
   `{ ok: false, errors: [{ path, message }] }` for the first invalid field, or
   `{ ok: true, summary }`. Correct an error and resubmit to find subsequent errors.
   Validation never mutates caller-owned data, including rejected or frozen inputs.
-- `formatCost(value: Exact, decimalPlaces = 2): string` formats a known exact value
+- `formatCost(value: Exact, decimalPlaces = 2, maxInputLength = 161): string` formats a known exact value
   for display only, with half-up rounding and 0–20 decimal places. It throws on
-  malformed values or invalid precision. It cannot format `null` unknowns.
+  malformed values, invalid precision or invalid limits. It cannot format `null`
+  unknowns. By default it rejects values exceeding 161 characters. Exact aggregates
+  and ratios can grow beyond that limit; callers must explicitly opt in with a
+  larger `maxInputLength`, a positive safe integer bounding the entire exact string
+  (including any fraction separator). For a known non-null generated result, use
+  `formatCost(result, 2, Math.max(161, result.length))`, or choose a fixed larger
+  application limit. Numeric syntax validation and exact half-up rounding still
+  apply. This option never changes the ledger validator's 161-character limit.
 
 The required envelope is `CostLedger`:
 
@@ -68,7 +75,7 @@ The API accepts ordinary JSON data, not executable objects, getters or proxies.
 ## Exact numbers and units
 
 `Exact` is a string containing a nonnegative integer, decimal, or integer fraction:
-`"24"`, `"0.50"`, `"1/15"`. Input strings are limited to 161 characters. No signs,
+`"24"`, `"0.50"`, `"1/15"`. Ledger input strings are limited to 161 characters. No signs,
 exponents, whitespace, leading integer zeroes, numeric JavaScript values, NaN,
 infinity, or zero fraction denominators are accepted. Decimal trailing zeroes are
 allowed. Fractions need not be reduced on input. Percentages and ratio denominators
@@ -273,3 +280,23 @@ production throughput, costs, topology, accounting completeness, or runtime
 integration. Linux quality CI must still pass on the exact final published
 revision before human review and manual merge; that controller-owned gate is
 unverified here.
+
+### Display-limit review repair (2026-10-24)
+
+`formatCost` retains its default 161-character guard and boundary regression.
+A validated third argument explicitly permits larger generated totals and ratios,
+without changing ledger input limits, numeric syntax or rounding rules. Regression
+coverage uses two accepted 161-digit charges to produce a 162-digit total and a
+larger fractional ratio through a declared small denominator. Both reject default
+formatting and succeed with an explicit sufficient limit; insufficient and invalid
+limits still reject. Malformed values reject with either default or larger limits.
+
+The repair remains within the three permitted files, with no scope deviations.
+`pnpm format` and `pnpm exec tsx --test tests/benchmark-cost-ledger.test.ts` passed
+(83 tests, no failures or skips). Complete `pnpm check` passed (exit 0) for this
+repair on the non-root Linux environment recorded above: formatting, SDK drift,
+typecheck, all 170 TypeScript tests (no failures or skips), Python formatting and
+schema/workload checks, all 14 Python tests using `.venv`, both application builds,
+and Station Explorer checks. Existing database and isolation tests stayed enabled
+and unchanged. `git diff --check` passed. Changes remain uncommitted; Linux quality
+CI on the final published revision remains unverified and controller-owned.
