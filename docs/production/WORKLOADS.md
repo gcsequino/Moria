@@ -87,3 +87,57 @@ Analytical trials start at 5, 20, and 50 concurrent queries. Separate partition-
 9. Full-profile certification requires all operation classes, all selected concurrent background/data workloads, approved numeric gates, no unresolved required inputs, and every repetition passing safety, service, recovery, and cost gates. Report the capacity boundary and uncertainty rather than selecting only the best run.
 
 Harness implementation is tracked separately. Existing benchmark kernels do not establish coverage of this contract. M0 can produce reviewable provisional contracts without certifying production capacity; approving assumptions and producing capacity evidence are distinct decisions.
+
+## Validate calibration and operation capabilities
+
+From the repository root after development setup:
+
+```sh
+# Validate the checked-in calibration without changing any files.
+.venv/bin/python scripts/validate-production-workloads.py
+# A different v0.2 calibration file can be supplied as the positional argument.
+.venv/bin/python scripts/validate-production-workloads.py docs/production/workloads.v0.2.json
+# Require every external API operation class in the caller's capability declaration.
+.venv/bin/python scripts/validate-production-workloads.py --scope full-profile \
+  --operations detail page filteredSorted singleObjectAction multiObjectAction aggregateOrRelation
+# Explicitly select a subset and report the resulting mix and missing classes.
+.venv/bin/python scripts/validate-production-workloads.py --scope capability-scoped \
+  --operations detail page
+```
+
+The reusable Python entry points in `benchmarks.workloads` are `parse_calibration(json_text)`,
+`load_calibration(path)`, `validate_calibration(decoded_object)`, and
+`check_capabilities(profile, operations, scope=...)`. Validation returns a detached JSON
+object; failure raises `CalibrationError` with an ordered `errors` list. For example,
+`$.profiles[0].steadyRps: ...` identifies an invalid rate, and a missing-field error names
+both the containing object and the required field. The CLI prints these errors to stderr
+and exits nonzero. It never rewrites the input. Unknown fields and unsupported versions
+are rejected; v0.1 remains historical and is not converted.
+
+The existing document validator now delegates to this module, preserving its `validate`
+list-of-errors interface and six-mutation `--self-test`. The reusable validator first checks
+required fields, types, finite numbers, units, and fixed semantic flags, then checks the
+existing cross-field rules (card coverage, mix total, rate ordering/scaling, populations,
+percentiles, and bulk timing). The normal `pnpm check` gate also runs deterministic unit
+fixtures via `.venv/bin/python -m unittest benchmarks.test_workloads`.
+
+Operation selection covers the six external API classes in `mixPercent`. Both the API and
+CLI require an explicit scope when checking capabilities. A `full-profile` selection rejects
+every missing class, including a class whose calibration weight is zero. Empty, unknown,
+duplicate, malformed, or zero-total-weight selections fail. A `capability-scoped` selection
+reports `selectedOperations`, `missingOperations`, `originalMixPercent`,
+`selectedOriginalPercent`, and `effectiveMixPercent`. The effective percentages redistribute
+the selected original weight proportionally to total 100; they are not a claim that the
+omitted load ran. For detail/page, the selected original weight is 65%, with an effective
+mix of approximately 53.846%/46.154%. The input mix is unchanged. Output uses contract class
+order regardless of selection order; floating percentages can have normal rounding error.
+
+`fullProfileOperationCoverage` only describes the caller's declared coverage. Even with all
+classes selected, `fullProfileCertified`, `numericTargetsApproved`, and
+`productionClaimsAllowed` remain false. Capability-scoped output keeps that scope even if
+all classes are selected. No implementation support or successful outcomes are inferred.
+Background/data experiments remain separate obligations: this API does not select or execute
+them. The calibration is not a complete benchmark run manifest; required run-input names
+and unresolved decisions are declarations, not resolved values. Passing these checks supplies
+neither runtime/capacity evidence nor approval of provisional targets, and does not certify
+any card or deployment.
