@@ -8,6 +8,8 @@ Run pnpm check for TypeScript changes. Keep progress and deviations in docs/IMPL
 
 ## Development environment and code map
 
+Linux is the sole supported development and target hosting OS. Windows hosts must
+use a Linux container or WSL2 Linux filesystem; native Windows is unsupported.
 Use Node 24, pnpm 11.25.0, and Python 3.11 with a repository-local `.venv`.
 Follow README development setup; the complete gate is `pnpm check` for every PR.
 Linux requires a non-root user and the libraries listed in deploy/test/Dockerfile.
@@ -30,7 +32,7 @@ for fault/load experiments. Do not migrate, deploy, or restore a live installati
 as part of a code task. Changes to authorization, migration ownership, publication,
 retention, and recovery require explicit human review of the affected invariants.
 
-Both Quality jobs must pass on the latest PR revision before human review and merge.
+The Linux quality job must pass on the latest PR revision before human review and merge.
 Do not merge automatically or push directly to main. Local hooks provide feedback;
 they are not a security boundary or substitute for independent CI. Never weaken an
 acceptance criterion or disable checks to complete a task. If blocked, report the

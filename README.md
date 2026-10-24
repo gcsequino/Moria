@@ -14,12 +14,13 @@ The bundled [Snow Observatory](docs/SNOTEL.md) browses stations and charts snow 
 
 For a visual tour of the implemented components, read the [technical diagrams](docs/TECHNICAL-DIAGRAMS.md): architecture, protected queries, actions, Iceberg indexing, and object state.
 
-The verified development profile uses Node 24, pnpm 11.25.0, and Python 3.11:
+Linux is the supported development and target hosting OS. Use Node 24,
+pnpm 11.25.0, and Python 3.11. On Windows hosts, develop inside a Linux container
+or WSL2 Linux filesystem; native Windows development is unsupported.
 
 ```sh
 pnpm install --frozen-lockfile
-python -m venv .venv
-# Windows: use .venv/Scripts/python.exe instead
+python3 -m venv .venv
 .venv/bin/python -m pip install -r workers/iceberg/requirements.txt -r requirements-dev.txt -r docs/spec/schemas/requirements.txt
 pnpm check
 pnpm moria validate examples/maintenance.json --attributes examples/principal-attributes.json --json
@@ -27,17 +28,14 @@ pnpm moria validate examples/maintenance.json --attributes examples/principal-at
 
 Run the Linux test harness with `docker build -f deploy/test/Dockerfile -t moria-test:local .` followed by `docker run --rm --network none moria-test:local`. This is test packaging, not a production deployment.
 
-On Windows, use a short checkout path (for example `C:\src\Moria`). Deeply nested
-paths can exceed native Iceberg/Arrow file path limits even when Git supports long paths.
-
 `pnpm check` runs formatting, SDK drift checks, TypeScript checks, runtime tests,
 Python formatting, specification/workload validation, both bundled application
 builds, and the Station Explorer type/build/hosting smoke checks. Python commands
 use `.venv` or the explicit `MORIA_PYTHON` executable. Specification validation
 uses `--check` to avoid rewriting the historical report.
 
-The Quality workflow runs on pull requests and main, with Linux and Windows jobs.
-Inspect both jobs and their logs on the latest revision before merging. Required
+The Quality workflow runs on pull requests and main with the Linux quality job.
+Inspect that job and its logs on the latest revision before merging. Required
 checks and review protection must be configured separately when the repository's
 GitHub plan supports them; until then, the owner enforces this review procedure.
 

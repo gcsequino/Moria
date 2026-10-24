@@ -1,9 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-const python =
-  process.env.MORIA_PYTHON ??
-  resolve(process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
+const python = process.env.MORIA_PYTHON ?? resolve('.venv/bin/python');
 for (const args of [
   ['-m', 'black', '--check', 'workers', 'benchmarks', 'docs/spec/schemas', 'scripts'],
   ['docs/spec/schemas/validate.py', '--check'],

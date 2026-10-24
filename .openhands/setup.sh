@@ -2,6 +2,11 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+if [ "$(uname -s)" != "Linux" ]; then
+  echo "Linux is required. Use a Linux container or WSL2 Linux filesystem." >&2
+  exit 1
+fi
+
 if [ "$(id -u)" -eq 0 ]; then
   echo "Use a non-root Linux user; embedded PostgreSQL cannot run as root." >&2
   exit 1

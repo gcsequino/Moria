@@ -4,7 +4,7 @@ Link the bounded issue or acceptance criteria. Describe observable behavior and 
 
 ## Verification
 
-Record the source revision, commands, results, and any unverified checks. Include regression evidence for changed behavior. `pnpm check` and both Quality jobs must pass on the latest revision before merge.
+Record the source revision, commands, results, and any unverified checks. Include regression evidence for changed behavior. `pnpm check` and the Linux quality job must pass on the latest revision before merge.
 
 ## Review and operations
 
