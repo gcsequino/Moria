@@ -1,0 +1,57 @@
+{
+  "recordedAt": "2026-10-15T05:20:33.304Z",
+  "scope": "Internal store plus integrated authority/policy point operations. Excludes HTTP/OIDC, multirow query SQL, Iceberg ingestion and end-to-end pagination. Memory is Node process RSS only, excludes PostgreSQL.",
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 16562937856,
+    "os": "linux 6.18.33.2-microsoft-standard-WSL2",
+    "node": "v24.22.0",
+    "postgres": "18.4"
+  },
+  "rows": 100000,
+  "clients": 20,
+  "activationMs": 2323.6255130000004,
+  "activationRowsPerSecond": 43036.194705441754,
+  "reads": {
+    "attempts": 1000,
+    "success": 1000,
+    "failures": {},
+    "elapsedMs": 202.36267599999974,
+    "successfulOpsPerSecond": 4941.622732840326,
+    "p50Ms": 3.1795499999998356,
+    "p95Ms": 6.802913999999873,
+    "maxMs": 34.342398000000685
+  },
+  "actions": {
+    "attempts": 200,
+    "success": 200,
+    "failures": {},
+    "elapsedMs": 817.2535450000005,
+    "successfulOpsPerSecond": 244.72209539329668,
+    "p50Ms": 78.90227400000003,
+    "p95Ms": 87.77057500000046,
+    "maxMs": 104.62346499999967
+  },
+  "authorizedReads": {
+    "attempts": 1000,
+    "success": 1000,
+    "failures": {},
+    "elapsedMs": 616.6854279999998,
+    "successfulOpsPerSecond": 1621.572287256965,
+    "p50Ms": 11.821916999999303,
+    "p95Ms": 17.04987700000038,
+    "maxMs": 21.84183100000064
+  },
+  "authorizedActions": {
+    "attempts": 200,
+    "success": 200,
+    "failures": {},
+    "elapsedMs": 867.7126749999998,
+    "successfulOpsPerSecond": 230.4910435934338,
+    "p50Ms": 86.01033999999981,
+    "p95Ms": 90.61122400000022,
+    "maxMs": 98.08014399999956
+  },
+  "peakNodeRssBytes": 373329920
+}

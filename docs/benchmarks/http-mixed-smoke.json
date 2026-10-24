@@ -1,0 +1,94 @@
+{
+  "recordedAt": "2026-10-15T07:58:02.527Z",
+  "rows": 10000,
+  "batchRows": 1000,
+  "stagingMs": 222.47630000000026,
+  "publicationMs": 2.852300000000014,
+  "queries": [],
+  "queryLoads": [],
+  "peakNodeRssBytes": 289030144,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination: three sequential pages then 1000 requests each at 20/100 concurrent callers, 20 DB connections. Each caller walks from the start, so this is a warm early-queue working set, not uniform population sampling. Failure latency is included. Excludes Iceberg/HTTP and concurrent writes; security concurrency correctness is covered separately by integration tests.",
+  "http": {
+    "results": [
+      {
+        "clients": 20,
+        "elapsedMs": 5051.130599999999,
+        "operations": {
+          "query": {
+            "attempts": 1467,
+            "success": 1438,
+            "failures": {
+              "500:INTERNAL": 29
+            },
+            "successfulOpsPerSecond": 284.6887387944395,
+            "p50Ms": 11.411200000000463,
+            "p95Ms": 28.833399999999983,
+            "p99Ms": 53.602300000000014
+          },
+          "detail": {
+            "attempts": 418,
+            "success": 418,
+            "failures": {},
+            "successfulOpsPerSecond": 82.7537502198023,
+            "p50Ms": 3.850600000000668,
+            "p95Ms": 10.652500000000146,
+            "p99Ms": 20.82679999999982
+          },
+          "action": {
+            "attempts": 209,
+            "success": 209,
+            "failures": {},
+            "successfulOpsPerSecond": 41.37687510990115,
+            "p50Ms": 350.89660000000003,
+            "p95Ms": 558.5531000000001,
+            "p99Ms": 595.1516000000001
+          }
+        }
+      },
+      {
+        "clients": 100,
+        "elapsedMs": 5521.4496,
+        "operations": {
+          "query": {
+            "attempts": 798,
+            "success": 792,
+            "failures": {
+              "500:INTERNAL": 6
+            },
+            "successfulOpsPerSecond": 143.4405921227643,
+            "p50Ms": 404.53800000000047,
+            "p95Ms": 610.7957999999999,
+            "p99Ms": 676.0717000000004
+          },
+          "detail": {
+            "attempts": 226,
+            "success": 226,
+            "failures": {},
+            "successfulOpsPerSecond": 40.93128007543526,
+            "p50Ms": 385.0036999999993,
+            "p95Ms": 480.03949999999895,
+            "p99Ms": 622.2031999999999
+          },
+          "action": {
+            "attempts": 113,
+            "success": 113,
+            "failures": {},
+            "successfulOpsPerSecond": 20.46564003771763,
+            "p50Ms": 1256.2446999999993,
+            "p95Ms": 1455.6996,
+            "p99Ms": 1476.3945000000003
+          }
+        }
+      }
+    ],
+    "scope": "Loopback workload-session HTTP, 70% UID-ordered pages of 100 / 20% population-distributed detail / 10% idempotent actions. Current markings, canonical region restriction and hidden assignee property. Each caller maintains a pinned cursor chain; actions accumulate overlays. No retry by generator. All attempt latencies include failures. 20 database connections. Same Node process hosts server and fetch generator. One timed run per concurrency, no separate warmup; 100-client phase inherits prior overlays/cache. No ingestion during load, OIDC, TLS, separate network host, cold-cache guarantee or capacity certification."
+  }
+}

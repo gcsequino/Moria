@@ -1,0 +1,8 @@
+{
+  "baselineCommit": "5d26eb9",
+  "benchmarkImage": "sha256:ebd7b673f4cc78570b6ee43913e568dc286a8830b3280f28cec5401050937d98",
+  "compilerImage": "sha256:114c7a4425406451c2866b6aafe69fe29b1b298832db1277d411ac73c82d04d6",
+  "measuredRunTsSha256": "fd452740649bcd79b9ccab90bb400f52a34d97ee5f28b5b6102e751061de779f",
+  "measuredRustBinarySha256": "3574eb516a64a1c70204c541e9b8d3c8eee6c26019cd974f7f5268805bb14dc7",
+  "note": "The committed runner adds input-name validation after this image was built; workload code is unchanged. Dockerfile now enforces the resolved Cargo.lock and compiler image digest from this build. Single-thread Tokio, release profile, 20 database connections, no prepared statement caching. Existing local inference and host background activity were not isolated."
+}

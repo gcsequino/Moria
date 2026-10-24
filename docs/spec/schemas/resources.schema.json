@@ -1,0 +1,1558 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.example.invalid/moria/v0.2/resources.schema.json",
+  "title": "Moria resource declaration v0.2",
+  "$ref": "#/$defs/Resource",
+  "$defs": {
+    "ScalarType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": ["string", "boolean", "int64", "float64", "date", "timestamp", "uid"]
+            },
+            "nullable": {
+              "type": "boolean"
+            }
+          },
+          "required": ["type", "nullable"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "decimal"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "precision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 38
+            },
+            "scale": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 38
+            }
+          },
+          "required": ["type", "nullable", "precision", "scale"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ValueType": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ScalarType"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "array"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "items": {
+              "$ref": "#/$defs/ScalarType"
+            }
+          },
+          "required": ["type", "nullable", "items"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Fields": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/ValueType"
+      },
+      "minProperties": 1
+    },
+    "Expr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "literal": {
+              "oneOf": [
+                {
+                  "type": ["string", "number", "boolean", "null"]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": ["string", "number", "boolean", "null"]
+                  },
+                  "minItems": 0
+                }
+              ]
+            }
+          },
+          "required": ["literal"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["field"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "principalAttribute": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["principalAttribute"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "parameter": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["parameter"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": ["eq", "ne", "lt", "lte", "gt", "gte", "in", "contains"]
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "required": ["op", "args"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": ["and", "or"]
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minItems": 2
+            }
+          },
+          "required": ["op", "args"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": ["not", "isNull"]
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minItems": 1,
+              "maxItems": 1
+            }
+          },
+          "required": ["op", "args"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Scope": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": ["target", "operations"],
+      "additionalProperties": false
+    },
+    "Limits": {
+      "type": "object",
+      "properties": {
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "memoryMiB": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cpuMillis": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": ["timeoutSeconds"],
+      "additionalProperties": false
+    },
+    "Artifact": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": ["uri", "digest"],
+      "additionalProperties": false
+    },
+    "Metadata": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+        },
+        "markings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": ["namespace", "name"],
+      "additionalProperties": false
+    },
+    "Edit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "set"
+            },
+            "targetType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "uid": {
+              "$ref": "#/$defs/Expr"
+            },
+            "property": {
+              "type": "string",
+              "minLength": 1
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": ["op", "targetType", "uid", "property", "value"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "clearOverride"
+            },
+            "targetType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "uid": {
+              "$ref": "#/$defs/Expr"
+            },
+            "property": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["op", "targetType", "uid", "property"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": ["delete", "restore"]
+            },
+            "targetType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "uid": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": ["op", "targetType", "uid"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "create"
+            },
+            "targetType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "identityKey": {
+              "$ref": "#/$defs/Expr"
+            },
+            "values": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minProperties": 1
+            }
+          },
+          "required": ["op", "targetType", "identityKey", "values"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": ["link", "unlink"]
+            },
+            "linkType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "sourceUid": {
+              "$ref": "#/$defs/Expr"
+            },
+            "targetUid": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": ["op", "linkType", "sourceUid", "targetUid"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Namespace": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Namespace"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Dataset": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Dataset"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "$ref": "#/$defs/Fields"
+            },
+            "primaryKey": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "writeModes": {
+              "type": "array",
+              "items": {
+                "enum": ["replace", "append", "upsert", "delete"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "identityDomain": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["columns", "writeModes"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Transform": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Transform"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+              },
+              "minItems": 0,
+              "uniqueItems": true
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "artifact": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "runtime": {
+              "const": "python-duckdb-v1"
+            },
+            "limits": {
+              "$ref": "#/$defs/Limits"
+            }
+          },
+          "required": ["inputs", "outputs", "artifact", "runtime", "limits"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "ConnectorImplementation": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "ConnectorImplementation"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "artifact": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "abiVersion": {
+              "const": "connector/v1"
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "enum": ["batchRead", "schemaDiscovery", "continuousRead", "writeback"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "configurationSchema": {
+              "type": "object"
+            }
+          },
+          "required": ["artifact", "abiVersion", "capabilities", "configurationSchema"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Connection": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Connection"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "implementation": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "configuration": {
+              "type": "object"
+            },
+            "secrets": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+              },
+              "minItems": 0,
+              "uniqueItems": true
+            },
+            "output": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "mode": {
+              "enum": ["replace", "append", "upsert", "delete"]
+            },
+            "coverage": {
+              "enum": ["full", "incremental", "appendOnly"]
+            },
+            "stream": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "implementation",
+            "configuration",
+            "secrets",
+            "output",
+            "mode",
+            "coverage",
+            "stream"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "ObjectType": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "ObjectType"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "primaryKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "properties": {
+              "$ref": "#/$defs/Fields"
+            },
+            "source": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+                },
+                "mapping": {
+                  "type": "object",
+                  "propertyNames": {
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minProperties": 1
+                }
+              },
+              "required": ["resource", "mapping"],
+              "additionalProperties": false
+            },
+            "readPolicy": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "writePolicy": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "propertyPolicies": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "read": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+                  },
+                  "write": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              "minProperties": 0
+            }
+          },
+          "required": ["primaryKey", "properties", "source"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "LinkType": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "LinkType"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "sourceType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "targetType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "cardinality": {
+              "enum": ["manyToOne", "oneToOne", "manyToMany"]
+            },
+            "mode": {
+              "enum": ["mapped", "actionManaged"]
+            },
+            "sourceProperty": {
+              "type": "string",
+              "minLength": 1
+            },
+            "targetProperty": {
+              "type": "string",
+              "minLength": 1
+            },
+            "readPolicy": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            }
+          },
+          "required": ["sourceType", "targetType", "cardinality", "mode"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Action"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "inputs": {
+              "$ref": "#/$defs/Fields"
+            },
+            "targetType": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "targetParameter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "condition": {
+              "$ref": "#/$defs/Expr"
+            },
+            "edits": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Edit"
+              },
+              "minItems": 1
+            },
+            "function": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            }
+          },
+          "required": ["inputs", "targetType", "condition"],
+          "additionalProperties": false,
+          "oneOf": [
+            {
+              "required": ["edits"],
+              "not": {
+                "required": ["function"]
+              }
+            },
+            {
+              "required": ["function"],
+              "not": {
+                "required": ["edits"]
+              }
+            }
+          ]
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Function": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Function"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "artifact": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "runtime": {
+              "const": "typescript-v1"
+            },
+            "inputs": {
+              "$ref": "#/$defs/Fields"
+            },
+            "outputs": {
+              "$ref": "#/$defs/Fields"
+            },
+            "effect": {
+              "enum": ["readOnly", "editProposal"]
+            },
+            "limits": {
+              "$ref": "#/$defs/Limits"
+            }
+          },
+          "required": ["artifact", "runtime", "inputs", "outputs", "effect", "limits"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Application": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Application"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": ["browser", "service", "delegated"]
+            },
+            "scopes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Scope"
+              },
+              "minItems": 0
+            },
+            "frontend": {
+              "$ref": "#/$defs/Artifact"
+            }
+          },
+          "required": ["mode", "scopes"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "AgentAdapter": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "AgentAdapter"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "artifact": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "abiVersion": {
+              "const": "agent/v1"
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "enum": ["events", "cancel", "checkpoint", "resume"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": ["artifact", "abiVersion", "capabilities"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Agent": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Agent"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "artifact": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "adapter": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "application": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "model": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "inputs": {
+              "$ref": "#/$defs/Fields"
+            },
+            "outputs": {
+              "$ref": "#/$defs/Fields"
+            },
+            "limits": {
+              "$ref": "#/$defs/Limits"
+            }
+          },
+          "required": [
+            "artifact",
+            "adapter",
+            "application",
+            "model",
+            "inputs",
+            "outputs",
+            "limits"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "ModelProvider": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "ModelProvider"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "adapter": {
+              "const": "openai-compatible-v1"
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https?://[^\\s/]+"
+            },
+            "destination": {
+              "type": "string",
+              "minLength": 1
+            },
+            "secret": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "destinationPolicy": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            }
+          },
+          "required": ["adapter", "endpoint", "destination", "destinationPolicy"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Model": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Model"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "upstreamName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "versionLabel": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mutable": {
+              "type": "boolean"
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "enum": ["chat", "tools", "structuredOutput", "streaming", "embeddings"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "embeddingDimensions": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": ["provider", "upstreamName", "mutable", "capabilities"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "RetrievalCollection": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "RetrievalCollection"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "textProperty": {
+              "type": "string",
+              "minLength": 1
+            },
+            "embeddingModel": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "chunkSize": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "chunkOverlap": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "metric": {
+              "const": "cosine"
+            },
+            "searchMode": {
+              "const": "exact"
+            }
+          },
+          "required": [
+            "source",
+            "textProperty",
+            "embeddingModel",
+            "chunkSize",
+            "chunkOverlap",
+            "metric",
+            "searchMode"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "EvaluationSuite": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "EvaluationSuite"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "agent": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "fixtures": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "evaluator": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "repeats": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": ["agent", "fixtures", "evaluator", "repeats"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Automation": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Automation"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "enum": ["build", "sync", "invokeAgent", "evaluate"]
+            },
+            "target": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "application": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "intervalSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "input": {
+              "type": "object"
+            },
+            "overlap": {
+              "const": "skip"
+            },
+            "missed": {
+              "const": "coalesce"
+            }
+          },
+          "required": [
+            "operation",
+            "target",
+            "application",
+            "intervalSeconds",
+            "input",
+            "overlap",
+            "missed"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Policy": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Policy"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": ["row", "objectRead", "objectWrite", "propertyRead", "propertyWrite"]
+                },
+                "expression": {
+                  "$ref": "#/$defs/Expr"
+                }
+              },
+              "required": ["type", "expression"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "const": "modelDestination"
+                },
+                "allowedDestinations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "allowedMarkings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+                  },
+                  "minItems": 0,
+                  "uniqueItems": true
+                }
+              },
+              "required": ["type", "allowedDestinations", "allowedMarkings"],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "SecretReference": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "SecretReference"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "binding": {
+              "type": "string",
+              "minLength": 1
+            },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": ["binding", "consumers"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Marking": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Marking"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "eligibilityGroup": {
+              "type": "string",
+              "minLength": 1
+            },
+            "declassifierGroup": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["eligibilityGroup", "declassifierGroup"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "RestrictedView": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "RestrictedView"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "dataset": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "policy": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            }
+          },
+          "required": ["dataset", "policy"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Grant": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "Grant"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "application": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "target": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+            },
+            "operations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "environment": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["subjects", "application", "target", "operations", "environment"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "ObjectSet": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "const": "moria/v1alpha2"
+        },
+        "kind": {
+          "const": "ObjectSet"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "const": "static"
+                },
+                "objectType": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+                },
+                "uids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "minItems": 0,
+                  "uniqueItems": true
+                }
+              },
+              "required": ["mode", "objectType", "uids"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "const": "dynamic"
+                },
+                "objectType": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_-]*/[A-Z][A-Za-z]*/[A-Za-z_][A-Za-z0-9_-]*$"
+                },
+                "where": {
+                  "$ref": "#/$defs/Expr"
+                }
+              },
+              "required": ["mode", "objectType", "where"],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "additionalProperties": false
+    },
+    "Resource": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Namespace"
+        },
+        {
+          "$ref": "#/$defs/Dataset"
+        },
+        {
+          "$ref": "#/$defs/Transform"
+        },
+        {
+          "$ref": "#/$defs/ConnectorImplementation"
+        },
+        {
+          "$ref": "#/$defs/Connection"
+        },
+        {
+          "$ref": "#/$defs/ObjectType"
+        },
+        {
+          "$ref": "#/$defs/LinkType"
+        },
+        {
+          "$ref": "#/$defs/Action"
+        },
+        {
+          "$ref": "#/$defs/Function"
+        },
+        {
+          "$ref": "#/$defs/Application"
+        },
+        {
+          "$ref": "#/$defs/AgentAdapter"
+        },
+        {
+          "$ref": "#/$defs/Agent"
+        },
+        {
+          "$ref": "#/$defs/ModelProvider"
+        },
+        {
+          "$ref": "#/$defs/Model"
+        },
+        {
+          "$ref": "#/$defs/RetrievalCollection"
+        },
+        {
+          "$ref": "#/$defs/EvaluationSuite"
+        },
+        {
+          "$ref": "#/$defs/Automation"
+        },
+        {
+          "$ref": "#/$defs/Policy"
+        },
+        {
+          "$ref": "#/$defs/SecretReference"
+        },
+        {
+          "$ref": "#/$defs/Marking"
+        },
+        {
+          "$ref": "#/$defs/RestrictedView"
+        },
+        {
+          "$ref": "#/$defs/Grant"
+        },
+        {
+          "$ref": "#/$defs/ObjectSet"
+        }
+      ]
+    }
+  }
+}

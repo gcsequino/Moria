@@ -1,0 +1,58 @@
+{
+  "recordedAt": "2026-10-15T07:41:30.010Z",
+  "rows": 1000000,
+  "batchRows": 1000,
+  "stagingMs": 20473.3141,
+  "publicationMs": 3.1608000000014727,
+  "queries": [
+    {
+      "page": 1,
+      "elapsedMs": 10.04370000000199,
+      "rows": 100
+    },
+    {
+      "page": 2,
+      "elapsedMs": 4.291100000002189,
+      "rows": 100
+    },
+    {
+      "page": 3,
+      "elapsedMs": 3.3806000000004133,
+      "rows": 100
+    }
+  ],
+  "queryLoads": [
+    {
+      "clients": 20,
+      "attempts": 1000,
+      "success": 1000,
+      "failures": {},
+      "elapsedMs": 1141.8019999999997,
+      "successfulQueriesPerSecond": 875.8085902809771,
+      "p50Ms": 21.364699999998265,
+      "p95Ms": 25.15429999999833,
+      "p99Ms": 86.42439999999988
+    },
+    {
+      "clients": 100,
+      "attempts": 1000,
+      "success": 1000,
+      "failures": {},
+      "elapsedMs": 960.0247999999992,
+      "successfulQueriesPerSecond": 1041.6397576395952,
+      "p50Ms": 95.61650000000009,
+      "p95Ms": 99.94870000000083,
+      "p99Ms": 109.39779999999882
+    }
+  ],
+  "peakNodeRssBytes": 255287296,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination: three sequential pages then 1000 requests each at 20/100 concurrent callers, 20 DB connections. Each caller walks from the start, so this is a warm early-queue working set, not uniform population sampling. Failure latency is included. Excludes Iceberg/HTTP and concurrent writes; security concurrency correctness is covered separately by integration tests."
+}

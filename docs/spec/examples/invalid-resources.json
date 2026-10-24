@@ -1,0 +1,329 @@
+[
+  {
+    "name": "unknown spec field",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Dataset",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "eval_cases"
+      },
+      "spec": {
+        "columns": {
+          "caseId": {
+            "type": "string",
+            "nullable": false
+          },
+          "prompt": {
+            "type": "string",
+            "nullable": false
+          },
+          "expected": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "primaryKey": ["caseId"],
+        "writeModes": ["replace"],
+        "surprise": true
+      }
+    }
+  },
+  {
+    "name": "unknown resource kind",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Mystery",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "eval_cases"
+      },
+      "spec": {
+        "columns": {
+          "caseId": {
+            "type": "string",
+            "nullable": false
+          },
+          "prompt": {
+            "type": "string",
+            "nullable": false
+          },
+          "expected": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "primaryKey": ["caseId"],
+        "writeModes": ["replace"]
+      }
+    }
+  },
+  {
+    "name": "missing namespace",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "ObjectType",
+      "metadata": {
+        "name": "Equipment"
+      },
+      "spec": {
+        "primaryKey": "id",
+        "properties": {
+          "id": {
+            "type": "uid",
+            "nullable": false
+          },
+          "name": {
+            "type": "string",
+            "nullable": false
+          },
+          "region": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "source": {
+          "resource": "maintenance/Dataset/equipment",
+          "mapping": {
+            "id": "id",
+            "name": "name",
+            "region": "region"
+          }
+        },
+        "readPolicy": "maintenance/Policy/ReadObject"
+      }
+    }
+  },
+  {
+    "name": "unqualified reference",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "RestrictedView",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "RegionalOrders"
+      },
+      "spec": {
+        "dataset": "Dataset/raw",
+        "policy": "maintenance/Policy/RegionRows"
+      }
+    }
+  },
+  {
+    "name": "invalid artifact digest",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Transform",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "Consolidate"
+      },
+      "spec": {
+        "inputs": ["maintenance/Dataset/source_a", "maintenance/Dataset/source_b"],
+        "outputs": ["maintenance/Dataset/work_orders_clean"],
+        "artifact": {
+          "uri": "oci://example.invalid/fixture",
+          "digest": "latest"
+        },
+        "runtime": "python-duckdb-v1",
+        "limits": {
+          "timeoutSeconds": 60,
+          "memoryMiB": 512,
+          "cpuMillis": 1000
+        }
+      }
+    }
+  },
+  {
+    "name": "secret value in declaration",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "SecretReference",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "ModelToken"
+      },
+      "spec": {
+        "binding": "model-token",
+        "consumers": ["maintenance/ModelProvider/LocalProvider"],
+        "value": "not-a-real-secret"
+      }
+    }
+  },
+  {
+    "name": "negative timeout",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Function",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "Summarize"
+      },
+      "spec": {
+        "artifact": {
+          "uri": "oci://example.invalid/fixture",
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "runtime": "typescript-v1",
+        "inputs": {
+          "workOrderId": {
+            "type": "uid",
+            "nullable": false
+          }
+        },
+        "outputs": {
+          "summary": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "effect": "readOnly",
+        "limits": {
+          "timeoutSeconds": -1,
+          "memoryMiB": 512,
+          "cpuMillis": 1000
+        }
+      }
+    }
+  },
+  {
+    "name": "invalid expression operator",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Policy",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "LocalModelOnly"
+      },
+      "spec": {
+        "type": "row",
+        "allowedDestinations": ["private-local"],
+        "allowedMarkings": ["maintenance/Marking/Sensitive"],
+        "expression": {
+          "op": "eval",
+          "args": []
+        }
+      }
+    }
+  },
+  {
+    "name": "action with no handler",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Action",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "AssignWorkOrder"
+      },
+      "spec": {
+        "inputs": {
+          "workOrderId": {
+            "type": "uid",
+            "nullable": false
+          },
+          "assignee": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "targetType": "maintenance/ObjectType/WorkOrder",
+        "targetParameter": "workOrderId",
+        "condition": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "status"
+            },
+            {
+              "literal": "OPEN"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "action with two handlers",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Action",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "AssignWorkOrder"
+      },
+      "spec": {
+        "inputs": {
+          "workOrderId": {
+            "type": "uid",
+            "nullable": false
+          },
+          "assignee": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "targetType": "maintenance/ObjectType/WorkOrder",
+        "targetParameter": "workOrderId",
+        "condition": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "status"
+            },
+            {
+              "literal": "OPEN"
+            }
+          ]
+        },
+        "edits": [
+          {
+            "op": "set",
+            "targetType": "maintenance/ObjectType/WorkOrder",
+            "uid": {
+              "parameter": "workOrderId"
+            },
+            "property": "assignee",
+            "value": {
+              "parameter": "assignee"
+            }
+          }
+        ],
+        "function": "maintenance/Function/Summarize"
+      }
+    }
+  },
+  {
+    "name": "invalid uid text",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "ObjectSet",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "SelectedOrders"
+      },
+      "spec": {
+        "mode": "static",
+        "objectType": "maintenance/ObjectType/WorkOrder",
+        "uids": ["not-a-uuid"]
+      }
+    }
+  },
+  {
+    "name": "invalid model endpoint",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "ModelProvider",
+      "metadata": {
+        "namespace": "maintenance",
+        "name": "LocalProvider"
+      },
+      "spec": {
+        "adapter": "openai-compatible-v1",
+        "endpoint": "not a uri",
+        "destination": "private-local",
+        "secret": "maintenance/SecretReference/ModelToken",
+        "destinationPolicy": "maintenance/Policy/LocalModelOnly"
+      }
+    }
+  }
+]

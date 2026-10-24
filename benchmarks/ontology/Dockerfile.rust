@@ -1,0 +1,11 @@
+FROM rust:bookworm@sha256:114c7a4425406451c2866b6aafe69fe29b1b298832db1277d411ac73c82d04d6 AS rust
+WORKDIR /src/rust
+COPY benchmarks/ontology/rust/ ./
+RUN rustc --version > /src/rust-version.txt && cargo build --release --locked
+
+FROM moria-ontology-bench:local
+COPY --chown=node:node benchmarks/ontology/run.ts benchmarks/ontology/run.ts
+COPY --from=rust /src/rust/target/release/moria-bench /app/benchmarks/ontology/rust-server
+COPY --from=rust /src/rust/Cargo.lock /app/benchmarks/ontology/rust/Cargo.lock
+ENV BENCH_IMPLEMENTATIONS=node,rust
+ENV BENCH_OUTPUT=/results/rust-comparison.json

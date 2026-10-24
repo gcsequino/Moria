@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.example.invalid/moria/v0.2/manifest.schema.json",
+  "title": "Moria deployment unit manifest v0.2",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "const": "moria/v1alpha2"
+    },
+    "projectId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "deploymentUnitId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "$ref": "resources.schema.json"
+      },
+      "minItems": 1
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "package": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        },
+        "required": ["package", "digest"],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    }
+  },
+  "required": ["apiVersion", "projectId", "deploymentUnitId", "resources"],
+  "additionalProperties": false
+}

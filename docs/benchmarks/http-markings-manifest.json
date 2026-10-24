@@ -1,0 +1,19 @@
+{
+  "runs": [
+    "http-markings-1000000.json",
+    "http-markings-10000000.json"
+  ],
+  "sourceSha256": {
+    "apps/api/src/server.ts": "97bd42d6364dbfef4132ed6cf9d950529221706d7a693216a5411e87ce983580",
+    "scripts/benchmark-staging.ts": "794177d56badfb5cea724ae3ee1f4b52e431d01ff851dc2f6ed2d969e0cbdc4a",
+    "services/ontology/src/query.ts": "1e856751491dd3154cea431312b2792993d76831501ad418a96feb093bbac789",
+    "services/catalog/src/catalog.ts": "5deb36046743822c42e2f5cada6e7eec7a5e219f642e0292e1effcebb05c5c0c",
+    "services/ontology/src/store.ts": "de9a7ed1660aa5cd81b756c90202b4bcbd5bc460c8215518dce2c9e5e155ecb9",
+    "scripts/http-workload.ts": "8d6aab65b9967fa865483b92c932a38a83dafee8a3c26d32d69cab946aa681fd",
+    "services/ontology/src/service.ts": "82315d7802a2267fe124a6fdc8113bb814739996d05607981b2b1ade462f7a33"
+  },
+  "scope": "Sequential 30-second mixed HTTP phases at 20 and 100 clients per population; no concurrent refresh; see each result for hardware and limits.",
+  "recordedAt": "2026-10-15T11:59:19.2711560Z",
+  "baseCommit": "4ef9c60d76690afcb667c1ae2f35531614257bde",
+  "changes": "Benchmark initial and refresh stages persist sensitive marking; query fixture grants the same marking."
+}

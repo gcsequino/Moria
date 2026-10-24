@@ -1,0 +1,245 @@
+{
+  "actions": {
+    "edit-asset": {
+      "inputs": {
+        "notes": { "nullable": false, "type": "string" },
+        "status": { "nullable": false, "type": "string" },
+        "title": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" }
+      }
+    },
+    "edit-notes": {
+      "inputs": {
+        "notes": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" }
+      }
+    },
+    "edit-status": {
+      "inputs": {
+        "status": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" }
+      }
+    },
+    "edit-title": {
+      "inputs": {
+        "title": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" }
+      }
+    },
+    "reset-asset": { "inputs": { "uid": { "nullable": false, "type": "uid" } } }
+  },
+  "app": "management",
+  "endpoints": {
+    "apps": {
+      "method": "GET",
+      "output": { "items": { "ref": "HostedApp" }, "type": "list" },
+      "path": "/api/management/v1/apps"
+    },
+    "importAssets": {
+      "input": { "items": { "ref": "SourceRow" }, "type": "list" },
+      "method": "POST",
+      "output": { "ref": "ImportResult" },
+      "path": "/api/management/v1/datasets/assets/import"
+    },
+    "jobs": { "method": "GET", "output": { "ref": "Jobs" }, "path": "/api/management/v1/jobs" },
+    "lineage": {
+      "method": "GET",
+      "output": { "ref": "Lineage" },
+      "path": "/api/management/v1/lineage"
+    },
+    "retryJob": {
+      "input": {
+        "nullable": false,
+        "properties": { "id": { "nullable": false, "type": "string" } },
+        "type": "object"
+      },
+      "method": "POST",
+      "output": { "ref": "Job" },
+      "path": "/api/management/v1/jobs/retry"
+    },
+    "setSnowSchedule": {
+      "input": {
+        "nullable": false,
+        "properties": {
+          "enabled": { "nullable": false, "type": "boolean" },
+          "intervalMinutes": { "nullable": false, "type": "float64" }
+        },
+        "type": "object"
+      },
+      "method": "POST",
+      "output": { "ref": "Schedule" },
+      "path": "/api/management/v1/snotel/schedule"
+    },
+    "setWeatherSchedule": {
+      "input": {
+        "nullable": false,
+        "properties": {
+          "enabled": { "nullable": false, "type": "boolean" },
+          "intervalMinutes": { "nullable": false, "type": "float64" }
+        },
+        "type": "object"
+      },
+      "method": "POST",
+      "output": { "ref": "Schedule" },
+      "path": "/api/management/v1/weather/schedule"
+    },
+    "syncSnow": {
+      "input": {
+        "nullable": false,
+        "properties": { "requestKey": { "nullable": false, "type": "string" } },
+        "type": "object"
+      },
+      "method": "POST",
+      "output": { "ref": "Job" },
+      "path": "/api/management/v1/snotel/sync"
+    },
+    "syncWeather": {
+      "input": {
+        "nullable": false,
+        "properties": { "requestKey": { "nullable": false, "type": "string" } },
+        "type": "object"
+      },
+      "method": "POST",
+      "output": { "ref": "Job" },
+      "path": "/api/management/v1/weather/sync"
+    },
+    "workspace": {
+      "method": "GET",
+      "output": { "ref": "WorkspaceStatus" },
+      "path": "/api/management/v1/workspace"
+    }
+  },
+  "objects": {
+    "assets": {
+      "properties": {
+        "id": { "nullable": false, "type": "string" },
+        "notes": { "nullable": false, "type": "string" },
+        "region": { "nullable": false, "type": "string" },
+        "status": { "nullable": false, "type": "string" },
+        "title": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" }
+      },
+      "type": "Asset"
+    }
+  },
+  "types": {
+    "HostedApp": {
+      "nullable": false,
+      "optional": ["deployment", "error"],
+      "properties": {
+        "app": { "nullable": false, "type": "string" },
+        "deployment": {
+          "nullable": false,
+          "optional": ["previous"],
+          "properties": {
+            "current": { "nullable": false, "type": "string" },
+            "previous": { "nullable": false, "type": "string" },
+            "promotedAt": { "nullable": false, "type": "string" }
+          },
+          "type": "object"
+        },
+        "error": { "nullable": false, "type": "string" },
+        "versions": { "items": { "nullable": false, "type": "string" }, "type": "list" }
+      },
+      "type": "object"
+    },
+    "ImportResult": {
+      "nullable": false,
+      "properties": {
+        "revision": { "nullable": false, "type": "string" },
+        "rows": { "nullable": false, "type": "float64" }
+      },
+      "type": "object"
+    },
+    "Job": {
+      "nullable": false,
+      "properties": {
+        "attempt": { "nullable": false, "type": "float64" },
+        "created_at": { "nullable": false, "type": "string" },
+        "error": { "nullable": true, "type": "string" },
+        "id": { "nullable": false, "type": "string" },
+        "kind": { "nullable": false, "type": "string" },
+        "phase": { "nullable": false, "type": "string" },
+        "requested_by": { "nullable": false, "type": "string" },
+        "result": { "nullable": true, "type": "string" },
+        "status": { "nullable": false, "type": "string" },
+        "updated_at": { "nullable": false, "type": "string" }
+      },
+      "type": "object"
+    },
+    "Jobs": {
+      "nullable": false,
+      "properties": {
+        "jobs": { "items": { "ref": "Job" }, "type": "list" },
+        "schedules": { "items": { "ref": "Schedule" }, "type": "list" }
+      },
+      "type": "object"
+    },
+    "Lineage": {
+      "nullable": false,
+      "properties": {
+        "edges": {
+          "items": {
+            "nullable": false,
+            "properties": {
+              "from": { "nullable": false, "type": "string" },
+              "label": { "nullable": false, "type": "string" },
+              "to": { "nullable": false, "type": "string" }
+            },
+            "type": "object"
+          },
+          "type": "list"
+        },
+        "limitations": { "items": { "nullable": false, "type": "string" }, "type": "list" },
+        "nodes": {
+          "items": {
+            "nullable": false,
+            "properties": {
+              "detail": { "nullable": false, "type": "string" },
+              "id": { "nullable": false, "type": "string" },
+              "kind": { "nullable": false, "type": "string" },
+              "label": { "nullable": false, "type": "string" },
+              "status": { "nullable": true, "type": "string" }
+            },
+            "type": "object"
+          },
+          "type": "list"
+        }
+      },
+      "type": "object"
+    },
+    "Schedule": {
+      "nullable": false,
+      "properties": {
+        "enabled": { "nullable": false, "type": "boolean" },
+        "interval_minutes": { "nullable": false, "type": "float64" },
+        "kind": { "nullable": false, "type": "string" },
+        "next_run": { "nullable": false, "type": "string" }
+      },
+      "type": "object"
+    },
+    "SourceRow": {
+      "nullable": false,
+      "properties": {
+        "id": { "nullable": false, "type": "string" },
+        "notes": { "nullable": false, "type": "string" },
+        "region": { "nullable": false, "type": "string" },
+        "status": { "nullable": false, "type": "string" },
+        "title": { "nullable": false, "type": "string" }
+      },
+      "type": "object"
+    },
+    "WorkspaceStatus": {
+      "nullable": false,
+      "properties": {
+        "administrator": { "nullable": false, "type": "boolean" },
+        "importing": { "nullable": false, "type": "boolean" },
+        "principal": { "nullable": false, "type": "string" },
+        "ready": { "nullable": false, "type": "boolean" },
+        "revision": { "nullable": false, "type": "string" }
+      },
+      "type": "object"
+    }
+  },
+  "version": 1
+}

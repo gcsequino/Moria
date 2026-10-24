@@ -1,0 +1,89 @@
+{
+  "contractVersion": "0.1",
+  "status": "proposed-calibration-not-certified",
+  "referenceWorkload": "Large-bank ServiceNow-instance class; no measured equivalence",
+  "units": {
+    "rates": "offered external API requests per second",
+    "inputVolume": "decimal bytes",
+    "memory": "binary bytes"
+  },
+  "profiles": [
+    {
+      "id": "T-S",
+      "objects": 1000000,
+      "steadyRps": 20,
+      "busyHourRps": 50,
+      "peakRps": 100
+    },
+    {
+      "id": "T-B",
+      "objects": 10000000,
+      "steadyRps": 500,
+      "busyHourRps": 1000,
+      "peakRps": 2000
+    },
+    {
+      "id": "T-E",
+      "objects": 50000000,
+      "repeatObjects": 100000000,
+      "steadyRps": 2000,
+      "busyHourRps": 4000,
+      "peakRps": 10000
+    }
+  ],
+  "mixPercent": {
+    "detail": 35,
+    "page": 30,
+    "filteredSorted": 15,
+    "singleObjectAction": 10,
+    "multiObjectAction": 5,
+    "aggregateOrRelation": 5
+  },
+  "objectMeanBytes": 4096,
+  "overlayFraction": 0.2,
+  "retainedGenerations": 2,
+  "editsPerEditedObject": 10,
+  "windowsSeconds": {
+    "warmup": 600,
+    "steady": 1800,
+    "peak": 900,
+    "recoveryMinimum": 1800,
+    "busyHour": 3600,
+    "soak": 86400
+  },
+  "repetitions": 3,
+  "proposedTargets": {
+    "queryP95Ms": 500,
+    "queryP99Ms": 2000,
+    "actionP95Ms": 1000,
+    "actionP99Ms": 3000,
+    "unexpectedErrorFraction": 0.001,
+    "haAvailabilityPercent": 99.95,
+    "haFailureDomainRpoSeconds": 0,
+    "haFailoverRtoSeconds": 300,
+    "drRpoSeconds": 900,
+    "drRtoSeconds": 14400
+  },
+  "ingestionScenarios": [
+    {
+      "id": "D-S",
+      "inputBytes": 100000000000,
+      "intervalSeconds": 86400
+    },
+    {
+      "id": "D-M",
+      "inputBytes": 1000000000000000,
+      "intervalSeconds": 2592000
+    },
+    {
+      "id": "D-L",
+      "inputBytes": 1000000000000000,
+      "intervalSeconds": 86400
+    }
+  ],
+  "acceptance": {
+    "safetyViolationsAllowed": 0,
+    "costCeilings": null,
+    "productionClaimsAllowed": false
+  }
+}

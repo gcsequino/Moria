@@ -1,0 +1,8 @@
+{
+  "auth": "SELECT json_build_object('region',region)::text FROM bench_sessions WHERE token=$1 AND enabled",
+  "queue_typed": "SELECT coalesce(jsonb_agg(row),'[]'::jsonb)::text FROM (SELECT (payload-'internalNote') || jsonb_build_object('assignee',assignee) AS row FROM bench_objects WHERE region=$1 AND status='OPEN' AND NOT marked AND (priority,id)>($2,$3) ORDER BY priority,id LIMIT 100) q",
+  "queue_json": "SELECT coalesce(jsonb_agg(row),'[]'::jsonb)::text FROM (SELECT (payload-'internalNote') || jsonb_build_object('assignee',assignee) AS row FROM bench_objects WHERE payload->>'region'=$1 AND payload->>'status'='OPEN' AND NOT marked AND ((payload->>'priority')::int,id)>($2,$3) ORDER BY (payload->>'priority')::int,id LIMIT 100) q",
+  "detail": "SELECT ((payload-'internalNote') || jsonb_build_object('assignee',assignee))::text FROM bench_objects WHERE id=$1 AND region=$2 AND NOT marked",
+  "receipt": "SELECT result::text FROM bench_receipts WHERE key=$1",
+  "action": "WITH changed AS (UPDATE bench_objects SET assignee='operator' WHERE id=$1 AND region=$2 AND status='OPEN' AND NOT marked RETURNING id), rev AS (UPDATE bench_head SET revision=revision+1 WHERE EXISTS(SELECT 1 FROM changed) RETURNING revision), audit AS (INSERT INTO bench_history(id,revision,assignee) SELECT changed.id,rev.revision,'operator' FROM changed,rev) INSERT INTO bench_receipts(key,result) SELECT $3,jsonb_build_object('revision',revision::text) FROM rev RETURNING result::text"
+}

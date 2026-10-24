@@ -1,0 +1,103 @@
+{
+  "recordedAt": "2026-10-15T08:30:23.015Z",
+  "rows": 10000,
+  "batchRows": 1000,
+  "stagingMs": 228.6803,
+  "publicationMs": 2.717399999999998,
+  "queries": [],
+  "queryLoads": [],
+  "peakNodeRssBytes": 288186368,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination: three sequential pages then 1000 requests each at 20/100 concurrent callers, 20 DB connections. Each caller walks from the start, so this is a warm early-queue working set, not uniform population sampling. Failure latency is included. Excludes Iceberg/HTTP and concurrent writes; security concurrency correctness is covered separately by integration tests. The preceding scope describes staging and optional direct queries only; the separate http section includes concurrent actions and HTTP. Peak Node RSS includes that phase and its in-process generator.",
+  "http": {
+    "refreshEnabled": true,
+    "results": [
+      {
+        "clients": 20,
+        "elapsedMs": 3035.4032999999995,
+        "refresh": {
+          "stagingMs": 314.6223,
+          "publicationMs": 56.546800000000076,
+          "revision": "10"
+        },
+        "cumulativeInternalQueryErrors": {},
+        "operations": {
+          "query": {
+            "attempts": 1052,
+            "success": 1052,
+            "failures": {},
+            "successfulOpsPerSecond": 346.57668060122364,
+            "p50Ms": 40.321500000000015,
+            "p95Ms": 70.11290000000008,
+            "p99Ms": 127.16469999999981
+          },
+          "detail": {
+            "attempts": 300,
+            "success": 300,
+            "failures": {},
+            "successfulOpsPerSecond": 98.83365416384704,
+            "p50Ms": 23.71270000000004,
+            "p95Ms": 37.766599999999926,
+            "p99Ms": 85.04479999999967
+          },
+          "action": {
+            "attempts": 150,
+            "success": 150,
+            "failures": {},
+            "successfulOpsPerSecond": 49.41682708192352,
+            "p50Ms": 37.10429999999997,
+            "p95Ms": 58.28740000000016,
+            "p99Ms": 75.90750000000025
+          }
+        }
+      },
+      {
+        "clients": 100,
+        "elapsedMs": 3322.6441999999997,
+        "refresh": {
+          "stagingMs": 1511.6072999999997,
+          "publicationMs": 171.98329999999987,
+          "revision": "207"
+        },
+        "cumulativeInternalQueryErrors": {},
+        "operations": {
+          "query": {
+            "attempts": 704,
+            "success": 704,
+            "failures": {},
+            "successfulOpsPerSecond": 211.8794422827458,
+            "p50Ms": 331.0847999999987,
+            "p95Ms": 389.7577000000001,
+            "p99Ms": 395.2043999999996
+          },
+          "detail": {
+            "attempts": 200,
+            "success": 200,
+            "failures": {},
+            "successfulOpsPerSecond": 60.19302337578005,
+            "p50Ms": 297.6835999999985,
+            "p95Ms": 336.6735000000008,
+            "p99Ms": 353.85030000000097
+          },
+          "action": {
+            "attempts": 100,
+            "success": 100,
+            "failures": {},
+            "successfulOpsPerSecond": 30.096511687890025,
+            "p50Ms": 315.2426999999998,
+            "p95Ms": 363.96979999999985,
+            "p99Ms": 375.22679999999946
+          }
+        }
+      }
+    ],
+    "scope": "Loopback workload-session HTTP, 70% UID-ordered pages of 100 / 20% population-distributed detail / 10% idempotent actions. Current markings, canonical region restriction and hidden assignee property. Each caller maintains a pinned cursor chain; actions accumulate overlays. No retry by generator. All attempt latencies include failures. 20 database connections. Same Node process hosts server and fetch generator. One timed run per concurrency, no separate warmup; 100-client phase inherits prior overlays/cache. Optional refresh streams a full same-schema generation per phase; enabled runs continue until both the minimum duration and publication finish. Otherwise no ingestion during load. No OIDC, TLS, separate network host, cold-cache guarantee or capacity certification."
+  }
+}

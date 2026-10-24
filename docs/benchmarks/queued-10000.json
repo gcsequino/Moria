@@ -1,0 +1,37 @@
+{
+  "recordedAt": "2026-10-15T05:09:26.579Z",
+  "scope": "Internal store only: excludes HTTP, authentication, policy SQL, Iceberg ingestion and end-to-end pagination. Memory is Node process RSS only, excludes PostgreSQL.",
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "rows": 10000,
+  "clients": 20,
+  "activationMs": 1596.4807999999998,
+  "activationRowsPerSecond": 6263.777177902798,
+  "reads": {
+    "attempts": 1000,
+    "success": 1000,
+    "failures": {},
+    "elapsedMs": 99.20870000000014,
+    "successfulOpsPerSecond": 10079.761149979777,
+    "p50Ms": 0.6811999999999898,
+    "p95Ms": 1.1216000000003987,
+    "maxMs": 99.15559999999914
+  },
+  "actions": {
+    "attempts": 200,
+    "success": 200,
+    "failures": {},
+    "elapsedMs": 317.83680000000004,
+    "successfulOpsPerSecond": 629.2537553864121,
+    "p50Ms": 25.660800000000563,
+    "p95Ms": 66.73250000000007,
+    "maxMs": 84.54569999999967
+  },
+  "peakNodeRssBytes": 152444928
+}

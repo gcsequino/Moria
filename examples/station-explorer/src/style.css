@@ -1,0 +1,13 @@
+:root { font-family: system-ui, sans-serif; color: #173b4a; background: #eff5f4; }
+body { margin: 0; }
+main { max-width: 800px; margin: 64px auto; padding: 24px; }
+h1 { font-size: clamp(2rem, 6vw, 3.5rem); margin: 12px 0; }
+.eyebrow { font-size: .75rem; letter-spacing: .15em; }
+nav { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 28px 0; }
+button { border: 1px solid #51727b; border-radius: 8px; padding: 10px 16px; background: white; color: inherit; cursor: pointer; }
+button:disabled { opacity: .5; }
+.notice { background: #fff2dc; padding: 20px; border-radius: 10px; }
+ul { list-style: none; padding: 0; display: grid; gap: 12px; }
+li { display: grid; gap: 8px; background: white; border: 1px solid #d5e2df; padding: 20px; border-radius: 12px; }
+small, footer { color: #527079; }
+footer { margin-top: 40px; }

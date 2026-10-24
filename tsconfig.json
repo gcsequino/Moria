@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "types": ["node"],
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "apps/**/*.ts",
+    "packages/**/*.ts",
+    "services/**/*.ts",
+    "workers/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts",
+    "benchmarks/**/*.ts",
+    "apps/**/*.tsx"
+  ]
+}

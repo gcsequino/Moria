@@ -1,0 +1,34 @@
+{
+  "recordedAt": "2026-10-15T07:36:09.851Z",
+  "rows": 1000000,
+  "batchRows": 1000,
+  "stagingMs": 20426.9475,
+  "publicationMs": 3.249599999999191,
+  "queries": [
+    {
+      "page": 1,
+      "elapsedMs": 9.65809999999692,
+      "rows": 100
+    },
+    {
+      "page": 2,
+      "elapsedMs": 4.102200000001176,
+      "rows": 100
+    },
+    {
+      "page": 3,
+      "elapsedMs": 3.413700000000972,
+      "rows": 100
+    }
+  ],
+  "peakNodeRssBytes": 215773184,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination, sequentially. Excludes Iceberg/HTTP; concurrency correctness is covered separately by integration tests."
+}

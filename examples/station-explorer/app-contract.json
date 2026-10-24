@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "app": "station-explorer",
+  "types": {},
+  "objects": {
+    "snow-stations": {
+      "type": "Station",
+      "properties": {
+        "uid": { "type": "uid", "nullable": false },
+        "triplet": { "type": "string", "nullable": false },
+        "name": { "type": "string", "nullable": false },
+        "state": { "type": "string", "nullable": false },
+        "elevationFt": { "type": "float64", "nullable": false }
+      }
+    }
+  },
+  "actions": {},
+  "endpoints": {}
+}

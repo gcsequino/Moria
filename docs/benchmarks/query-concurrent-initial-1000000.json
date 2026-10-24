@@ -1,0 +1,62 @@
+{
+  "recordedAt": "2026-10-15T07:38:51.954Z",
+  "rows": 1000000,
+  "batchRows": 1000,
+  "stagingMs": 20425.0243,
+  "publicationMs": 3.2414000000026135,
+  "queries": [
+    {
+      "page": 1,
+      "elapsedMs": 9.95310000000245,
+      "rows": 100
+    },
+    {
+      "page": 2,
+      "elapsedMs": 4.484599999999773,
+      "rows": 100
+    },
+    {
+      "page": 3,
+      "elapsedMs": 3.5800000000017462,
+      "rows": 100
+    }
+  ],
+  "queryLoads": [
+    {
+      "clients": 20,
+      "attempts": 1000,
+      "success": 887,
+      "failures": {
+        "40001": 113
+      },
+      "elapsedMs": 1712.7727000000014,
+      "successfulQueriesPerSecond": 517.8737377119563,
+      "p50Ms": 21.78280000000086,
+      "p95Ms": 68.90799999999945,
+      "p99Ms": 92.34309999999823
+    },
+    {
+      "clients": 100,
+      "attempts": 1000,
+      "success": 999,
+      "failures": {
+        "40001": 1
+      },
+      "elapsedMs": 1093.6031999999977,
+      "successfulQueriesPerSecond": 913.4940351308428,
+      "p50Ms": 102.99600000000282,
+      "p95Ms": 160.33889999999883,
+      "p99Ms": 186.47430000000168
+    }
+  ],
+  "peakNodeRssBytes": 271847424,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination: three sequential pages then 1000 requests each at 20/100 concurrent callers, 20 DB connections. Each caller walks from the start, so this is a warm early-queue working set, not uniform population sampling. Failure latency is included. Excludes Iceberg/HTTP and concurrent writes; security concurrency correctness is covered separately by integration tests."
+}

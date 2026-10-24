@@ -1,0 +1,5 @@
+{
+  "region": { "type": "string", "nullable": false },
+  "isOperator": { "type": "boolean", "nullable": false },
+  "isAuditor": { "type": "boolean", "nullable": false }
+}

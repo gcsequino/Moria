@@ -1,0 +1,2 @@
+# Development-only Python formatter; not part of the worker runtime.
+black==26.10.1

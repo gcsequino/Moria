@@ -1,0 +1,34 @@
+{
+  "recordedAtUtc": "2026-10-15T05:48:28.3485012Z",
+  "sourceCommit": "9a490962af64ff683d500cadaeca3f469775ef7a",
+  "benchmarkImage": "sha256:25068ef3b064f67ad8c6d89c95a476b19ac4651b5b5bf9113d78ed23a2be5038",
+  "testBaseImage": "3068c45e452d",
+  "host": "Windows host, Ubuntu 24.04 WSL2, Ryzen 7 9800X3D, 32 GiB host RAM",
+  "hostActivity": "Existing local inference service remained available; host background activity was not isolated.",
+  "sourceFiles": [
+    {
+      "file": "run.ts",
+      "Hash": "836D5835387EE35734913D8998B0EBBF7A0517D603E78BEF7E6CE852770AC04D"
+    },
+    {
+      "file": "node.ts",
+      "Hash": "9E4138E85F6D8C0F3A220FC2D326810950704D77407649A5C042846C1222AF38"
+    },
+    {
+      "file": "python.py",
+      "Hash": "2AD86DCBBFF3806D1623E57DC34C8033FD811C3535E59294C86C97266A3104F1"
+    },
+    {
+      "file": "main.go",
+      "Hash": "B1D30A1B5932BECF2390AC323846E6024514E544011B650DF94B1E9D7CAEA31F"
+    },
+    {
+      "file": "load.ts",
+      "Hash": "7BE4AD00F43D49B5631CA0AD047FBB2969124EB1222A130DDE8AFF8A3263308D"
+    },
+    {
+      "file": "queries.json",
+      "Hash": "96A5CE3CA28F64B19EA86ED6A8E24BCB99D9ACF195904A998AFD8D6B1015907D"
+    }
+  ]
+}

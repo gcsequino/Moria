@@ -1,0 +1,461 @@
+{
+  "recordedAt": "2026-10-15T08:40:10.481Z",
+  "rows": 1000000,
+  "batchRows": 1000,
+  "stagingMs": 20755.226300000002,
+  "publicationMs": 2.6134000000020023,
+  "queries": [],
+  "queryLoads": [],
+  "peakNodeRssBytes": 338608128,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination: three sequential pages then 1000 requests each at 20/100 concurrent callers, 20 DB connections. Each caller walks from the start, so this is a warm early-queue working set, not uniform population sampling. Failure latency is included. Excludes Iceberg/HTTP and concurrent writes; security concurrency correctness is covered separately by integration tests. The preceding scope describes staging and optional direct queries only; the separate http section includes concurrent actions and HTTP. Peak Node RSS includes that phase and its in-process generator.",
+  "http": {
+    "refreshEnabled": true,
+    "results": [
+      {
+        "clients": 20,
+        "elapsedMs": 26091.864900000004,
+        "refresh": {
+          "stagingMs": 26038.914799999995,
+          "publicationMs": 28.598600000004808,
+          "revision": "1473"
+        },
+        "pinnedAfterRefreshPlan": [
+          {
+            "QUERY PLAN": [
+              {
+                "Plan": {
+                  "Node Type": "Limit",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 1.41,
+                  "Total Cost": 23873.31,
+                  "Plan Rows": 101,
+                  "Plan Width": 260,
+                  "Disabled": false,
+                  "Plans": [
+                    {
+                      "Node Type": "Nested Loop",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Join Type": "Left",
+                      "Startup Cost": 1.41,
+                      "Total Cost": 294973.04,
+                      "Plan Rows": 1248,
+                      "Plan Width": 260,
+                      "Disabled": false,
+                      "Inner Unique": false,
+                      "Filter": "(NOT COALESCE(overlay_versions_1.tombstone, false))",
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Join Type": "Left",
+                          "Startup Cost": 1.13,
+                          "Total Cost": 274185.52,
+                          "Plan Rows": 2497,
+                          "Plan Width": 228,
+                          "Disabled": false,
+                          "Inner Unique": false,
+                          "Filter": "(NOT COALESCE(overlay_versions.tombstone, false))",
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Inner",
+                              "Startup Cost": 0.85,
+                              "Total Cost": 232622.95,
+                              "Plan Rows": 4994,
+                              "Plan Width": 196,
+                              "Disabled": false,
+                              "Inner Unique": false,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "staged_source_rows_pkey",
+                                  "Relation Name": "staged_source_rows",
+                                  "Alias": "p",
+                                  "Startup Cost": 0.43,
+                                  "Total Cost": 190311.29,
+                                  "Plan Rows": 4994,
+                                  "Plan Width": 106,
+                                  "Disabled": false,
+                                  "Index Cond": "((stage = 'fc7f6076-700c-40a7-b804-e4332fe9a5a7'::uuid) AND (uid > '00000000-0000-0000-0000-0000000003e8'::uuid))",
+                                  "Filter": "((((value ->> 'region'::text))::text = 'East'::text COLLATE \"C\") IS TRUE)"
+                                },
+                                {
+                                  "Node Type": "Subquery Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Alias": "cur",
+                                  "Startup Cost": 0.43,
+                                  "Total Cost": 8.46,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 90,
+                                  "Disabled": false,
+                                  "Filter": "((((cur.value ->> 'region'::text))::text = 'East'::text COLLATE \"C\") IS TRUE)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Subquery",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "staged_source_rows_pkey",
+                                      "Relation Name": "staged_source_rows",
+                                      "Alias": "r",
+                                      "Startup Cost": 0.43,
+                                      "Total Cost": 8.45,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 90,
+                                      "Disabled": false,
+                                      "Index Cond": "((stage = 'd237073d-39de-4381-a163-1d93d5062469'::uuid) AND (uid = p.uid))"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Limit",
+                              "Parent Relationship": "Inner",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 0.28,
+                              "Total Cost": 8.3,
+                              "Plan Rows": 1,
+                              "Plan Width": 41,
+                              "Disabled": false,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Backward",
+                                  "Index Name": "overlay_versions_pkey",
+                                  "Relation Name": "overlay_versions",
+                                  "Alias": "overlay_versions",
+                                  "Startup Cost": 0.28,
+                                  "Total Cost": 8.3,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 41,
+                                  "Disabled": false,
+                                  "Index Cond": "((environment = 'stream'::text) AND (object_type = 'orders'::text) AND (uid = p.uid) AND (revision <= '1'::bigint))"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "Inner",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 0.28,
+                          "Total Cost": 8.3,
+                          "Plan Rows": 1,
+                          "Plan Width": 41,
+                          "Disabled": false,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Scan Direction": "Backward",
+                              "Index Name": "overlay_versions_pkey",
+                              "Relation Name": "overlay_versions",
+                              "Alias": "overlay_versions_1",
+                              "Startup Cost": 0.28,
+                              "Total Cost": 8.3,
+                              "Plan Rows": 1,
+                              "Plan Width": 41,
+                              "Disabled": false,
+                              "Index Cond": "((environment = 'stream'::text) AND (object_type = 'orders'::text) AND (uid = p.uid) AND (revision <= '1475'::bigint))"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "cumulativeInternalQueryErrors": {},
+        "operations": {
+          "query": {
+            "attempts": 10318,
+            "success": 10318,
+            "failures": {},
+            "successfulOpsPerSecond": 395.4489278380404,
+            "p50Ms": 36.12359999999899,
+            "p95Ms": 46.199399999997695,
+            "p99Ms": 54.63379999999961,
+            "maxMs": 180.74690000000192,
+            "overOneSecond": 0
+          },
+          "detail": {
+            "attempts": 2948,
+            "success": 2948,
+            "failures": {},
+            "successfulOpsPerSecond": 112.98540795372583,
+            "p50Ms": 26.15099999999802,
+            "p95Ms": 33.91950000000361,
+            "p99Ms": 40.476199999997334,
+            "maxMs": 101.8083000000006,
+            "overOneSecond": 0
+          },
+          "action": {
+            "attempts": 1473,
+            "success": 1473,
+            "failures": {},
+            "successfulOpsPerSecond": 56.454377854761916,
+            "p50Ms": 34.90129999999772,
+            "p95Ms": 39.656199999997625,
+            "p99Ms": 52.22210000000268,
+            "maxMs": 139.4436999999998,
+            "overOneSecond": 0
+          }
+        }
+      },
+      {
+        "clients": 100,
+        "elapsedMs": 67143.00450000001,
+        "refresh": {
+          "stagingMs": 66877.01019999999,
+          "publicationMs": 118.15429999999469,
+          "revision": "5567"
+        },
+        "pinnedAfterRefreshPlan": [
+          {
+            "QUERY PLAN": [
+              {
+                "Plan": {
+                  "Node Type": "Limit",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 1.68,
+                  "Total Cost": 25612.09,
+                  "Plan Rows": 101,
+                  "Plan Width": 264,
+                  "Disabled": false,
+                  "Plans": [
+                    {
+                      "Node Type": "Nested Loop",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Join Type": "Left",
+                      "Startup Cost": 1.68,
+                      "Total Cost": 314933.74,
+                      "Plan Rows": 1242,
+                      "Plan Width": 264,
+                      "Disabled": false,
+                      "Inner Unique": false,
+                      "Filter": "(NOT COALESCE(overlay_versions_1.tombstone, false))",
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Join Type": "Left",
+                          "Startup Cost": 1.39,
+                          "Total Cost": 302004.52,
+                          "Plan Rows": 2484,
+                          "Plan Width": 230,
+                          "Disabled": false,
+                          "Inner Unique": false,
+                          "Filter": "(NOT COALESCE(overlay_versions.tombstone, false))",
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Inner",
+                              "Startup Cost": 1.11,
+                              "Total Cost": 260641.82,
+                              "Plan Rows": 4967,
+                              "Plan Width": 200,
+                              "Disabled": false,
+                              "Inner Unique": false,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "staged_source_rows_pkey",
+                                  "Relation Name": "staged_source_rows",
+                                  "Alias": "p",
+                                  "Startup Cost": 0.56,
+                                  "Total Cost": 217925.62,
+                                  "Plan Rows": 4967,
+                                  "Plan Width": 108,
+                                  "Disabled": false,
+                                  "Index Cond": "((stage = 'd237073d-39de-4381-a163-1d93d5062469'::uuid) AND (uid > '00000000-0000-0000-0000-0000000003e8'::uuid))",
+                                  "Filter": "((((value ->> 'region'::text))::text = 'East'::text COLLATE \"C\") IS TRUE)"
+                                },
+                                {
+                                  "Node Type": "Subquery Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Alias": "cur",
+                                  "Startup Cost": 0.56,
+                                  "Total Cost": 8.59,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 92,
+                                  "Disabled": false,
+                                  "Filter": "((((cur.value ->> 'region'::text))::text = 'East'::text COLLATE \"C\") IS TRUE)",
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Subquery",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "staged_source_rows_pkey",
+                                      "Relation Name": "staged_source_rows",
+                                      "Alias": "r",
+                                      "Startup Cost": 0.56,
+                                      "Total Cost": 8.57,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 92,
+                                      "Disabled": false,
+                                      "Index Cond": "((stage = '3c6e38ba-5f67-47d5-977f-95e643a10584'::uuid) AND (uid = p.uid))"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Limit",
+                              "Parent Relationship": "Inner",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 0.28,
+                              "Total Cost": 8.31,
+                              "Plan Rows": 1,
+                              "Plan Width": 39,
+                              "Disabled": false,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Backward",
+                                  "Index Name": "overlay_versions_pkey",
+                                  "Relation Name": "overlay_versions",
+                                  "Alias": "overlay_versions",
+                                  "Startup Cost": 0.28,
+                                  "Total Cost": 8.31,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 39,
+                                  "Disabled": false,
+                                  "Index Cond": "((environment = 'stream'::text) AND (object_type = 'orders'::text) AND (uid = p.uid) AND (revision <= '1475'::bigint))"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "Inner",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 0.28,
+                          "Total Cost": 5.18,
+                          "Plan Rows": 1,
+                          "Plan Width": 39,
+                          "Disabled": false,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Scan Direction": "Backward",
+                              "Index Name": "overlay_versions_pkey",
+                              "Relation Name": "overlay_versions",
+                              "Alias": "overlay_versions_1",
+                              "Startup Cost": 0.28,
+                              "Total Cost": 10.08,
+                              "Plan Rows": 2,
+                              "Plan Width": 39,
+                              "Disabled": false,
+                              "Index Cond": "((environment = 'stream'::text) AND (object_type = 'orders'::text) AND (uid = p.uid) AND (revision <= '5577'::bigint))"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "cumulativeInternalQueryErrors": {},
+        "operations": {
+          "query": {
+            "attempts": 28712,
+            "success": 28712,
+            "failures": {},
+            "successfulOpsPerSecond": 427.6245934153869,
+            "p50Ms": 165.0048999999999,
+            "p95Ms": 175.78230000000622,
+            "p99Ms": 180.8694000000105,
+            "maxMs": 194.8570999999938,
+            "overOneSecond": 0
+          },
+          "detail": {
+            "attempts": 8202,
+            "success": 8202,
+            "failures": {},
+            "successfulOpsPerSecond": 122.15717871248968,
+            "p50Ms": 155.96300000000338,
+            "p95Ms": 168.5387999999948,
+            "p99Ms": 176.27060000000347,
+            "maxMs": 189.7453999999998,
+            "overOneSecond": 0
+          },
+          "action": {
+            "attempts": 4101,
+            "success": 4101,
+            "failures": {},
+            "successfulOpsPerSecond": 61.07858935624484,
+            "p50Ms": 163.5101999999897,
+            "p95Ms": 171.62900000000081,
+            "p99Ms": 176.62920000001031,
+            "maxMs": 198.19659999999567,
+            "overOneSecond": 0
+          }
+        }
+      }
+    ],
+    "scope": "Loopback workload-session HTTP, 70% UID-ordered pages of 100 / 20% population-distributed detail / 10% idempotent actions. Current markings, canonical region restriction and hidden assignee property. Each caller maintains a pinned cursor chain; actions accumulate overlays. No retry by generator. All attempt latencies include failures. 20 database connections. Same Node process hosts server and fetch generator. One timed run per concurrency, no separate warmup; 100-client phase inherits prior overlays/cache. Optional refresh streams a full same-schema generation per phase; enabled runs continue until both the minimum duration and publication finish. Otherwise no ingestion during load. No OIDC, TLS, separate network host, cold-cache guarantee or capacity certification."
+  }
+}

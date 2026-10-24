@@ -1,0 +1,92 @@
+{
+  "recordedAt": "2026-10-15T08:04:11.567Z",
+  "rows": 1000000,
+  "batchRows": 1000,
+  "stagingMs": 20586.334799999997,
+  "publicationMs": 3.208200000000943,
+  "queries": [],
+  "queryLoads": [],
+  "peakNodeRssBytes": 330530816,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "hostMemoryBytes": 33945907200,
+    "os": "win32 10.0.26300",
+    "node": "v24.19.0",
+    "postgres": "18.4"
+  },
+  "scope": "Single synthetic narrow-row run through real ObjectStore. UID registry seeded server-side outside timing. Async generator bounds input buffering; no retained overlays. Publication time includes lock acquisition and commit, not instrumented lock hold. Optional queries use integrated authority and pinned pagination: three sequential pages then 1000 requests each at 20/100 concurrent callers, 20 DB connections. Each caller walks from the start, so this is a warm early-queue working set, not uniform population sampling. Failure latency is included. Excludes Iceberg/HTTP and concurrent writes; security concurrency correctness is covered separately by integration tests. The preceding scope describes staging and optional direct queries only; the separate http section includes concurrent actions and HTTP. Peak Node RSS includes that phase and its in-process generator.",
+  "http": {
+    "results": [
+      {
+        "clients": 20,
+        "elapsedMs": 30022.8475,
+        "cumulativeInternalQueryErrors": {},
+        "operations": {
+          "query": {
+            "attempts": 15255,
+            "success": 15255,
+            "failures": {},
+            "successfulOpsPerSecond": 508.1130295852184,
+            "p50Ms": 28.100299999998242,
+            "p95Ms": 35.71389999999519,
+            "p99Ms": 37.91410000000178
+          },
+          "detail": {
+            "attempts": 4358,
+            "success": 4358,
+            "failures": {},
+            "successfulOpsPerSecond": 145.1561181863246,
+            "p50Ms": 20.325700000001234,
+            "p95Ms": 25.838400000000547,
+            "p99Ms": 27.584200000001147
+          },
+          "action": {
+            "attempts": 2179,
+            "success": 2179,
+            "failures": {},
+            "successfulOpsPerSecond": 72.5780590931623,
+            "p50Ms": 27.411000000000058,
+            "p95Ms": 29.62539999999717,
+            "p99Ms": 32.21229999999923
+          }
+        }
+      },
+      {
+        "clients": 100,
+        "elapsedMs": 30124.247600000002,
+        "cumulativeInternalQueryErrors": {},
+        "operations": {
+          "query": {
+            "attempts": 14315,
+            "success": 14315,
+            "failures": {},
+            "successfulOpsPerSecond": 475.1985905201496,
+            "p50Ms": 147.94229999999516,
+            "p95Ms": 158.6912999999986,
+            "p99Ms": 172.33660000000964
+          },
+          "detail": {
+            "attempts": 4089,
+            "success": 4089,
+            "failures": {},
+            "successfulOpsPerSecond": 135.73783001305566,
+            "p50Ms": 139.2254999999859,
+            "p95Ms": 153.77539999999863,
+            "p99Ms": 165.0393999999942
+          },
+          "action": {
+            "attempts": 2044,
+            "success": 2044,
+            "failures": {},
+            "successfulOpsPerSecond": 67.8523170816057,
+            "p50Ms": 146.40039999999863,
+            "p95Ms": 154.49749999999767,
+            "p99Ms": 171.19580000000133
+          }
+        }
+      }
+    ],
+    "scope": "Loopback workload-session HTTP, 70% UID-ordered pages of 100 / 20% population-distributed detail / 10% idempotent actions. Current markings, canonical region restriction and hidden assignee property. Each caller maintains a pinned cursor chain; actions accumulate overlays. No retry by generator. All attempt latencies include failures. 20 database connections. Same Node process hosts server and fetch generator. One timed run per concurrency, no separate warmup; 100-client phase inherits prior overlays/cache. No ingestion during load, OIDC, TLS, separate network host, cold-cache guarantee or capacity certification."
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+.venv/
+.local/
+dist/
+coverage/
+artifacts/
+docs/benchmarks/
+pnpm-lock.yaml
+**/target/

@@ -1,0 +1,3 @@
+-c constraints.txt
+pyiceberg[pyarrow,sql-sqlite]==0.12.0
+pyarrow==26.0.0

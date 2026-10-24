@@ -1,0 +1,43 @@
+{
+  "name": "moria",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "moria": "tsx apps/cli/src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "pnpm format:check && pnpm sdk:check && pnpm typecheck && pnpm test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,yml,yaml}\"",
+    "start": "tsx apps/local/src/main.ts",
+    "build:management": "vite build --config apps/management/vite.config.ts",
+    "sdk:generate": "tsx scripts/generate-sdk.ts",
+    "sdk:check": "tsx scripts/generate-sdk.ts --check"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "openid-client": "6.8.8",
+    "pg": "8.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "embedded-postgres": "18.4.0-beta.17",
+    "jose": "6.2.12",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "^8.3.4"
+  }
+}

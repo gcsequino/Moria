@@ -1,0 +1,125 @@
+{
+  "actions": {},
+  "app": "snotel",
+  "endpoints": {
+    "status": { "method": "GET", "output": { "ref": "Status" }, "path": "/api/v1/status" }
+  },
+  "objects": {
+    "snow-observations": {
+      "properties": {
+        "date": { "nullable": false, "type": "date" },
+        "depthQa": { "nullable": false, "type": "string" },
+        "depthQc": { "nullable": false, "type": "string" },
+        "periodRef": { "nullable": false, "type": "string" },
+        "retrievedAt": { "nullable": false, "type": "string" },
+        "snowDepth": { "nullable": true, "type": "float64" },
+        "swe": { "nullable": true, "type": "float64" },
+        "sweQa": { "nullable": false, "type": "string" },
+        "sweQc": { "nullable": false, "type": "string" },
+        "triplet": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" },
+        "unit": { "nullable": false, "type": "string" }
+      },
+      "type": "Observation"
+    },
+    "snow-stations": {
+      "properties": {
+        "county": { "nullable": false, "type": "string" },
+        "elevationFt": { "nullable": false, "type": "float64" },
+        "latitude": { "nullable": false, "type": "float64" },
+        "longitude": { "nullable": false, "type": "float64" },
+        "name": { "nullable": false, "type": "string" },
+        "retrievedAt": { "nullable": false, "type": "string" },
+        "state": { "nullable": false, "type": "string" },
+        "timeZoneOffset": { "nullable": true, "type": "float64" },
+        "triplet": { "nullable": false, "type": "string" },
+        "uid": { "nullable": false, "type": "uid" }
+      },
+      "type": "Station"
+    }
+  },
+  "types": {
+    "Status": {
+      "nullable": false,
+      "optional": ["weather"],
+      "properties": {
+        "completed": {
+          "nullable": true,
+          "properties": {
+            "completed_at": { "nullable": false, "type": "string" },
+            "config": {
+              "nullable": false,
+              "optional": ["source"],
+              "properties": {
+                "beginDate": { "nullable": false, "type": "string" },
+                "endDate": { "nullable": false, "type": "string" },
+                "source": { "nullable": false, "type": "string" },
+                "stations": { "items": { "nullable": false, "type": "string" }, "type": "list" }
+              },
+              "type": "object"
+            },
+            "id": { "nullable": false, "type": "string" },
+            "observation_count": { "nullable": false, "type": "float64" },
+            "station_count": { "nullable": false, "type": "float64" }
+          },
+          "type": "object"
+        },
+        "latest": {
+          "nullable": true,
+          "properties": {
+            "error": { "nullable": true, "type": "string" },
+            "started_at": { "nullable": false, "type": "string" },
+            "status": { "nullable": false, "type": "string" }
+          },
+          "type": "object"
+        },
+        "weather": {
+          "nullable": false,
+          "properties": {
+            "areas": {
+              "items": {
+                "nullable": false,
+                "properties": {
+                  "forecastUrl": { "nullable": false, "type": "string" },
+                  "id": { "nullable": false, "type": "string" },
+                  "latitude": { "nullable": false, "type": "float64" },
+                  "longitude": { "nullable": false, "type": "float64" },
+                  "name": { "nullable": false, "type": "string" },
+                  "periods": {
+                    "items": {
+                      "nullable": false,
+                      "properties": {
+                        "detailedForecast": { "nullable": false, "type": "string" },
+                        "endTime": { "nullable": false, "type": "string" },
+                        "isDaytime": { "nullable": false, "type": "boolean" },
+                        "name": { "nullable": false, "type": "string" },
+                        "precipitationProbability": { "nullable": true, "type": "float64" },
+                        "shortForecast": { "nullable": false, "type": "string" },
+                        "startTime": { "nullable": false, "type": "string" },
+                        "temperature": { "nullable": false, "type": "float64" },
+                        "temperatureUnit": { "nullable": false, "type": "string" },
+                        "windDirection": { "nullable": false, "type": "string" },
+                        "windSpeed": { "nullable": false, "type": "string" }
+                      },
+                      "type": "object"
+                    },
+                    "type": "list"
+                  },
+                  "retrievedAt": { "nullable": false, "type": "string" },
+                  "sourceUpdatedAt": { "nullable": false, "type": "string" }
+                },
+                "type": "object"
+              },
+              "type": "list"
+            },
+            "jobId": { "nullable": true, "type": "string" },
+            "publishedAt": { "nullable": true, "type": "string" }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "version": 1
+}
