@@ -4,6 +4,9 @@ import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { createServer } from 'node:net';
+import { randomBytes } from 'node:crypto';
+import EmbeddedPostgres from 'embedded-postgres';
+import { startDevelopmentDatabase } from '../apps/local/src/development-database.js';
 import { runProcess } from '../apps/local/src/runtime.js';
 import { snowCommand } from '../apps/cli/src/snotel.js';
 import { authCommand } from '../apps/cli/src/auth.js';
@@ -22,6 +25,89 @@ async function freePort() {
   await new Promise<void>((r) => server.close(() => r()));
   return port;
 }
+
+test('development cluster waits for removed and idle clients to disconnect before stopping', async (t) => {
+  const directory = await mkdtemp(resolve(tmpdir(), 'platform-database-drain-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const port = await freePort();
+  const password = randomBytes(32).toString('base64url');
+  const database = await startDevelopmentDatabase(directory, port, password);
+  const disconnects: (() => void)[] = [];
+  const ended: Promise<void>[] = [];
+  let stopping: Promise<void> | undefined;
+  let poolEnded = false;
+  const stop = EmbeddedPostgres.prototype.stop;
+  let stopCalls = 0;
+  let endedCount = 0;
+  let endedAtStop = 0;
+  const observedStop = t.mock.method(
+    EmbeddedPostgres.prototype,
+    'stop',
+    async function (this: EmbeddedPostgres) {
+      stopCalls += 1;
+      endedAtStop = endedCount;
+      // Keep cleanup safe even with the old ordering. The assertion below must
+      // reject an early stop request, before the real cluster is terminated.
+      await Promise.all(ended);
+      await stop.call(this);
+    },
+  );
+  try {
+    await database.pool.query('CREATE TABLE drain_marker (value text)');
+    await database.pool.query("INSERT INTO drain_marker VALUES ('preserved')");
+    const clients = await Promise.all([database.pool.connect(), database.pool.connect()]);
+    for (const client of clients) {
+      ended.push(
+        new Promise<void>((resolveEnd) =>
+          client.once('end', () => {
+            endedCount += 1;
+            resolveEnd();
+          }),
+        ),
+      );
+      const end = client.end;
+      t.mock.method(client, 'end', ((...args: unknown[]) => {
+        disconnects.push(() => Reflect.apply(end, client, args));
+      }) as typeof client.end);
+    }
+    // One client is already absent from pool.totalCount when pool.end starts.
+    clients[0].release(true);
+    clients[1].release();
+    await database.pool.end();
+    poolEnded = true;
+    assert.equal(database.pool.totalCount, 0);
+    assert.equal(disconnects.length, 2);
+    stopping = database.stop();
+    assert.equal(stopCalls, 0, 'cluster stop must wait for actual client disconnections');
+    assert.deepEqual((await clients[1].query('SELECT value FROM drain_marker')).rows, [
+      { value: 'preserved' },
+    ]);
+    // Closing only the idle client must not abandon the earlier removed one.
+    disconnects.splice(1, 1)[0]();
+    await ended[1];
+    assert.deepEqual((await clients[0].query('SELECT value FROM drain_marker')).rows, [
+      { value: 'preserved' },
+    ]);
+    assert.equal(stopCalls, 0);
+  } finally {
+    for (const disconnect of disconnects) disconnect();
+    if (!poolEnded) await database.pool.end();
+    await Promise.all(ended);
+    await (stopping ?? database.stop());
+    observedStop.mock.restore();
+  }
+  assert.equal(stopCalls, 1);
+  assert.equal(endedAtStop, 2, 'all client end events must precede cluster stop');
+  const restarted = await startDevelopmentDatabase(directory, port, password);
+  try {
+    assert.deepEqual((await restarted.pool.query('SELECT value FROM drain_marker')).rows, [
+      { value: 'preserved' },
+    ]);
+  } finally {
+    await restarted.pool.end();
+    await restarted.stop();
+  }
+});
 
 test('retired commands and configuration fail before instance access', async () => {
   await assert.rejects(snowCommand(['open'], {}), /retired/);
