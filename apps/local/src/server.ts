@@ -30,6 +30,7 @@ export function createLocalServer(
   auth?: AppAuth,
   publicOrigin?: string,
   jobs?: Jobs,
+  options: { serveManagement?: boolean } = {},
 ) {
   if (
     publicOrigin &&
@@ -94,7 +95,13 @@ export function createLocalServer(
       const originalPath = new URL(request.url ?? '/', `http://${host}`).pathname;
       const path = originalPath.replace(/^\/api\/management\//, '/management/');
       if (auth && (await auth.handle(request, response))) return;
-      if (await serveApp(appHost, 'management', request, response)) return;
+      if (options.serveManagement !== false) {
+        if (await serveApp(appHost, 'management', request, response)) return;
+      } else if (!['/api/', '/management/', '/local/'].some((prefix) => path.startsWith(prefix))) {
+        request.resume();
+        send(404, { error: { code: 'NOT_FOUND', message: 'Endpoint not found.' } });
+        return;
+      }
       const key = request.headers['x-moria-key'];
       const validKey =
         typeof key === 'string' &&

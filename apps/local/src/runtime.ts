@@ -121,7 +121,7 @@ export async function runProcess(
     }
     const credentials = await localCredentials(directory);
     const appHost = localAppHost(directory);
-    await bootstrapManagement(appHost);
+    if (role === 'combined') await bootstrapManagement(appHost);
     const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
 
     const authConfig = await loadAuthConfig(directory, 'management');
@@ -148,6 +148,7 @@ export async function runProcess(
       new AppAuth(managementSessions, credentials.accessKey),
       undefined,
       jobs,
+      { serveManagement: role === 'combined' },
     );
     await listen(server, port);
     for (const entry of publicConfig) {
@@ -167,6 +168,7 @@ export async function runProcess(
         publicAuth,
         entry.origin,
         jobs,
+        { serveManagement: role === 'combined' },
       );
       publicServers.push(publicServer);
       await listen(publicServer, entry.port);
@@ -174,7 +176,7 @@ export async function runProcess(
     }
     checkStartup();
     if (role === 'combined') jobs.start();
-    console.log(`Moria management: http://127.0.0.1:${port}/`);
+    console.log(`Moria ${role === 'api' ? 'API' : 'management'}: http://127.0.0.1:${port}/`);
     console.log('Management recovery: pnpm moria auth recover --app management');
     console.log('Google setup: pnpm moria auth setup. Local recovery: pnpm moria auth recover.');
     console.log(`Data persists in ${directory}. Press Ctrl+C to stop.`);

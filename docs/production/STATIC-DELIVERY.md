@@ -60,6 +60,23 @@ exact loopback Host and Origin; production ingress compatibility/configuration
 is separate work, and this change supplies no public-origin binding, DNS or
 proxy configuration.
 
+## API-only companion (#58)
+
+`pnpm exec tsx apps/local/src/api.ts` uses the existing external PostgreSQL and
+auth/workspace composition without management artifact bootstrap or serving.
+It starts with no promoted management release or dist directory. Root, static
+assets, release paths and unknown UI routes return uncached JSON 404s on both
+local and configured public API listeners after their existing Host/Origin and
+HTTPS proxy checks. Later publication/promotion cannot turn that listener into a
+static host. Authorized inventory and lineage may still read AppHost metadata.
+
+`pnpm start` retains combined development bootstrap/static behavior. Prepare and
+promote artifacts separately for independent static delivery; neither API-only
+nor static-only builds them. Stopping either listener leaves the other and
+external PostgreSQL running. API permissions, CSRF, recovery and session checks
+remain unchanged; same-origin routing and local-development limits above still
+apply. This supplies no production ingress configuration or client changes.
+
 ## Evidence and remaining gates
 
 `tests/static-host-process.integration.test.ts` uses actual child processes and

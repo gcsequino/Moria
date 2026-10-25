@@ -921,3 +921,60 @@ record. Existing staged issue work is preserved. No protected paths were changed
 and no credential files were accessed. Independent-environment validation, independent review,
 current-main integration and exact-revision Linux quality CI remain unverified
 controller gates. #14/M1 remains open; changes are uncommitted.
+
+
+## Issue #58 — API-only management artifact lifecycle separation (2026-10-25)
+
+Scope: the existing runtime skips management bootstrap for API-only, and the
+shared server accepts an optional static-serving composition flag with its
+existing behavior as the default. Both local and public API-only listeners
+return controlled uncached JSON 404s for UI/static/release routes. Auth and API
+routing retain the existing Host/Origin, trusted HTTPS proxy, administrator,
+session, CSRF, recovery and protected operation checks. Combined development
+still bootstraps/serves management; execution-only roles remain independent.
+AppHost inventory and lineage are read-only at API startup/request time.
+
+Dependency: the #55 standalone static lifecycle already present in this checkout.
+No schema, dependency, Catalog/storage/engine, Jobs/lease, generated-client,
+protected-path or delivery-policy changes. No existing tests changed. Acceptance
+is bounded to lifecycle separation, not management/object privilege separation,
+multi-environment scheduling or arbitrary-code execution.
+
+New real child-process/PostgreSQL coverage uses a disposable synthetic cluster,
+scoped runtime grants and the repository-local Python 3.11 Iceberg worker.
+Runtime and existing API entrypoint start without UI source/dist or promoted
+artifacts; a fixture rejects importing the UI builder. Coverage includes real
+recovery, inventory/lineage/object reads, Iceberg import, action mutation,
+unauthenticated/wrong-origin/non-administrator session denial, current-grant
+revocation, public binding/recovery checks, non-serving after later promotion,
+and static/API/external-database lifecycle independence. No live installation,
+credential-file inspection, provider account or model API is used.
+
+Local validation on non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace
+Python 3.11.17, based on checkout revision
+`2b8d405144bafad1c14d9724b35767e70db7ed0c` plus these uncommitted changes:
+
+- `pnpm format`: passed; no out-of-scope changes.
+- `pnpm exec tsx --test tests/api-only-process.integration.test.ts`: passed,
+  one real process/PostgreSQL test, no skips (4.35 seconds).
+- Final `pnpm check`: passed, exit 0. All 421 runtime tests passed with zero
+  failures or skips (148.22 seconds). Formatting, SDK drift, TypeScript,
+  Python validation/formatting and all 14 Python tests, both application builds
+  and starter verification passed. Existing combined-mode, scheduler/execution
+  and static-process regressions passed unchanged.
+- `git diff --check`: passed. Required local infrastructure was available.
+
+Initial fixture runs corrected flat object-field assertions, allowed the existing
+inventory operation to create an empty AppHost root, and replaced an incorrect
+origin-bound-session assumption with denial through a real non-administrator
+session. The first full gate caught test header type inference; it was corrected
+before the passing gate. No production authentication behavior or existing test
+was changed. No checks were disabled. Local logs are
+`/tmp/issue-58-format.log`, `/tmp/issue-58-targeted.log` and
+`/tmp/issue-58-check.log`; these are ephemeral evidence, not CI.
+
+Independent-environment full checks, clean independent review, current-main
+integration and exact-head Linux CI are unverified controller gates, not local
+claims. Publication belongs to the controller and merges remain manual. #14/M1
+remains open for environment/stream ownership and remaining role separation.
+Changes remain uncommitted.

@@ -97,7 +97,8 @@ listeners or execution start, preserving #34.
 Stopping API or scheduler processes does not stop workers or external PostgreSQL.
 Worker shutdown drains its active handler; hard termination leaves recovery to
 the next fenced worker. No forced handler cancellation mechanism is introduced.
-Database failures retain generic diagnostics. Static hosting remains with the API.
+Database failures retain generic diagnostics. API-only no longer bootstraps or
+serves management artifacts (#58); combined development retains both.
 
 ## Scope and verification
 
@@ -126,7 +127,7 @@ Verification results for the uncommitted issue-35 workspace are recorded below.
 
 Independent human review of coordination, recovery and publication invariants and
 exact-head Linux quality CI remain required and unverified here. The controller
-owns publication and merges remain manual. Static-host extraction, broader API
+owns publication and merges remain manual. Remaining API
 role separation, general multi-environment scheduling/concurrency and production
 deployment evidence remain subsequent bounded work under #14.
 
@@ -155,3 +156,44 @@ disabled or infrastructure-dependent tests skipped. All cluster/data fixtures
 were synthetic; no live installation, download or model API was used. This does
 not establish a new multi-process Iceberg engine certification or production
 capacity. Independent review and exact-head CI remain unverified as noted above.
+
+## API/static composition — issue #58
+
+`runProcess('api')` and `apps/local/src/api.ts` skip management bootstrap and
+static serving on both loopback and configured public listeners. No management
+promotion or dist directory is required; startup never builds, publishes,
+promotes or repairs a UI artifact. Existing `createLocalServer` callers retain
+static serving by default; the runtime explicitly disables it for API-only.
+AppHost remains available for authorized read-only inventory and lineage.
+Execution-only roles retain their existing early return and loop ownership.
+
+Host/Origin and public HTTPS proxy binding checks run before routing. Root,
+static/release paths and unknown UI routes return uncached JSON 404s, with no SPA
+fallback, even after a release is promoted independently. Auth, management,
+object/action and import routes retain their existing current administrator,
+session, CSRF and recovery boundaries. API-only is not a new permission role or
+a public universal execution API.
+
+The combined `pnpm start` remains the local browser development path. Independent
+static and API ports are separate lifecycles, not a working cross-origin browser
+client. Trusted ingress must route same-origin `/api/`, including `/api/auth/`,
+to API-only; legacy `/management/` and `/local/` routes also belong there. Route
+UI/assets to static delivery. Static's exact loopback Host/Origin requirement
+remains; no proxy implementation, forwarding, CORS relaxation, DNS or live
+configuration is supplied. See [static delivery](STATIC-DELIVERY.md).
+
+`tests/api-only-process.integration.test.ts` runs real API children and disposable
+external PostgreSQL with scoped runtime grants. Both runtime and existing
+entrypoint start in a directory with only the real Iceberg worker sources and no
+UI source/dist; a fixture module hook rejects loading Vite. The test covers
+recovery, authorized inventory/lineage/object reads, real Iceberg import, action
+mutation, unauthenticated/CSRF/non-administrator session denial, current-grant
+revocation, public binding checks, artifact non-serving after later promotion,
+and static/API/database shutdown independence. Existing combined-mode and process
+tests are unchanged. Full check results and limitations are in
+[implementation progress](../IMPLEMENTATION.md).
+
+Independent-environment checks, clean independent review, current-main
+integration and exact-head Linux CI remain mandatory controller gates. #14/M1
+remains open for environment/stream ownership and remaining role separation.
+This slice provides no capacity, arbitrary-code isolation or deployment claim.
