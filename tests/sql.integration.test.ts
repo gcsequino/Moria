@@ -2063,64 +2063,145 @@ test(
 test(
   'local lease supervision renews a live fence and aborts on replacement',
   { timeout: 15000 },
-  async () => {
+  async (t) => {
     const environment = 'supervision';
     await catalog.ensureEnvironment(environment);
     const lease = {
       execution: 'job',
       worker: 'worker',
-      fence: await catalog.claim(environment, 'job', 'worker', 1),
+      fence: await catalog.claim(environment, 'job', 'worker'),
     };
-    const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-    await withLease(
-      catalog,
-      environment,
-      lease,
-      async (signal) => {
-        await sleep(2200);
+    // Control only Node scheduling. PostgreSQL's clock and every Catalog call stay real.
+    // The default 60-second lease outlives the entire 15-second test timeout.
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const renew = t.mock.method(catalog, 'renew');
+    const readLease = async () =>
+      (
+        await pool.query(
+          `SELECT worker,fence,expires_at::text AS expiry,
+            expires_at>clock_timestamp() AS live
+          FROM moria.leases WHERE environment=$1 AND execution=$2`,
+          [environment, lease.execution],
+        )
+      ).rows[0];
+    const tickRenewal = async (lost = false) => {
+      const count = renew.mock.callCount();
+      t.mock.timers.tick(20000);
+      assert.equal(renew.mock.callCount(), count + 1);
+      const call = renew.mock.calls[count];
+      assert.ok(call.result, 'Renewal must return the real Catalog promise');
+      assert.deepEqual(call.arguments, [
+        environment,
+        lease.execution,
+        lease.worker,
+        lease.fence,
+        60,
+      ]);
+      // Observe completion of the actual SQL, then let withLease's catch/then
+      // continuation abort or schedule the next tick before advancing again.
+      if (lost) {
+        await assert.rejects(call.result, { code: 'LEASE_LOST' });
+      } else {
+        await call.result;
+      }
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    };
+    await withLease(catalog, environment, lease, async (signal) => {
+      assert.equal(renew.mock.callCount(), 1, 'Startup must renew before entering work');
+      for (let tick = 0; tick < 4; tick++) {
+        // Leave ample real-time headroom, but make an SQL extension observable
+        // even when successive controlled ticks occur within one millisecond.
+        const before = await pool.query(
+          `UPDATE moria.leases SET expires_at=clock_timestamp()+interval '30 seconds'
+          WHERE environment=$1 AND execution=$2 AND worker=$3 AND fence=$4
+          RETURNING expires_at::text AS expiry`,
+          [environment, lease.execution, lease.worker, lease.fence],
+        );
+        assert.equal(before.rowCount, 1);
+        await tickRenewal();
         assert.equal(signal.aborted, false);
         const live = await pool.query(
-          'SELECT 1 FROM moria.leases WHERE environment=$1 AND expires_at>clock_timestamp()',
-          [environment],
+          `SELECT worker,fence,expires_at>clock_timestamp() AS live,
+            expires_at>$3::timestamptz AS extended
+          FROM moria.leases WHERE environment=$1 AND execution=$2`,
+          [environment, lease.execution, before.rows[0].expiry],
         );
-        assert.equal(live.rowCount, 1);
-      },
-      { seconds: 1 },
-    );
-    const expiry = (
-      await pool.query('SELECT expires_at FROM moria.leases WHERE environment=$1', [environment])
-    ).rows[0].expires_at;
-    await sleep(450);
-    assert.deepEqual(
-      (await pool.query('SELECT expires_at FROM moria.leases WHERE environment=$1', [environment]))
-        .rows[0].expires_at,
-      expiry,
-    );
-    await withLease(
-      catalog,
-      environment,
-      lease,
-      async (signal) => {
-        await pool.query(
-          "UPDATE moria.leases SET expires_at=clock_timestamp()-interval '1 second' WHERE environment=$1",
-          [environment],
-        );
-        await catalog.claim(environment, 'job', 'replacement', 10);
-        await new Promise<void>((resolve) => {
-          if (signal.aborted) resolve();
-          else signal.addEventListener('abort', () => resolve(), { once: true });
-        });
-        signal.throwIfAborted();
-      },
-      { seconds: 1 },
-    ).then(
-      () => assert.fail('Lost worker must abort'),
-      (error) => assert.equal(error.code, 'LEASE_LOST'),
-    );
+        assert.deepEqual(live.rows, [
+          { worker: lease.worker, fence: lease.fence, live: true, extended: true },
+        ]);
+      }
+    });
+    assert.equal(renew.mock.callCount(), 5);
+    const stopped = await readLease();
+    t.mock.timers.tick(40000);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(renew.mock.callCount(), 5, 'Work completion must remove the renewal timer');
+    assert.deepEqual(await readLease(), stopped);
+
+    const entered = Promise.withResolvers<AbortSignal>();
+    const finish = Promise.withResolvers<void>();
+    const supervised = withLease(catalog, environment, lease, async (signal) => {
+      entered.resolve(signal);
+      await finish.promise;
+      signal.throwIfAborted();
+    });
+    let replacementFence: string | undefined;
+    try {
+      const signal = await Promise.race([
+        entered.promise,
+        supervised.then(() => assert.fail('Supervised work must wait for completion')),
+      ]);
+      assert.equal(renew.mock.callCount(), 6);
+      await pool.query(
+        `UPDATE moria.leases SET expires_at=clock_timestamp()-interval '1 second'
+        WHERE environment=$1 AND execution=$2 AND worker=$3 AND fence=$4`,
+        [environment, lease.execution, lease.worker, lease.fence],
+      );
+      replacementFence = await catalog.claim(environment, lease.execution, 'replacement');
+      assert.equal(BigInt(replacementFence), BigInt(lease.fence) + 1n);
+      const replacement = await readLease();
+      assert.equal(replacement.worker, 'replacement');
+      assert.equal(replacement.fence, replacementFence);
+      assert.equal(replacement.live, true);
+      assert.equal(signal.aborted, false, 'Replacement must precede the failing renewal');
+      // Keep all renewal and post-abort assertions outside work: withLease
+      // deliberately replaces callback errors with the signal's abort reason.
+      await tickRenewal(true);
+      assert.equal(signal.aborted, true);
+      finish.resolve();
+      await assert.rejects(supervised, { code: 'LEASE_LOST' });
+      assert.deepEqual(
+        await readLease(),
+        replacement,
+        'Stale renewal must not alter the new lease',
+      );
+    } finally {
+      finish.resolve();
+      // Drain supervision on assertion failure without replacing that failure.
+      await supervised.catch(() => {});
+    }
     await assert.rejects(
       withLease(catalog, environment, lease, async () => assert.fail('Stale lease must not start')),
       { code: 'LEASE_LOST' },
     );
+    assert.ok(replacementFence);
+    await pool.query(
+      `UPDATE moria.leases SET expires_at=clock_timestamp()-interval '1 second'
+      WHERE environment=$1 AND execution=$2 AND worker=$3 AND fence=$4`,
+      [environment, lease.execution, 'replacement', replacementFence],
+    );
+    const expired = await readLease();
+    assert.equal(expired.live, false);
+    await assert.rejects(
+      withLease(
+        catalog,
+        environment,
+        { execution: lease.execution, worker: 'replacement', fence: replacementFence },
+        async () => assert.fail('Expired current fence must not start'),
+      ),
+      { code: 'LEASE_LOST' },
+    );
+    assert.deepEqual(await readLease(), expired, 'Startup renewal must not resurrect expiry');
   },
 );
 
