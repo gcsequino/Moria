@@ -32,11 +32,21 @@ import {
 
 import {
   prepareSnapshot,
+  validateSnapshot,
   snapshotObjects,
   snapshotBytesLimit,
   type SnapshotPublication,
   type SnapshotObject,
 } from './snapshot-publication.js';
+
+import {
+  boundedBytes,
+  inventoryLimit,
+  inventoryLocation,
+  parseInventory,
+  snapshotIdentity,
+  snapshotObjectId,
+} from './reference-inventory.js';
 
 const prefix = 'moria-storage:v1:';
 
@@ -71,7 +81,7 @@ export interface CatalogStorageBinding {
   readonly tableId: string;
   /** Required for publication; service-owned Iceberg table UUID, never request-selected. */
   readonly icebergTableUuid?: string;
-  /** Exact immutable engine names, supplied only by trusted service composition. */
+  /** Explicit trusted mappings; when absent, recover a complete publication inventory. */
   readonly readObjects?: readonly ScopedObject[];
   /** Must compose an existing createAuthorized*Storage adapter with these arguments. */
   readonly storage: (
@@ -286,6 +296,7 @@ export class CatalogStorage {
       bytes: Buffer;
       logical: StorageLocation;
       objects: { reference: ScopedObject; bytes: Buffer }[];
+      inventory?: Buffer;
     }[] = [];
     for (const [index, output] of declaration.outputs.entries()) {
       const binding = bindings[index];
@@ -315,7 +326,13 @@ export class CatalogStorage {
           snapshot?.identityBytes ?? bytes,
         ),
       });
-      candidates.push({ binding, bytes, logical, objects: snapshot?.staged ?? [] });
+      candidates.push({
+        binding,
+        bytes,
+        logical,
+        objects: snapshot?.staged ?? [],
+        inventory: snapshot?.inventory,
+      });
     }
     const publication: Publication = {
       environment: session.environment,
@@ -357,13 +374,14 @@ export class CatalogStorage {
           ),
         ),
       });
-    const writes = candidates.flatMap(({ binding, bytes, logical, objects }) => [
+    const writes = candidates.flatMap(({ binding, bytes, logical, objects, inventory }) => [
       ...objects.map((object) => ({
         binding,
         bytes: object.bytes,
         logical: object.reference.location,
       })),
       { binding, bytes, logical },
+      ...(inventory ? [{ binding, bytes: inventory, logical: inventoryLocation(logical) }] : []),
     ]);
     if (!(await committed())) {
       for (const { binding, bytes, logical } of writes) {
@@ -405,8 +423,10 @@ export class CatalogStorage {
     }
     cancelled(signal);
     const controller = new AbortController();
+    let recovered: Awaited<ReturnType<CatalogStorage['recoverReferences']>> | undefined;
     const stop = () => {
       controller.abort();
+      recovered?.objects.clear();
       clearTimeout(timer);
       signal?.removeEventListener('abort', stop);
     };
@@ -427,23 +447,39 @@ export class CatalogStorage {
           aborted,
         ]);
         cancelled(controller.signal);
+        if (!pinned.binding.readObjects) {
+          recovered = await Promise.race([
+            this.recoverReferences(pinned, controller.signal),
+            aborted,
+          ]);
+          cancelled(controller.signal);
+        }
       } finally {
         if (onAbort) controller.signal.removeEventListener('abort', onAbort);
       }
       const { binding, current, logical, storage, ...provenance } = pinned;
-      if (!binding.icebergTableUuid || !binding.readObjects) {
+      if (!binding.icebergTableUuid || (!binding.readObjects && !recovered)) {
         throw new StorageError('BINDING_MISMATCH');
       }
       const rows = scopedRows(
         {
-          metadata: (signal) => storage.read(logical, { signal }),
+          metadata: (signal) =>
+            recovered
+              ? Promise.resolve(metadataStream(recovered.metadata))
+              : storage.read(logical, { signal }),
           snapshotId: pinned.snapshotId,
           tableUuid: binding.icebergTableUuid,
-          objects: binding.readObjects,
+          objects: recovered?.references ?? binding.readObjects!,
           check: async (signal) => {
             await current.checkCurrent({ location: logical, operation: 'read' }, signal);
           },
           read: async (object, offset, length, signal) => {
+            if (recovered) {
+              cancelled(signal);
+              return metadataStream(
+                recovered.objects.get(object.name)!.subarray(offset, offset + length),
+              );
+            }
             const storage = await binding.storage(
               Object.freeze({
                 location: object.location,
@@ -485,6 +521,60 @@ export class CatalogStorage {
       stop();
       throw error;
     }
+  }
+
+  private async recoverReferences(
+    pinned: Awaited<ReturnType<CatalogStorage['openRead']>>,
+    signal: AbortSignal,
+  ) {
+    const { binding, current, logical } = pinned;
+    if (!binding.icebergTableUuid) throw new StorageError('BINDING_MISMATCH');
+    const check = async () => {
+      await current.checkCurrent({ location: logical, operation: 'read' }, signal);
+    };
+    const read = async (target: StorageLocation, limit: number) => {
+      cancelled(signal);
+      await check();
+      const storage = await binding.storage(
+        Object.freeze({ location: target, operations: Object.freeze(['read'] as const) }),
+        current,
+      );
+      cancelled(signal);
+      return boundedBytes(await storage.read(target, { signal }), limit, check, signal);
+    };
+    const inventory = await read(inventoryLocation(logical), inventoryLimit);
+    const references = parseInventory(inventory, logical);
+    const metadata = await read(logical, metadataLimit);
+    const scope = [pinned.environment, pinned.execution, pinned.dataset] as const;
+    if (metadataObjectId(...scope, snapshotIdentity(metadata, inventory)) !== logical.objectId) {
+      throw new StorageError('BINDING_MISMATCH');
+    }
+    const total = references.reduce((size, object) => size + object.size, metadata.length);
+    if (total > snapshotBytesLimit) throw new StorageError('LIMIT_EXCEEDED');
+    // Verify the entire promised closure before releasing any row. Retain exact verified
+    // bytes for this iterator so subsequent reads cannot replace content after verification.
+    const objects = new Map<string, Buffer>();
+    for (const reference of references) {
+      const bytes = await read(reference.location, reference.size);
+      if (
+        bytes.length !== reference.size ||
+        snapshotObjectId(scope, reference.name, bytes) !== reference.location.objectId
+      ) {
+        throw new StorageError('BINDING_MISMATCH');
+      }
+      objects.set(reference.name, bytes);
+    }
+    await validateSnapshot(
+      metadata,
+      references.map((reference) => ({ reference, bytes: objects.get(reference.name)! })),
+      binding.icebergTableUuid,
+      pinned.snapshotId,
+      `moria://${binding.warehouseId}/${binding.tableId}`,
+      signal,
+    );
+    await check();
+    cancelled(signal);
+    return { metadata, references, objects };
   }
 
   async read(

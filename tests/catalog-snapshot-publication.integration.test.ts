@@ -211,7 +211,8 @@ for (const provider of ['local', 's3'] as const) {
         );
         assert.equal(
           f.writes(),
-          fixtures.reduce((count, fixture) => count + fixture.objects.length + 1, 0),
+          // Each output writes its referenced objects, root metadata and durable inventory.
+          fixtures.reduce((count, fixture) => count + fixture.objects.length + 2, 0),
         );
         const reader = new CatalogStorage(
           authority,

@@ -1367,3 +1367,142 @@ Station Explorer verification passed (`/tmp/issue-63-reader-check.log`). Final
 Fresh independent review, current-main integration and exact-head Linux quality
 CI remain unverified controller-owned gates. Changes remain uncommitted; the
 existing production/runtime limitations and dependency gates remain in force.
+
+## Issue #65 — durable scoped reference recovery (2026-10-25)
+
+Scope: existing catalog publication/read seams, one dedicated inventory helper,
+dedicated recovery integration tests and a fresh-process fixture under
+`tests/fixtures/iceberg-scoped-storage`, plus catalog/worker documentation.
+Dependency #63's domain-separated complete-snapshot commitment already binds the
+canonical reference inventory; no schema, dependency, adapter, runtime, protected
+path or delivery-policy change is needed. Accepted C01/C04/C08 and S01–S03/S06
+remain the governing contracts. Changes are uncommitted on `delivery/issue-65`, based on
+`7fce280b0d49c22be35b7641db7c13c50186f43f`.
+
+Complete publication persists the exact committed reference array through the
+existing authorized create-only StreamingStorage path before Catalog.publish.
+Its service-derived location hashes the canonical pinned metadata StorageLocation
+with `moria-reference-inventory-v1\0`. Fresh bindings recover only from catalog
+provenance, reject noncanonical/duplicate/extra fields and names, verify metadata
+and inventory commitment, validate UUID/snapshot, then verify every object's size
+and scoped content hash before any row release. The iterator retains verified
+bytes and provenance; current Authority checks continue through consumption.
+Explicit trusted mappings and metadata-only APIs are preserved. Missing older
+inventories fail closed. No registry, provider listing, metadata URL fetching,
+physical fallback, cleanup, adoption or migration is introduced.
+
+Limits: inventory 256 KiB; intake at most 65,536 frames of at most 256 KiB per
+object; root metadata 1 MiB; 128 referenced objects each at most 16 MiB; total
+verified metadata/objects 64 MiB per scan, plus inventory and bounded transient
+copies. Publication retains 64 MiB input across at most 16 outputs, plus at most
+256 KiB inventory per output. Existing child request/transport/row limits are
+unchanged. One maximum 60-second reader deadline covers pinning, recovery and the
+iterator lifetime, with safely observed pending SQL cleanup. Inventory failures
+preserve heads/history/lineage/checkpoint/receipt and existing orphan semantics.
+Only the committed exact request recovers its receipt; collisions cannot establish
+durability. All promised snapshots' objects and inventories remain retained.
+
+Environment: non-root Linux uid 10001; Node 24.21.0; pnpm 11.25.0; repository-local
+Python 3.11.17; PyIceberg 0.12.0; PyArrow 26.0.0; embedded-postgres package
+18.4.0-beta.17 (PostgreSQL 18.4); MinIO RELEASE.2025-09-07T16-13-09Z
+(Go 1.24.6 linux/amd64), isolated fixture SHA-256
+`7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f`.
+Only disposable synthetic PostgreSQL/provider fixtures and generated ephemeral
+sessions/credentials are used; no credential file or live installation is read.
+
+Initial verification: `pnpm typecheck` passed. The first
+`pnpm exec tsx --test tests/catalog-reference-recovery.integration.test.ts` passed
+20 tests, zero skips, across local storage and isolated S3 (72.275 seconds;
+`/tmp/issue-65-focused.log`). This includes fresh-process rows/scalars/provenance,
+receipt recovery after lease expiry, competing publication, malformed/swapped/
+missing/oversized durable data, failed/uncertain/cancelled inventory writes,
+revocation/expiry and cancellation/deadline during inventory intake and SQL pinning.
+Additional metadata-only and partial-inventory cases and exact-scope assertions
+are undergoing verification. `pnpm format` and full `pnpm check` were started;
+final results are recorded below when available.
+
+Scope conflict: the existing complete-publication regression counts exactly one
+metadata write plus the referenced objects per output. The required durable
+inventory necessarily adds one write per output. The file containing that
+assertion is outside the issue's listed test scope. Permission for that one expected
+write-count update is pending; the assertion has not been weakened or changed.
+
+Independent-environment full check, independent no-findings review, current-main
+integration and exact-head Linux quality CI remain unverified/controller-owned.
+No publication, merge or deployment is performed. #17 remains open and #18/#19
+remain dependency-gated. This is not production recovery/capacity certification,
+runtime rollout or a new retention/expiration policy.
+
+Final focused verification:
+
+- `pnpm exec tsx --test tests/catalog-reference-recovery.integration.test.ts`:
+  24 passed, zero failed/skipped (90.943 seconds;
+  `/tmp/issue-65-recovery-verified.log`). Includes partial inventory intake,
+  metadata-only compatibility, exact read/create scopes, same-environment/table
+  publication inventory swaps and unchanged committed state after fresh-process
+  receipt recovery. Both local and isolated S3 variants passed.
+- `pnpm format`, `pnpm format:check`, `pnpm typecheck` and `git diff --check`:
+  passed (`/tmp/issue-65-format.log`, `/tmp/issue-65-format-final.log`).
+- `pnpm check:python && pnpm build && pnpm check:starter`: passed, run separately
+  to exercise the checks after the full gate's expected runtime-test failure
+  (`/tmp/issue-65-remaining-checks.log`). This does not turn a failed full gate
+  into a pass. No database tests were skipped or checks disabled.
+
+
+Bounded review repair 1: recovery initially reused the metadata-only Python
+validator. To preserve the complete publisher's child isolation/resource envelope,
+recovery now reuses `validateSnapshot` after content verification and before row
+release. This also revalidates the entire closure, with the existing 2 GiB
+address-space/60-second CPU/zero-core limits and isolated minimal child environment.
+No worker or adapter changes were needed. `pnpm format` and full `pnpm check`
+were rerun against this final implementation (`/tmp/issue-65-check-final.log`).
+The focused 24-test result above precedes this repair; final-gate recovery results
+below supersede it for the final source.
+
+The first full `pnpm check` completed with exit 1: 577 tests, 573 passed, four
+reported failures (the two provider-specific write-count assertions and their two
+enclosing tests), zero cancelled/skipped, 456.590 seconds. Both assertions at
+`tests/catalog-snapshot-publication.integration.test.ts:212` expected 18 writes
+and observed 20: the additional durable inventory for each of two outputs.
+No other failures occurred. Formatting, SDK drift and TypeScript stages passed.
+The assertion remains unchanged because its file is outside the authorized scope;
+the required minimal follow-up is changing only `fixture.objects.length + 1` to
+`fixture.objects.length + 2`, then rerunning the full gate. No missing infrastructure
+caused this failure. The host kernel is Linux 6.18.33.2-microsoft-standard-WSL2;
+the checkout and test data are on the Linux filesystem, using the non-root user.
+
+Final-source full gate: `pnpm check` exited 1 after 427.817 seconds
+(`/tmp/issue-65-check-final.log`): 577 tests, 573 passed, four reported failures,
+zero cancelled/skipped. All 24 dedicated recovery tests passed with the reused
+complete-snapshot validator. The only failures remain the two expected-write-count
+assertions (20 actual versus 18 expected) and their enclosing local/S3 tests.
+Formatting, SDK drift and TypeScript stages passed on this final source. The later
+Python/build/starter stages were already verified separately; the full gate itself
+is failed, not accepted. One bounded review repair was used; no checks or existing
+tests were weakened. `git diff --check` passes and all changes remain uncommitted.
+Acceptance is blocked on the narrowly identified test-scope decision and then a
+passing full gate, in addition to the independent review/environment, current-main
+integration and exact-head Linux CI gates listed above.
+
+Bounded review repair 2 (#65 verification feedback): the requested repair resolves
+the test-scope decision above. Updated only the existing complete-publication
+regression's exact write count to include one durable inventory per output, in
+addition to root metadata and referenced objects (20 writes for the two-output
+fixture). The assertion still requires an exact count; its per-write unchanged
+catalog-state checks and all row/provenance/receipt checks remain intact. No
+production code, protected path, dependency or delivery policy changes are needed
+for this repair. The original failed-gate results above remain historical evidence.
+
+Repair verification uses the same non-root Linux environment and repository-local
+Python 3.11.17, Node 24.21.0 and pnpm 11.25.0. `pnpm format` passed
+(`/tmp/issue-65-repair-format.log`). Full `pnpm check` passed (exit 0;
+`/tmp/issue-65-repair-check.log`): all 577 tests passed, zero failed/cancelled/skipped,
+runtime-test duration 427.231 seconds. Both local and isolated S3 publication and
+recovery suites passed, using real disposable PostgreSQL and PyIceberg fixtures.
+Formatting, SDK drift, TypeScript, Python formatting/specification/workload checks,
+both application builds and starter verification all passed in the same full gate.
+`git diff --check` also passed. This supersedes the local full-gate blocker above.
+Independent
+environment/review, current-main integration and exact-head Linux quality CI
+remain unverified and controller-owned. #17 remains open; #18/#19 remain
+dependency-gated. Changes remain uncommitted.
