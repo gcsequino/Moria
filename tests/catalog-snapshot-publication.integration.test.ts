@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { execFile } from 'node:child_process';
+import childProcess, { execFile } from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
 import { promisify } from 'node:util';
 import { mkdir, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { CatalogStorage, type CatalogStorageBinding } from '../services/catalog/src/storage.js';
 import { metadataStream } from '../services/catalog/src/storage-publication.js';
-import type { SnapshotPublication } from '../services/catalog/src/snapshot-publication.js';
+import {
+  validateSnapshot,
+  type SnapshotPublication,
+} from '../services/catalog/src/snapshot-publication.js';
 import { Authority } from '../services/security/src/authority.js';
 import { WorkloadSessions } from '../services/security/src/sessions.js';
 import {
@@ -17,6 +21,82 @@ import {
 import { StorageError } from '../services/storage/src/locations.js';
 import { database } from './fixtures/catalog-storage/database.js';
 import { startS3 } from './fixtures/storage-s3/server.js';
+
+test('snapshot validator reports bounded invalid-input and child-signal diagnostics', async (t) => {
+  const validate = (bytes?: Buffer) =>
+    validateSnapshot(
+      Buffer.from('{"private-sentinel": "never expose this metadata"}'),
+      bytes
+        ? [
+            {
+              bytes,
+              reference: {
+                name: 'moria://warehouse/table/data.parquet',
+                size: bytes.length,
+                location: {
+                  version: 1,
+                  warehouseId: 'warehouse',
+                  tableId: 'table',
+                  objectId: 'synthetic',
+                },
+              },
+            },
+          ]
+        : [],
+      randomUUID(),
+      '1',
+      'moria://warehouse/table',
+      AbortSignal.timeout(10000),
+    );
+  await assert.rejects(validate(), (error: unknown) => {
+    assert.ok(error instanceof StorageError);
+    assert.equal(error.code, 'INVALID_INPUT');
+    assert.deepEqual(error.cause, {
+      validator: {
+        code: 1,
+        signal: null,
+        phase: 'validating',
+        failure: 'invalid',
+        spawnFailed: false,
+        inputFailed: false,
+      },
+    });
+    assert.ok(!JSON.stringify(error).includes('private-sentinel'));
+    return true;
+  });
+
+  // Observe and terminate a real isolated child. No fake exit or validator result.
+  const spawn = childProcess.spawn;
+  t.mock.method(childProcess, 'spawn', (...args: Parameters<typeof spawn>) => {
+    const child = spawn(...args);
+    child.stdout?.once('data', () => child.kill('SIGTERM'));
+    return child;
+  });
+  syncBuiltinESMExports();
+  try {
+    // The larger intake fills the pipe before import completes, exercising EPIPE.
+    for (const bytes of [undefined, Buffer.alloc(4 * 1024 * 1024)]) {
+      await assert.rejects(validate(bytes), (error: unknown) => {
+        assert.ok(error instanceof StorageError);
+        assert.equal(error.code, 'IO_ERROR');
+        assert.deepEqual(error.cause, {
+          validator: {
+            code: null,
+            signal: 'SIGTERM',
+            phase: 'importing',
+            failure: 'unknown',
+            spawnFailed: false,
+            inputFailed: bytes !== undefined,
+          },
+        });
+        return true;
+      });
+    }
+  } finally {
+    t.mock.restoreAll();
+    syncBuiltinESMExports();
+  }
+});
 
 for (const provider of ['local', 's3'] as const) {
   test(`${provider}: complete scoped Iceberg publication`, { timeout: 300000 }, async (t) => {

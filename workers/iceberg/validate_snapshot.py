@@ -7,6 +7,27 @@ import resource
 import sys
 from pathlib import Path
 
+INVALID_ERRORS = (ValueError, TypeError, KeyError, EOFError)
+
+
+# Only fixed protocol tokens cross the process boundary; never exception messages.
+def diagnostic(token):
+    print(token, flush=True)
+
+
+def failure(kind, error, traceback):
+    if isinstance(error, MemoryError):
+        diagnostic("memory")
+    elif isinstance(error, OSError):
+        diagnostic("io")
+    elif isinstance(error, INVALID_ERRORS):
+        diagnostic("invalid")
+    else:
+        diagnostic("internal")
+
+
+sys.excepthook = failure
+diagnostic("importing")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 resource.setrlimit(resource.RLIMIT_AS, (2 * 1024**3, 2 * 1024**3))
 resource.setrlimit(resource.RLIMIT_CPU, (60, 60))
@@ -15,6 +36,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pyiceberg.catalog.noop import NoopCatalog
+from pyiceberg.exceptions import ResolveError, ValidationError
 from pyiceberg.io import FileIO, InputFile
 from pyiceberg.manifest import DataFileContent, FileFormat, ManifestContent
 from pyiceberg.table import StaticTable
@@ -34,6 +56,7 @@ from pyiceberg.types import (
 )
 from worker import wire
 
+INVALID_ERRORS += (ResolveError, ValidationError)
 FRAME = 2 * 1024**2
 
 
@@ -87,6 +110,7 @@ class MemoryIO(FileIO):
 
 
 def main():
+    diagnostic("receiving")
     request = receive()
     declarations = request["objects"]
     if len(declarations) > 128:
@@ -112,6 +136,7 @@ def main():
         objects[name] = bytes(data)
     if sys.stdin.buffer.read(1):
         raise ValueError("Extra input")
+    diagnostic("validating")
     scoped = MemoryIO(objects)
     pa.set_cpu_count(1)
     pa.set_io_thread_count(1)
@@ -328,3 +353,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    diagnostic("complete")

@@ -121,7 +121,7 @@ export async function validateSnapshot(
         OMP_NUM_THREADS: '1',
         PYICEBERG_MAX_WORKERS: '1',
       },
-      stdio: ['pipe', 'ignore', 'ignore'],
+      stdio: ['pipe', 'pipe', 'ignore'],
     },
   );
   const abort = () => {
@@ -130,16 +130,46 @@ export async function validateSnapshot(
   signal.addEventListener('abort', abort, { once: true });
   if (signal.aborted) abort();
   child.stdin.on('error', () => {});
-  const exit = new Promise<number | null>((done) => {
-    child.once('error', () => done(null));
-    child.once('close', done);
+  let diagnostics = '';
+  child.stdout.on('data', (chunk: Buffer) => {
+    // Drain continuously, but retain only a bounded fixed-token protocol.
+    diagnostics = (diagnostics + chunk.toString('ascii')).slice(0, 256);
   });
+  let spawnFailed = false;
+  let inputFailed = false;
+  child.once('error', () => {
+    spawnFailed = true;
+  });
+  const exit = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((done) => {
+    child.once('close', (code, signal) => done({ code, signal }));
+  });
+  const failed = (result: Awaited<typeof exit>) => {
+    const tokens = diagnostics.trim().split('\n');
+    const phase =
+      ['importing', 'receiving', 'validating', 'complete'].findLast((token) =>
+        tokens.includes(token),
+      ) ?? 'startup';
+    const failure =
+      ['memory', 'io', 'invalid', 'internal'].find((token) => tokens.includes(token)) ?? 'unknown';
+    const error = new StorageError(
+      failure === 'invalid' && result.code === 1 && !result.signal ? 'INVALID_INPUT' : 'IO_ERROR',
+    );
+    error.cause = { validator: { ...result, phase, failure, spawnFailed, inputFailed } };
+    return error;
+  };
   const send = async (frame: unknown) => {
     cancelled(signal);
     const line = JSON.stringify(frame) + '\n';
     if (Buffer.byteLength(line) > 2 * 1024 * 1024) throw new StorageError('LIMIT_EXCEEDED');
     await new Promise<void>((done, reject) =>
-      child.stdin.write(line, (error) => (error ? reject(new StorageError('IO_ERROR')) : done())),
+      child.stdin.write(line, (error) => {
+        if (error) {
+          inputFailed = true;
+          reject(new StorageError('IO_ERROR'));
+        } else {
+          done();
+        }
+      }),
     );
   };
   try {
@@ -156,9 +186,18 @@ export async function validateSnapshot(
       }
     }
     child.stdin.end();
-    const code = await exit;
+    const result = await exit;
     cancelled(signal);
-    if (code !== 0) throw new StorageError('INVALID_INPUT');
+    if (result.code !== 0 || diagnostics !== 'importing\nreceiving\nvalidating\ncomplete\n') {
+      throw failed(result);
+    }
+  } catch (error) {
+    if (!inputFailed) throw error;
+    // EPIPE can precede close when the child fails during import or intake.
+    // Preserve its actual termination instead of losing it to the write error.
+    const result = await exit;
+    cancelled(signal);
+    throw failed(result);
   } finally {
     abort();
     await exit;

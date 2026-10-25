@@ -1506,3 +1506,100 @@ Independent
 environment/review, current-main integration and exact-head Linux quality CI
 remain unverified and controller-owned. #17 remains open; #18/#19 remain
 dependency-gated. Changes remain uncommitted.
+
+## Issue #67 — merged-main complete-snapshot retry investigation
+
+Scope: complete-snapshot validator supervision, fixed Python child, and the existing
+publication regression and directly necessary synthetic fixtures. No protected
+paths, dependencies, schemas, adapters, delivery policy, credentials, or live
+installation are changed or accessed. Work remains uncommitted on
+`delivery/issue-67`; publication and independent acceptance are controller-owned.
+Accepted contracts reviewed: C04 atomic output/checkpoint publication and exact
+receipt retry, R02 trusted Iceberg validation, the accepted storage boundary, and
+production acceptance traceability.
+
+Original evidence is retained unchanged at `/tmp/issue-67-main-ci-failed.log`
+(SHA-256 `66d722041a26299735de36eebba4933082a55411c0f98c257c0d5e05bdd49696`),
+from Linux quality run `40230735283` on merged main
+`a24ea469676aef2daafb04c5a57dd9119fd3cf75`. Runtime: 577 tests, 575 passed,
+two reported failures, zero cancelled/skipped, 513.166 seconds. The exact
+post-expiry committed-receipt assertion failed at publication test line 255;
+`validateSnapshot` line 161 mapped a nonzero child termination to `INVALID_INPUT`.
+The log contains neither child stderr nor exit code/signal, so it cannot establish
+whether input, resources, or lifecycle caused the failure.
+
+Diagnostic work retains only a bounded fixed-token child status stream and OS
+exit code/signal in an error cause. It never includes exception messages, raw
+stderr, metadata, rows, sessions, or provider configuration. Python exceptions
+remain failures; signals and infrastructure failures are distinguished from
+recognized invalid input. The isolated environment, 2 GiB address-space limit,
+60-second CPU limit, zero-core limit, frame/chunk bounds, pipe backpressure,
+cancellation, cleanup, and validation checks remain in force. No receipt-path
+shortcut or limit increase is made.
+
+Verification environment: disposable non-root Linux (uid 10001), Node 24.21.0,
+pnpm 11.25.0, repository-local Python 3.11.17, pinned PyIceberg 0.12.0 and
+PyArrow 26.0.0. The initial diagnostic focused run and full `pnpm check` are in
+progress (`/tmp/issue-67-diagnostic-focused.log`,
+`/tmp/issue-67-check-diagnostic.log`). A bounded 20-invocation synthetic probe uses
+one real multi-file fixture and the actual TypeScript parent/Python child protocol
+(`/tmp/issue-67-probe.ts`, `/tmp/issue-67-probe.log`). Passing runs alone will not
+be claimed as a diagnosis or root-cause repair.
+
+Investigation results: the focused local/S3 publication run passed all 82 tests,
+zero failures/skips, 132.329 seconds. Both exact lost-ack retries passed; original
+assertions are unchanged. All 20 probe invocations passed. These are bounded
+reproduction attempts, not evidence that the original defect is repaired. The
+original failure's discarded process details cannot be recovered from its log.
+No root cause has been established and no speculative storage, receipt-identity,
+validation, or resource-limit change is justified.
+
+Added a diagnostic regression in the existing publication test file: malformed
+metadata yields an allowlisted validation failure without echoing its sentinel;
+a real isolated child receives SIGTERM during import, both with an empty intake
+and with a 4 MiB intake that fills the pipe. The latter verifies that EPIPE does
+not discard the underlying signal. Only process observation/signalling uses a
+spawn wrapper; the actual fixed Python child and OS pipes execute. This is a
+synthetic termination test, not reproduction of the original valid-receipt fault.
+The child must exit zero with the exact completion protocol before acceptance.
+
+Diagnostic regression red: an external temporary copy of the original parent
+(with only import paths adjusted to the checkout) fails the new assertion because
+its error cause is absent (`/tmp/issue-67-diagnostics-red.log`). Green: the final
+regression passes (`/tmp/issue-67-diagnostics-regression-final.log`, 1 test,
+zero failed/skipped). Initial diagnostic classification missed PyIceberg's own
+`ValidationError`/`ResolveError` classes, which do not inherit `ValueError`; the
+new malformed-input assertion exposed this and the explicit allowlist was
+corrected. The first full gate overlaps diagnostic development and therefore is
+not final-source evidence; its diagnostic-test failure is retained. Final-source
+`pnpm check` is running separately (`/tmp/issue-67-check-final.log`).
+`pnpm format`, repository-local Black and TypeScript checks passed during
+preparation. No original publication assertion was removed or weakened.
+
+Acceptance remains blocked on capturing/reproducing the original failure with
+process diagnostics and establishing a justified root-cause repair. Instrumented
+passing runs can alter timing and cannot resolve that blocker. Independent review,
+full independent checks, exact current-main-integrated PR-head Linux quality,
+and exact merged-main Linux quality remain unverified/controller-owned. Ordinary
+roadmap delivery must not be represented as unblocked. No runtime rollout,
+production claim, publication, commit, push, merge or deployment is performed.
+
+The diagnostic-development full gate finished with exit 1: 578 tests, 577 passed,
+one failed, zero cancelled/skipped, 492.061 seconds. Its sole failure is the new
+malformed-input diagnostic assertion described above; it did not reproduce the
+original receipt retry failure. The subsequent final-source gate includes the
+explicit PyIceberg exception-class correction and backpressured signal regression.
+The host kernel is Linux `6.18.33.2-microsoft-standard-WSL2`; this is a local Linux
+workspace run, not a claim to have executed the remote Linux quality CI image.
+
+Final-source verification: full `pnpm check` exited 0
+(`/tmp/issue-67-check-final.log`). All 578 runtime tests passed, zero
+failed/cancelled/skipped, 475.893 seconds. Formatting, SDK drift, TypeScript,
+Python formatting/specification/workload checks, both application builds, and
+starter verification passed in the same gate. Both provider-specific exact
+post-expiry receipt retries, all unchanged malformed/incompatible/unchanged-state
+assertions, and the unchanged durable inventory and metadata-only compatibility
+suites passed. `git diff --check` passed; the supplied CI log's SHA-256 remains
+unchanged. Only the four scoped files are modified, and changes are uncommitted.
+This passes the local diagnostic change's checks; it does not establish a
+root-cause fix or satisfy the outstanding independent/remote acceptance gates.
