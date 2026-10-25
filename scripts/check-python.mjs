@@ -7,6 +7,7 @@ for (const args of [
   ['docs/spec/schemas/validate.py', '--check'],
   ['scripts/validate-production-workloads.py', '--self-test'],
   ['-m', 'unittest', 'benchmarks.test_workloads'],
+  ['benchmarks/development/test_run.py'],
 ]) {
   const result = spawnSync(python, args, {
     stdio: 'inherit',

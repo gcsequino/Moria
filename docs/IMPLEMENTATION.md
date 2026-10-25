@@ -475,3 +475,27 @@ Temporary evidence logs: `/tmp/issue-46-format.log`,
 `/tmp/issue-46-focused.log`, `/tmp/issue-46-check.log`. These local logs are not
 production or capacity evidence. Changes remain uncommitted for the controller;
 the independent review, CI and current-main gates above remain outstanding.
+
+## Development workflow improvements (2026-10-24)
+
+Added repository workflows for Linux verification, independent revision-bound
+review, and disposable-instance browser checks. Existing Docker packaging,
+repeatable setup, OpenHands completion hook and offline CI gate remain the shared
+execution path. Root guidance routes tools to the workflows and keeps optional
+minimalism guidance subordinate to contracts and required verification.
+
+Added five synthetic repair tasks pinned to source revision
+42491b01e691802becbc4fbf57eb706f84e487b9, with isolated worktree preparation,
+unchanged-baseline-test enforcement, full-gate grading and repair-size accounting.
+The grading boundary regression tests run through the Python quality checks.
+This suite is an open-book smoke benchmark; paired configuration trials and
+measured quality/cost improvements are not claimed.
+
+Validation: all five task fixtures passed their baseline tests, failed the
+intended assertion after mutation, and passed after restoration. Actual worktree
+preparation succeeded. Skill structure checks and independent review passed.
+The pinned Linux image completed repeatable setup and the offline quality gate
+(374 runtime tests, zero failures or skips, plus Python/specification/build checks).
+Browser checks are a workflow for future UI changes; no UI changed in this patch.
+Ponytail installation is per developer environment and is not a repository
+runtime dependency. No live delivery controller or active job was modified.

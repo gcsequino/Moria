@@ -44,3 +44,26 @@ co-author trailers, generated-by notices, or session links to repository content
 Keep source readable and formatter-clean. Run `pnpm format` for TypeScript/JSON/YAML; `pnpm check` enforces that formatting. Use Black for Python (`python -m black workers benchmarks docs/spec/schemas`, configured in pyproject.toml), gofmt for Go, and rustfmt for Rust. Do not compress statements or control flow onto one line. Preserve raw benchmark evidence in docs/benchmarks without reformatting it.
 
 When interacting with Cloudflare, use the cf CLI unless the project has a Wrangler configuration file.
+
+## Verification and review workflows
+
+Repository workflows live in `.agents/skills/`. Use `moria-verify` when validating
+a change, `moria-review` for an independent review, and `moria-ui-check` for browser
+behavior changes. Tools without skill discovery should read the matching SKILL.md.
+The existing OpenHands setup and quality hook remain the executable gate.
+
+Prefer the smallest complete change and reuse existing code before adding a new
+dependency. Optional minimalism plugins do not override readability, contracts,
+security checks, or the full quality gate.
+
+For meaningful changes, obtain an independent review of the complete diff and
+relevant callers/tests. Record the reviewed revision; a changed revision needs
+renewed review. A truncated diff or confidence score is not a review verdict.
+Use the existing independent reviewer when the delivery controller owns the task;
+do not create a second job or edit its active checkout.
+
+Review rules: restricted views cannot become Transform inputs; authorization must
+use current authority at protected boundaries; publication must preserve fencing
+and atomicity; errors must not disclose credential values. Report a concrete
+trigger, affected location and consequence for each finding. Keep mechanical
+formatting and generated-file checks in `pnpm check`.
