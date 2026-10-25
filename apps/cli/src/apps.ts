@@ -1,6 +1,5 @@
-import { createServer } from 'node:http';
 import { localAppHost, bootstrapBundled } from '../../../services/app-host/src/bootstrap.js';
-import { serveApp } from '../../../services/app-host/src/http.js';
+import { startStaticServer } from '../../../services/app-host/src/static-server.js';
 import { appId } from '../../../services/app-host/src/store.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 
@@ -50,27 +49,7 @@ export async function appCommand(args: string[], values: { directory?: string; p
         port === Number(process.env.MORIA_PORT ?? 3210)
       )
         throw new MoriaError('USAGE', 'Choose a separate custom-app port from 1024 to 65535.');
-      await host.verify(id, (await host.active(id)).current);
-      const server = createServer(async (request, response) => {
-        if (
-          request.headers.host !== `127.0.0.1:${port}` ||
-          (request.headers.origin && request.headers.origin !== `http://127.0.0.1:${port}`)
-        ) {
-          response.writeHead(403);
-          response.end();
-          return;
-        }
-        if (!(await serveApp(host, id, request, response))) {
-          response.writeHead(404);
-          response.end();
-        }
-      });
-      await new Promise<void>((ready, reject) => {
-        server.once('error', reject);
-        server.listen(port, '127.0.0.1', ready);
-      });
-      process.once('SIGINT', () => server.close());
-      process.once('SIGTERM', () => server.close());
+      await startStaticServer(host, id, port);
       return {
         app: id,
         url: `http://127.0.0.1:${port}`,
