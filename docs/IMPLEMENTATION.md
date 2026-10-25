@@ -489,3 +489,51 @@ gates; uncommitted local checks cannot establish either. No lease repair or PR39
 changes were reused. The diff contains 32 files, below the 40-file bound, and no
 protected-path edits. Historical domain/UI/generated/build and recovery fixtures
 remain for a separate cleanup. This slice does not complete M1, M3 or parent #14.
+
+### Issue #46 — published catalog metadata to scoped storage
+
+Bounded M2-01f integration after #44: added `services/catalog/src/storage.ts`,
+real integration coverage and an isolated database fixture, plus
+`docs/production/CATALOG-STORAGE.md`. Existing Catalog, Authority, session and
+scoped adapter APIs are reused without modifying existing runtime consumers,
+publication/lease code, schemas, dependencies, protected paths or existing tests.
+The service pins a coherent head/history pair, validates strict versioned logical
+locations, and rechecks current session/epoch authority through bounded storage
+reads. Effective markings and exact Dataset identity come from trusted service
+bindings. No writer migration or automatic warehouse relocation is introduced.
+
+Verification uses non-root Linux, Node 24.21.0, pnpm 11.25.0, repository `.venv`,
+real embedded PostgreSQL and the preprovisioned checksum-pinned MinIO server.
+Initial `pnpm typecheck` passed. The first focused run found a test setup error:
+the local adapter requires its root to exist. Creating that synthetic temporary
+root repaired the fixture; the next run passed 23 tests, zero skips. Additional
+scope and failed-publication regressions were then added; the focused run passed
+29 tests with no failures or skips. The final implementation also verifies a
+head switch to different Iceberg-generated metadata bytes and validates
+cancellation before provider initialization.
+
+Independent no-findings review, exact-head Linux CI and integration with current
+main remain unverified controller-owned gates. No commit, push, PR, merge, deploy
+or external communication was performed. This slice does not complete #17:
+manifest/data-file IO, logical-reference support in existing Iceberg consumers,
+credential lifecycle and recoverable transitions remain follow-ups. No production
+capacity claim is made.
+
+Final local verification on October 25, 2026, against checkout baseline
+`9f818d230cf95ed1c069d1a0aefaa02f94c10bc4` with uncommitted issue changes:
+
+- `pnpm format`: passed; no existing source or protected files changed.
+- `pnpm exec tsx --test tests/catalog-storage.integration.test.ts`: 29 passed,
+  zero failures/cancellations/skips (before the final strengthening above).
+- `pnpm check`: exit 0 on the final implementation; 374 tests passed, zero
+  failures/cancellations/skips, runtime test duration 104.591 seconds. Real
+  PostgreSQL, Iceberg, local filesystem and pinned MinIO tests all ran. Formatting,
+  SDK drift, TypeScript, Python formatting/specification/workload checks, both
+  application builds and starter type/build/hosting checks passed.
+- `git diff --check`: passed. Only the issue's permitted files are changed.
+
+Python is `.venv` 3.11.17. No required runtime infrastructure was unavailable.
+Temporary evidence logs: `/tmp/issue-46-format.log`,
+`/tmp/issue-46-focused.log`, `/tmp/issue-46-check.log`. These local logs are not
+production or capacity evidence. Changes remain uncommitted for the controller;
+the independent review, CI and current-main gates above remain outstanding.
