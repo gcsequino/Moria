@@ -64,3 +64,20 @@ the APIs closes their pool without stopping PostgreSQL. See
 [database lifecycle](../../docs/DATABASE.md) for validation, role grants, pool
 budgets, version compatibility and explicit recreation of disposable unversioned
 development instances.
+
+## Independent static process
+
+To serve an existing trusted promoted artifact without starting the workspace or
+PostgreSQL, run from the repository root:
+
+```sh
+pnpm exec tsx apps/local/src/static-host.ts --app management --directory /path/to/disposable-instance --port 3212
+```
+
+App, instance directory and port are explicit and required. Missing or damaged
+promoted artifacts fail startup without rebuilding them. SIGINT/SIGTERM stop
+only static delivery; artifacts and independently running APIs remain intact.
+The management shell alone grants no session or API access. Same-origin `/api`
+requests require separate trusted proxy routing to the API service; this is not
+a cross-origin management client. See [static delivery](../../docs/production/STATIC-DELIVERY.md)
+for publication, restrictions, lifecycle and verification details.
