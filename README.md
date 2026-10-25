@@ -65,6 +65,9 @@ review against their specific invariants before merge.
 
 ### Formatting
 
+Reusable verification, independent review, browser checks and configuration
+comparisons are documented in [development workflows](docs/development/WORKFLOWS.md).
+
 Run `pnpm format` to format TypeScript, JSON and YAML. `pnpm check` includes
 `pnpm format:check`, so formatting regressions fail the normal checks. Prettier
 is pinned in the lockfile; `.editorconfig` supplies matching editor defaults.

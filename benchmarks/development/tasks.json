@@ -1,0 +1,45 @@
+{
+  "baseline": "42491b01e691802becbc4fbf57eb706f84e487b9",
+  "tasks": [
+    {
+      "id": "calendar-date",
+      "file": "packages/contracts/values.ts",
+      "before": "Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value",
+      "after": "Number.isFinite(date.getTime())",
+      "test": "tests/values.test.ts",
+      "prompt": "Repair wire date validation: impossible calendar dates such as 2024-02-30 must fail, while 2024-02-29 remains valid. Preserve the existing wire contract and add appropriate regression coverage."
+    },
+    {
+      "id": "int64-boundary",
+      "file": "packages/contracts/values.ts",
+      "before": "BigInt(value) < 2n ** 63n",
+      "after": "BigInt(value) <= 2n ** 63n",
+      "test": "tests/values.test.ts",
+      "prompt": "Repair signed int64 wire validation at the upper boundary. Reject overflow without converting the value through a lossy JavaScript number. Preserve valid signed 64-bit values and demonstrate both boundaries."
+    },
+    {
+      "id": "database-ipv6",
+      "file": "services/database/src/config.ts",
+      "before": "host: url.hostname.replace(/^\\[(.*)\\]$/, '$1'),",
+      "after": "host: url.hostname,",
+      "test": "tests/database-config.test.ts",
+      "prompt": "Repair external PostgreSQL configuration for IPv6 URL hosts. The driver needs an unbracketed host. Preserve IPv4, DNS names, explicit ports, TLS defaults and credential redaction."
+    },
+    {
+      "id": "database-budget",
+      "file": "services/database/src/config.ts",
+      "before": "if (max * replicas + 1 > budget)",
+      "after": "if (max * replicas > budget)",
+      "test": "tests/database-config.test.ts",
+      "prompt": "Repair database connection budget validation. Reserve the migration connection in addition to all runtime replica pools. Preserve runtime minimum pool requirements and the one-connection migration pool."
+    },
+    {
+      "id": "pagination-verdict",
+      "file": "benchmarks/pagination-oracle.ts",
+      "before": "violated ? 'violation' : incomplete ? 'incomplete' : 'pass'",
+      "after": "incomplete ? 'incomplete' : violated ? 'violation' : 'pass'",
+      "test": "tests/benchmark-pagination-oracle.test.ts",
+      "prompt": "Repair the pagination oracle verdict when a trace contains both a definite contract violation and incomplete capture. A definite violation must remain visible; incomplete evidence alone must not be presented as a pass. Preserve malformed-input behavior and evidence limitations."
+    }
+  ]
+}
