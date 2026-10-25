@@ -725,3 +725,28 @@ available; independent-environment runtime validation remains unverified.
 Final `git diff --check` passed. Only the authorized test and this record differ
 from HEAD; no protected paths changed. Changes are left uncommitted for the
 controller, preserving the pre-existing staged changes.
+
+### Issue #47 empty-history guidance repair — October 25, 2026
+
+Confirmed that Overview and Executions both mount `Platform` and share its loaded
+empty-history message. That message still directed users to removed sync and
+schedule controls. Replaced it with guidance that executions come from explicitly
+configured workloads and no bundled workloads run by default. The loading state,
+filters, historical job visibility and execution behavior are unchanged.
+
+Reviewed the retirement coverage matrix and accepted runtime contracts R01/R06.
+Source inspection confirms both views use the corrected block, and searching
+management source finds neither obsolete instruction. This bounded copy repair
+changes only `apps/management/src/platform.tsx` and this record; no tests or
+protected paths are changed. Browser interaction was not independently exercised.
+
+Validation: `pnpm format` passed (log: `/tmp/issue-47-guidance-format.log`). Full
+`pnpm check` results are recorded below. Independent review, exact-head Linux CI
+and current-main integration remain controller-owned and unverified in this repair.
+Changes are left uncommitted; no publication, merge or live data operations occurred.
+
+Full `pnpm check` exited 0: 377 runtime tests passed with zero failures,
+cancellations or skips. Formatting, SDK drift, TypeScript, Python checks, both
+application builds and starter checks passed. Required local runtime infrastructure
+was available. Evidence: `/tmp/issue-47-guidance-check.log`.
+Final `git diff --check` passed; only the two scoped files above differ from HEAD.

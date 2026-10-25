@@ -294,7 +294,7 @@ export function Platform({
             <h3>{data ? 'No matching executions yet.' : 'Waiting for execution status.'}</h3>
             <p>
               {data
-                ? 'Start a sync above, or enable a schedule.'
+                ? 'Executions from explicitly configured workloads appear here. No bundled workloads run by default.'
                 : 'The instance must authorize and return this information.'}
             </p>
           </div>
