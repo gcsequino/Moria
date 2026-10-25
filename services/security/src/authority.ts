@@ -22,18 +22,7 @@ export interface SecuritySnapshot {
 export class Authority {
   constructor(readonly catalog: Catalog) {}
   async migrate(): Promise<void> {
-    await this.catalog.pool.query(`
-      CREATE TABLE IF NOT EXISTS moria.principals(environment text NOT NULL REFERENCES moria.environments(id),principal text NOT NULL,enabled boolean NOT NULL,kind text NOT NULL CHECK(kind IN ('human','workload')),attributes jsonb NOT NULL,markings text[] NOT NULL,synced_at timestamptz NOT NULL,PRIMARY KEY(environment,principal));
-      CREATE TABLE IF NOT EXISTS moria.application_scopes(environment text NOT NULL REFERENCES moria.environments(id),application text NOT NULL,operations text[] NOT NULL,enabled boolean NOT NULL,PRIMARY KEY(environment,application));
-      CREATE TABLE IF NOT EXISTS moria.permissions(environment text NOT NULL,principal text NOT NULL,application text NOT NULL,operations text[] NOT NULL,PRIMARY KEY(environment,principal,application),FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
-      CREATE TABLE IF NOT EXISTS moria.security_audit(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,environment text NOT NULL,actor text NOT NULL,operation text NOT NULL,target text NOT NULL,epoch bigint NOT NULL,created_at timestamptz NOT NULL DEFAULT clock_timestamp());
-      CREATE TABLE IF NOT EXISTS moria.workload_sessions(token_hash text PRIMARY KEY,environment text NOT NULL,principal text NOT NULL,application text NOT NULL,expires_at timestamptz NOT NULL,disabled boolean NOT NULL DEFAULT false,FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
-      CREATE TABLE IF NOT EXISTS moria.auth_providers(environment text NOT NULL,application text NOT NULL,provider text NOT NULL,revision text NOT NULL,enabled boolean NOT NULL,PRIMARY KEY(environment,application,provider),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
-      CREATE TABLE IF NOT EXISTS moria.external_identities(environment text NOT NULL,issuer text NOT NULL,subject text NOT NULL,principal text NOT NULL,PRIMARY KEY(environment,issuer,subject),FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal));
-      CREATE TABLE IF NOT EXISTS moria.auth_invitations(environment text NOT NULL,application text NOT NULL,issuer text NOT NULL,email text NOT NULL,subject text NOT NULL,PRIMARY KEY(environment,application,issuer,email));
-      CREATE TABLE IF NOT EXISTS moria.auth_flows(state_hash text PRIMARY KEY,environment text NOT NULL,application text NOT NULL,provider text,revision text,browser_hash text,nonce text,verifier text,expires_at timestamptz NOT NULL);
-      CREATE TABLE IF NOT EXISTS moria.browser_sessions(token_hash text PRIMARY KEY,environment text NOT NULL,principal text NOT NULL,application text NOT NULL,provider text,revision text,subject text,email text,display_name text NOT NULL,access_token text,verified_at timestamptz NOT NULL,expires_at timestamptz NOT NULL,disabled boolean NOT NULL DEFAULT false,FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
-    `);
+    await this.catalog.migrate();
   }
   private async change(
     environment: string,

@@ -6,16 +6,6 @@ export type { WeatherView } from './connector.js';
 /** Internal workload API. Callers must enforce instance and application authority. */
 export async function createWeatherService(catalog: Catalog, download = downloadWeather) {
   await catalog.migrate();
-  await catalog.pool.query(`
-    CREATE TABLE IF NOT EXISTS moria.weather_publications (
-      job_id text PRIMARY KEY, published_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-      view jsonb NOT NULL, raw jsonb NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS moria.weather_head (
-      singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
-      job_id text NOT NULL REFERENCES moria.weather_publications(job_id)
-    );
-  `);
   async function read(client?: PoolClient): Promise<WeatherView> {
     const result = await (client ?? catalog.pool).query(
       `SELECT p.view FROM moria.weather_head h JOIN moria.weather_publications p USING(job_id) WHERE singleton=true`,

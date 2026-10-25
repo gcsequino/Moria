@@ -51,16 +51,6 @@ export async function createSnowService(catalog: Catalog, warehouse: string) {
     store = new ObjectStore(catalog);
   await authority.migrate();
   await store.migrate();
-  await catalog.pool.query(
-    `CREATE TABLE IF NOT EXISTS moria.snow_syncs(id uuid PRIMARY KEY,status text NOT NULL,config jsonb NOT NULL,started_at timestamptz NOT NULL DEFAULT clock_timestamp(),completed_at timestamptz,station_count integer,observation_count integer,error text)`,
-  );
-  await catalog.pool.query(`ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
-    ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS result jsonb;
-    CREATE TABLE IF NOT EXISTS moria.index_provenance(
-      stage uuid PRIMARY KEY REFERENCES moria.source_stages(id),environment text NOT NULL,
-      principal text NOT NULL,application text NOT NULL,contract text NOT NULL,
-      source_dataset text NOT NULL,source_revision bigint NOT NULL,metadata_location text NOT NULL,snapshot_id text NOT NULL,
-      FOREIGN KEY(environment,source_dataset,source_revision) REFERENCES moria.snapshot_history(environment,dataset,revision));`);
   const datasets = ['snow-stations-source', 'snow-observations-source', 'snow-raw-source'];
   for (const dataset of datasets) await catalog.ensureDataset(snowEnvironment, dataset);
   const reads = ['snow-stations:read', 'snow-observations:read'];

@@ -1,3 +1,4 @@
+import { schema } from '../../database/src/schema.js';
 import { randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { MoriaError } from '../../../packages/contracts/types.js';
@@ -5,50 +6,12 @@ import { fingerprint } from '../../../packages/compiler/src/index.js';
 
 /** Trusted internal persistence API, not an authorization boundary or HTTP service. */
 export class Catalog {
-  constructor(readonly pool: Pool) {}
+  constructor(
+    readonly pool: Pool,
+    readonly schemaMode: 'apply' | 'verify' = 'apply',
+  ) {}
   async migrate(): Promise<void> {
-    await this.pool.query(`
-      CREATE SCHEMA IF NOT EXISTS moria;
-      CREATE TABLE IF NOT EXISTS moria.environments (
-        id text PRIMARY KEY, revision bigint NOT NULL DEFAULT 0, security_epoch bigint NOT NULL DEFAULT 0
-      );
-      CREATE TABLE IF NOT EXISTS moria.identities (
-        domain text NOT NULL, canonical_key text NOT NULL, uid uuid NOT NULL UNIQUE,
-        created_at timestamptz NOT NULL DEFAULT clock_timestamp(), PRIMARY KEY(domain,canonical_key)
-      );
-      CREATE TABLE IF NOT EXISTS moria.leases (
-        environment text NOT NULL REFERENCES moria.environments(id), execution text NOT NULL,
-        worker text NOT NULL, fence bigint NOT NULL, expires_at timestamptz NOT NULL,
-        PRIMARY KEY(environment,execution)
-      );
-      CREATE TABLE IF NOT EXISTS moria.dataset_heads (
-        environment text NOT NULL REFERENCES moria.environments(id), dataset text NOT NULL,
-        revision bigint NOT NULL DEFAULT 0, metadata_location text, snapshot_id text,
-        PRIMARY KEY(environment,dataset)
-      );
-      CREATE TABLE IF NOT EXISTS moria.publications (
-        environment text NOT NULL REFERENCES moria.environments(id), execution text NOT NULL,
-        request_hash text NOT NULL, receipt jsonb NOT NULL, PRIMARY KEY(environment,execution)
-      );
-      CREATE TABLE IF NOT EXISTS moria.snapshot_history (
-        environment text NOT NULL, dataset text NOT NULL, revision bigint NOT NULL,
-        metadata_location text NOT NULL, snapshot_id text NOT NULL, execution text NOT NULL,
-        lineage jsonb NOT NULL, PRIMARY KEY(environment,dataset,revision),
-        FOREIGN KEY(environment,dataset) REFERENCES moria.dataset_heads(environment,dataset)
-      );
-      CREATE TABLE IF NOT EXISTS moria.checkpoints (
-        environment text NOT NULL REFERENCES moria.environments(id), connection text NOT NULL,
-        stream text NOT NULL, config_revision text NOT NULL, version bigint NOT NULL DEFAULT 0,
-        value jsonb NOT NULL, PRIMARY KEY(environment,connection,stream,config_revision)
-      );
-      CREATE TABLE IF NOT EXISTS moria.action_keys (
-        environment text NOT NULL REFERENCES moria.environments(id), application text NOT NULL,
-        principal text NOT NULL, action text NOT NULL, key text NOT NULL,
-        input_hash text NOT NULL, action_revision text NOT NULL, result jsonb,
-        expires_at timestamptz NOT NULL,
-        PRIMARY KEY(environment,application,principal,action,key)
-      );
-    `);
+    await schema(this.pool, this.schemaMode);
   }
   /** repeatable-read is reserved for protected snapshot reads with append-only
    * cursor metadata. Data/security mutations retain the serializable default. */

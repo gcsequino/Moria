@@ -32,22 +32,7 @@ export interface StoredObject {
 export class ObjectStore {
   constructor(readonly catalog: Catalog) {}
   async migrate(): Promise<void> {
-    await this.catalog.pool.query(`
-      CREATE TABLE IF NOT EXISTS moria.object_homes(uid uuid PRIMARY KEY REFERENCES moria.identities(uid),object_type text NOT NULL);
-      CREATE TABLE IF NOT EXISTS moria.source_generations(environment text NOT NULL REFERENCES moria.environments(id),object_type text NOT NULL,revision bigint NOT NULL,PRIMARY KEY(environment,object_type,revision));
-      CREATE TABLE IF NOT EXISTS moria.source_rows(environment text NOT NULL,object_type text NOT NULL,revision bigint NOT NULL,uid uuid NOT NULL REFERENCES moria.object_homes(uid),value jsonb NOT NULL,PRIMARY KEY(environment,object_type,revision,uid),FOREIGN KEY(environment,object_type,revision) REFERENCES moria.source_generations(environment,object_type,revision));
-      CREATE TABLE IF NOT EXISTS moria.overlay_versions(environment text NOT NULL REFERENCES moria.environments(id),object_type text NOT NULL,uid uuid NOT NULL REFERENCES moria.object_homes(uid),revision bigint NOT NULL,overrides jsonb NOT NULL,tombstone boolean NOT NULL,PRIMARY KEY(environment,object_type,uid,revision));
-      CREATE TABLE IF NOT EXISTS moria.source_stages(id uuid PRIMARY KEY,environment text NOT NULL REFERENCES moria.environments(id),object_type text NOT NULL,expected_revision bigint NOT NULL,security_epoch bigint NOT NULL,status text NOT NULL CHECK(status IN ('loading','ready','published','failed')),published_revision bigint,created_at timestamptz NOT NULL DEFAULT clock_timestamp());
-      CREATE TABLE IF NOT EXISTS moria.staged_source_rows(stage uuid NOT NULL REFERENCES moria.source_stages(id),uid uuid NOT NULL REFERENCES moria.object_homes(uid),value jsonb NOT NULL,PRIMARY KEY(stage,uid));
-      ALTER TABLE moria.source_generations ADD COLUMN IF NOT EXISTS stage uuid REFERENCES moria.source_stages(id);
-      ALTER TABLE moria.source_generations ADD COLUMN IF NOT EXISTS object_schema jsonb;
-      ALTER TABLE moria.source_stages ADD COLUMN IF NOT EXISTS object_schema jsonb;
-      ALTER TABLE moria.source_stages ADD COLUMN IF NOT EXISTS base_source_revision bigint;
-      ALTER TABLE moria.source_stages ADD COLUMN IF NOT EXISTS lease_binding jsonb;
-      ALTER TABLE moria.source_stages ADD COLUMN IF NOT EXISTS required_markings text[];
-      ALTER TABLE moria.source_generations ADD COLUMN IF NOT EXISTS required_markings text[];
-    `);
-    await new CursorStore(this.catalog).migrate();
+    await this.catalog.migrate();
   }
   private async lock(c: PoolClient, environment: string, epoch: string): Promise<string> {
     const result = await c.query(

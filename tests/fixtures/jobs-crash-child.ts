@@ -13,7 +13,7 @@ process.on(
         await catalog.transaction(async (c) => {
           await job.guard(c);
           await c.query(
-            'INSERT INTO moria.job_test_publications(id) VALUES($1) ON CONFLICT DO NOTHING',
+            'INSERT INTO public.job_test_publications(id) VALUES($1) ON CONFLICT DO NOTHING',
             [job.id],
           );
           await job.complete(c, { published: true });
