@@ -1226,3 +1226,144 @@ Independent-environment verification, clean independent review, current-main
 integration and exact-head Linux CI remain controller gates and are unverified.
 No commits, publication, live infrastructure or external contacts; #17 remains
 open and changes remain uncommitted.
+
+## Issue #63 — bounded complete scoped snapshot publication (2026-10-25)
+
+Scope: additive trusted `CatalogStorage.publishSnapshot`, one dedicated publication
+helper, fixed Python closure validation, genuine Iceberg fixture support, dedicated
+integration tests and storage/worker documentation. Dependencies #49/#56 and accepted
+C04/S01/S02/S06/S08 contracts are preserved. No dependencies, schemas, protected paths,
+storage adapter internals, physical-path consumers, runtime rollout or delivery
+policy changed. Work is on `delivery/issue-63`; changes remain uncommitted.
+
+The new seam binds every exact-size immutable object's content and canonical logical
+name into the existing catalog request hash, validates retained metadata/manifests/
+Parquet through real pinned parsers, stages through existing scoped create-only
+adapters and publishes only after acknowledged completion. It returns the existing
+receipt and service-owned immutable references for trusted reader binding replacement.
+The metadata-only API and object identity remain unchanged. Full limits and retry,
+orphan and uncertain-acknowledgment semantics are in CATALOG-STORAGE.md.
+
+Initial validation: workspace Python 3.11 real fixture/validator smoke passed.
+Initial TypeScript checking found a missing explicit fixture array type. Initial
+focused tests exercised both local and isolated S3 adapters; the only runtime
+failures were new expiry assertions expecting AUTHORIZATION_CHANGED rather than
+Authority's existing UNAUTHENTICATED contract. First repair pass corrected these
+test declarations/expectations without changing authority behavior or weakening
+assertions, strengthened stalled-intake cancellation and unsafe-reference cases,
+and completed validation bounds. Subsequent check results are recorded below.
+
+No live installation, credential file, paid model, external person, commit, push,
+PR, merge or deployment was involved. Fresh independent no-findings review,
+current-main integration and successful Linux quality CI on the exact published
+head remain unverified controller gates. #17 stays open and #18/#19 remain
+dependency-gated; production durability/capacity, recovery, Spark interoperability,
+arbitrary-code isolation and runtime adoption are outside this slice.
+
+The repaired focused integration command
+`pnpm exec tsx --test tests/catalog-snapshot-publication.integration.test.ts`
+passed 62 tests with no failures/skips in 93.28 seconds (raw output:
+`/tmp/issue-63-focused-repair1.log`). `pnpm typecheck`, `pnpm format`, workspace
+Black formatting and `git diff --check` passed. A subsequent parser probe showed
+that PyIceberg accepts an unresolved current-snapshot ID at model-parse time.
+The second repair pass added explicit current/reference snapshot resolution and
+cross-history immutable snapshot-definition checks, plus a dangling-snapshot
+regression. The full gate below includes that final regression. The two-repair
+budget is exhausted; further failures must be reported rather than repaired here.
+
+Final verification: `pnpm check` exited 0 on the uncommitted issue changes above
+base `aff3d976075db3d2c965cfe0bab1cb383275ee53`. All 535 runtime tests passed
+(zero failures, cancellations or skips; 338.94 seconds), including 64 complete
+snapshot tests across real PostgreSQL/local storage and isolated checksum-pinned
+MinIO, and all existing metadata publication/scoped reader tests. Formatting,
+SDK drift, TypeScript, Python formatting/specification/workload validation, all
+14 Python tests, both application builds and Station Explorer type/build/hosting
+verification passed. Raw full-gate output: `/tmp/issue-63-check.log`; formatting:
+`/tmp/issue-63-format.log`; Black: `/tmp/issue-63-black.log`. Final
+`git diff --check` passed. Environment: non-root Linux, Node 24.21.0,
+pnpm 11.25.0, workspace Python 3.11.17, PyIceberg 0.12.0 and PyArrow 26.0.0.
+Only synthetic disposable databases, warehouses and S3 fixtures were used.
+No required local infrastructure gate was skipped. Controller-owned independent
+review, current-main integration and exact-head Linux CI remain unverified;
+local success does not satisfy or replace those acceptance gates.
+
+### Issue #63 — schema validation review repair (2026-10-25)
+
+This follow-up addresses the explicitly requested schema-validation findings only.
+The earlier two-pass repair history above is preserved; this repair does not change
+delivery policy or authorize further unrelated repairs. Regressions use genuine
+Iceberg metadata and Parquet containing nulls, retaining integer snapshot IDs
+without JavaScript number coercion. They retain the original metadata while changing
+root nullability, exercise a different resolved current schema for snapshots with
+omitted schema IDs, and supply unknown or duplicate schema IDs in root/retained
+metadata. Repeated snapshot definitions stay consistent so unrelated snapshot
+checks cannot mask the schema-resolution gap. Every rejection asserts zero storage
+writes and unchanged heads, history/lineage, checkpoints and publication receipts.
+
+Verification commands and final results for this repair are recorded below.
+
+The pre-fix reproduction (`pnpm exec tsx --test
+ tests/catalog-snapshot-publication.integration.test.ts`, output
+`/tmp/issue-63-schema-reproduction.log`) reproduced all six schema rejection gaps
+on both adapters: each candidate incorrectly succeeded. Twelve failing subtests
+plus their two parent tests were reported. The retained-schema regression was
+subsequently tightened to make the unknown ID valid only in the root, isolating
+resolution inside retained metadata.
+
+The validator now rejects duplicate schema IDs within a metadata file, conflicting
+schema definitions across history, and unresolved current/explicit snapshot schema
+IDs. Its scan cache includes PyIceberg's resolved projection, so snapshots without
+schema IDs cannot reuse a historical scan under a different current schema. These
+scan contexts share the existing 128-scan and aggregate row/byte bounds.
+
+Final focused command: `pnpm exec tsx --test
+ tests/catalog-snapshot-publication.integration.test.ts` passed all 76 tests,
+zero failures/cancellations/skips, in 116.29 seconds. Output:
+`/tmp/issue-63-schema-focused.log`. This includes real disposable PostgreSQL,
+local storage and isolated S3, original successful publication/read/retry cases,
+and all new pre-staging schema regressions. `pnpm format`, workspace Black and
+`git diff --check` passed; no protected paths or dependencies changed.
+
+Full `pnpm check` exited 0: all 547 runtime tests passed, zero failures,
+cancellations or skips (366.40 seconds); all 14 Python tests, formatting, SDK drift,
+TypeScript, specification/workload validation, application builds and Station
+Explorer verification passed. Output: `/tmp/issue-63-schema-check.log`. The final
+retained-metadata test refinement also passed the focused suite above and a fresh
+`pnpm format:check` (`/tmp/issue-63-schema-format-check.log`). Validator source was
+unchanged throughout the full gate. Final `git diff --check` passed.
+
+Changes remain uncommitted. No required local infrastructure was unavailable or
+skipped. Fresh independent no-findings review, current-main integration and Linux
+quality CI on the exact published head remain unverified controller-owned gates.
+The scope and production/runtime limitations recorded above remain unchanged;
+#17 remains open and #18/#19 remain dependency-gated.
+
+### Issue #63 reader compatibility repair
+
+Verified the two additional review findings against the pinned PyIceberg parser
+and unchanged scoped reader. New real PostgreSQL/local/S3 regressions reproduced
+successful publication of missing sort orders, empty sort orders, and a current
+schema renaming `value` to `renamed` while the selected snapshot retains schema 0.
+The pre-fix run is recorded in `/tmp/issue-63-reader-regressions-before.log`.
+
+The fixed validator requires nonempty sort orders and compares each metadata
+file's current snapshot resolved projection fields with its advertised current
+table schema before scan-cache reuse. Ordered field definitions must match;
+schema IDs alone may differ. Validation still precedes all scoped writes and
+catalog publication. Regressions on both adapters require `INVALID_INPUT`, zero
+writes and unchanged heads, history/lineage, checkpoint and receipt state.
+No reader, dependency, schema, protected path or delivery policy changed.
+
+Verification: `pnpm format`, `.venv/bin/python -m black workers benchmarks
+docs/spec/schemas` and `git diff --check` passed. `pnpm exec tsx --test
+tests/catalog-snapshot-publication.integration.test.ts` passed all 82 tests, zero
+failures/cancellations/skips, in 124.76 seconds with real disposable PostgreSQL,
+local storage and isolated S3 (`/tmp/issue-63-reader-focused.log`). Full
+`pnpm check` exited 0: all 553 runtime tests passed with zero failures,
+cancellations or skips (363.91 seconds), and all 14 Python tests, formatting,
+SDK drift, TypeScript, specification/workload validation, application builds and
+Station Explorer verification passed (`/tmp/issue-63-reader-check.log`). Final
+`git diff --check` passed. No required local infrastructure was unavailable.
+Fresh independent review, current-main integration and exact-head Linux quality
+CI remain unverified controller-owned gates. Changes remain uncommitted; the
+existing production/runtime limitations and dependency gates remain in force.

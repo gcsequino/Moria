@@ -28,8 +28,11 @@ export async function metadataBytes(
   size: number,
   check: () => Promise<void>,
   signal?: AbortSignal,
+  limit = metadataLimit,
+  frames = Number.POSITIVE_INFINITY,
+  frameBytes = limit,
 ): Promise<Buffer> {
-  integer(size, 1, metadataLimit);
+  integer(size, 1, limit);
   const bytes = Buffer.alloc(size);
   const reader = stream.getReader();
   const abort = () => {
@@ -37,6 +40,7 @@ export async function metadataBytes(
   };
   signal?.addEventListener('abort', abort, { once: true });
   let offset = 0;
+  let count = 0;
   try {
     while (true) {
       cancelled(signal);
@@ -47,7 +51,12 @@ export async function metadataBytes(
       if (item.done) {
         break;
       }
-      if (!(item.value instanceof Uint8Array) || item.value.length > size - offset) {
+      if (
+        ++count > frames ||
+        !(item.value instanceof Uint8Array) ||
+        item.value.length > frameBytes ||
+        item.value.length > size - offset
+      ) {
         throw new StorageError('INVALID_INPUT');
       }
       bytes.set(item.value, offset);

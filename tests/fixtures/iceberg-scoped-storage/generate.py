@@ -26,6 +26,7 @@ from pyiceberg.types import (
 
 root = Path(sys.argv[1])
 objects = {}
+logical_table = sys.argv[3] if len(sys.argv) > 3 else "moria://warehouse/table"
 
 
 class FixtureOutput(OutputFile):
@@ -48,7 +49,7 @@ class FixtureOutput(OutputFile):
 
 class FixtureIO(FileIO):
     def physical(self, name):
-        if not name.startswith("moria://warehouse/table/"):
+        if not name.startswith(logical_table + "/"):
             raise ValueError("Unexpected fixture reference")
         path = root / hashlib.sha256(name.encode()).hexdigest()
         objects[name] = str(path)
@@ -69,7 +70,7 @@ class FixtureIO(FileIO):
 catalog = SqlCatalog(
     "fixture",
     uri="sqlite:///:memory:",
-    warehouse="moria://warehouse/table",
+    warehouse=logical_table,
     **{"py-io-impl": "__main__.FixtureIO"},
 )
 catalog.create_namespace("fixture")
@@ -89,7 +90,7 @@ table = catalog.create_table(
             10, "tags", ListType(element_id=11, element_type=StringType(), element_required=True)
         ),
     ),
-    location="moria://warehouse/table",
+    location=logical_table,
     properties={"format-version": "2"},
 )
 for start in (0, 150):
@@ -115,6 +116,20 @@ for start in (0, 150):
     )
 original_metadata = objects[table.metadata_location]
 original_snapshot = str(table.current_snapshot().snapshot_id)
+if len(sys.argv) > 2 and sys.argv[2] == "--snapshot":
+    print(
+        json.dumps(
+            {
+                "metadata": original_metadata,
+                "snapshotId": original_snapshot,
+                "tableUuid": str(table.metadata.table_uuid),
+                "objects": {
+                    name: path for name, path in objects.items() if path != original_metadata
+                },
+            }
+        )
+    )
+    sys.exit(0)
 table.overwrite(
     pa.Table.from_pylist(
         [{"id": 301, "value": "x" * (4 * 1024 * 1024)}], schema=table.schema().as_arrow()
