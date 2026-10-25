@@ -1,192 +1,155 @@
-# API and execution processes — M1-02a (#30)
+# API, scheduler and worker processes — M1-02b (#35)
 
-This slice separates the management/Snow APIs from the existing fixed-handler
-execution supervisor. Parent #14 remains open. The scheduler and worker remain
-one serial supervisor; this is not general multi-environment scheduling or a
-user-code execution service.
+This bounded successor to #30/#34 separates the fixed Snow/weather scheduler and
+worker. Parent #14 remains open. It adds no execution concurrency, arbitrary
+handlers, environment ownership, schema migration or capacity claim.
 
-## Entry points and prerequisites
+## Commands and prerequisites
 
-Use supported non-root Linux, Node 24, pnpm 11.25.0 and the repository-local Python
-3.11 `.venv`, following README setup. Run from the repository root:
+Use non-root Linux, Node 24, pnpm 11.25.0 and the repository-local Python 3.11
+`.venv`, following README setup. Run from the repository root:
 
 ```sh
-# Existing combined development launcher (unchanged command):
 pnpm start
-
-# Independent roles, in separate processes with the same runtime configuration:
 pnpm exec tsx apps/local/src/api.ts
+pnpm exec tsx apps/local/src/scheduler.ts
+pnpm exec tsx apps/local/src/worker.ts
+# Compatible combined scheduler/worker:
 pnpm exec tsx apps/local/src/supervisor.ts
 ```
 
-Independent roles require `MORIA_DATABASE_MODE=external`. Provision and version the
-external PostgreSQL database separately using the existing database lifecycle.
-Neither role initializes, migrates, owns, or stops that database. Existing
-unversioned development databases remain unsupported; there is no adoption path
-or migration expansion here. The combined launcher retains embedded development
-ownership and also continues to accept external mode.
+Independent entry points require `MORIA_DATABASE_MODE=external`. Provision the
+versioned PostgreSQL schema separately through the existing lifecycle. These
+processes neither initialize, migrate, own nor stop PostgreSQL. The combined
+development launcher retains embedded database ownership and accepts external
+mode. There is no adoption path for unversioned databases.
 
-Set `MORIA_DATABASE_SECRET_REF` to the name of an environment variable containing
-the runtime PostgreSQL URL. Supply secrets through the environment or external
-credential management, never checked-in configuration, command output or logs.
-The existing URL validation disallows query options and implicit credential-file
-reads. `MORIA_DATABASE_TLS=verify` is the default; `disable` is for explicitly
-trusted local test connections. The runtime role must have existing scoped DML
-and sequence grants, schema-version read access, and no administrative powers,
-table ownership or schema CREATE permission. Schema admission and the lifetime
-shared schema lease remain mandatory; losing the lease fences pool checkouts.
+Set `MORIA_DATABASE_SECRET_REF` to the environment variable containing the runtime
+PostgreSQL URL. Supply secrets through environment variables or external stores.
+Existing URL validation prohibits query options and implicit credential-file
+reads. TLS defaults to `verify`; `disable` is for explicitly trusted local tests.
+Runtime admission requires the existing scoped DML/sequence grants and schema
+version read access, without administrative powers, table ownership or schema
+CREATE. All roles retain the lifetime shared schema lease and checkout fencing.
 
 Set `MORIA_DATABASE_POOL_MAX` (minimum 4), `MORIA_DATABASE_REPLICAS` and
-`MORIA_DATABASE_CONNECTION_BUDGET` consistently across the installation. Replicas
-counts **all simultaneously running API and supervisor processes**, including
-replacement overlap. The existing validator requires
-`pool maximum × replicas + 1 <= connection budget`, reserving one migration
-connection. For example, three processes at pool maximum 4 require a budget of
-at least 13. Configuration validation is not automatic fleet discovery.
+`MORIA_DATABASE_CONNECTION_BUDGET` consistently. Replicas counts every simultaneous
+API, scheduler, worker and supervisor process, including replacement overlap.
+Validation requires `pool maximum × replicas + 1 <= connection budget`; four
+processes with pools of four need at least 17 connections. This is configuration
+validation, not fleet discovery.
 
-Both roles need the same `MORIA_LOCAL_DIR` and durable shared warehouse paths
-(`warehouse/` and `snow-warehouse/` under that directory). These paths must identify
-the same storage from each process. Do not use independent copies of a warehouse.
-API processes retain the existing local recovery credentials, session key, OIDC
-configuration, scoped browser sessions and authorization behavior. Preserve that
-authentication state across API restarts and provision it before running multiple
-API replicas; concurrent first-time API credential creation is not introduced as
-a supported topology. The supervisor does not load API credential files, create
-browser sessions, bootstrap static apps or bind HTTP listeners.
+Use the same `MORIA_LOCAL_DIR` and durable shared warehouse paths across roles.
+API processes retain recovery credentials, session keys, OIDC and authorization;
+preserve that state across restarts and provision it before multiple API replicas.
+Concurrent first-time credential creation is not a supported topology. Scheduler,
+worker and supervisor return before API credential/authentication bootstrap,
+static hosting or HTTP listener binding. Shared configuration validation still
+includes listener settings.
 
-API listeners retain `MORIA_PORT` (3210), `MORIA_SNOTEL_PORT` (3211), and existing
-explicit public-origin/reverse-proxy settings. Static hosting remains attached to
-the API. This slice does not extract a static host. Configuration validation stays
-shared, including listener settings, even when the supervisor binds no listeners.
+## Responsibilities and coordination
 
-## Startup, execution and shutdown
+API-only retains authorized enqueue, inspect, schedule configuration and retry.
+It never starts either loop. Scheduler-only dispatches due fixed workloads; it
+never claims work, recovers attempts or invokes handlers. Worker-only claims and
+executes queued work and recovers interrupted attempts; it never dispatches or
+advances schedules. Shared initialization verifies the catalog and ensures the
+bundled environments, grants and initially paused schedule records.
 
-The shared runtime initializes the same bundled Snow/weather services against a
-verified catalog. Initialization may ensure bundled environments, grants and
-schedule records; it performs no external schema migration. API-only constructs
-the existing job interface for authorized enqueue, inspect, schedule and retry
-requests, but never starts the supervisor loop. It does not fire schedules, claim
-jobs or execute handlers. Supervisor-only starts that loop and returns before any
-HTTP or authentication bootstrap. No CLI switch loads arbitrary handlers.
+Scheduler dispatch locks due schedule rows in kind order within a serializable
+catalog transaction. Enqueue, durable request-key aliases and next-run advancement
+commit together. A crash before commit rolls all of them back; a crash after
+commit leaves both the firing and advancement durable. Existing keys remain
+`schedule:<kind>:<due-time>`. Competing schedulers serialize on the same rows;
+serialization/deadlock retries use the existing bounded catalog policy. Exhausted
+contention leaves due work for the next loop rather than advancing it partially.
 
-The existing global PostgreSQL supervisor advisory lock keeps execution serial
-across processes and kinds. Active-job uniqueness, request-key coalescing,
-scheduled firing keys, heartbeat, attempt recovery, publication transactions and
-fencing are unchanged. Additional supervisors contend for the same lock; they do
-not increase throughput. A handler that loses its lock can still have in-flight
-work, but its stale publication must be rejected. This does not promise exactly
-once arbitrary external side effects.
+Schedule configuration updates lock those same rows, so configuration and
+advancement serialize and stale dispatch cannot overwrite a newer configuration.
+Missed intervals coalesce into one refresh, advancing from current time.
+Equivalent active input reuses the job with a durable request alias. Different
+manual input takes precedence: that scheduled interval advances without replacing
+or duplicating the manual job. Existing manual request-key conflicts are unchanged.
 
-SIGINT/SIGTERM closes that process's HTTP listeners, drains its own active job,
-releases its schema lease and ends its pool. Repeated close requests await the same
-drain. Shutdown requested during startup waits for resource acquisition and any
-pending listener bind to settle before draining. Startup checks shutdown before
-and after each bind and before starting execution, so it cannot add later
-listeners or start jobs after drain. Signal handlers remain installed through
-drain, including repeated termination signals. API shutdown never stops the supervisor or external database. Supervisor
-shutdown never stops API processes. Drain preserves existing handler behavior:
-it waits for the active handler, with no new forced cancellation mechanism. An
-operator-enforced hard kill leaves interruption recovery to the next supervisor;
-publication is protected by the existing fence. Database errors use generic
-messages and stop the affected process's services.
+Workers retain the global session advisory supervisor lock, one active job per
+kind, interrupted-attempt recovery, unpredictable publication fences, heartbeat,
+30-minute cooperative deadline and retry policy. Scheduling never acquires the
+execution lock or modifies worker fences. Combined mode and supervisor-only run
+the same scheduler and worker paths as independent loops, allowing scheduling
+during a blocked handler without additional handler concurrency. Direct `tick()`
+callers retain schedule-then-work behavior.
 
-## Scope, progress and verification
+These are trusted fixed handlers in one bundled environment, not database roles
+with newly narrowed table privileges. A disconnected worker may still have
+in-flight work, but its stale publication is rejected. Arbitrary external effects
+are not promised exactly-once execution.
 
-Allowed changes are confined to `apps/local/src/`, the new process integration
-test and its fixture directory, and this document. No database baseline, shared
-contracts, dependencies, package scripts, delivery policy or existing tests change.
-Progress is recorded here instead of `docs/IMPLEMENTATION.md`, as required by #30.
-No commit, publication, live deployment, live download or model call is part of
-this work.
+## Lifecycle
 
-The synthetic integration test owns a temporary PostgreSQL cluster externally to
-the application children. Children use the validated external configuration,
-scoped runtime role, real schema leases and minimum-size pools. A fixture supplies
-fixed synthetic handlers through a module-level initialization parameter, never
-through production CLI flags or environment controls. IPC barriers hold execution
-at publication and observe supervisor ticks. Bounded database waits and cleanup
-cover all child processes and the temporary cluster.
+SIGINT/SIGTERM stops new loop iterations and drains in-flight scheduler
+transactions and handlers before releasing schema leases and pools. Repeated
+close requests share the same drain. Startup still records shutdown immediately,
+waits for pending acquisition/listen operations and checks shutdown before later
+listeners or execution start, preserving #34.
 
-Evidence on non-root Linux (2026-10-25), Node 24.21.0, pnpm 11.25.0,
-Python 3.11.17 from `.venv`, on branch `delivery/issue-30` based on `5cc57ce`
-with the uncommitted changes described here:
+Stopping API or scheduler processes does not stop workers or external PostgreSQL.
+Worker shutdown drains its active handler; hard termination leaves recovery to
+the next fenced worker. No forced handler cancellation mechanism is introduced.
+Database failures retain generic diagnostics. Static hosting remains with the API.
 
-- `pnpm typecheck`: passed during implementation.
-- `pnpm exec tsx --test tests/execution-process.integration.test.ts`: passed during
-  implementation, exercising authenticated enqueue/inspect/schedule, API restart
-  during active work, shared request-key identity, competing supervisors, loss of
-  the supervisor connection and rejection of stale publication, SIGKILL recovery,
-  and graceful handler drain. Final gate results are recorded below.
-- The final test also verifies authorized retry, API-only does not fire a due
-  schedule or claim queued work, all four configured HTTP ports are available
-  while only supervisors run, and graceful exits release runtime connections
-  without stopping the externally owned database.
+## Scope and verification
 
-Initial implementation verification (before the lifecycle repair below):
+Changes are limited to the issue's execution/runtime directories, process tests
+and fixtures, and this document. Evidence is recorded here instead of the shared
+implementation progress file. No dependency, schema baseline, storage, delivery
+policy or protected-path change is required.
 
-- `pnpm format`: passed; no out-of-scope files changed.
-- `pnpm check`: passed, exit 0. All 181 TypeScript/runtime tests passed with zero
-  failures or skips (80.91 seconds for the test phase). This includes existing
-  crash/replay, authorization, external-database and real Iceberg integration
-  tests. Python formatting and validation, 14 Python tests, SDK drift checks,
-  TypeScript checks, both application builds and starter verification passed.
-- The process test passed in the full gate in 11.48 seconds against the bundled
-  real PostgreSQL test cluster, with no downloads or model calls.
-- Both runnable entry points were invoked with `MORIA_DATABASE_MODE=development`;
-  each exited 1 with the expected external-mode requirement before startup.
-- `git diff --check`: passed. Changes remain uncommitted and within the exclusive
-  file scope. Local command output is in `/tmp/issue-30-format.log` and
-  `/tmp/issue-30-check.log`; these are ephemeral workspace evidence, not CI logs.
+The new real PostgreSQL child-process test uses a temporary synthetic cluster,
+validated external configuration, scoped runtime grants and actual schema leases.
+An IPC fixture intercepts the SQL call immediately after enqueue and before
+advancement inside the real transaction; no production test flags exist.
+It covers crash rollback/restart, competing schedulers, durable firing identity,
+scheduler-only non-execution, worker-only non-dispatch, configuration serialization,
+active-job aliasing, scheduling during a blocked handler with an unchanged fence,
+and scheduler/worker shutdown isolation. Bounded database barriers observe locks
+and state; race ordering does not depend on sleeps.
 
-No infrastructure-dependent gate was skipped in the local complete check. The
-process publication fixture uses a synthetic SQL publication row and the real
-job guard/completion transaction; it does not claim a new multi-process Iceberg
-engine certification. Existing real Iceberg crash/replay tests remain in the gate.
+The existing process regression retains authenticated API enqueue/inspect/schedule/
+retry, API restart isolation, competing supervisors, connection-loss stale
+publication rejection, hard-kill recovery, graceful drain and all four #34 startup
+listener barriers. Existing database, authorization and real Iceberg publication
+checks remain in the complete gate.
 
-Independent review of lifecycle and publication invariants and the Linux quality
-CI job on the final published revision remain required and unverified here. The
-controller owns publication; merges remain manual. This slice does not close #14:
-scheduler/worker separation, static-host extraction, general multi-environment
-concurrency and production deployment evidence remain later work.
+Verification results for the uncommitted issue-35 workspace are recorded below.
 
-## Startup/shutdown coordination repair
+Independent human review of coordination, recovery and publication invariants and
+exact-head Linux quality CI remain required and unverified here. The controller
+owns publication and merges remain manual. Static-host extraction, broader API
+role separation, general multi-environment scheduling/concurrency and production
+deployment evidence remain subsequent bounded work under #14.
 
-The review identified a race in which drain could pass a pending listener before
-it bound, then startup could open further listeners or start combined-mode jobs
-after stop. The runtime now records shutdown immediately, waits for startup to
-settle before releasing resources, and stops startup at listener boundaries.
-Startup cancellation exits normally; startup failures still report a generic
-error and exit unsuccessfully. No CLI behavior or shared execution contract was
-expanded.
+### Local verification evidence (2026-10-25)
 
-The process fixture now pauses the native listen call with an explicit IPC
-barrier. For both API and combined roles, the regression sends SIGTERM while the
-first local listener or first public listener is pending, waits for signal
-acknowledgment, then releases the bind. Each child must exit normally within the
-bounded wait, make no subsequent listen or jobs.start calls, drain jobs exactly
-once, release all four configured ports, and release its database connections.
-The externally owned PostgreSQL cluster and an unrelated supervisor's existing
-connections survive; that supervisor subsequently publishes its held synthetic
-job using the real fenced transaction. These barriers exist only in the test
-fixture, not in production entry points or environment configuration.
+Non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace Python 3.11.17:
 
-Repair verification on the same non-root Linux workspace:
+- `pnpm format`: passed. No out-of-scope files changed.
+- Final `pnpm check`: passed, exit 0. All 273 TypeScript/runtime tests passed
+  with zero failures or skips (86.62 seconds for the runtime test phase).
+  Python formatting/validation and all 14 Python tests, SDK drift, TypeScript,
+  both application builds and starter verification passed.
+- In that final gate, the scheduler process test passed in 5.87 seconds and the
+  existing execution process regression passed in 13.71 seconds. Recovery
+  replacements in the latter now use worker-only mode; combined supervisors
+  remain covered alongside API lifecycle and #34 barriers.
+- Both new entry points invoked with `MORIA_DATABASE_MODE=development` exited 1
+  with the expected external-mode requirement before startup.
+- `git diff --check`: passed. Changes remain uncommitted.
+- Local logs: `/tmp/issue-35-format.log` and
+  `/tmp/issue-35-final-check.log`. These are ephemeral workspace evidence, not CI.
 
-- `pnpm exec tsx --test tests/execution-process.integration.test.ts`: passed,
-  1 test, zero failures/skips, 15.23 seconds including all four startup barriers.
-- `pnpm format`: passed; no out-of-scope changes.
-- Complete `pnpm check`: passed, exit 0. All 181 TypeScript/runtime tests passed
-  with zero failures or skips (82.37 seconds for the test phase). The process
-  integration test passed in 13.54 seconds. Python formatting/validation and all
-  14 Python tests, SDK drift, TypeScript checks, both application builds and
-  starter verification passed using the workspace `.venv` (Python 3.11.17).
-- `git diff --check`: passed. Repair output is recorded in the ephemeral local
-  files `/tmp/issue-30-repair-format.log`, `/tmp/issue-30-repair-process.log` and
-  `/tmp/issue-30-repair-check.log`. These are local evidence, not CI results.
-  No infrastructure-dependent check was skipped.
-
-The repair remains confined to the runtime, process integration test and fixture,
-and this document. Shutdown synchronizes with existing initialization and handler
-drain; it does not introduce a forced deadline for stalled external dependencies
-or handlers. Independent review of the repair and Linux quality CI on the final
-published revision remain unverified and are controller-owned follow-up work.
+An intermediate gate caught a missing explicit receiver type in the fixture's
+SQL interception; it was corrected before the final passing gate. No checks were
+disabled or infrastructure-dependent tests skipped. All cluster/data fixtures
+were synthetic; no live installation, download or model API was used. This does
+not establish a new multi-process Iceberg engine certification or production
+capacity. Independent review and exact-head CI remain unverified as noted above.

@@ -252,7 +252,7 @@ test(
     // Lose just the supervisor lock connection while its handler is at an IPC barrier.
     await pool.query(`SELECT pg_terminate_backend(a.pid) FROM pg_stat_activity a JOIN pg_locks l ON l.pid=a.pid
     WHERE a.usename='process_runtime' AND l.locktype='advisory' AND l.mode='ExclusiveLock' AND l.granted`);
-    const replacement = launch('supervisor');
+    const replacement = launch('worker');
     await replacement.event('ready');
     assert.equal((await replacement.event('started')).id, recovery);
     supervisor.process.send({ command: 'release' });
@@ -276,7 +276,7 @@ test(
     const crashed = (await request('snotel/sync', { requestKey: 'process/hard-crash' })).id;
     assert.equal((await replacement.event('started')).id, crashed);
     await stop(replacement.process, 'SIGKILL');
-    const finalSupervisor = launch('supervisor');
+    const finalSupervisor = launch('worker');
     await finalSupervisor.event('ready');
     assert.equal((await finalSupervisor.event('started')).id, crashed);
     // Graceful shutdown drains the active handler before releasing its own pool.
