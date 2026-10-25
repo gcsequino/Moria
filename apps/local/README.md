@@ -81,3 +81,28 @@ The management shell alone grants no session or API access. Same-origin `/api`
 requests require separate trusted proxy routing to the API service; this is not
 a cross-origin management client. See [static delivery](../../docs/production/STATIC-DELIVERY.md)
 for publication, restrictions, lifecycle and verification details.
+
+## API-only lifecycle
+
+`pnpm exec tsx apps/local/src/api.ts` requires the existing external PostgreSQL
+configuration and a separately provisioned schema; see
+[execution processes](../../docs/production/EXECUTION-PROCESSES.md).
+It starts without a management promotion, UI source/build directory or UI build.
+It neither publishes management artifacts nor serves them, even if an operator
+later promotes a release. Root, static assets, release URLs and unknown UI routes
+return an uncached JSON 404 after Host/Origin validation. Public API bindings use
+the same separation and retain trusted HTTPS proxy checks.
+
+Management/authentication and object/action/import APIs retain their existing
+administrator, session, recovery and CSRF checks. Read-only app inventory and
+lineage may inspect the AppHost store; process roles grant no permissions.
+`pnpm start` retains the combined development UI bootstrap and static serving.
+
+Serve an already-promoted management shell separately with the
+[static entrypoint](../../docs/production/STATIC-DELIVERY.md). A functional browser
+client needs trusted same-origin routing of `/api/` (including `/api/auth/`) to
+API-only and UI/assets to static delivery. Legacy `/management/` and `/local/`
+routes, when used, also go to the API. Separate localhost ports alone do not
+provide that composition: there is no CORS allowance or forwarding. The static
+entrypoint still accepts only its exact loopback Host/Origin. Public ingress
+configuration, DNS and deployment validation are outside this local slice.

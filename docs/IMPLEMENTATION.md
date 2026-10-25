@@ -1033,3 +1033,155 @@ was available. Final `git diff --check` passed.
 Independent-environment validation, clean independent review, current-main
 integration and exact-revision Linux CI remain unverified controller gates; #17
 remains open. Changes are left uncommitted.
+
+
+## Issue #58 — API-only management artifact lifecycle separation (2026-10-25)
+
+Scope: the existing runtime skips management bootstrap for API-only, and the
+shared server accepts an optional static-serving composition flag with its
+existing behavior as the default. Both local and public API-only listeners
+return controlled uncached JSON 404s for UI/static/release routes. Auth and API
+routing retain the existing Host/Origin, trusted HTTPS proxy, administrator,
+session, CSRF, recovery and protected operation checks. Combined development
+still bootstraps/serves management; execution-only roles remain independent.
+AppHost inventory and lineage are read-only at API startup/request time.
+
+Dependency: the #55 standalone static lifecycle already present in this checkout.
+No schema, dependency, Catalog/storage/engine, Jobs/lease, generated-client,
+protected-path or delivery-policy changes. No existing tests changed. Acceptance
+is bounded to lifecycle separation, not management/object privilege separation,
+multi-environment scheduling or arbitrary-code execution.
+
+New real child-process/PostgreSQL coverage uses a disposable synthetic cluster,
+scoped runtime grants and the repository-local Python 3.11 Iceberg worker.
+Runtime and existing API entrypoint start without UI source/dist or promoted
+artifacts; a fixture rejects importing the UI builder. Coverage includes real
+recovery, inventory/lineage/object reads, Iceberg import, action mutation,
+unauthenticated/wrong-origin/non-administrator session denial, current-grant
+revocation, public binding/recovery checks, non-serving after later promotion,
+and static/API/external-database lifecycle independence. No live installation,
+credential-file inspection, provider account or model API is used.
+
+Local validation on non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace
+Python 3.11.17, based on checkout revision
+`2b8d405144bafad1c14d9724b35767e70db7ed0c` plus these uncommitted changes:
+
+- `pnpm format`: passed; no out-of-scope changes.
+- `pnpm exec tsx --test tests/api-only-process.integration.test.ts`: passed,
+  one real process/PostgreSQL test, no skips (4.35 seconds).
+- Final `pnpm check`: passed, exit 0. All 421 runtime tests passed with zero
+  failures or skips (148.22 seconds). Formatting, SDK drift, TypeScript,
+  Python validation/formatting and all 14 Python tests, both application builds
+  and starter verification passed. Existing combined-mode, scheduler/execution
+  and static-process regressions passed unchanged.
+- `git diff --check`: passed. Required local infrastructure was available.
+
+Initial fixture runs corrected flat object-field assertions, allowed the existing
+inventory operation to create an empty AppHost root, and replaced an incorrect
+origin-bound-session assumption with denial through a real non-administrator
+session. The first full gate caught test header type inference; it was corrected
+before the passing gate. No production authentication behavior or existing test
+was changed. No checks were disabled. Local logs are
+`/tmp/issue-58-format.log`, `/tmp/issue-58-targeted.log` and
+`/tmp/issue-58-check.log`; these are ephemeral evidence, not CI.
+
+Independent-environment full checks, clean independent review, current-main
+integration and exact-head Linux CI are unverified controller gates, not local
+claims. Publication belongs to the controller and merges remain manual. #14/M1
+remains open for environment/stream ownership and remaining role separation.
+Changes remain uncommitted.
+
+## Issue #61 — platform composition PostgreSQL teardown repair (2026-10-25)
+
+Scope: tests/platform-composition.test.ts, the directly owned development
+cluster in apps/local/src/development-database.ts, and this record. Base revision
+is `55cbdb125b8a5fcf4b7f126ae447749bf2bcd94a`. Runtime composition, external
+PostgreSQL semantics, signal handling, leases, schemas, dependencies, storage
+engines and delivery policy are unchanged. All original test bodies/assertions
+are byte-for-byte unchanged. No protected paths changed.
+
+The initial CI-log access blocker was resolved by the controller supplying
+`/tmp/issue61-ci-failed.log`. Read it before implementing the repair. The offline,
+non-root Linux gate passed formatting, SDK drift and TypeScript, then failed
+with 420/421 runtime tests passing, zero skips. Its sole failure was the default
+composition test at line 40, with `terminating connection due to administrator
+command` and the pg-protocol parser stack. Startup had reached readiness.
+Python/build/starter stages were not reached in that failed CI run. Log contents
+were used as diagnostic evidence only; no credential files were inspected.
+
+Read the accepted core/security/runtime contracts, production acceptance,
+development setup and database lifecycle documentation. Inspected runtime entry
+points and all runProcess/startDevelopmentDatabase callers, composition cleanup,
+Jobs loops/stop, schema release, embedded-postgres stop and exit-hook ownership,
+and pg pool/client teardown. Runtime already waits for startup, listeners, jobs,
+schema release and pool.end() before stopping its development cluster. External
+mode has no cluster owner. The defect is in assuming pool.end() means every
+socket is disconnected: pg-pool removes idle clients from its tracked list
+before their asynchronous end callbacks finish.
+
+Local evidence matched the CI signature:
+
+- Baseline focused test passed both tests, but temporary instrumentation recorded
+  pool.end requested; three client.end requests; pool.end resolved; cluster.stop
+  requested; then three client end events (`/tmp/issue-61-ordering.log`).
+- Temporarily delaying client disconnect by 100 ms reproduced the same test
+  failure and PostgreSQL error/parser stack (`/tmp/issue-61-reproduction.log`).
+  This was diagnostic fault injection only. No timeout or retry was added to
+  the final tests. All temporary logging/delay instrumentation was removed.
+- The initial unchanged `pnpm check` passed 421/421 runtime tests and 14 Python
+  tests (`/tmp/issue-61-check.log`), which did not rule out this teardown race.
+
+The development database owner now tracks each connected client until its real
+`end` event, removes completed promises, and waits for remaining disconnects
+before invoking embedded cluster stop. The existing caller still drains and
+ends its pool first. Tracking begins at connection time so clients already
+removed from the pool are covered. There is no error suppression or alteration
+to persistent paths, initialization or external PostgreSQL behavior.
+
+The added regression uses a real disposable PostgreSQL cluster and two real
+clients, holding their end calls with explicit barriers. One client is removed
+before pool.end(), the other is idle. It proves pool.totalCount can reach zero
+while both disconnects remain pending, checks cluster stop has not been requested,
+queries real persisted data while waiting, releases the idle client first and
+proves the removed client still prevents shutdown. Both end events must precede
+the stop request. A transparent stop wrapper waits for cleanup even on the old
+ordering, without suppressing errors or allowing the ordering assertion to pass.
+A real restart verifies the marker persists. No mock substitutes for SQL or
+cluster start/stop, and no live installation is used.
+
+Validation:
+
+- The final regression against the original development-database.ts exits 1 at
+  `cluster stop must wait for actual client disconnections` (actual 1, expected
+  0); the two original tests pass (`/tmp/issue-61-regression-red-final.log`).
+- With the repair, all three focused tests pass, zero skips
+  (`/tmp/issue-61-regression-green.log`). Six further runs in two batches of
+  three concurrent processes all exit 0, with three tests passing in each and
+  no skips (`/tmp/issue-61-repeat-1.log` through `-6.log`). Fixed run counts;
+  no retry-until-pass behavior.
+- `pnpm format` and `git diff --check` passed. The complete repaired `pnpm
+  check` exited 1: formatting, SDK drift and TypeScript passed; 421/422 runtime
+  tests passed, zero skips (156.84 seconds). Both the new regression and the
+  original composition test passed. The sole failure is
+  `tests/api-only-process.integration.test.ts:78`: `TypeError: fetch failed`,
+  caused by `read ECONNRESET` (`/tmp/issue-61-repair-check.log`). The fixed-count
+  focused batches overlapped the beginning of this gate; the log does not
+  establish the cause of the reset. It must not be dismissed as transient.
+- The runtime failure prevented the gate's downstream stages from executing.
+  Ran `pnpm check:python && pnpm build && pnpm check:starter` separately: exit 0,
+  including Python formatting/validation and all 14 Python tests, both builds,
+  and starter type/build/hosting verification. These passes do not override the
+  failed full gate.
+
+Remaining blocker: diagnose the API-only integration connection reset in an
+explicitly authorized follow-up. That test is outside issue #61's allowed files;
+no changes or retries were made to obtain a green gate. The scoped lifecycle
+repair and deterministic regression are complete locally, but issue acceptance
+and roadmap resumption remain blocked by the failed complete quality gate and
+independent validation/review requirements.
+
+Environment: non-root Linux, Node 24.21.0, pnpm 11.25.0, repository-local Python
+3.11.17. Independent-environment validation, clean independent review, current
+main integration, exact-head Linux CI and merged-main validation remain
+unverified controller gates. No publication, commits, live operations, external
+contacts or paid model calls were performed. Changes remain uncommitted.
