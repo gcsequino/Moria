@@ -1,3 +1,8 @@
+import {
+  scopedObjects,
+  scopedRows,
+  type ScopedObject,
+} from '../../../workers/iceberg/scoped-read.js';
 import { authorize } from '../../../packages/authorization/src/access.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 import type { SessionContext } from '../../ontology/src/service.js';
@@ -58,6 +63,8 @@ export interface CatalogStorageBinding {
   readonly tableId: string;
   /** Required for publication; service-owned Iceberg table UUID, never request-selected. */
   readonly icebergTableUuid?: string;
+  /** Exact immutable engine names, supplied only by trusted service composition. */
+  readonly readObjects?: readonly ScopedObject[];
   /** Must compose an existing createAuthorized*Storage adapter with these arguments. */
   readonly storage: (
     scope: StorageAuthorityScope,
@@ -99,7 +106,14 @@ export class CatalogStorage {
         throw new StorageError('INVALID_INPUT');
       }
       keys.add(key);
-      return Object.freeze({ ...binding, markings: Object.freeze([...binding.markings]) });
+      return Object.freeze({
+        ...binding,
+        markings: Object.freeze([...binding.markings]),
+        readObjects:
+          binding.readObjects === undefined
+            ? undefined
+            : scopedObjects(binding.readObjects, binding.warehouseId, binding.tableId),
+      });
     });
   }
 
@@ -285,11 +299,117 @@ export class CatalogStorage {
     return catalog.publish(publication, checkSession);
   }
 
+  async readRows(
+    authenticated: SessionContext,
+    dataset: string,
+    options: { signal?: AbortSignal; timeoutMs?: number } = {},
+  ) {
+    options = Object.freeze({ ...options });
+    const signal = transferSignal(options);
+    const timeout = options.timeoutMs ?? 60000;
+    if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 60000) {
+      throw new StorageError('INVALID_INPUT');
+    }
+    cancelled(signal);
+    const controller = new AbortController();
+    const stop = () => {
+      controller.abort();
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', stop);
+    };
+    const timer = setTimeout(stop, timeout);
+    signal?.addEventListener('abort', stop, { once: true });
+    try {
+      let onAbort: (() => void) | undefined;
+      const aborted = new Promise<never>((_resolve, reject) => {
+        onAbort = () => reject(new StorageError('CANCELLED'));
+        controller.signal.addEventListener('abort', onAbort, { once: true });
+      });
+      let pinned;
+      try {
+        // Observe the entire open even after cancellation: Catalog.transaction
+        // retains its client until rollback/unlock/release have safely completed.
+        pinned = await Promise.race([
+          this.openRead(authenticated, dataset, controller.signal),
+          aborted,
+        ]);
+        cancelled(controller.signal);
+      } finally {
+        if (onAbort) controller.signal.removeEventListener('abort', onAbort);
+      }
+      const { binding, current, logical, storage, ...provenance } = pinned;
+      if (!binding.icebergTableUuid || !binding.readObjects) {
+        throw new StorageError('BINDING_MISMATCH');
+      }
+      const rows = scopedRows(
+        {
+          metadata: (signal) => storage.read(logical, { signal }),
+          snapshotId: pinned.snapshotId,
+          tableUuid: binding.icebergTableUuid,
+          objects: binding.readObjects,
+          check: async (signal) => {
+            await current.checkCurrent({ location: logical, operation: 'read' }, signal);
+          },
+          read: async (object, offset, length, signal) => {
+            const storage = await binding.storage(
+              Object.freeze({
+                location: object.location,
+                operations: Object.freeze(['read'] as const),
+              }),
+              current,
+            );
+            return storage.read(object.location, { range: { offset, length }, signal });
+          },
+        },
+        { ...options, signal: controller.signal },
+      );
+      // Own cleanup even when return/throw happens before the generator starts.
+      const iterator = {
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+        async next() {
+          try {
+            const result = await rows.next();
+            if (result.done) stop();
+            return result;
+          } catch (error) {
+            stop();
+            throw error;
+          }
+        },
+        async return(value?: void) {
+          stop();
+          return rows.return(value);
+        },
+        async throw(error?: unknown) {
+          stop();
+          return rows.throw(error);
+        },
+      };
+      return Object.freeze({ ...provenance, rows: iterator });
+    } catch (error) {
+      stop();
+      throw error;
+    }
+  }
+
   async read(
     authenticated: SessionContext,
     dataset: string,
     signal?: AbortSignal,
   ): Promise<PublishedMetadata> {
+    const {
+      binding: _binding,
+      current: _current,
+      logical,
+      storage,
+      ...published
+    } = await this.openRead(authenticated, dataset, signal);
+    return Object.freeze({ ...published, stream: await storage.read(logical, { signal }) });
+  }
+
+  private async openRead(authenticated: SessionContext, dataset: string, signal?: AbortSignal) {
     signal = transferSignal({ signal });
     cancelled(signal);
     // Snapshot trusted authentication before the first await; callers cannot retarget a stream.
@@ -308,6 +428,7 @@ export class CatalogStorage {
       session.principal,
       session.application,
     );
+    cancelled(signal);
     authorize(state.identity, dataset, 'read', binding.markings);
     const catalog = this.authority.catalog;
     const checkSession = async (client: import('pg').PoolClient) => {
@@ -322,7 +443,9 @@ export class CatalogStorage {
     };
     const pinned = await catalog.transaction(
       async (client) => {
+        cancelled(signal);
         await checkSession(client);
+        cancelled(signal);
         // One MVCC statement resolves both pointers, including equality of snapshot and location.
         const result = await client.query<{
           revision: string;
@@ -352,9 +475,19 @@ export class CatalogStorage {
       throw new StorageError('BINDING_MISMATCH');
     }
     const current: TrustedStorageAuthority = {
-      checkCurrent: async () => {
+      checkCurrent: async (_request, signal) => {
+        cancelled(signal);
         // A new transaction per check observes current revocation, expiry and policy epoch.
-        await catalog.transaction(checkSession, session.environment, 'repeatable-read', 'shared');
+        await catalog.transaction(
+          async (client) => {
+            cancelled(signal);
+            await checkSession(client);
+          },
+          session.environment,
+          'repeatable-read',
+          'shared',
+        );
+        cancelled(signal);
         return true;
       },
     };
@@ -366,14 +499,17 @@ export class CatalogStorage {
       Object.freeze({ location: logical, operations: Object.freeze(['read'] as const) }),
       current,
     );
-    const stream = await storage.read(logical, { signal });
+    cancelled(signal);
     return Object.freeze({
       environment: session.environment,
       dataset,
       revision: pinned.revision,
       snapshotId: pinned.snapshotId,
       execution: pinned.execution,
-      stream,
+      storage,
+      binding,
+      current,
+      logical,
     });
   }
 }

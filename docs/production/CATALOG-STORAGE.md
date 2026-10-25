@@ -181,3 +181,54 @@ completion, cancellation, session/epoch changes, stale/replaced leases, head and
 checkpoint conflicts, competing publication, acknowledgment retry and conflicting
 retry. Controller-owned independent review, exact-head Linux CI and current-main
 integration remain required before acceptance.
+
+## Additive scoped engine read (#56, dependent on #49)
+
+The metadata-only limitation above still applies to `read`. The separate trusted
+`readRows` seam now composes the same pin/Authority resolution with PyIceberg
+0.12.0 and PyArrow 26.0.0 through read-only scoped FileIO. It returns pinned
+`environment`, `dataset`, `revision`, `snapshotId`, `execution` and an async rows
+iterator. It does not repin on later publication. No current runtime/indexer or
+physical-path worker is switched to this entrypoint.
+
+Service-owned `readObjects` binds every permitted engine name to an exact logical
+warehouse/table/object and immutable size. Only canonical `moria://` names under
+the bound table are admitted; the inventory is copied, validated and frozen.
+Metadata publication does not create this inventory or upload data objects.
+Trusted composition must supply the real immutable objects and mappings; mapping
+retention/discovery and production writer adoption remain later work. Missing,
+foreign, physical-path and provider URL references fail closed. No second catalog
+or policy authority is introduced: PyIceberg's NoopCatalog cannot publish, and
+PostgreSQL remains the provenance authority.
+
+Parent-only scoped adapters perform metadata and range IO, with fresh authority
+transactions on access/release. Rows receive an additional current-authority check
+before release. The read deadline starts at `readRows`, covers initial catalog
+pinning and remains active through iterator completion, including time paused
+before the first row. Pinning and scan authority waits are abortable with that
+deadline signal as well as caller cancellation; late results cannot start storage
+IO or release rows. Iterator return/throw also cleans up before the first next call.
+The underlying catalog transaction retains ownership of SQL cleanup and can
+remain pending until contention clears or its existing lock timeout expires.
+No provider initialization/network IO occurs in a catalog SQL
+transaction. The worker receives no storage or DB credentials. See the
+[worker documentation](../../workers/iceberg/README.md#scoped-pinned-snapshot-reader-56)
+for the exact protocol, process lifecycle, limits and supported feature envelope.
+This is Dataset-level access, not query row-policy enforcement, unrestricted
+Iceberg/Spark support, arbitrary-code isolation, production capacity or runtime
+rollout. Database timeout configuration remains an operational obligation.
+
+`tests/iceberg-scoped-storage.integration.test.ts` uses disposable PostgreSQL,
+real PyIceberg-generated v2 manifests and Parquet, real local storage and the
+existing pinned loopback MinIO fixture. The fixture writer preserves logical
+names inside standard Iceberg files; the reader cannot access its physical files.
+Coverage includes exact scalar rows across multiple data files, range offsets,
+pinned provenance across a competing publication, table/reference denial,
+revocation/expiry, cancellation, return, deadline and child failure. Real PostgreSQL
+environment-lock contention tests check cancellation/deadline settlement and child
+and listener cleanup before unlocking, then connection/lock cleanup after unlocking.
+Oversized
+real Parquet rows exercise the frame rejection path. No mock-only storage or
+transaction proof replaces the existing suites. Independent-environment checks,
+clean independent review, current-main integration and Linux CI on the exact
+revision remain mandatory before acceptance; #17 remains open.

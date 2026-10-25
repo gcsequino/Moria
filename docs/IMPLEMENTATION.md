@@ -849,6 +849,51 @@ application builds and starter checks passed. Required local runtime infrastruct
 was available. Evidence: `/tmp/issue-47-guidance-check.log`.
 Final `git diff --check` passed; only the two scoped files above differ from HEAD.
 
+## Issue #56 — scoped pinned Iceberg snapshot reads (October 25, 2026)
+
+Bounded scope: additive CatalogStorage trusted reader composition, dedicated
+TypeScript/Python scoped readers, disposable Iceberg fixtures/integration tests,
+and storage/worker documentation. Dependencies are the existing #49 catalog pin
+and publication integration, Authority and authorized StreamingStorage adapters,
+PyIceberg 0.12.0 and PyArrow 26.0.0. No dependencies, schemas, adapter internals,
+protected delivery paths or existing runtime consumers changed.
+
+The implementation pins existing catalog provenance, uses exact immutable
+service-owned reference mappings, mediates every manifest/Parquet range in the
+parent, and checks current authority before releasing rows. The fixed Python
+entrypoint has an allowlisted environment, serialized bounded IPC, process memory
+and CPU limits, bounded row frames and deterministic child cleanup. The initial
+fixture run exposed physical names in fixture output handles; those handles now
+preserve logical names in genuine Iceberg manifests. A malformed-reference test
+was corrected to target the current snapshot's manifest list as well as retained
+history. Neither finding was resolved by relaxing reader denial.
+
+Verification on the uncommitted working tree based on
+`c531f72e19b8d557e12160eb4a4e5ed16591c77d`, non-root Linux, Node 24.21.0,
+pnpm 11.25.0 and workspace Python 3.11.17:
+
+- `pnpm typecheck` passed.
+- `pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed
+  all 27 cases, zero skips, using disposable PostgreSQL and both real adapters.
+  Synthetic inputs include two 150-row files with exact int64/decimal/date/time/
+  array values, a competing retained snapshot and a row exceeding the frame limit.
+- `pnpm format` and `.venv/bin/python -m black workers benchmarks docs/spec/schemas
+  tests/fixtures/iceberg-scoped-storage` completed; fixture Black check passed.
+- Full `pnpm check` passed: 444 tests, zero failures/cancellations/skips, plus
+  formatting, SDK drift, TypeScript, Python/spec validation, both application
+  builds and starter build/hosting smoke. Local command output is retained at
+  `/tmp/issue-56-check.log` for this workspace session.
+- `git diff --check` passed. Only the issue's allowed source/test/documentation
+  paths are changed; existing physical-path and storage regressions remain intact.
+
+Limits: fixture-scale unpartitioned, unsorted v2 Parquet snapshots with no deletes;
+no query row policy, arbitrary-code isolation, production capacity or runtime
+rollout claim. Mapping provisioning and immutable retention are trusted composition
+obligations. Database waits remain cooperative. Independent-environment execution,
+clean independent review, current-main integration and Linux CI on the exact head
+are unverified here and remain controller/human gates. #17 remains open. Changes
+are left uncommitted; no publication, deployment or live-installation work occurs.
+
 ## Issue #55 — independent static-host lifecycle
 
 Scope: standalone `apps/local/src/static-host.ts`, a shared static listener used
@@ -921,6 +966,73 @@ record. Existing staged issue work is preserved. No protected paths were changed
 and no credential files were accessed. Independent-environment validation, independent review,
 current-main integration and exact-revision Linux quality CI remain unverified
 controller gates. #14/M1 remains open; changes are uncommitted.
+
+### Issue #56 authority-wait repair — October 25, 2026
+
+Confirmed the scoped reader awaited current authority without an abort race and
+passed only the caller signal through CatalogStorage, omitting the engine's
+internal deadline. Scoped authority checks now race the combined scan signal,
+remove their abort listener on every outcome, observe late promise rejection and
+recheck cancellation before allowing output. CatalogStorage forwards that signal
+and denies cancelled checks before/after its current-authority transaction and
+before session validation when a blocked transaction resumes. No authorization
+failure becomes permission to read. Existing catalog transaction ownership,
+physical-path readers, adapters, dependencies and protected paths are unchanged.
+
+Added real PostgreSQL environment advisory-lock contention cases for both local
+and isolated S3 storage, before worker startup and with buffered rows. Each test
+observes an actually blocked authority backend, then verifies deadline or caller
+cancellation rejects pending iteration and completes iterator return while the
+lock remains held. It checks no further storage opens, no remaining child or
+caller abort listener, and then releases the lock and verifies pool and advisory
+lock cleanup. The underlying catalog transaction is not forcibly cancelled: its
+connection drains after lock release or the existing lock timeout. Initial
+catalog pinning precedes the engine deadline; deployment database/pool timeouts
+remain required. This repair does not claim general database cancellation.
+
+Validation: `pnpm format`, `pnpm typecheck` and `git diff --check` passed.
+`pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed
+all 35 tests with no skips, including eight real contention cases
+(log: `/tmp/issue-56-repair-targeted.log`). Full `pnpm check` exited 0:
+all 455 runtime tests passed with zero failures/skips, plus formatting, SDK drift,
+TypeScript, Python formatting/specification/workload checks using the workspace
+`.venv`, both application builds and Station Explorer type/build/hosting checks
+(log: `/tmp/issue-56-repair-check.log`). Required local infrastructure was available.
+Final `git diff --check` passed.
+Independent-environment checks, clean independent review, current-main integration
+and exact-revision Linux CI remain mandatory unverified controller gates. #17
+remains open. Changes remain uncommitted; no credential files were accessed.
+
+### Issue #56 post-exit authority-wait repair — October 25, 2026
+
+Confirmed that successful child close removed the engine deadline timer and caller
+abort listener before the final authority check. Their lifetime now extends through
+that check to the existing iterator cleanup. No authority or storage semantics,
+dependencies, protected paths or existing consumers change.
+
+Extended the real PostgreSQL contention regressions to the post-exit phase for
+local and isolated pinned S3 storage. A test-only transaction wrapper acquires an
+exclusive environment lock once the actual reader child has exited, then delegates
+to the real catalog transaction. Tests observe the blocked PostgreSQL backend and
+require deadline/cancellation rejection, iterator completion, no further storage
+opens and child/listener cleanup before unlocking. Pool and advisory-lock cleanup
+are checked after unlocking. The underlying SQL transaction still drains after
+contention clears; this is not general database cancellation.
+
+Before the repair, all four new post-exit cases failed with missing expected
+rejection (log: `/tmp/issue-56-post-exit-before.log`). After the repair,
+`pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed all
+39 tests with zero failures/skips (log: `/tmp/issue-56-post-exit-targeted.log`).
+`pnpm format`, `pnpm typecheck` and `git diff --check` passed. Full `pnpm check`
+exited 0: all 459 runtime tests passed with zero failures/skips, plus formatting,
+SDK drift, TypeScript, Python formatting/specification/workload checks using the
+workspace `.venv`, both application builds and Station Explorer type/build/hosting
+checks (log: `/tmp/issue-56-post-exit-check.log`). Required local infrastructure
+was available. Final `git diff --check` passed.
+
+Independent-environment validation, clean independent review, current-main
+integration and exact-revision Linux CI remain unverified controller gates; #17
+remains open. Changes are left uncommitted.
 
 
 ## Issue #58 — API-only management artifact lifecycle separation (2026-10-25)
@@ -1073,3 +1185,44 @@ Environment: non-root Linux, Node 24.21.0, pnpm 11.25.0, repository-local Python
 main integration, exact-head Linux CI and merged-main validation remain
 unverified controller gates. No publication, commits, live operations, external
 contacts or paid model calls were performed. Changes remain uncommitted.
+
+
+## Issue #56 — final focused initial-pinning cancellation pass (2026-10-25)
+
+Scope is the trusted readRows lifecycle in services/catalog/src/storage.ts,
+real PostgreSQL regressions in tests/iceberg-scoped-storage.integration.test.ts,
+and scoped-reader documentation. Accepted C04 exact-snapshot and S06 current
+release authority contracts remain unchanged. No protected paths, dependencies,
+schemas, storage adapters, physical-path readers or runtime adoption changed.
+
+The read deadline and caller cancellation now cover initial catalog pinning,
+starting at readRows invocation and continuing through iterator completion.
+Initial openRead races cancellation while retaining an observer of its eventual
+result. Catalog.transaction retains ownership of rollback, advisory unlock and
+client release; cancellation checkpoints prevent late pinning from initializing
+storage. The iterator owns timer/listener cleanup on completion, error, return
+and throw, including return/throw before its first pull. Existing startup,
+buffered-row and post-child-exit cancellation/deadline guards remain in place.
+
+Added real PostgreSQL advisory-lock regressions for caller cancellation and
+deadline on both local and isolated pinned S3 fixtures. They require CANCELLED
+before unlocking, confirm the backend is still blocked, verify no storage/child
+startup and caller-listener cleanup, then verify pool/lock drainage and no late
+storage startup after unlocking. Additional iterator regressions cover return
+and throw before first pull and normal exhaustion. The existing one-millisecond
+deadline assertion now covers rejection during either initial pinning or first
+pull and requires the CANCELLED code.
+
+Validation: pnpm format passed. Full pnpm check exited 0 in the provided
+non-root Linux checkout with Node 24.21.0, pnpm 11.25.0 and workspace Python
+3.11.17. Formatting, SDK drift, TypeScript, all 471 runtime tests (zero failures
+or skips; 248.79 seconds), Python formatting/schema validation and all 14 Python
+tests, both builds and starter verification passed. Both local and isolated S3
+initial-pinning regressions rejected before unlock and passed drainage assertions;
+all existing startup/buffered-row/post-exit cancellation tests passed. Raw gate
+output is /tmp/issue-56-final-check.log; formatting output is
+/tmp/issue-56-final-format.log. git diff --check passed.
+Independent-environment verification, clean independent review, current-main
+integration and exact-head Linux CI remain controller gates and are unverified.
+No commits, publication, live infrastructure or external contacts; #17 remains
+open and changes remain uncommitted.
