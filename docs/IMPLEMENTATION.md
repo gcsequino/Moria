@@ -570,3 +570,158 @@ unverified controller-owned gates. Changes
 remain uncommitted; no publication, merge, deployment or live data operation was
 performed. Historical Snow fixtures and the remaining retirement scope are
 unchanged.
+
+## Issue #53 — deterministic local lease supervision regression
+
+Scope is limited to `local lease supervision renews a live fence and aborts on
+replacement` in `tests/sql.integration.test.ts` and this record. Baseline:
+`42491b01e691802becbc4fbf57eb706f84e487b9`, branch `delivery/issue-53`.
+Read `withLease`, `Catalog.claim`/`renew`, the indexing supervision caller,
+accepted C04/R01 contracts and production acceptance obligations before changing
+the test. No production semantics, schemas, deadlines, dependencies, delivery
+policy, protected paths or other tests changed. The #37 repair loop remains
+stopped; #47/#50 remain blocked pending this repair's merge and integration.
+
+Diagnosis on October 25, 2026 used the original test with temporary observation
+of real `Catalog.renew` and a synthetic 1100 ms event-loop stall at work entry.
+Command: `pnpm exec tsx --test --test-name-pattern='^local lease supervision renews a live fence and aborts on replacement$' tests/sql.integration.test.ts`.
+Recorded execution order in `/tmp/issue-53-race.log`:
+
+- Startup renewal began at 0.155 ms and succeeded at 1.325 ms.
+- Work entered; the event loop resumed at 1101.619 ms after the injected stall.
+- The scheduled renewal began at 1101.922 ms and failed at 1105.303 ms with
+  `MoriaError: Worker lease expired or was replaced`, code `LEASE_LOST`, at
+  `services/catalog/src/catalog.ts:170`.
+- The test failed before replacement was attempted (one failure, zero skips).
+
+This reproduces the expiry mechanism under controlled scheduling starvation,
+not a captured historical full-suite failure. A one-second PostgreSQL lease
+expires against `clock_timestamp()` while a 333 ms Node timer can be delayed
+past that expiry under contention. Renewal correctly rejects that expired
+lease. The original 2200 ms and 450 ms sleeps neither synchronize SQL completion
+nor reserve the event loop. A `LEASE_LOST` after actual replacement or expiry is
+required behavior, not automatically a flaky error. Diagnostic instrumentation
+and the synthetic stall were removed.
+
+The regression now controls only Node `setTimeout`, leaving PostgreSQL time and
+all Catalog operations real. It uses the existing 60-second default lease and
+unchanged 15-second test timeout. A call-through Node spy observes each renewal
+promise; after SQL completion an unmocked `setImmediate` turn lets supervision
+schedule its successor or propagate cancellation before the next controlled
+tick. Four 20-second ticks each require exactly one renewal with the original
+execution/worker/fence and default duration. Before each tick, SQL sets the
+synthetic row's expiry to 30 seconds ahead (longer than the entire test timeout)
+so every renewal must observably extend it. Assertions check SQL liveness,
+strict expiry extension and exact worker/fence, rather than relying on timestamp
+rounding or wall-clock sleeps. Work completion must remove the timer and preserve
+the exact SQL expiry through another 40 seconds of controlled scheduling.
+
+Replacement is ordered explicitly: expire the original row, claim through
+Catalog, assert the live replacement and fence increment of exactly one, then
+advance the old worker's renewal. It must abort with `LEASE_LOST` without changing
+the replacement row. Stale startup is rejected. A separate expired-start probe
+uses the current replacement worker/fence and verifies `LEASE_LOST`, no entry to
+work and no resurrection or mutation of the expired row. This distinguishes
+expiry from fencing replacement with real SQL effects.
+
+Validation uses non-root Linux, Node 24.21.0, pnpm 11.25.0, workspace `.venv`
+Python 3.11.17 and disposable embedded PostgreSQL with synthetic data. No model
+inference is needed. Initial focused validation passed. Initial `pnpm typecheck`
+reported TS2769 because the spy's return type permits undefined; an explicit
+assertion now requires the actual Catalog promise before awaiting it. Twelve
+focused runs before that additional assertion passed, four concurrent fresh
+processes/databases at a time, with no retries, failures or skips. Final repeated
+validation and the complete gate are recorded below.
+
+Limitations: this checkout has no local `main` or remote-tracking refs, so current
+main freshness is unverified. Independent-environment full validation and
+independent assertion review are not established by same-host repeated tests.
+Those gates, Linux quality CI on the exact published head, current-main
+integration and merged-main validation remain mandatory controller-owned work.
+No commit, push, PR, merge, deployment, live-data operation or external contact
+was performed. Changes remain uncommitted; this record does not unblock #47/#50.
+
+Executed validation:
+
+- `pnpm format`: passed with changes confined to the scoped test. Initial
+  `pnpm typecheck` failed as described above; the complete gate subsequently
+  passed TypeScript checking.
+- The focused command above ran another twelve times after the promise assertion,
+  using Python `ThreadPoolExecutor(max_workers=4)` to launch twelve independent
+  `subprocess.run` calls (no retry). All twelve exited 0 with one test passed,
+  zero failures/cancellations/skips each. These runs overlapped `pnpm check`.
+  Evidence: `/tmp/issue-53-final-repeat-{1..12}.log`; the preceding batch is
+  `/tmp/issue-53-repeat-{1..12}.log`.
+- First full `pnpm check`: exit 0, 374 runtime tests passed, zero failures,
+  cancellations or skips; runtime test duration 115.906 seconds. Formatting,
+  SDK drift, TypeScript, Python formatting/specification/workload checks,
+  application builds and starter checks all passed. Evidence:
+  `/tmp/issue-53-check.log`. All required local runtime infrastructure was
+  available. After expanding the observer's if/else into readable blocks, the
+  complete gate was run again on the final source; result follows below.
+- `git diff --check`: passed. No protected paths changed.
+
+Final-source `pnpm format` and `pnpm check` both exited 0. The final gate passed
+374 runtime tests with zero failures/cancellations/skips in 99.111 seconds,
+including the revised real-PostgreSQL regression; all other gate stages passed.
+Evidence: `/tmp/issue-53-final-format.log` and `/tmp/issue-53-final-check.log`.
+The two complete gates ran in this implementation environment; neither is
+claimed as independent-environment validation or an independent review.
+
+### Issue #53 verification repair — October 25, 2026
+
+Verified the review finding against `withLease` and its actual Catalog and
+indexer callers: after abort, the callback catch replaces any callback error
+with `signal.reason`. An assertion inside that callback can therefore be
+misclassified as the expected `LEASE_LOST`. The existing expiry diagnostic log
+was also inspected; its recorded SQL failure precedes replacement, as described
+above. No production defect or change to lease semantics is required.
+
+The replacement phase now uses explicit work-entry and work-completion promises.
+All replacement, renewal-barrier and post-abort assertions execute outside the
+callback. The captured replacement snapshot is compared after supervision rejects
+with `LEASE_LOST`, including its exact expiry, worker and fence. Cleanup releases
+and drains work even when an assertion fails, preserving the original assertion
+error. The live-renewal, stopped-timer, stale-start and expired-start checks and
+15-second timeout remain intact. Changes remain limited to the scoped test and
+this record.
+
+Validation commands and evidence:
+
+- `pnpm format`: exit 0 (`/tmp/issue-53-review-format.log`).
+- `pnpm exec tsx --test --test-name-pattern='^local lease supervision renews a live fence and aborts on replacement$' tests/sql.integration.test.ts`:
+  exit 0, one pass, zero failures/cancellations/skips
+  (`/tmp/issue-53-review-focused.log`).
+- The same focused command ran twelve times via workspace `.venv/bin/python`,
+  `ThreadPoolExecutor(max_workers=4)` and independent `subprocess.run` calls,
+  overlapping the complete gate. All twelve exited 0, each with one pass and
+  zero failures/cancellations/skips. No retries. Logs:
+  `/tmp/issue-53-review-repeat-{1..12}.log`.
+- Temporary test copies at `tests/.issue-53-negative.ts` used the same focused
+  command with that path. The staged pre-repair test passed despite replacing
+  the expected replacement snapshot with an intentionally wrong object (exit 0).
+  The repaired test rejected that mutation (exit 1, `ERR_ASSERTION`). Separate
+  mutations forcing unconditional assertion failures at the post-abort check
+  and inside the lost-renewal barrier also exited 1 with `ERR_ASSERTION`, rather
+  than being accepted as `LEASE_LOST`. Logs:
+  `/tmp/issue-53-review-negative-{baseline-row,repaired-row,repaired-abort,repaired-barrier}.log`.
+  Temporary copies were removed; the actual test was not mutated.
+
+These checks use real disposable PostgreSQL and synthetic data on the same
+non-root Linux host and workspace `.venv`; no model smoke test is needed. They
+are not independent-environment validation or independent review. This checkout
+still has only `delivery/issue-53` at baseline
+`42491b01e691802becbc4fbf57eb706f84e487b9`; current-main freshness cannot be verified
+from local refs. Independent validation/review, exact-head Linux quality CI,
+current-main integration and merged-main validation remain outstanding and
+controller-owned. No publication or merge was performed; #47/#50 remain blocked.
+
+Full `pnpm check` on the repaired source exited 0: 374 runtime tests passed,
+zero failures/cancellations/skips, runtime duration 108.864 seconds. Formatting,
+SDK drift, TypeScript, Python formatting/specification/workload validation,
+both application builds and starter checks passed. Evidence:
+`/tmp/issue-53-review-check.log`. Required local runtime infrastructure was
+available; independent-environment runtime validation remains unverified.
+Final `git diff --check` passed. Only the authorized test and this record differ
+from HEAD; no protected paths changed. Changes are left uncommitted for the
+controller, preserving the pre-existing staged changes.
