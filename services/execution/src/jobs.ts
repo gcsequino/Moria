@@ -16,8 +16,7 @@ type Guard = (client: PoolClient) => Promise<void>;
 /** Trusted, fixed-handler execution queue. No arbitrary code or URLs supplied by callers. */
 export class Jobs {
   private stopped = false;
-  private timer?: ReturnType<typeof setTimeout>;
-  private active?: Promise<void>;
+  private loops: { timer?: ReturnType<typeof setTimeout>; active?: Promise<void> }[] = [];
   constructor(
     readonly catalog: Catalog,
     readonly handlers: Record<string, JobHandler>,
@@ -40,67 +39,77 @@ export class Jobs {
       throw new MoriaError('INPUT_INVALID', 'A bounded request key is required.');
     return this.catalog.transaction(async (c) => {
       await check?.(c);
-      await c.query("SELECT pg_advisory_xact_lock(hashtextextended('moria/jobs/enqueue',0))");
-      const old = (
-        await c.query(
-          'SELECT j.* FROM moria.job_requests r JOIN moria.jobs j ON j.id=r.job_id WHERE r.request_key=$1',
-          [requestKey],
-        )
-      ).rows[0];
-      if (old) {
-        if (old.kind !== kind || JSON.stringify(old.input) !== JSON.stringify(input)) {
-          // jsonb canonical ordering differs from input; compare through PostgreSQL.
-          const same = (
-            await c.query('SELECT input=$2::jsonb AS same FROM moria.jobs WHERE id=$1', [
-              old.id,
-              JSON.stringify(input),
-            ])
-          ).rows[0].same;
-          if (old.kind !== kind || !same)
-            throw new MoriaError(
-              'IDEMPOTENCY_CONFLICT',
-              'Request key was used with different input.',
-            );
-        }
-        return this.publicJob(old);
-      }
-      const active = (
-        await c.query(
-          "SELECT * FROM moria.jobs WHERE kind=$1 AND status IN ('queued','running','retrying')",
-          [kind],
-        )
-      ).rows[0];
-      if (active) {
+      return this.enqueueInTransaction(c, kind, input, requestKey, actor);
+    });
+  }
+  private async enqueueInTransaction(
+    c: PoolClient,
+    kind: string,
+    input: unknown,
+    requestKey: string,
+    actor: string,
+  ) {
+    await c.query("SELECT pg_advisory_xact_lock(hashtextextended('moria/jobs/enqueue',0))");
+    const old = (
+      await c.query(
+        'SELECT j.* FROM moria.job_requests r JOIN moria.jobs j ON j.id=r.job_id WHERE r.request_key=$1',
+        [requestKey],
+      )
+    ).rows[0];
+    if (old) {
+      if (old.kind !== kind || JSON.stringify(old.input) !== JSON.stringify(input)) {
+        // jsonb canonical ordering differs from input; compare through PostgreSQL.
         const same = (
           await c.query('SELECT input=$2::jsonb AS same FROM moria.jobs WHERE id=$1', [
-            active.id,
+            old.id,
             JSON.stringify(input),
           ])
         ).rows[0].same;
-        if (!same)
+        if (old.kind !== kind || !same)
           throw new MoriaError(
-            'WORKLOAD_BUSY',
-            'This workload already has an active job with different input.',
+            'IDEMPOTENCY_CONFLICT',
+            'Request key was used with different input.',
           );
-        await c.query('INSERT INTO moria.job_requests(request_key,job_id) VALUES($1,$2)', [
-          requestKey,
-          active.id,
-        ]);
-        return this.publicJob(active);
       }
-      const row = (
-        await c.query(
-          'INSERT INTO moria.jobs(id,kind,input,request_key,requested_by) VALUES($1,$2,$3,$4,$5) RETURNING *',
-          [randomUUID(), kind, JSON.stringify(input), requestKey, actor],
-        )
-      ).rows[0];
+      return this.publicJob(old);
+    }
+    const active = (
+      await c.query(
+        "SELECT * FROM moria.jobs WHERE kind=$1 AND status IN ('queued','running','retrying')",
+        [kind],
+      )
+    ).rows[0];
+    if (active) {
+      const same = (
+        await c.query('SELECT input=$2::jsonb AS same FROM moria.jobs WHERE id=$1', [
+          active.id,
+          JSON.stringify(input),
+        ])
+      ).rows[0].same;
+      if (!same)
+        throw new MoriaError(
+          'WORKLOAD_BUSY',
+          'This workload already has an active job with different input.',
+        );
       await c.query('INSERT INTO moria.job_requests(request_key,job_id) VALUES($1,$2)', [
         requestKey,
-        row.id,
+        active.id,
       ]);
-      return this.publicJob(row);
-    });
+      return this.publicJob(active);
+    }
+    const row = (
+      await c.query(
+        'INSERT INTO moria.jobs(id,kind,input,request_key,requested_by) VALUES($1,$2,$3,$4,$5) RETURNING *',
+        [randomUUID(), kind, JSON.stringify(input), requestKey, actor],
+      )
+    ).rows[0];
+    await c.query('INSERT INTO moria.job_requests(request_key,job_id) VALUES($1,$2)', [
+      requestKey,
+      row.id,
+    ]);
+    return this.publicJob(row);
   }
+
   private publicJob(row: any) {
     return {
       id: row.id,
@@ -165,7 +174,42 @@ export class Jobs {
       return this.publicJob(row);
     });
   }
+  async scheduleTick() {
+    if (this.stopped) return;
+    await this.catalog.transaction(async (c) => {
+      // Row locks serialize dispatch with other schedulers and configuration updates.
+      const due = (
+        await c.query(
+          'SELECT * FROM moria.job_schedules WHERE enabled AND next_run<=clock_timestamp() AND kind=ANY($1::text[]) ORDER BY kind FOR UPDATE',
+          [Object.keys(this.handlers)],
+        )
+      ).rows;
+      for (const schedule of due) {
+        try {
+          await this.enqueueInTransaction(
+            c,
+            schedule.kind,
+            {},
+            `schedule:${schedule.kind}:${new Date(schedule.next_run).toISOString()}`,
+            'schedule',
+          );
+        } catch (error) {
+          // A configured manual refresh takes precedence over scheduled default input.
+          if (!(error instanceof MoriaError) || error.code !== 'WORKLOAD_BUSY') throw error;
+        }
+        // Enqueue and advancement commit together, coalescing missed intervals.
+        await c.query(
+          "UPDATE moria.job_schedules SET next_run=clock_timestamp()+interval_minutes*interval '1 minute' WHERE kind=$1",
+          [schedule.kind],
+        );
+      }
+    });
+  }
   async tick() {
+    await this.scheduleTick();
+    await this.workerTick();
+  }
+  async workerTick() {
     const lock = await this.catalog.pool.connect();
     let acquired = false,
       lost = false;
@@ -192,30 +236,6 @@ export class Jobs {
           [kinds],
         );
       });
-      const due = (
-        await this.catalog.pool.query(
-          'SELECT * FROM moria.job_schedules WHERE enabled AND next_run<=clock_timestamp() AND kind=ANY($1::text[])',
-          [kinds],
-        )
-      ).rows;
-      for (const schedule of due) {
-        try {
-          await this.enqueue(
-            schedule.kind,
-            {},
-            `schedule:${schedule.kind}:${new Date(schedule.next_run).toISOString()}`,
-            'schedule',
-          );
-        } catch (error) {
-          // A configured manual refresh takes precedence over the default scheduled input.
-          if (!(error instanceof MoriaError) || error.code !== 'WORKLOAD_BUSY') throw error;
-        }
-        // Coalesce missed intervals. No restart storm of old forecasts.
-        await this.catalog.pool.query(
-          "UPDATE moria.job_schedules SET next_run=clock_timestamp()+interval_minutes*interval '1 minute' WHERE kind=$1",
-          [schedule.kind],
-        );
-      }
       const fence = randomUUID();
       const row = await this.catalog.transaction(async (c) => {
         const candidate = (
@@ -349,26 +369,35 @@ export class Jobs {
       lock.release(lost ? new Error('Supervisor connection lost') : undefined);
     }
   }
-  start() {
+  start(role: 'combined' | 'scheduler' | 'worker' = 'combined') {
+    if (this.loops.length) return;
     this.stopped = false;
-    const run = () => {
-      this.active = this.tick()
-        .catch((e) =>
-          console.error(
-            'Execution supervisor failed:',
-            e instanceof MoriaError ? e.code : 'database unavailable',
-          ),
-        )
-        .finally(() => {
-          this.active = undefined;
-          if (!this.stopped) this.timer = setTimeout(run, 2000);
-        });
-    };
-    run();
+    const tasks = [];
+    if (role !== 'worker') tasks.push(() => this.scheduleTick());
+    if (role !== 'scheduler') tasks.push(() => this.workerTick());
+    for (const task of tasks) {
+      const loop: (typeof this.loops)[number] = {};
+      this.loops.push(loop);
+      const run = () => {
+        loop.active = task()
+          .catch((e) =>
+            console.error(
+              'Execution loop failed:',
+              e instanceof MoriaError ? e.code : 'database unavailable',
+            ),
+          )
+          .finally(() => {
+            loop.active = undefined;
+            if (!this.stopped) loop.timer = setTimeout(run, 2000);
+          });
+      };
+      run();
+    }
   }
   async stop() {
     this.stopped = true;
-    clearTimeout(this.timer);
-    await this.active;
+    for (const loop of this.loops) clearTimeout(loop.timer);
+    await Promise.all(this.loops.map((loop) => loop.active));
+    this.loops = [];
   }
 }

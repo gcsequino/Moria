@@ -25,16 +25,16 @@ if (pausedListen) {
 }
 
 class ObservedJobs extends Jobs {
-  override start() {
+  override start(role: 'combined' | 'scheduler' | 'worker' = 'combined') {
     process.send?.({ event: 'jobs-start' });
-    super.start();
+    super.start(role);
   }
   override async stop() {
     process.send?.({ event: 'jobs-stop' });
     await super.stop();
   }
-  override async tick() {
-    await super.tick();
+  override async workerTick() {
+    await super.workerTick();
     process.send?.({ event: 'tick' });
   }
 }

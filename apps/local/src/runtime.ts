@@ -22,7 +22,7 @@ import { loadAuthConfig } from '../../../services/security/src/auth-config.js';
 
 import { publicHosting } from '../../../services/app-host/src/public-hosting.js';
 
-export type ProcessRole = 'combined' | 'api' | 'supervisor';
+export type ProcessRole = 'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker';
 
 export async function runProcess(
   role: ProcessRole,
@@ -117,9 +117,9 @@ export async function runProcess(
     const execution = await executionFactory(catalog, snow);
     jobs = execution.jobs;
     checkStartup();
-    if (role === 'supervisor') {
-      jobs.start();
-      console.log('Moria execution supervisor ready.');
+    if (role === 'supervisor' || role === 'scheduler' || role === 'worker') {
+      jobs.start(role === 'supervisor' ? 'combined' : role);
+      console.log(`Moria execution ${role} ready.`);
       return { close, jobs };
     }
     const credentials = await localCredentials(directory);
