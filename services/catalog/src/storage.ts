@@ -15,6 +15,16 @@ import {
   type StreamingStorage,
 } from '../../storage/src/locations.js';
 
+import type { Publication, Receipt } from './catalog.js';
+import {
+  metadataBytes,
+  metadataLimit,
+  metadataObjectId,
+  metadataStream,
+  validateMetadata,
+  type MetadataPublication,
+} from './storage-publication.js';
+
 const prefix = 'moria-storage:v1:';
 
 /** Canonical encoding: duplicate keys, alternate spellings and extra fields are rejected. */
@@ -46,6 +56,8 @@ export interface CatalogStorageBinding {
   readonly markings: readonly string[];
   readonly warehouseId: string;
   readonly tableId: string;
+  /** Required for publication; service-owned Iceberg table UUID, never request-selected. */
+  readonly icebergTableUuid?: string;
   /** Must compose an existing createAuthorized*Storage adapter with these arguments. */
   readonly storage: (
     scope: StorageAuthorityScope,
@@ -89,6 +101,188 @@ export class CatalogStorage {
       keys.add(key);
       return Object.freeze({ ...binding, markings: Object.freeze([...binding.markings]) });
     });
+  }
+
+  async publish(
+    authenticated: SessionContext,
+    request: MetadataPublication,
+    signal?: AbortSignal,
+  ): Promise<Receipt> {
+    signal = transferSignal({ signal });
+    cancelled(signal);
+    const session = Object.freeze({ ...authenticated });
+    if (!session.sessionHash) {
+      throw new MoriaError('UNAUTHENTICATED', 'An authenticated session is required');
+    }
+    // Capture declarations before awaiting engine streams or authority. No caller callbacks
+    // or mutable request objects are passed to the publication transaction.
+    const exactKeys = (value: object, allowed: string[]) => {
+      if (Object.keys(value).some((key) => !allowed.includes(key))) {
+        throw new StorageError('INVALID_INPUT');
+      }
+    };
+    exactKeys(request, ['execution', 'worker', 'fence', 'lineage', 'checkpoint', 'outputs']);
+    for (const output of request.outputs) {
+      exactKeys(output, ['dataset', 'expectedRevision', 'snapshotId', 'size', 'stream']);
+    }
+    const declaration = structuredClone({
+      execution: request.execution,
+      worker: request.worker,
+      fence: request.fence,
+      lineage: request.lineage,
+      checkpoint: request.checkpoint,
+      outputs: request.outputs.map(({ stream: _stream, ...output }) => output),
+    });
+    const streams = request.outputs.map((output) => output.stream);
+    if (
+      !declaration.execution ||
+      !declaration.worker ||
+      !/^[1-9][0-9]*$/.test(declaration.fence) ||
+      declaration.outputs.length < 1 ||
+      declaration.outputs.length > 16 ||
+      new Set(declaration.outputs.map((output) => output.dataset)).size !==
+        declaration.outputs.length ||
+      declaration.outputs.some(
+        (output) =>
+          !/^[0-9]+$/.test(output.expectedRevision) ||
+          !/^[1-9][0-9]*$/.test(output.snapshotId) ||
+          !Number.isSafeInteger(output.size) ||
+          output.size < 1 ||
+          output.size > metadataLimit,
+      )
+    ) {
+      throw new StorageError('INVALID_INPUT');
+    }
+    const bindingFor = (dataset: string) => {
+      const binding = this.bindings.find(
+        (entry) => entry.environment === session.environment && entry.dataset === dataset,
+      );
+      if (!binding) {
+        throw new StorageError('AUTHORITY_DENIED');
+      }
+      return binding;
+    };
+    const bindings = declaration.outputs.map((output) => bindingFor(output.dataset));
+    if (bindings.some((binding) => !binding.icebergTableUuid)) {
+      throw new StorageError('BINDING_MISMATCH');
+    }
+    const state = await this.authority.current(
+      session.environment,
+      session.principal,
+      session.application,
+    );
+    for (const binding of bindings) {
+      authorize(state.identity, binding.dataset, 'write', binding.markings);
+    }
+    for (const dataset of Object.keys(declaration.lineage)) {
+      const input = bindingFor(dataset);
+      authorize(state.identity, dataset, 'read', input.markings);
+      if (
+        bindings.some((binding) =>
+          input.markings.some((marking) => !binding.markings.includes(marking)),
+        )
+      ) {
+        throw new StorageError('AUTHORITY_DENIED');
+      }
+    }
+    const catalog = this.authority.catalog;
+    const checkSession = async (client: import('pg').PoolClient) => {
+      cancelled(signal);
+      await this.authority.assertCurrent(
+        client,
+        session.environment,
+        session.principal,
+        session.application,
+        state.epoch,
+        session.sessionHash,
+      );
+      cancelled(signal);
+    };
+    const check = async () => {
+      await catalog.transaction(checkSession, session.environment, 'repeatable-read', 'shared');
+    };
+    const current: TrustedStorageAuthority = {
+      checkCurrent: async () => {
+        await check();
+        return true;
+      },
+    };
+    await check();
+    const candidates: {
+      binding: CatalogStorageBinding;
+      bytes: Buffer;
+      logical: StorageLocation;
+    }[] = [];
+    for (const [index, output] of declaration.outputs.entries()) {
+      const binding = bindings[index];
+      const bytes = await metadataBytes(streams[index], output.size, check, signal);
+      await validateMetadata(bytes, binding.icebergTableUuid!, output.snapshotId, signal);
+      const logical = location({
+        version: 1,
+        warehouseId: binding.warehouseId,
+        tableId: binding.tableId,
+        objectId: metadataObjectId(
+          session.environment,
+          declaration.execution,
+          output.dataset,
+          bytes,
+        ),
+      });
+      candidates.push({ binding, bytes, logical });
+    }
+    const publication: Publication = {
+      environment: session.environment,
+      execution: declaration.execution,
+      worker: declaration.worker,
+      fence: declaration.fence,
+      securityEpoch: state.epoch,
+      lineage: declaration.lineage,
+      checkpoint: declaration.checkpoint,
+      outputs: declaration.outputs.map((output, index) => ({
+        dataset: output.dataset,
+        expectedRevision: output.expectedRevision,
+        snapshotId: output.snapshotId,
+        metadataLocation: encodeMetadataLocation(candidates[index].logical),
+      })),
+    };
+    // This is only an optimization for acknowledgment retry. Catalog.publish alone
+    // validates the request hash and returns the receipt under current authority.
+    const committed = async () => {
+      await check();
+      return (
+        (
+          await catalog.pool.query(
+            'SELECT 1 FROM moria.publications WHERE environment=$1 AND execution=$2',
+            [session.environment, declaration.execution],
+          )
+        ).rowCount === 1
+      );
+    };
+    if (!(await committed())) {
+      for (const { binding, bytes, logical } of candidates) {
+        await check();
+        const storage = await binding.storage(
+          Object.freeze({ location: logical, operations: Object.freeze(['create'] as const) }),
+          current,
+        );
+        try {
+          await storage.write(logical, metadataStream(bytes), { size: bytes.length, signal });
+        } catch (error) {
+          // An object collision is never evidence of matching bytes or durability.
+          // Only an already committed catalog receipt can resolve a concurrent retry.
+          if (
+            error instanceof StorageError &&
+            error.code === 'ALREADY_EXISTS' &&
+            (await committed())
+          ) {
+            return catalog.publish(publication, checkSession);
+          }
+          throw error;
+        }
+      }
+    }
+    await check();
+    return catalog.publish(publication, checkSession);
   }
 
   async read(
