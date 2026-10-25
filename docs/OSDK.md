@@ -1,3 +1,5 @@
+> Snow examples below are retained SDK fixtures, not a working default application. Management is the only default bundle; generated Snow inputs remain until separately scoped cleanup.
+
 # Generated TypeScript OSDK
 
 Management and Snow now use generated, app-specific clients. The SDK is a browser-safe Fetch client for the hosted API. It uses same-origin cookie authentication; it does not contain keys, provider secrets, profile selectors or permissions. Generating methods never grants access: Moria still checks the current user and application on every request.

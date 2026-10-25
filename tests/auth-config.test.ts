@@ -12,8 +12,9 @@ test('Google CLI setup validates redirects, references private credentials and s
   const setup = await authCommand(['setup'], { directory });
   assert.equal(
     setup.authorizedRedirectUri,
-    `http://127.0.0.1:${process.env.MORIA_SNOTEL_PORT ?? 3211}/api/auth/callback`,
+    `http://127.0.0.1:${process.env.MORIA_PORT ?? 3210}/api/auth/callback`,
   );
+  assert.ok(setup.instructions.some((step: string) => step.includes('grant-admin')));
   const file = resolve(directory, 'download.json');
   const web = {
     client_id: 'client',
@@ -52,4 +53,50 @@ test('Google CLI setup validates redirects, references private credentials and s
   await writeFile(path, '{broken');
   await authCommand(['disable'], { directory });
   assert.deepEqual((await loadAuthConfig(directory)).providers, []);
+});
+
+test('management validates all enabled declarations but reads only required provider credentials', async () => {
+  const directory = resolve('.local', `auth-selection-${randomUUID()}`);
+  const auth = resolve(directory, 'auth');
+  await mkdir(auth, { recursive: true });
+  const provider = {
+    id: 'unused',
+    label: 'Unused',
+    issuer: 'https://identity.example.test',
+    credentialsFile: 'unavailable.json',
+    emails: ['reader@example.test'],
+  };
+  const save = async (providers: unknown[]) =>
+    writeFile(resolve(auth, 'providers.json'), JSON.stringify({ providers }));
+  await save([provider]);
+  assert.deepEqual((await loadAuthConfig(directory, 'management')).managementProviders, []);
+  await assert.rejects(loadAuthConfig(directory), /credential JSON/);
+  await save([{ ...provider, managementEmails: ['admin@example.test'] }]);
+  await assert.rejects(loadAuthConfig(directory, 'management'), /credential JSON/);
+  await save([{ ...provider, issuer: 'http://identity.example.test' }]);
+  await assert.rejects(loadAuthConfig(directory, 'management'), /HTTPS/);
+  await save([{ ...provider, managementEmails: ['invalid'] }]);
+  await assert.rejects(loadAuthConfig(directory, 'management'), /Invalid OIDC/);
+  await save([provider, provider]);
+  await assert.rejects(loadAuthConfig(directory, 'management'), /Duplicate/);
+  await writeFile(
+    resolve(auth, 'required.json'),
+    JSON.stringify({ client_id: 'synthetic', client_secret: 'synthetic' }),
+  );
+  await save([
+    provider,
+    {
+      ...provider,
+      id: 'required',
+      credentialsFile: 'required.json',
+      managementEmails: ['ADMIN@example.test'],
+    },
+  ]);
+  assert.deepEqual(
+    (await loadAuthConfig(directory, 'management')).managementProviders.map((p) => [
+      p.id,
+      p.emails,
+    ]),
+    [['required', ['admin@example.test']]],
+  );
 });

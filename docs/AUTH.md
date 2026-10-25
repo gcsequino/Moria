@@ -1,16 +1,18 @@
+> Default startup hosts management only. Run `auth grant-admin --email your-account` after configuring Google; legacy reader invitations do not grant management access. Shared provider declarations are validated, but management reads credentials only for providers with administrator invitations.
+
 # Hosted application authentication
 
-The snow and management apps use Moria-owned opaque cookie sessions. Google is the first configured OpenID Connect provider. `openid-client` handles discovery, authorization-code exchange, PKCE, state, nonce, issuer/audience/expiry validation and JWKS signature verification. No Google SDK or provider credential ships to React.
+Management and explicitly composed custom apps use Moria-owned opaque cookie sessions. Google is the first configured OpenID Connect provider. `openid-client` handles discovery, authorization-code exchange, PKCE, state, nonce, issuer/audience/expiry validation and JWKS signature verification. No Google SDK or provider credential ships to React.
 
 ## Google setup
 
 Run `pnpm moria auth setup` from the repository root for values matching the configured local port.
 
 1. Open [Google Auth Platform](https://console.cloud.google.com/auth/clients) and select or create a project. Configure Branding and Audience. While the application is in Testing, add your account as a test user.
-2. Create a **Web application** OAuth client. Register this exact redirect URI for the default port: `http://127.0.0.1:3211/api/auth/callback`. `localhost` and `127.0.0.1` are different redirect URIs. JavaScript origins are not needed for this server-side flow.
+2. Create a **Web application** OAuth client. Register this exact redirect URI for the default port: `http://127.0.0.1:3210/api/auth/callback`. `localhost` and `127.0.0.1` are different redirect URIs. JavaScript origins are not needed for this server-side flow.
 3. Download the client JSON into a private local folder, outside the repository. Do not paste its client secret into chat or commit it.
 4. Run `pnpm moria auth configure-google --config "C:\path\client.json" --email "you@gmail.com"`. The CLI checks that the downloaded Web client contains the exact callback and writes a credential-file reference and initial invitation into ignored `.local/workspace/auth/providers.json`.
-5. Restart `pnpm start`, open `http://127.0.0.1:3211/snow/`, and choose **Continue with Google**. This requests only `openid email profile`.
+5. Run `pnpm moria auth grant-admin --email "you@gmail.com"` for the explicit administrator invitation. Restart `pnpm start`, open `http://127.0.0.1:3210/`, and choose **Continue with Google**. This requests only `openid email profile`.
 
 This first invitation flow supports Gmail and Google Workspace accounts. Google accounts backed by third-party email addresses require a separate ownership-verification flow and are rejected. Google's `email_verified` alone does not establish current ownership of such addresses. See [Google's identity guidance](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token) and [OIDC setup](https://developers.google.com/identity/openid-connect/openid-connect).
 
@@ -18,11 +20,11 @@ Actual Google account sign-in is unverified until real credentials are supplied 
 
 ## Management administrators
 
-Reuse the configured Google Web client and add `http://127.0.0.1:3210/api/auth/callback` to its authorized redirect URIs, preserving the snow callback. Run `pnpm moria auth grant-admin --email "you@gmail.com"`, restart Moria, and open `http://127.0.0.1:3210/`.
+Reuse the configured Google Web client and add `http://127.0.0.1:3210/api/auth/callback` to its authorized redirect URIs, removing the retired Snow callback when appropriate. Run `pnpm moria auth grant-admin --email "you@gmail.com"`, restart Moria, and open `http://127.0.0.1:3210/`.
 
-Management invitations use a separate `managementEmails` list. Snow invitations never imply administrative access. First management sign-in creates a human principal with explicit `instance:manage`, asset read/index/source read/write and asset edit/reset operations, plus the workspace policy attributes and marking needed to manage assets. Returning sign-ins and bootstrap do not restore revoked grants. The snow application's two read scopes remain unchanged.
+Management invitations use a separate `managementEmails` list. Snow invitations never imply administrative access. First management sign-in creates a human principal with explicit `instance:manage`, asset read/index/source read/write and asset edit/reset operations, plus the workspace policy attributes and marking needed to manage assets. Returning sign-ins and bootstrap do not restore revoked grants. Default startup does not create Snow sessions.
 
-Management browser requests use `/api/management/v1/` and the shared object/action API. Each request requires current administrative authority; object/action operations also enforce this requirement against the same authorization snapshot used for the operation. Imports and snow synchronization recheck the initiating administrator before protected publication. Caller-selected profiles cannot elevate browser sessions.
+Management browser requests use `/api/management/v1/` and the shared object/action API. Each request requires current administrative authority; object/action operations also enforce this requirement against the same authorization snapshot used for the operation. Imports recheck the initiating administrator before protected publication. Caller-selected profiles cannot elevate browser sessions.
 
 ## Trust boundaries and extension points
 
@@ -47,14 +49,14 @@ Separate ports are separate browser origins but **not cookie security boundaries
 
 ## CLI recovery
 
-- `pnpm moria auth recover`: uses the private local snow recovery key to obtain a five-minute, single-use link. Opening it creates an audited, 15-minute read-only recovery session. It works without Google and never grants management or ingestion access.
+- `pnpm moria auth recover`: defaults to management recovery. Snow recovery is retired.
 - `pnpm moria auth recover --app management`: uses the private local operator credential to issue a single-use link for a 15-minute management recovery session, independently of Google. Recovery is labeled in the UI.
 - `pnpm moria auth disable`: archives provider configuration, even if malformed. Restart the instance to invalidate provider sessions, then use recovery. The configuration can be restored from the archive; users must sign in again.
-- `pnpm moria apps recover snotel` and `pnpm moria apps recover management`: rebuild and promote bundled UI assets without login or a running database. Existing application publication/rollback tools are unchanged.
-- `pnpm moria snotel sync`: retains the independent operator CLI path for ingestion.
+- `pnpm moria apps recover management`: rebuild and promote bundled UI assets without login or a running database. Existing application publication/rollback tools are unchanged.
+- Snow commands and `--app snotel` fail explicitly.
 
 Local recovery keys are never sent on ordinary browser data requests. Do not expose the local runtime as a production service. Production TLS/proxy bindings, per-user administrative UI, rate limiting, periodic expired-session cleanup, provider key rotation operations and deployment hardening remain work.
 
 ## Public origins
 
-Explicit HTTPS proxy listeners are now available alongside localhost. See [PUBLIC-HOSTING.md](PUBLIC-HOSTING.md) for the two domain callbacks and local-only recovery boundaries. Public Google sign-in requires registering those callbacks; localhost login does not transfer cookies to a public hostname.
+Explicit HTTPS proxy listeners are now available alongside localhost. See [PUBLIC-HOSTING.md](PUBLIC-HOSTING.md) for the management callback and local-only recovery boundaries. Public Google sign-in requires registering those callbacks; localhost login does not transfer cookies to a public hostname.

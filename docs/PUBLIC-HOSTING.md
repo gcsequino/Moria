@@ -1,3 +1,14 @@
+# Current management hosting
+
+Default startup accepts `MORIA_PUBLIC_ORIGIN` as an exact HTTPS origin and
+`MORIA_PUBLIC_PORT` (default 3212) for a trusted TLS proxy. Register that origin's
+`/api/auth/callback`. Recovery remains local-only. All `MORIA_SNOW_PUBLIC_*` and
+`MORIA_SNOTEL_PORT` settings fail explicitly. The historical launcher below sets
+retired options and is not compatible with current startup. No deployment or
+live configuration changes are part of issue #47.
+
+> Historical guide: the bundled Snow/weather POC is retired. Commands and configuration below describe the former composition and must not be used with current default startup. No live installation is changed by this retirement slice. See [retirement scope](production/SNOW-RETIREMENT.md).
+
 # Public HTTPS hosting
 
 Legacy installation runbook: these Windows instructions are retained for the

@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { sdk } from './client.js';
-import { OperationalHealth } from './operational-health.js';
 import type { Lineage } from './generated/index.js';
 
-type Jobs = Awaited<ReturnType<typeof sdk.endpoints.jobs>>;
+type Jobs = Awaited<ReturnType<typeof sdk.endpoints.jobs>> & { registeredKinds?: string[] };
 type Job = Jobs['jobs'][number];
 type View = 'overview' | 'assets' | 'apps' | 'executions' | 'lineage';
-const labels: Record<string, string> = { snotel: 'Snow observations', weather: 'Mountain weather' };
+const labels: Record<string, string> = {};
 function date(value: string) {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
@@ -65,7 +64,6 @@ export function Platform({
   const [selected, setSelected] = useState<string>();
   const alive = useRef(true);
   const mutation = useRef(false);
-  const requestKeys = useRef<Record<string, string>>({});
   const reload = useRef<() => Promise<void>>(async () => {});
   useEffect(() => {
     alive.current = true;
@@ -147,14 +145,6 @@ export function Platform({
       mutation.current = false;
       if (alive.current) setPending(false);
     }
-  }
-  async function sync(kind: 'snotel' | 'weather') {
-    const requestKey = (requestKeys.current[kind] ??= crypto.randomUUID());
-    const job = await (kind === 'snotel'
-      ? sdk.endpoints.syncSnow({ requestKey })
-      : sdk.endpoints.syncWeather({ requestKey }));
-    delete requestKeys.current[kind];
-    if (alive.current) setSelected(job.id);
   }
   const jobs = data?.jobs ?? [];
   const active = jobs.filter((j) => ['queued', 'running', 'retrying'].includes(j.status));
@@ -238,28 +228,13 @@ export function Platform({
               <small>In recent history</small>
             </button>
           </section>
-          {data && (
-            <OperationalHealth
-              data={data}
-              lineage={lineage}
-              lineageError={lineageError}
-              now={updated ? Date.parse(updated) : Date.now()}
-              onJob={(id) => {
-                setSelected(id);
-                setFilter('all');
-                onNavigate('executions');
-              }}
-              onLineage={() => onNavigate('lineage')}
-            />
-          )}
           <section className="panel access-panel">
             <div>
               <div className="eyebrow">YOUR ACCESS</div>
               <h2>Instance administrator</h2>
               <p>
-                You can import and edit assets, inspect applications, and manage refresh jobs. Snow
-                uses a separate read-only app scope. Every API request is authorized by the
-                instance.
+                You can import and edit assets, inspect applications, and inspect execution history.
+                Every API request is authorized by the instance.
               </p>
             </div>
             <div>
@@ -274,87 +249,14 @@ export function Platform({
         </>
       )}
       <section className="panel apps-panel">
-        <div className="panel-head">
-          <div className="eyebrow">DATA REFRESH</div>
-          <h2>Connected workloads</h2>
-          <p>
-            Run a refresh now or control its recurring schedule. Previously published data remains
-            available while a refresh runs.
-          </p>
-        </div>
-        <div className="workloads">
-          {(['snotel', 'weather'] as const).map((kind) => {
-            const schedule = data?.schedules.find((s) => s.kind === kind);
-            const last = jobs.find((j) => j.kind === kind);
-            return (
-              <article className="workload" key={kind}>
-                <div className="workload-heading">
-                  <h3>{labels[kind]}</h3>
-                  <span className="badge">
-                    {!data ? 'Loading' : schedule?.enabled ? 'Scheduled' : 'Schedule paused'}
-                  </span>
-                </div>
-                <p>
-                  {kind === 'snotel'
-                    ? 'NRCS station observations: snow depth and snow water equivalent.'
-                    : 'Weather forecasts for the configured Front Range locations.'}
-                </p>
-                <dl>
-                  <div>
-                    <dt>Frequency</dt>
-                    <dd>
-                      Every {schedule?.interval_minutes ?? (kind === 'snotel' ? 360 : 60)} minutes
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Next scheduled run</dt>
-                    <dd>{schedule?.enabled ? date(schedule.next_run) : 'Paused'}</dd>
-                  </div>
-                  <div>
-                    <dt>Latest execution</dt>
-                    <dd>
-                      {last
-                        ? `${last.status} · ${date(last.updated_at)}`
-                        : 'No executions recorded'}
-                    </dd>
-                  </div>
-                </dl>
-                <div className="edit-buttons">
-                  <button
-                    className="primary"
-                    disabled={pending || !data}
-                    onClick={() => void act(() => sync(kind), `${labels[kind]} refresh requested.`)}
-                  >
-                    Sync now
-                  </button>
-                  <button
-                    className="quiet"
-                    disabled={pending || !data}
-                    onClick={() =>
-                      void act(
-                        () => {
-                          const input = {
-                            enabled: !schedule?.enabled,
-                            intervalMinutes:
-                              schedule?.interval_minutes ?? (kind === 'snotel' ? 360 : 60),
-                          };
-                          return kind === 'snotel'
-                            ? sdk.endpoints.setSnowSchedule(input)
-                            : sdk.endpoints.setWeatherSchedule(input);
-                        },
-                        schedule?.enabled
-                          ? 'Schedule paused. Existing jobs are unchanged.'
-                          : 'Schedule enabled.',
-                      )
-                    }
-                  >
-                    {schedule?.enabled ? 'Pause schedule' : 'Enable schedule'}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <h2>Platform execution</h2>
+        <p>
+          Workloads require explicit trusted server composition. No bundled workloads are registered
+          by default. Historical jobs remain visible.
+        </p>
+        <button className="quiet" onClick={() => onNavigate('lineage')}>
+          Explore lineage
+        </button>
       </section>
       <section className="panel">
         <div className="panel-head explorer-head">
@@ -392,7 +294,7 @@ export function Platform({
             <h3>{data ? 'No matching executions yet.' : 'Waiting for execution status.'}</h3>
             <p>
               {data
-                ? 'Start a sync above, or enable a schedule.'
+                ? 'Executions from explicitly configured workloads appear here. No bundled workloads run by default.'
                 : 'The instance must authorize and return this information.'}
             </p>
           </div>
@@ -428,7 +330,10 @@ export function Platform({
               </div>
             </dl>
             {detail.error && <p className="operation-error">{detail.error}</p>}
-            {detail.status === 'failed' && (
+            {detail.status === 'failed' && !data?.registeredKinds?.includes(detail.kind) && (
+              <p>This historical workload has no registered handler. Retry is unavailable.</p>
+            )}
+            {detail.status === 'failed' && data?.registeredKinds?.includes(detail.kind) && (
               <button
                 className="primary"
                 disabled={pending}

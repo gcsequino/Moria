@@ -122,12 +122,9 @@ test(
       MORIA_DATABASE_REPLICAS: '3',
       MORIA_DATABASE_CONNECTION_BUDGET: '13',
       MORIA_PUBLIC_ORIGIN: 'https://management.example.test',
-      MORIA_SNOW_PUBLIC_ORIGIN: 'https://snow.example.test',
       MORIA_PUBLIC_PORT: String(publicPort),
-      MORIA_SNOW_PUBLIC_PORT: String(publicSnowPort),
       MORIA_LOCAL_DIR: resolve(directory, 'workspace'),
       MORIA_PORT: String(apiPort),
-      MORIA_SNOTEL_PORT: String(snowPort),
     };
     const launch = (role: string, pausedListen = false) => {
       const result = child(role, env, pausedListen);
@@ -140,7 +137,7 @@ test(
     await stop(scheduler.process);
     const due = '2020-01-01T00:00:00.000Z';
     await pool.query(
-      "UPDATE moria.job_schedules SET enabled=true,next_run=$1 WHERE kind='weather'",
+      "UPDATE moria.job_schedules SET enabled=true,next_run=$1 WHERE kind='periodic'",
       [due],
     );
     const worker = launch('worker');
@@ -149,7 +146,7 @@ test(
     assert.equal((await pool.query('SELECT count(*) FROM moria.jobs')).rows[0].count, '0');
     assert.equal(
       (
-        await pool.query("SELECT next_run FROM moria.job_schedules WHERE kind='weather'")
+        await pool.query("SELECT next_run FROM moria.job_schedules WHERE kind='periodic'")
       ).rows[0].next_run.toISOString(),
       due,
     );
@@ -171,13 +168,13 @@ test(
     assert.equal((await pool.query('SELECT count(*) FROM moria.job_attempts')).rows[0].count, '0');
     assert.equal(
       (await pool.query('SELECT request_key FROM moria.job_requests')).rows[0].request_key,
-      `schedule:weather:${due}`,
+      `schedule:periodic:${due}`,
     );
     await stop(restarted.process);
     await stop(competitor.process);
 
     // A concurrent configuration update waits for dispatch, then owns the final state.
-    await pool.query("UPDATE moria.job_schedules SET next_run='2020-01-02' WHERE kind='weather'");
+    await pool.query("UPDATE moria.job_schedules SET next_run='2020-01-02' WHERE kind='periodic'");
     const configuring = launch('scheduler', true);
     await configuring.event('before-advance');
     configuring.process.send({ command: 'configure' });
@@ -209,7 +206,7 @@ test(
     await duplicate.event('schedule-tick');
     const configured = (
       await pool.query(
-        "SELECT enabled,interval_minutes,next_run>clock_timestamp()-interval '1 minute' AS fresh FROM moria.job_schedules WHERE kind='weather'",
+        "SELECT enabled,interval_minutes,next_run>clock_timestamp()-interval '1 minute' AS fresh FROM moria.job_schedules WHERE kind='periodic'",
       )
     ).rows[0];
     assert.deepEqual(configured, { enabled: false, interval_minutes: 120, fresh: true });
@@ -224,7 +221,7 @@ test(
     const fence = (await pool.query('SELECT fence FROM moria.jobs WHERE id=$1', [first])).rows[0]
       .fence;
     await pool.query(
-      "UPDATE moria.job_schedules SET enabled=true,next_run=$1 WHERE kind='snotel'",
+      "UPDATE moria.job_schedules SET enabled=true,next_run=$1 WHERE kind='sample'",
       [due],
     );
     const independent = launch('scheduler');

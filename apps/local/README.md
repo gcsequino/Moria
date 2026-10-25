@@ -1,16 +1,19 @@
 # Local asset workspace
 
-Run `pnpm start` from the repository root. Open the loopback URL printed in the terminal; the fragment is your local operator access key. The app binds only to `127.0.0.1:3210` and starts its own PostgreSQL cluster on `127.0.0.1:55432`. No Docker, external account, or model endpoint is required.
+Run `pnpm start` from the repository root. Open the loopback URL printed in the terminal; use `pnpm moria auth recover` for a temporary administrator session, or configure Google and explicitly grant an administrator invitation. The app binds only to `127.0.0.1:3210` and starts its own PostgreSQL cluster on `127.0.0.1:55432`. Default startup hosts management only. No Snow/weather workloads are registered. No Docker, external account, or model endpoint is required.
 
 Prerequisites: Linux, Node 24, pnpm dependencies (`pnpm install --frozen-lockfile`), and the Python environment from the root README. `MORIA_PYTHON` can override the Python executable. Run as an ordinary user because PostgreSQL cannot run as root. Windows hosts must use a Linux container or WSL2 Linux filesystem; native Windows development is unsupported.
 
 ## Try the complete workflow
 
-1. Open the printed URL and click **Import / refresh dataset** to import the prefilled sample.
-2. Select **West editor**. Only West assets are returned by the server. Open an asset, choose **Status**, enter your value, and click **Save override**.
-3. Switch to **Operator**, click **Load refreshed sample**, then **Import / refresh dataset**. Titles and other untouched values change; your saved status remains.
-4. Select **East reader**. Only East assets appear and editing/import are disabled; direct unauthorized API requests are also rejected.
-5. Stop with Ctrl+C, run `pnpm start` again, and open the printed link. Data, stable IDs, and overrides remain. **Use all source values** clears title/status/notes overrides for the selected asset.
+1. Sign in with local recovery or an invited administrator account.
+2. Open Assets and import the prefilled synthetic sample.
+3. Open an asset, edit Status and save the override.
+4. Load the refreshed sample and import it. Source values change while saved overrides remain.
+5. Restart and sign in again. Stable IDs, data and overrides remain. Use all source values clears overrides.
+
+The browser uses current administrator permissions. Standalone tests retain East/West
+workload profiles; browser callers cannot choose those identities.
 
 ## Import format
 
@@ -28,11 +31,16 @@ All fields are required; notes may be empty. Region is `West` or `East`. IDs mus
 
 `.local/workspace/` holds PostgreSQL files, the Iceberg warehouse, and a generated credentials file. It is ignored by Git. Keep the whole directory intact: Iceberg metadata includes absolute paths, so moving it requires migration. Stop the app before making a filesystem backup. This is not a validated production backup/restore procedure.
 
-Optional environment variables: `MORIA_PORT`, `MORIA_DB_PORT`, `MORIA_LOCAL_DIR`, `MORIA_PYTHON`. Run from the repository root. Port overrides must be 1024–65535. The operator link remains stable across restarts. To open another browser, use the full printed link; the page removes its fragment and keeps the key in that tab's session storage.
+Optional environment variables: `MORIA_PORT`, `MORIA_DB_PORT`, `MORIA_LOCAL_DIR`, `MORIA_PYTHON`. Run from the repository root. Port overrides must be 1024–65535. Recovery links are temporary and single-use. Run the recovery command again for another browser. Retired `MORIA_SNOTEL_PORT` and `MORIA_SNOW_PUBLIC_*` settings fail explicitly.
 
 ## Boundaries
 
-This is one local asset dataset with fixed schema and trusted bootstrap bindings. Demo profiles are workload identities controlled by the local operator, not separate user accounts or OIDC login. Anyone with the local access key can select Operator. The server enforces exact loopback Host/Origin checks, requires the key for data endpoints, and uses the existing workload session/action/query authorization paths. There is no CORS access or remote listener.
+This is one local asset dataset with fixed schema and trusted bootstrap bindings.
+Management uses app-bound browser sessions and current administrator authorization.
+The local operator credential is reserved for CLI recovery. Exact Host/Origin
+checks remain enforced. Optional trusted HTTPS proxy bindings are described in
+[public hosting](../../docs/PUBLIC-HOSTING.md).
+
 
 Imports validate the whole input, allocate stable UIDs, write real Parquet/Iceberg snapshots, publish catalog pointers, then run the fenced Iceberg indexer. Dataset and ontology publication are separate transactions. If indexing fails after dataset publication, the old objects stay visible and the UI asks you to import again. Imports are serialized within this process. Durable job recovery, safe garbage collection, arbitrary dataset schemas, generated SDKs and production deployment remain future work. The bundled React client calls the existing API directly.
 

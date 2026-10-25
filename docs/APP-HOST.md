@@ -19,10 +19,10 @@ pnpm start
 For a custom app, build its static artifact with a relative base (for Vite: `base: './'`), then:
 
 ```sh
-pnpm moria apps publish snow-observatory ./path/to/dist --json
-pnpm moria apps promote snow-observatory <full-version-hash>
-pnpm moria apps serve snow-observatory --port 3211
-pnpm moria apps rollback snow-observatory
+pnpm moria apps publish sample-app ./path/to/dist --json
+pnpm moria apps promote sample-app <full-version-hash>
+pnpm moria apps serve sample-app --port 3211
+pnpm moria apps rollback sample-app
 ```
 
 Publish returns the full SHA-256 version. It never promotes implicitly. Rollback atomically exchanges the active and previous versions. `serve` starts a loopback static host on a separate port; it refuses the configured management port and the management app ID. Custom-app API/auth bindings are a separate capability and are not implicitly granted by publishing assets. The first custom host is static-only: no management credentials, CORS bypass, arbitrary user backend, SSR, or shell build execution is supplied.
@@ -37,7 +37,7 @@ Artifacts must contain `index.html`. Symlinks, traversal, dotfiles, unsupported 
 
 Stable entry URLs redirect to `/releases/<version>/...` with path/query preserved. HTML has a version-specific base URL, so late asset requests from an open older tab cannot accidentally mix releases. HTML is not cached; versioned assets can be cached immutably. Unknown extensionless routes serve the app shell; missing asset paths return 404. The React console uses in-page navigation. Reopen the stable root URL to switch an existing tab to the promoted release.
 
-Each custom app gets a separate origin, rather than sharing the management console's origin/session storage. Static delivery uses a restrictive CSP and does not allow service workers. The snow app now uses shared OIDC/cookie authentication; see [AUTH.md](AUTH.md). Static shells remain publicly readable on loopback. Management also uses Google sessions with separate explicit admin invitations, retaining the independent local operator credential for CLI recovery. Separate ports do not isolate cookies; production deployments of untrusted apps need separate hostnames.
+Each custom app gets a separate origin, rather than sharing the management console's origin/session storage. Static delivery uses a restrictive CSP and does not allow service workers. Management uses shared OIDC/cookie authentication; see [AUTH.md](AUTH.md). Static shells remain publicly readable on loopback. Management also uses Google sessions with separate explicit admin invitations, retaining the independent local operator credential for CLI recovery. Separate ports do not isolate cookies; production deployments of untrusted apps need separate hostnames.
 
 ## Management versus object APIs
 
@@ -48,7 +48,7 @@ The console uses a generated app-specific OSDK; see [OSDK.md](OSDK.md). Its endp
 - `POST /api/management/v1/datasets/assets/import`: real Iceberg ingestion, gated by administrative and dataset-write permissions.
 - `/api/v1/objects/...` and `/api/v1/actions/...`: existing protected query/action service.
 
-`/local/status` and `/local/import` remain compatibility aliases. Being bundled does not confer a server-side grant. The Applications page is read-only; the CLI owns publishing, promotion and recovery. Human login is implemented for snow and management through the shared auth host. Legacy management paths remain available to the authenticated local CLI. Complete management OpenAPI/client generation, deployed ownership, production TLS and general application release bindings remain future platform work.
+`/local/status` and `/local/import` remain compatibility aliases. Being bundled does not confer a server-side grant. The Applications page is read-only; the CLI owns publishing, promotion and recovery. Human login is implemented for management through the shared auth host. Legacy management paths remain available to the authenticated local CLI. Complete management OpenAPI/client generation, deployed ownership, production TLS and general application release bindings remain future platform work.
 
 ## Verification
 
@@ -56,8 +56,15 @@ Tests cover two releases, deterministic publication, promotion, rollback, old as
 
 ## Scoped SNOTEL binding
 
-The bundled Snow Observatory is composed by `pnpm start` on its own origin (default 3211). `createScopedAppServer` binds trusted server-selected object services to an app-specific key and internal workload session. Hosting/promoting a static artifact cannot request extra scopes or inject a caller-selected identity. Only the two snow read services and read-only sync status are exposed. Generic `apps serve` still serves static assets only. See [SNOTEL.md](SNOTEL.md) for ingestion, source semantics and scope details.
+Default startup composes management only. Custom application hosting retains the
+trusted `createScopedAppServer` seam, shared browser authentication and explicit
+server-selected object bindings. Publishing a static artifact cannot register
+handlers or grant scopes. Generic `apps serve` remains static-only.
 
-Bundled recovery accepts an explicit app: `pnpm moria apps recover snotel` or `pnpm moria apps recover management`; omission retains the management default.
+`pnpm moria apps recover management` rebuilds the bundled console. Startup preserves
+existing promoted artifacts; after upgrading from the Snow composition, run this
+command explicitly to replace the old management UI. `apps recover snotel` fails
+because bundled Snow recovery is retired. Existing artifacts and data are retained.
 
-Stable application routes now serve the active HTML without exposing its release hash in the page URL. HTML remains `no-store` and its injected base pins assets to the selected release. Explicit release URLs remain available for pinned views. The scoped snow app mounts at `/snow/`; its origin root redirects there. This supersedes the earlier stable-route-to-release redirect behavior.
+Stable routes serve the active HTML with no-store caching and a release-pinned
+asset base. Explicit release URLs remain available for pinned views.

@@ -123,12 +123,9 @@ test(
       MORIA_DATABASE_REPLICAS: '3',
       MORIA_DATABASE_CONNECTION_BUDGET: '13',
       MORIA_PUBLIC_ORIGIN: 'https://management.example.test',
-      MORIA_SNOW_PUBLIC_ORIGIN: 'https://snow.example.test',
       MORIA_PUBLIC_PORT: String(publicPort),
-      MORIA_SNOW_PUBLIC_PORT: String(publicSnowPort),
       MORIA_LOCAL_DIR: resolve(directory, 'workspace'),
       MORIA_PORT: String(apiPort),
-      MORIA_SNOTEL_PORT: String(snowPort),
     };
     const launch = (role: string, pausedListen = 0) => {
       const result = child(role, env, pausedListen);
@@ -161,12 +158,29 @@ test(
       assert.ok(response.ok, `authorized ${path}: ${response.status}`);
       return response.json();
     };
-    const first = (await request('snotel/sync', { requestKey: 'process/first' })).id;
-    await request('weather/schedule', { enabled: true, intervalMinutes: 60 });
+    const firstInput = { requestKey: 'process/first', input: null };
+    const first = (await request('jobs/sample/enqueue', firstInput)).id;
+    assert.deepEqual((await pool.query('SELECT input FROM moria.jobs WHERE id=$1', [first])).rows, [
+      { input: null },
+    ]);
+    assert.equal((await request('jobs/sample/enqueue', firstInput)).id, first);
+    for (const conflictingInput of [{}, { input: {} }]) {
+      const conflict = await fetch(`${origin}/management/v1/jobs/sample/enqueue`, {
+        method: 'POST',
+        headers: { origin, cookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ requestKey: firstInput.requestKey, ...conflictingInput }),
+      });
+      assert.equal(conflict.status, 409);
+      assert.equal((await conflict.json()).error.code, 'IDEMPOTENCY_CONFLICT');
+    }
+    assert.deepEqual((await pool.query('SELECT input FROM moria.jobs WHERE id=$1', [first])).rows, [
+      { input: null },
+    ]);
+    await request('jobs/periodic/schedule', { enabled: true, intervalMinutes: 60 });
     await new Promise((r) => setTimeout(r, 2300));
     assert.equal((await pool.query('SELECT count(*) FROM moria.job_attempts')).rows[0].count, '0');
     assert.equal((await pool.query('SELECT count(*) FROM moria.jobs')).rows[0].count, '1');
-    await request('weather/schedule', { enabled: false, intervalMinutes: 60 });
+    await request('jobs/periodic/schedule', { enabled: false, intervalMinutes: 60 });
     assert.equal((await request('jobs')).jobs[0].id, first);
     const supervisor = launch('supervisor');
     await supervisor.event('ready');
@@ -191,7 +205,7 @@ test(
       )
     ).rows;
     for (const role of ['api', 'combined']) {
-      for (const pausedListen of [1, 3]) {
+      for (const pausedListen of [1, 2]) {
         const starting = launch(role, pausedListen);
         await starting.event('listen-pending');
         starting.process.kill('SIGTERM');
@@ -230,7 +244,10 @@ test(
     }
     api = launch('api');
     await api.event('ready');
-    assert.equal((await request('snotel/sync', { requestKey: 'process/repeat' })).id, first);
+    assert.equal(
+      (await request('jobs/sample/enqueue', { requestKey: 'process/repeat', input: null })).id,
+      first,
+    );
     const second = launch('supervisor');
     await second.event('ready');
     await second.event('tick');
@@ -247,7 +264,20 @@ test(
         '1',
     );
     await stop(second.process);
-    const recovery = (await request('snotel/sync', { requestKey: 'process/recovery' })).id;
+    const recovery = (await request('jobs/sample/enqueue', { requestKey: 'process/recovery' })).id;
+    assert.deepEqual(
+      (await pool.query('SELECT input FROM moria.jobs WHERE id=$1', [recovery])).rows,
+      [{ input: {} }],
+    );
+    assert.equal(
+      (
+        await request('jobs/sample/enqueue', {
+          requestKey: 'process/recovery',
+          input: {},
+        })
+      ).id,
+      recovery,
+    );
     await supervisor.event('started');
     // Lose just the supervisor lock connection while its handler is at an IPC barrier.
     await pool.query(`SELECT pg_terminate_backend(a.pid) FROM pg_stat_activity a JOIN pg_locks l ON l.pid=a.pid
@@ -273,7 +303,7 @@ test(
         .rows[0].count,
       '1',
     );
-    const crashed = (await request('snotel/sync', { requestKey: 'process/hard-crash' })).id;
+    const crashed = (await request('jobs/sample/enqueue', { requestKey: 'process/hard-crash' })).id;
     assert.equal((await replacement.event('started')).id, crashed);
     await stop(replacement.process, 'SIGKILL');
     const finalSupervisor = launch('worker');
@@ -296,7 +326,7 @@ test(
     assert.equal((await fetch(`http://127.0.0.1:${apiPort}/management/v1/jobs`)).status, 401);
     const failed = randomUUID();
     await pool.query(
-      "INSERT INTO moria.jobs(id,kind,input,request_key,requested_by,status) VALUES($1,'snotel','{}','process/failed','synthetic-test','failed')",
+      "INSERT INTO moria.jobs(id,kind,input,request_key,requested_by,status) VALUES($1,'sample','{}','process/failed','synthetic-test','failed')",
       [failed],
     );
     assert.equal((await request('jobs/retry', { id: failed })).status, 'queued');
