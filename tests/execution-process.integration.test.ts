@@ -2,10 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fork, type ChildProcess } from 'node:child_process';
 import { randomUUID, randomBytes } from 'node:crypto';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { access, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { createServer } from 'node:net';
+import { request as httpRequest } from 'node:http';
 import EmbeddedPostgres from 'embedded-postgres';
 import pg from 'pg';
 import { digest } from '../services/security/src/browser-sessions.js';
@@ -130,11 +131,45 @@ test(
       MORIA_PORT: String(apiPort),
       MORIA_SNOTEL_PORT: String(snowPort),
     };
-    const launch = (role: string, pausedListen = 0) => {
-      const result = child(role, env, pausedListen);
+    const launch = (role: string, pausedListen = 0, localDirectory = env.MORIA_LOCAL_DIR) => {
+      const result = child(role, { ...env, MORIA_LOCAL_DIR: localDirectory }, pausedListen);
       children.push(result.process);
       return result;
     };
+    // Each fresh role creates only its own browser and static hosting state.
+    // Occupied opposite-role ports prove that availability is not a dependency.
+    for (const role of ['snow', 'management']) {
+      const ownDirectory = resolve(directory, role);
+      const occupied = role === 'snow' ? [apiPort, publicPort] : [snowPort, publicSnowPort];
+      const blockers = occupied.map(() => createServer());
+      try {
+        await Promise.all(
+          blockers.map(
+            (server, index) =>
+              new Promise<void>((ready, reject) => {
+                server.once('error', reject);
+                server.listen(occupied[index], '127.0.0.1', ready);
+              }),
+          ),
+        );
+        const isolated = launch(role, 0, ownDirectory);
+        await isolated.event('ready');
+        const absent =
+          role === 'snow'
+            ? ['credentials.json', 'apps/management']
+            : ['snow-access-key', 'apps/snotel'];
+        for (const path of absent) {
+          await assert.rejects(access(resolve(ownDirectory, path)), { code: 'ENOENT' });
+        }
+        assert.equal(isolated.messages.filter((m) => m.event === 'jobs-start').length, 0);
+        await stop(isolated.process);
+        assert.equal(isolated.messages.filter((m) => m.event === 'jobs-stop').length, 1);
+      } finally {
+        await Promise.all(
+          blockers.map((server) => new Promise<void>((done) => server.close(() => done()))),
+        );
+      }
+    }
     let api = launch('api');
     await api.event('ready');
     assert.equal((await fetch(`http://127.0.0.1:${apiPort}/management/v1/jobs`)).status, 401);
@@ -190,8 +225,8 @@ test(
         "SELECT pid FROM pg_stat_activity WHERE usename='process_runtime' ORDER BY pid",
       )
     ).rows;
-    for (const role of ['api', 'combined']) {
-      for (const pausedListen of [1, 3]) {
+    for (const role of ['api', 'combined', 'management', 'snow']) {
+      for (const pausedListen of role === 'management' || role === 'snow' ? [1, 2] : [1, 3]) {
         const starting = launch(role, pausedListen);
         await starting.event('listen-pending');
         starting.process.kill('SIGTERM');
@@ -227,6 +262,93 @@ test(
         assert.equal(supervisor.process.exitCode, null);
         assert.equal(supervisor.process.signalCode, null);
       }
+    }
+    // The worker remains blocked at its IPC publication barrier throughout both
+    // independent API restarts. Existing management sessions survive the split.
+    let management = launch('management');
+    let snowApi = launch('snow');
+    await Promise.all([management.event('ready'), snowApi.event('ready')]);
+    const snowOrigin = `http://127.0.0.1:${snowPort}`;
+    const snowTicket = randomBytes(32).toString('base64url');
+    await pool.query(
+      "INSERT INTO moria.auth_flows(state_hash,environment,application,expires_at) VALUES($1,'snotel','snow-browser',clock_timestamp()+interval '5 minutes')",
+      [digest(snowTicket)],
+    );
+    const snowRecovery = await fetch(`${snowOrigin}/api/auth/recover`, {
+      method: 'POST',
+      headers: { origin: snowOrigin, 'content-type': 'application/json' },
+      body: JSON.stringify({ ticket: snowTicket }),
+    });
+    assert.equal(snowRecovery.status, 200);
+    const snowCookie = snowRecovery.headers.get('set-cookie')!.split(';')[0];
+    const verifyRoles = async () => {
+      assert.equal((await request('snotel/sync', { requestKey: 'process/roles' })).id, first);
+      assert.equal(
+        (
+          await fetch(`${snowOrigin}/api/v1/status`, {
+            headers: { cookie: snowCookie },
+          })
+        ).status,
+        200,
+      );
+      for (const [url, wrongCookie] of [
+        [`${snowOrigin}/api/v1/status`, cookie],
+        [`${origin}/management/v1/jobs`, snowCookie],
+      ]) {
+        assert.equal((await fetch(url)).status, 401);
+        assert.equal((await fetch(url, { headers: { cookie: wrongCookie } })).status, 401);
+        assert.equal(
+          (await fetch(url, { headers: { origin: 'https://untrusted.example.test' } })).status,
+          403,
+        );
+      }
+      for (const [listenerPort, host, path] of [
+        [publicPort, 'management.example.test', '/management/v1/jobs'],
+        [publicSnowPort, 'snow.example.test', '/api/v1/status'],
+      ] as const) {
+        const proxyRequest = (secure: boolean) =>
+          new Promise<number>((done, reject) => {
+            const request = httpRequest(
+              {
+                hostname: '127.0.0.1',
+                port: listenerPort,
+                path,
+                headers: { host, ...(secure ? { 'x-forwarded-proto': 'https' } : {}) },
+              },
+              (response) => {
+                response.resume();
+                response.on('end', () => done(response.statusCode!));
+              },
+            );
+            request.on('error', reject);
+            request.end();
+          });
+        assert.equal(await proxyRequest(false), 403);
+        assert.equal(await proxyRequest(true), 401);
+      }
+      assert.equal(
+        (await pool!.query('SELECT count(*) FROM public.process_publications')).rows[0].count,
+        '0',
+      );
+      assert.equal(supervisor.process.exitCode, null);
+    };
+    await verifyRoles();
+    await stop(management.process);
+    assert.equal(
+      (await fetch(`${snowOrigin}/api/v1/status`, { headers: { cookie: snowCookie } })).status,
+      200,
+    );
+    management = launch('management');
+    await management.event('ready');
+    await stop(snowApi.process);
+    assert.equal((await request('jobs')).jobs[0].id, first);
+    snowApi = launch('snow');
+    await snowApi.event('ready');
+    await verifyRoles();
+    for (const apiRole of [management, snowApi]) {
+      assert.equal(apiRole.messages.filter((m) => m.event === 'jobs-start').length, 0);
+      await stop(apiRole.process);
+      assert.equal(apiRole.messages.filter((m) => m.event === 'jobs-stop').length, 1);
     }
     api = launch('api');
     await api.event('ready');
@@ -305,6 +427,29 @@ test(
       'queued',
     );
     await stop(api.process);
+    // Compatible combined startup still serves both APIs and starts execution.
+    const combined = launch('combined');
+    await combined.event('ready');
+    assert.equal((await combined.event('started')).id, failed);
+    assert.equal(combined.messages.filter((m) => m.event === 'jobs-start').length, 1);
+    assert.equal(
+      (await request('jobs')).jobs.find((job: { id: string }) => job.id === failed).status,
+      'running',
+    );
+    assert.equal(
+      (
+        await fetch(`${snowOrigin}/api/v1/status`, {
+          headers: { cookie: snowCookie },
+        })
+      ).status,
+      200,
+    );
+    combined.process.kill('SIGTERM');
+    await combined.event('draining');
+    combined.process.send({ command: 'release' });
+    await combined.event('published');
+    await eventually(async () => combined.process.exitCode !== null);
+    assert.equal(combined.messages.filter((m) => m.event === 'jobs-stop').length, 1);
     assert.equal(
       (await pool.query("SELECT count(*) FROM pg_stat_activity WHERE usename='process_runtime'"))
         .rows[0].count,

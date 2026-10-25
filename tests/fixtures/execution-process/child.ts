@@ -75,7 +75,7 @@ if (!runtime) {
   });
   process.once('SIGTERM', async () => {
     process.send?.({ event: 'draining' });
-    await runtime.close();
+    await Promise.all([runtime.close(), runtime.close()]);
     process.disconnect?.();
   });
   process.send?.({ event: 'ready' });

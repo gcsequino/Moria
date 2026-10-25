@@ -22,12 +22,15 @@ import { loadAuthConfig } from '../../../services/security/src/auth-config.js';
 
 import { publicHosting } from '../../../services/app-host/src/public-hosting.js';
 
-export type ProcessRole = 'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker';
+export type ProcessRole =
+  'combined' | 'api' | 'management' | 'snow' | 'supervisor' | 'scheduler' | 'worker';
 
 export async function runProcess(
   role: ProcessRole,
   executionFactory: typeof createSnowJobs = createSnowJobs,
 ) {
+  const servesManagement = role === 'combined' || role === 'api' || role === 'management';
+  const servesSnow = role === 'combined' || role === 'api' || role === 'snow';
   const mode = process.env.MORIA_DATABASE_MODE ?? 'development';
   if (!['development', 'external'].includes(mode))
     throw new DatabaseError('MORIA_DATABASE_MODE must be development or external.');
@@ -41,7 +44,9 @@ export async function runProcess(
   const snowPort = integer(process.env, 'MORIA_SNOTEL_PORT', 3211, 1024, 65535);
   const ports = connection ? [port, snowPort] : [port, dbPort, snowPort];
   if (new Set(ports).size !== ports.length) throw new DatabaseError('Listener ports must differ.');
-  const publicConfig = publicHosting(process.env);
+  const publicConfig = publicHosting(process.env).filter((entry) =>
+    entry.app === 'management' ? servesManagement : servesSnow,
+  );
   const publicServers: ReturnType<typeof createLocalServer>[] = [];
   const directory = resolve(process.env.MORIA_LOCAL_DIR ?? '.local/workspace');
   await mkdir(directory, { recursive: true });
@@ -122,82 +127,85 @@ export async function runProcess(
       console.log(`Moria execution ${role} ready.`);
       return { close, jobs };
     }
-    const credentials = await localCredentials(directory);
+    const credentials = servesManagement ? await localCredentials(directory) : undefined;
     const appHost = localAppHost(directory);
-    await bootstrapManagement(appHost);
-    await bootstrapBundled(appHost, 'snotel');
-    const snowKeyPath = resolve(directory, 'snow-access-key');
-    let snowKey: string;
-    try {
-      snowKey = (await readFile(snowKeyPath, 'utf8')).trim();
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      snowKey = randomBytes(32).toString('base64url');
-      await writeFile(snowKeyPath, snowKey, { mode: 0o600, flag: 'wx' });
-    }
-    const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
+    if (servesManagement) await bootstrapManagement(appHost);
+    if (servesSnow) await bootstrapBundled(appHost, 'snotel');
+    const snowKey = servesSnow ? await snowCredentials(directory) : undefined;
+    const workspace = servesManagement
+      ? await createWorkspace(catalog, resolve(directory, 'warehouse'))
+      : undefined;
 
     const snowStatus = (
       session?: import('../../../services/ontology/src/service.js').SessionContext,
     ) => snow.status(session, async (c) => ({ weather: await execution.weather.read(c) }));
     const authConfig = await loadAuthConfig(directory);
-    const browserSessions = new BrowserSessions(
-      snow.authority,
-      {
-        environment: 'snotel',
-        application: 'snow-browser',
-        origin: `http://127.0.0.1:${snowPort}`,
+    const browserSessions = servesSnow
+      ? new BrowserSessions(
+          snow.authority,
+          {
+            environment: 'snotel',
+            application: 'snow-browser',
+            origin: `http://127.0.0.1:${snowPort}`,
+            entryPath: '/snow/',
+            initialOperations: ['snow-stations:read', 'snow-observations:read'],
+            recoveryPrincipal: 'snow-reader',
+          },
+          authConfig.providers,
+          authConfig.key,
+        )
+      : undefined;
+    await browserSessions?.initialize();
+    const managementSessions = servesManagement
+      ? new BrowserSessions(
+          workspace!.authority,
+          {
+            environment: 'local-workspace',
+            application: 'local-ui',
+            origin: `http://127.0.0.1:${port}`,
+            entryPath: '/',
+            initialOperations: managementOperations,
+            recoveryPrincipal: 'operator',
+            initialPrincipal: {
+              attributes: { admin: true, region: 'West' },
+              markings: ['workspace'],
+            },
+          },
+          authConfig.managementProviders,
+          authConfig.key,
+        )
+      : undefined;
+    await managementSessions?.initialize();
+    if (servesManagement)
+      server = createLocalServer(
+        workspace!,
+        credentials!.accessKey,
+        appHost,
+        snow,
+        new AppAuth(managementSessions!, credentials!.accessKey),
+        undefined,
+        jobs,
+      );
+    if (servesSnow)
+      snowServer = createScopedAppServer({
+        app: 'snotel',
         entryPath: '/snow/',
-        initialOperations: ['snow-stations:read', 'snow-observations:read'],
-        recoveryPrincipal: 'snow-reader',
-      },
-      authConfig.providers,
-      authConfig.key,
-    );
-    await browserSessions.initialize();
-    const managementSessions = new BrowserSessions(
-      workspace.authority,
-      {
-        environment: 'local-workspace',
-        application: 'local-ui',
-        origin: `http://127.0.0.1:${port}`,
-        entryPath: '/',
-        initialOperations: managementOperations,
-        recoveryPrincipal: 'operator',
-        initialPrincipal: { attributes: { admin: true, region: 'West' }, markings: ['workspace'] },
-      },
-      authConfig.managementProviders,
-      authConfig.key,
-    );
-    await managementSessions.initialize();
-    server = createLocalServer(
-      workspace,
-      credentials.accessKey,
-      appHost,
-      snow,
-      new AppAuth(managementSessions, credentials.accessKey),
-      undefined,
-      jobs,
-    );
-    snowServer = createScopedAppServer({
-      app: 'snotel',
-      entryPath: '/snow/',
-      host: appHost,
-      key: snowKey,
-      auth: new AppAuth(browserSessions, snowKey),
-      sessions: snow.sessions,
-      token: snow.token,
-      objects: new Map([
-        ['snow-stations', snow.stations],
-        ['snow-observations', snow.observations],
-      ]),
-      status: snowStatus,
-    });
-    await listen(server, port);
-    await listen(snowServer, snowPort);
+        host: appHost,
+        key: snowKey!,
+        auth: new AppAuth(browserSessions!, snowKey!),
+        sessions: snow.sessions,
+        token: snow.token,
+        objects: new Map([
+          ['snow-stations', snow.stations],
+          ['snow-observations', snow.observations],
+        ]),
+        status: snowStatus,
+      });
+    if (server) await listen(server, port);
+    if (snowServer) await listen(snowServer, snowPort);
     for (const entry of publicConfig) {
       const management = entry.app === 'management';
-      const localSessions = management ? managementSessions : browserSessions;
+      const localSessions = (management ? managementSessions : browserSessions)!;
       const publicSessions = new BrowserSessions(
         localSessions.authority,
         { ...localSessions.binding, origin: entry.origin },
@@ -206,7 +214,7 @@ export async function runProcess(
       );
       const publicAuth = new AppAuth(publicSessions, '', false);
       const publicServer = management
-        ? createLocalServer(workspace, '', appHost, snow, publicAuth, entry.origin, jobs)
+        ? createLocalServer(workspace!, '', appHost, snow, publicAuth, entry.origin, jobs)
         : createScopedAppServer({
             app: 'snotel',
             entryPath: '/snow/',
@@ -228,10 +236,14 @@ export async function runProcess(
     }
     checkStartup();
     if (role === 'combined') jobs.start();
-    console.log(`Moria management: http://127.0.0.1:${port}/`);
-    console.log('Management recovery: pnpm moria auth recover --app management');
-    console.log(`SNOTEL app: http://127.0.0.1:${snowPort}/snow/`);
-    console.log('Google setup: pnpm moria auth setup. Local recovery: pnpm moria auth recover.');
+    if (servesManagement) {
+      console.log(`Moria management: http://127.0.0.1:${port}/`);
+      console.log('Management recovery: pnpm moria auth recover --app management');
+    }
+    if (servesSnow) {
+      console.log(`SNOTEL app: http://127.0.0.1:${snowPort}/snow/`);
+      console.log('Google setup: pnpm moria auth setup. Local recovery: pnpm moria auth recover.');
+    }
     console.log(`Data persists in ${directory}. Press Ctrl+C to stop.`);
     return { close, jobs };
   } catch (error) {
@@ -248,6 +260,18 @@ export async function runProcess(
     await close();
   } finally {
     finishStartup();
+  }
+}
+
+async function snowCredentials(directory: string) {
+  const path = resolve(directory, 'snow-access-key');
+  try {
+    return (await readFile(path, 'utf8')).trim();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    const key = randomBytes(32).toString('base64url');
+    await writeFile(path, key, { mode: 0o600, flag: 'wx' });
+    return key;
   }
 }
 
