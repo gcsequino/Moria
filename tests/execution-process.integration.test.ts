@@ -158,7 +158,24 @@ test(
       assert.ok(response.ok, `authorized ${path}: ${response.status}`);
       return response.json();
     };
-    const first = (await request('jobs/sample/enqueue', { requestKey: 'process/first' })).id;
+    const firstInput = { requestKey: 'process/first', input: null };
+    const first = (await request('jobs/sample/enqueue', firstInput)).id;
+    assert.deepEqual((await pool.query('SELECT input FROM moria.jobs WHERE id=$1', [first])).rows, [
+      { input: null },
+    ]);
+    assert.equal((await request('jobs/sample/enqueue', firstInput)).id, first);
+    for (const conflictingInput of [{}, { input: {} }]) {
+      const conflict = await fetch(`${origin}/management/v1/jobs/sample/enqueue`, {
+        method: 'POST',
+        headers: { origin, cookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ requestKey: firstInput.requestKey, ...conflictingInput }),
+      });
+      assert.equal(conflict.status, 409);
+      assert.equal((await conflict.json()).error.code, 'IDEMPOTENCY_CONFLICT');
+    }
+    assert.deepEqual((await pool.query('SELECT input FROM moria.jobs WHERE id=$1', [first])).rows, [
+      { input: null },
+    ]);
     await request('jobs/periodic/schedule', { enabled: true, intervalMinutes: 60 });
     await new Promise((r) => setTimeout(r, 2300));
     assert.equal((await pool.query('SELECT count(*) FROM moria.job_attempts')).rows[0].count, '0');
@@ -228,7 +245,7 @@ test(
     api = launch('api');
     await api.event('ready');
     assert.equal(
-      (await request('jobs/sample/enqueue', { requestKey: 'process/repeat' })).id,
+      (await request('jobs/sample/enqueue', { requestKey: 'process/repeat', input: null })).id,
       first,
     );
     const second = launch('supervisor');
@@ -248,6 +265,19 @@ test(
     );
     await stop(second.process);
     const recovery = (await request('jobs/sample/enqueue', { requestKey: 'process/recovery' })).id;
+    assert.deepEqual(
+      (await pool.query('SELECT input FROM moria.jobs WHERE id=$1', [recovery])).rows,
+      [{ input: {} }],
+    );
+    assert.equal(
+      (
+        await request('jobs/sample/enqueue', {
+          requestKey: 'process/recovery',
+          input: {},
+        })
+      ).id,
+      recovery,
+    );
     await supervisor.event('started');
     // Lose just the supervisor lock connection while its handler is at an IPC barrier.
     await pool.query(`SELECT pg_terminate_backend(a.pid) FROM pg_stat_activity a JOIN pg_locks l ON l.pid=a.pid

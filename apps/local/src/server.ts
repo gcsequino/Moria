@@ -139,7 +139,13 @@ export function createLocalServer(
               throw new MoriaError('INPUT_INVALID', 'Expected requestKey and optional input.');
             send(
               202,
-              await jobs.enqueue(workload[1], input.input ?? {}, input.requestKey, actor, check),
+              await jobs.enqueue(
+                workload[1],
+                input.input === undefined ? {} : input.input,
+                input.requestKey,
+                actor,
+                check,
+              ),
             );
           } else {
             if (

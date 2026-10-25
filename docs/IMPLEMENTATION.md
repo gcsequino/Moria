@@ -537,3 +537,36 @@ Temporary evidence logs: `/tmp/issue-46-format.log`,
 `/tmp/issue-46-focused.log`, `/tmp/issue-46-check.log`. These local logs are not
 production or capacity evidence. Changes remain uncommitted for the controller;
 the independent review, CI and current-main gates above remain outstanding.
+
+### Issue #47 — explicit null workload input repair
+
+Review repair on October 25, 2026, against checkout baseline
+`03df0c9f71e8fee1ad3778b1964ae15eeef99fc9`. The existing coverage-transfer matrix
+in `docs/production/SNOW-RETIREMENT.md` remains applicable. Scope is limited to
+the management enqueue route, its existing synthetic execution process test,
+and this implementation record; no Jobs, lease, storage or protected-path changes.
+
+The real PostgreSQL regression reproduced explicit `input: null` being stored as
+`{}` before the fix. The route now defaults only omitted input. Assertions verify
+persisted null, same-key null replay, 409 `IDEMPOTENCY_CONFLICT` for explicit empty
+object and omitted input against that key, and unchanged persisted input after
+conflicts. Omitted input still persists as `{}` and replays with explicit `{}`.
+Existing independent process restart, scheduling, fencing, recovery and drain
+assertions remain intact.
+
+Validation uses non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace `.venv`
+Python 3.11.17 with synthetic PostgreSQL fixtures. `pnpm format` passed. The
+focused `pnpm exec tsx --test tests/execution-process.integration.test.ts` failed
+on the expected stored-payload assertion before the fix, then passed with zero
+skips after the fix. Evidence: `/tmp/issue47-payload-before.log`,
+`/tmp/issue47-payload-after.log` and `/tmp/issue47-payload-format.log`.
+
+Full `pnpm check` passed (exit 0): 377 runtime tests, zero failures or skips,
+formatting, SDK drift, TypeScript, Python checks (14 tests), both application
+builds and starter checks. Evidence: `/tmp/issue47-payload-check.log`.
+`git diff --check` passed. No required runtime infrastructure was unavailable.
+Independent review, exact-head Linux CI and current-main integration remain
+unverified controller-owned gates. Changes
+remain uncommitted; no publication, merge, deployment or live data operation was
+performed. Historical Snow fixtures and the remaining retirement scope are
+unchanged.
