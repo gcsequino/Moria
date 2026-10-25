@@ -23,32 +23,7 @@ export class Jobs {
     readonly handlers: Record<string, JobHandler>,
   ) {}
   async migrate() {
-    await this.catalog.pool.query(`
-      CREATE TABLE IF NOT EXISTS moria.jobs (
-        id uuid PRIMARY KEY, kind text NOT NULL, input jsonb NOT NULL,
-        request_key text NOT NULL UNIQUE, requested_by text NOT NULL,
-        status text NOT NULL DEFAULT 'queued', phase text NOT NULL DEFAULT 'Queued',
-        attempt integer NOT NULL DEFAULT 0, fence uuid,
-        available_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-        heartbeat_at timestamptz, created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-        updated_at timestamptz NOT NULL DEFAULT clock_timestamp(), error text, result jsonb
-      );
-      CREATE UNIQUE INDEX IF NOT EXISTS jobs_one_active_kind ON moria.jobs(kind)
-        WHERE status IN ('queued','running','retrying');
-      CREATE TABLE IF NOT EXISTS moria.job_attempts (
-        job_id uuid NOT NULL REFERENCES moria.jobs(id), attempt integer NOT NULL,
-        status text NOT NULL, started_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-        finished_at timestamptz, error text, PRIMARY KEY(job_id,attempt)
-      );
-      CREATE TABLE IF NOT EXISTS moria.job_requests (
-        request_key text PRIMARY KEY, job_id uuid NOT NULL REFERENCES moria.jobs(id)
-      );
-      INSERT INTO moria.job_requests(request_key,job_id) SELECT request_key,id FROM moria.jobs ON CONFLICT DO NOTHING;
-      CREATE TABLE IF NOT EXISTS moria.job_schedules (
-        kind text PRIMARY KEY, enabled boolean NOT NULL DEFAULT false,
-        interval_minutes integer NOT NULL, next_run timestamptz NOT NULL DEFAULT clock_timestamp()
-      );
-    `);
+    await this.catalog.migrate();
     for (const kind of Object.keys(this.handlers))
       await this.catalog.pool.query(
         'INSERT INTO moria.job_schedules(kind,interval_minutes) VALUES($1,$2) ON CONFLICT DO NOTHING',

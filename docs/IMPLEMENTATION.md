@@ -304,3 +304,68 @@ Scope remains bounded to #23; parent #20 remains open. No load generator, traffi
 new model invocation, migration, production access, deployment, or authorization/publication/
 retention behavior change. Capability declarations do not prove runtime support or capacity;
 background/data workloads, resolved run inputs, and approved gates remain future obligations.
+
+## M1-01 external database lifecycle — October 25, 2026
+
+Issue #13 depends on SRC-01 (#12) and is bounded to configuration, schema ownership
+and existing management/Snow/auth behavior under accepted C07/C08 and S01/S08
+contracts. External APIs use a scoped role, verify the version/checksum and close
+only their pool on shutdown. Only the development launcher owns an embedded
+cluster. Environment secret references, redacted errors, IPv6 URL normalization,
+verified TLS defaults, connection timeouts and replica pool budgets remain intact.
+See [database lifecycle](DATABASE.md) for final operator instructions and limits.
+
+The updated scope supports fresh initialization and explicit versioned migrations
+only. The runner rejects any existing unversioned `moria` schema before DDL,
+including empty schemas. The reference-schema validator and compatibility
+heuristics have been deleted, along with tests specific to that removed behavior.
+The version-1 baseline SQL and checksum remain unchanged. Version 1 is currently
+the only supported version; repeated application verifies it without changing
+rows. There is no supported earlier versioned upgrade step in this release;
+future steps require explicit reviewed migrations. Unknown/newer versions and
+checksum mismatches fail closed.
+
+The migration transaction retains its exclusive advisory lock. Runtime services
+hold both a lifetime shared lease and independent shared locks on every checkout;
+lease loss stops admission while active work drains under migration exclusion.
+The real HTTP lease-loss regression remains. The four-connection minimum still
+covers actual Snow and weather handlers (lease, supervisor, ingestion lock or
+publication transaction, and nested query); tests exercise synthetic downloads,
+real Iceberg publication, first-attempt completion and migration exclusion.
+Configuration tests retain IPv6/TLS/credential protections and replica budgeting.
+
+Replacement real PostgreSQL coverage checks empty, partial and complete unversioned
+schemas. Two rejected attempts preserve catalog definitions and all table data,
+leave no version marker, and cannot pass runtime verification. Existing populated
+management/Snow/auth fixtures retain their rows through repeated versioned
+migration. All unrelated authorization, transactional, restart and ownership
+regressions remain. Only isolated synthetic fixtures are used; no credential file
+or live installation is accessed. No protected paths or delivery policy changed.
+
+Validation environment: non-root Linux, Node 24.21.0, pnpm 11.25.0 and repository
+`.venv` Python 3.11.17, PostgreSQL 18.4; AMD Ryzen 7 9800X3D with 16 logical
+CPUs. Synthetic correctness fixtures run on the shared host; no load/capacity
+claim follows. Working tree is based on
+`7633bc20e67abd9fdaa7855d3976e364980e1fd4`.
+
+Validation completed:
+
+- `pnpm format` passed.
+- `pnpm exec tsx --test --test-name-pattern='unversioned|migration ownership' tests/sql.integration.test.ts`
+  passed all four selected real PostgreSQL tests.
+- Full `pnpm check` passed: 97 runtime tests, zero failures/cancellations/skips;
+  formatting, SDK drift, TypeScript, Python formatting, specification validation,
+  14 workload tests, both bundled builds and Station Explorer verification.
+  Snow/weather minimum-pool handlers, external restart/edit preservation, OIDC,
+  management authentication and lease-loss fencing all passed.
+- `git diff --check` and the staged equivalent passed. Protected-path comparison
+  against HEAD is empty. Baseline SQL is byte-identical to the provided checkout,
+  preserving the version-1 checksum.
+
+Full gate output is retained locally at `/tmp/issue-13-simplify-check.log`, with
+focused output at `/tmp/issue-13-simplify-focused.log`; these are workspace logs,
+not durable benchmark evidence. No required gate infrastructure was unavailable.
+Remote TLS, actual IPv6 network connectivity, installation cutover/restore,
+mixed-release operation and production capacity remain unverified. Human review
+of migration ownership/role invariants and latest-revision Linux CI remain required
+before manual merge. Changes remain uncommitted for the controller.

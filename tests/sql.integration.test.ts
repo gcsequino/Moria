@@ -1,3 +1,9 @@
+import { createSnowService } from '../services/snotel/src/service.js';
+import { snowConfig, snowFixture } from './fixtures/snow.js';
+import { createSnowJobs } from '../services/execution/src/snow-jobs.js';
+import { baseline } from '../services/database/src/baseline.js';
+import { externalDatabase } from '../services/database/src/config.js';
+import { schema, holdSchema } from '../services/database/src/schema.js';
 import {
   createClient as snowSdk,
   ApiError as SnowApiError,
@@ -8,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createServer } from 'node:net';
+import { createServer as createHttpServer } from 'node:http';
 import { fork } from 'node:child_process';
 import EmbeddedPostgres from 'embedded-postgres';
 import pg from 'pg';
@@ -2164,8 +2171,9 @@ test(
       environment,
       lease,
       async () => {
-        await pool.query('CREATE TABLE moria.deadline_commit_winner(id integer PRIMARY KEY)');
-        await pool.query('INSERT INTO moria.deadline_commit_winner VALUES(1)');
+        // This synthetic commit probe is not part of the application schema.
+        await pool.query('CREATE TABLE public.deadline_commit_winner(id integer PRIMARY KEY)');
+        await pool.query('INSERT INTO public.deadline_commit_winner VALUES(1)');
         cancel.abort();
         return 'committed';
       },
@@ -2173,7 +2181,7 @@ test(
     );
     assert.equal(result, 'committed');
     assert.equal(
-      (await pool.query('SELECT count(*) FROM moria.deadline_commit_winner')).rows[0].count,
+      (await pool.query('SELECT count(*) FROM public.deadline_commit_winner')).rows[0].count,
       '1',
     );
   },
@@ -2274,165 +2282,181 @@ test('published markings constrain reads, queries, action replay and subsequent 
   assert.deepEqual((await current.read(session, uid)).object, { uid });
 });
 
-test(
-  'local workspace HTTP preserves overrides through Iceberg refresh and restart, enforcing demo access',
-  { timeout: 90000 },
-  async () => {
-    const { createWorkspace } = await import('../apps/local/src/workspace.js');
-    const { createLocalServer } = await import('../apps/local/src/server.js');
-    const warehouse = resolve('.local', `workspace-test-${randomUUID()}`);
-    let workspace = await createWorkspace(catalog, warehouse);
-    const key = randomUUID();
-    let server = createLocalServer(workspace, key);
-    const start = async () => {
-      await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-      return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-    };
-    let base = await start();
-    const call = async (
-      path: string,
-      profile = 'operator',
-      data?: unknown,
-      extra: Record<string, string> = {},
-    ) => {
-      const response = await fetch(base + path, {
-        method: data === undefined ? 'GET' : 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-moria-key': key,
-          'x-moria-profile': profile,
-          ...extra,
-        },
-        ...(data === undefined ? {} : { body: JSON.stringify(data) }),
-      });
-      return { status: response.status, data: (await response.json()) as any };
-    };
-    const source = [
-      { id: 'west', title: 'West pump', region: 'West', status: 'Original', notes: '' },
-      { id: 'east', title: 'East pump', region: 'East', status: 'Original', notes: '' },
-    ];
-    try {
-      assert.equal((await fetch(base + '/local/status')).status, 401);
-      assert.equal((await call('/management/v1/apps', 'west-editor')).status, 403);
-      assert.equal((await call('/management/v1/apps', 'east-reader')).status, 403);
-      assert.equal((await call('/management/v1/apps', 'operator')).status, 200);
-      assert.equal((await call('/management/v1/workspace', 'west-editor')).status, 200);
-      assert.equal(
-        (await call('/local/status', 'operator', undefined, { origin: 'https://other.example' }))
-          .status,
-        403,
-      );
-      assert.equal(
-        await new Promise<number | undefined>((resolveStatus, reject) => {
-          import('node:http').then(({ get }) => {
-            get(base + '/local/status', { headers: { host: 'other.example' } }, (response) => {
-              response.resume();
-              resolveStatus(response.statusCode);
-            }).on('error', reject);
-          }, reject);
-        }),
-        403,
-      );
-      assert.equal(
-        (await call('/management/v1/datasets/assets/import', 'west-editor', source)).status,
-        403,
-      );
-      assert.equal(
-        (await call('/management/v1/datasets/assets/import', 'operator', source)).status,
-        200,
-      );
-      const query = (profile = 'operator') =>
-        call('/api/v1/objects/assets/query', profile, { pageSize: 25 });
-      const all = await query();
-      assert.equal(all.data.objects.length, 2);
-      const uid = all.data.objects.find((row: any) => row.id === 'west').uid;
-      assert.equal((await query('west-editor')).data.objects.length, 1);
-      assert.equal((await query('east-reader')).data.objects[0].id, 'east');
-      assert.equal((await call(`/api/v1/objects/assets/${uid}`, 'east-reader')).status, 404);
-      const input = { input: { uid, status: 'My edit' } };
-      assert.equal(
-        (
-          await call('/api/v1/actions/edit-status/invoke', 'east-reader', input, {
-            'idempotency-key': 'denied',
-          })
-        ).status,
-        403,
-      );
-      const headers = { 'idempotency-key': 'persistent-edit' };
-      const saved = await call('/api/v1/actions/edit-status/invoke', 'west-editor', input, headers);
-      assert.equal(saved.status, 200);
-      assert.deepEqual(
-        (await call('/api/v1/actions/edit-status/invoke', 'west-editor', input, headers)).data,
-        saved.data,
-      );
-      const next = source.map((row) => ({
-        ...row,
-        title: row.title + ' · updated 日本語',
-        status: 'Source changed',
-      }));
-      assert.equal(
-        (await call('/management/v1/datasets/assets/import', 'operator', [...next, next[0]]))
-          .status,
-        400,
-      );
-      assert.equal(
-        (await call('/management/v1/datasets/assets/import', 'operator', next)).status,
-        200,
-      );
-      let row = (await query('west-editor')).data.objects[0];
-      assert.equal(row.uid, uid);
-      assert.equal(row.status, 'My edit');
-      assert.equal(row.title, 'West pump · updated 日本語');
-      const heads = await catalog.heads('local-workspace', ['assets-source']);
-      assert.equal(
-        (
-          await iceberg({ operation: 'read', metadataLocation: heads[0].metadataLocation })
-        ).rows.find((r: any) => r.id === 'west').status,
-        'Source changed',
-      );
-      await new Promise<void>((r) => server.close(() => r()));
-      await pool.end();
-      await db.stop();
-      await db.start();
-      pool = new pg.Pool(connection);
-      catalog = new Catalog(pool);
-      workspace = await createWorkspace(catalog, warehouse);
-      server = createLocalServer(workspace, key);
-      base = await start();
-      row = (await query('west-editor')).data.objects[0];
-      assert.equal(row.status, 'My edit');
-      assert.equal(
-        (await call('/management/v1/datasets/assets/import', 'operator', [next[1]])).status,
-        200,
-      );
-      assert.equal((await query('west-editor')).data.objects.length, 0);
-      assert.equal(
-        (await call('/management/v1/datasets/assets/import', 'operator', next)).status,
-        200,
-      );
-      assert.equal((await query('west-editor')).data.objects[0].status, 'My edit');
-      assert.equal(
-        (
-          await call(
-            '/api/v1/actions/reset-asset/invoke',
-            'west-editor',
-            { input: { uid } },
-            { 'idempotency-key': 'reset' },
-          )
-        ).status,
-        200,
-      );
-      assert.equal((await query('west-editor')).data.objects[0].status, 'Source changed');
-    } finally {
-      await new Promise<void>((r) => server.close(() => r()));
-    }
-  },
-);
+for (const external of [false, true]) {
+  test(
+    `${external ? 'external PostgreSQL' : 'local'} workspace HTTP preserves overrides through Iceberg refresh and restart, enforcing demo access`,
+    { timeout: 90000 },
+    async (t) => {
+      let workspaceCatalog = external ? await externalCatalog(t) : catalog;
+      const { createWorkspace } = await import('../apps/local/src/workspace.js');
+      const { createLocalServer } = await import('../apps/local/src/server.js');
+      const warehouse = resolve('.local', `workspace-test-${randomUUID()}`);
+      let workspace = await createWorkspace(workspaceCatalog, warehouse);
+      const key = randomUUID();
+      let server = createLocalServer(workspace, key);
+      const start = async () => {
+        await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+        return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+      };
+      let base = await start();
+      const call = async (
+        path: string,
+        profile = 'operator',
+        data?: unknown,
+        extra: Record<string, string> = {},
+      ) => {
+        const response = await fetch(base + path, {
+          method: data === undefined ? 'GET' : 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-moria-key': key,
+            'x-moria-profile': profile,
+            ...extra,
+          },
+          ...(data === undefined ? {} : { body: JSON.stringify(data) }),
+        });
+        return { status: response.status, data: (await response.json()) as any };
+      };
+      const source = [
+        { id: 'west', title: 'West pump', region: 'West', status: 'Original', notes: '' },
+        { id: 'east', title: 'East pump', region: 'East', status: 'Original', notes: '' },
+      ];
+      try {
+        assert.equal((await fetch(base + '/local/status')).status, 401);
+        assert.equal((await call('/management/v1/apps', 'west-editor')).status, 403);
+        assert.equal((await call('/management/v1/apps', 'east-reader')).status, 403);
+        assert.equal((await call('/management/v1/apps', 'operator')).status, 200);
+        assert.equal((await call('/management/v1/workspace', 'west-editor')).status, 200);
+        assert.equal(
+          (await call('/local/status', 'operator', undefined, { origin: 'https://other.example' }))
+            .status,
+          403,
+        );
+        assert.equal(
+          await new Promise<number | undefined>((resolveStatus, reject) => {
+            import('node:http').then(({ get }) => {
+              get(base + '/local/status', { headers: { host: 'other.example' } }, (response) => {
+                response.resume();
+                resolveStatus(response.statusCode);
+              }).on('error', reject);
+            }, reject);
+          }),
+          403,
+        );
+        assert.equal(
+          (await call('/management/v1/datasets/assets/import', 'west-editor', source)).status,
+          403,
+        );
+        assert.equal(
+          (await call('/management/v1/datasets/assets/import', 'operator', source)).status,
+          200,
+        );
+        const query = (profile = 'operator') =>
+          call('/api/v1/objects/assets/query', profile, { pageSize: 25 });
+        const all = await query();
+        assert.equal(all.data.objects.length, 2);
+        const uid = all.data.objects.find((row: any) => row.id === 'west').uid;
+        assert.equal((await query('west-editor')).data.objects.length, 1);
+        assert.equal((await query('east-reader')).data.objects[0].id, 'east');
+        assert.equal((await call(`/api/v1/objects/assets/${uid}`, 'east-reader')).status, 404);
+        const input = { input: { uid, status: 'My edit' } };
+        assert.equal(
+          (
+            await call('/api/v1/actions/edit-status/invoke', 'east-reader', input, {
+              'idempotency-key': 'denied',
+            })
+          ).status,
+          403,
+        );
+        const headers = { 'idempotency-key': `persistent-edit-${external}` };
+        const saved = await call(
+          '/api/v1/actions/edit-status/invoke',
+          'west-editor',
+          input,
+          headers,
+        );
+        assert.equal(saved.status, 200);
+        assert.deepEqual(
+          (await call('/api/v1/actions/edit-status/invoke', 'west-editor', input, headers)).data,
+          saved.data,
+        );
+        const next = source.map((row) => ({
+          ...row,
+          title: row.title + ' · updated 日本語',
+          status: 'Source changed',
+        }));
+        assert.equal(
+          (await call('/management/v1/datasets/assets/import', 'operator', [...next, next[0]]))
+            .status,
+          400,
+        );
+        assert.equal(
+          (await call('/management/v1/datasets/assets/import', 'operator', next)).status,
+          200,
+        );
+        let row = (await query('west-editor')).data.objects[0];
+        assert.equal(row.uid, uid);
+        assert.equal(row.status, 'My edit');
+        assert.equal(row.title, 'West pump · updated 日本語');
+        const heads = await workspaceCatalog.heads('local-workspace', ['assets-source']);
+        assert.equal(
+          (
+            await iceberg({ operation: 'read', metadataLocation: heads[0].metadataLocation })
+          ).rows.find((r: any) => r.id === 'west').status,
+          'Source changed',
+        );
+        await new Promise<void>((r) => server.close(() => r()));
+        if ('closeExternal' in workspaceCatalog) {
+          await (workspaceCatalog as Awaited<ReturnType<typeof externalCatalog>>).closeExternal();
+          assert.equal((await pool.query('SELECT 1 AS alive')).rows[0].alive, 1);
+          workspaceCatalog = await externalCatalog(t);
+        } else {
+          await pool.end();
+          await db.stop();
+          await db.start();
+          pool = new pg.Pool(connection);
+          catalog = new Catalog(pool);
+          workspaceCatalog = catalog;
+        }
+        workspace = await createWorkspace(workspaceCatalog, warehouse);
+        server = createLocalServer(workspace, key);
+        base = await start();
+        row = (await query('west-editor')).data.objects[0];
+        assert.equal(row.status, 'My edit');
+        assert.equal(
+          (await call('/management/v1/datasets/assets/import', 'operator', [next[1]])).status,
+          200,
+        );
+        assert.equal((await query('west-editor')).data.objects.length, 0);
+        assert.equal(
+          (await call('/management/v1/datasets/assets/import', 'operator', next)).status,
+          200,
+        );
+        assert.equal((await query('west-editor')).data.objects[0].status, 'My edit');
+        assert.equal(
+          (
+            await call(
+              '/api/v1/actions/reset-asset/invoke',
+              'west-editor',
+              { input: { uid } },
+              { 'idempotency-key': `reset-${external}` },
+            )
+          ).status,
+          200,
+        );
+        assert.equal((await query('west-editor')).data.objects[0].status, 'Source changed');
+      } finally {
+        await new Promise<void>((r) => server.close(() => r()));
+      }
+    },
+  );
+}
 
 test(
   'SNOTEL sync persists Iceberg, atomically serves corrections and enforces app scope',
   { timeout: 120000 },
-  async () => {
+  async (t) => {
+    const catalog = await externalCatalog(t);
     const { createSnowService, snowViewer } = await import('../services/snotel/src/service.js');
     const { createScopedAppServer } = await import('../services/app-host/src/scoped.js');
     const { AppHost } = await import('../services/app-host/src/store.js');
@@ -2639,13 +2663,13 @@ test('related serving stages roll back together when publication completion fail
 });
 
 import { checkAuth } from './fixtures/auth-checks.js';
-test('OIDC browser sessions, scoped grants, refresh, revocation and CLI recovery use real PostgreSQL', async () => {
-  await checkAuth(catalog);
+test('OIDC browser sessions, scoped grants, refresh, revocation and CLI recovery use real PostgreSQL', async (t) => {
+  await checkAuth(await externalCatalog(t));
 });
 
 import { checkManagementAuth } from './fixtures/management-auth-checks.js';
-test('management Google sessions enforce admin grants, data writes, app isolation and CLI recovery', async () => {
-  await checkManagementAuth(catalog);
+test('management Google sessions enforce admin grants, data writes, app isolation and CLI recovery', async (t) => {
+  await checkManagementAuth(await externalCatalog(t));
 });
 
 import { jobsChecks } from './fixtures/jobs-checks.js';
@@ -2669,3 +2693,362 @@ test(
     await snowRecoveryChecks(catalog);
   },
 );
+
+async function externalCatalog(t: import('node:test').TestContext, poolMax = 6) {
+  const role = `runtime_${randomUUID().replaceAll('-', '')}`;
+  const password = randomUUID();
+  // Synthetic random credentials live only in memory; no files or logging.
+  await pool.query(`CREATE ROLE ${role} LOGIN PASSWORD '${password}'`);
+  await pool.query(`GRANT USAGE ON SCHEMA moria TO ${role}`);
+  await pool.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA moria TO ${role}`);
+  await pool.query(`REVOKE UPDATE, DELETE ON moria.security_audit FROM ${role}`);
+  await pool.query(`REVOKE ALL ON moria.schema_version FROM ${role}`);
+  await pool.query(`GRANT SELECT ON moria.schema_version TO ${role}`);
+  await pool.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA moria TO ${role}`);
+  const runtime = new pg.Pool(
+    externalDatabase({
+      MORIA_DATABASE_SECRET_REF: 'SYNTHETIC_DATABASE',
+      SYNTHETIC_DATABASE: `postgresql://${role}:${password}@127.0.0.1:${connection.port}/postgres`,
+      MORIA_DATABASE_TLS: 'disable',
+      MORIA_DATABASE_POOL_MAX: String(poolMax),
+    }),
+  );
+  const release = await holdSchema(runtime);
+  let closed = false;
+  const closeExternal = async () => {
+    if (closed) return;
+    closed = true;
+    release();
+    await runtime.end();
+    await pool.query(`DROP OWNED BY ${role}`);
+    await pool.query(`DROP ROLE ${role}`);
+    assert.equal((await pool.query('SELECT 1 AS alive')).rows[0].alive, 1);
+  };
+  t.after(closeExternal);
+  await assert.rejects(
+    runtime.query('CREATE TABLE moria.forbidden(id integer)'),
+    /permission denied/,
+  );
+  await assert.rejects(schema(pool, 'apply'), /busy/);
+  return Object.assign(new Catalog(runtime, 'verify'), { closeExternal });
+}
+
+test(
+  'external PostgreSQL runs bundled Snow and weather at the minimum pool with a schema lease',
+  { timeout: 120000 },
+  async (t) => {
+    const runtime = await externalCatalog(t, 4);
+    const snow = await createSnowService(
+      runtime,
+      resolve('.local', `pool-minimum-${randomUUID()}`),
+    );
+    let snowDownloads = 0;
+    let weatherDownloads = 0;
+    const fixture = snowFixture(23);
+    const areas = [
+      {
+        id: 'synthetic',
+        name: 'Synthetic area',
+        latitude: 40,
+        longitude: -105,
+        forecastUrl: 'https://api.weather.gov/gridpoints/BOU/1,1/forecast',
+        sourceUpdatedAt: '2025-04-01T00:00:00Z',
+        retrievedAt: '2025-04-01T01:00:00Z',
+        periods: [],
+      },
+    ];
+    const { jobs, weather } = await createSnowJobs(runtime, snow, {
+      snow: async (url) => {
+        snowDownloads++;
+        await assert.rejects(schema(pool, 'apply'), /busy/);
+        return fixture(url);
+      },
+      weather: async (guard) => {
+        weatherDownloads++;
+        await guard();
+        await assert.rejects(schema(pool, 'apply'), /busy/);
+        return { areas, raw: [] };
+      },
+    });
+    await jobs.schedule('snotel', false, 360);
+    await jobs.schedule('weather', false, 60);
+    // Count checked-out connections, including the already-held lifetime schema lease.
+    let active = runtime.pool.totalCount - runtime.pool.idleCount;
+    let peak = active;
+    const acquired = () => {
+      active++;
+      peak = Math.max(peak, active);
+    };
+    const released = () => {
+      active--;
+    };
+    runtime.pool.on('acquire', acquired);
+    runtime.pool.on('release', released);
+    // Schema lock cleanup is asynchronous after client.release(). Wait for its
+    // actual pool release event rather than counting a pending unlock as a leak.
+    const drained = async () => {
+      if (active === 1) return;
+      await new Promise<void>((resolve, reject) => {
+        const done = () => {
+          if (active !== 1) return;
+          clearTimeout(timer);
+          runtime.pool.removeListener('release', done);
+          resolve();
+        };
+        const timer = setTimeout(() => {
+          runtime.pool.removeListener('release', done);
+          reject(new Error('Runtime connections did not drain after schema unlock'));
+        }, 5000);
+        runtime.pool.on('release', done);
+      });
+    };
+    await drained();
+    t.after(() => {
+      runtime.pool.removeListener('acquire', acquired);
+      runtime.pool.removeListener('release', released);
+    });
+    for (const kind of ['snotel', 'weather']) {
+      peak = active;
+      const queued = await jobs.enqueue(
+        kind,
+        kind === 'snotel' ? snowConfig : {},
+        `pool-minimum:${randomUUID()}`,
+        'synthetic-operator',
+      );
+      await jobs.tick();
+      const row = (
+        await runtime.pool.query(
+          'SELECT status, phase, result, attempt, error FROM moria.jobs WHERE id=$1',
+          [queued.id],
+        )
+      ).rows[0];
+      assert.equal(row.status, 'succeeded');
+      assert.equal(row.phase, 'Published');
+      assert.equal(row.attempt, 1);
+      assert.equal(row.error, null);
+      assert.deepEqual(
+        (
+          await runtime.pool.query(
+            'SELECT status, error, finished_at IS NOT NULL AS finished FROM moria.job_attempts WHERE job_id=$1',
+            [queued.id],
+          )
+        ).rows,
+        [{ status: 'succeeded', error: null, finished: true }],
+      );
+      assert.equal(peak, 4, `${kind} must exercise all four connections`);
+      await drained();
+      assert.equal(active, 1, 'only the schema lease remains checked out');
+      assert.equal(runtime.pool.waitingCount, 0);
+      if (kind === 'snotel') {
+        assert.equal(snowDownloads, 2);
+        // Earlier security regressions revoke the shared default reader. Inspect
+        // through the existing ingestion identity without resetting those grants.
+        const status = await snow.status({
+          environment: 'snotel',
+          principal: 'snow-connector',
+          application: 'snow-ingestion',
+        });
+        assert.equal(status.completed.id, queued.id);
+        assert.equal(status.latest.status, 'completed');
+        assert.equal(status.completed.station_count, 1);
+        assert.equal(status.completed.observation_count, 3);
+        assert.equal(row.result.snapshots.length, 3);
+        assert.equal(row.result.stages.length, 2);
+        const heads = await runtime.heads(
+          'snotel',
+          row.result.snapshots.map((s: any) => s.dataset),
+        );
+        for (const snapshot of row.result.snapshots) {
+          assert.equal(
+            heads.find((h) => h.dataset === snapshot.dataset)?.snapshotId,
+            snapshot.snapshotId,
+          );
+        }
+        assert.equal(
+          (
+            await runtime.pool.query(
+              "SELECT count(*)::int AS n FROM moria.source_stages WHERE id=ANY($1::uuid[]) AND status='published'",
+              [row.result.stages],
+            )
+          ).rows[0].n,
+          2,
+        );
+      } else {
+        assert.equal(weatherDownloads, 1);
+        assert.equal(row.result.areaCount, 1);
+        const view = await weather.read();
+        assert.equal(view.jobId, queued.id);
+        assert.deepEqual(view.areas, areas);
+        assert.ok(view.publishedAt);
+      }
+      await assert.rejects(schema(pool, 'apply'), /busy/);
+    }
+  },
+);
+
+test('migration ownership, versioned idempotence and compatibility use real PostgreSQL', async () => {
+  // Preserve populated management/Snow/auth state across repeated versioned migrations.
+  const snapshot = async () => {
+    const tables = await pool.query(
+      "SELECT tablename FROM pg_tables WHERE schemaname='moria' AND tablename <> 'schema_version' ORDER BY tablename",
+    );
+    const rows = [];
+    for (const { tablename } of tables.rows) {
+      assert.match(tablename, /^[a-z_]+$/);
+      rows.push(
+        (
+          await pool.query(
+            `SELECT to_jsonb(t) AS value FROM moria.${tablename} t ORDER BY to_jsonb(t)::text`,
+          )
+        ).rows,
+      );
+    }
+    return rows;
+  };
+  const before = await snapshot();
+  const blocker = await pool.connect();
+  try {
+    await blocker.query('BEGIN');
+    await blocker.query('SELECT pg_advisory_xact_lock(731804135219::bigint)');
+    await assert.rejects(schema(pool, 'apply'), /busy/);
+    await schema(pool, 'verify');
+    await blocker.query('ROLLBACK');
+  } finally {
+    blocker.release();
+  }
+  await schema(pool, 'apply');
+  assert.deepEqual(await snapshot(), before);
+  for (const version of [0, 999]) {
+    await pool.query('UPDATE moria.schema_version SET version=$1', [version]);
+    await assert.rejects(schema(pool, 'apply'), /incompatible/);
+    await assert.rejects(schema(pool, 'verify'), /incompatible/);
+  }
+  await pool.query('UPDATE moria.schema_version SET version=1');
+  await schema(pool, 'verify');
+  const savedChecksum = (await pool.query('SELECT checksum FROM moria.schema_version')).rows[0]
+    .checksum;
+  await pool.query("UPDATE moria.schema_version SET checksum='incompatible'");
+  await assert.rejects(schema(pool, 'apply'), /incompatible/);
+  await assert.rejects(schema(pool, 'verify'), /incompatible/);
+  await pool.query('UPDATE moria.schema_version SET checksum=$1', [savedChecksum]);
+  await assert.rejects(holdSchema(pool), /runtime role must be scoped/);
+});
+
+for (const layout of ['empty', 'partial', 'complete']) {
+  test(`unversioned ${layout} schema is rejected without changing schema or data`, async () => {
+    const name = `migration_${randomUUID().replaceAll('-', '')}`;
+    await pool.query(`CREATE DATABASE ${name}`);
+    const isolated = new pg.Pool({ ...connection, database: name });
+    try {
+      if (layout === 'complete') {
+        await isolated.query(baseline);
+        await new Catalog(isolated).ensureEnvironment('preserved');
+      } else {
+        await isolated.query('CREATE SCHEMA moria');
+        if (layout === 'partial') {
+          await isolated.query(
+            'CREATE TABLE moria.environments(id integer PRIMARY KEY); INSERT INTO moria.environments VALUES(42)',
+          );
+        }
+      }
+      const snapshot = async () => {
+        const definitions = await isolated.query(`
+          SELECT to_jsonb(n) AS value FROM pg_namespace n WHERE n.nspname='moria'
+          UNION ALL
+          SELECT to_jsonb(c) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE n.nspname='moria'
+          UNION ALL
+          SELECT to_jsonb(a) FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid
+            JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='moria'
+          UNION ALL
+          SELECT to_jsonb(c) FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace
+            WHERE n.nspname='moria'
+          ORDER BY value
+        `);
+        const tables = await isolated.query(
+          "SELECT tablename FROM pg_tables WHERE schemaname='moria' ORDER BY tablename",
+        );
+        const rows = [];
+        for (const { tablename } of tables.rows) {
+          assert.match(tablename, /^[a-z_]+$/);
+          rows.push(
+            (
+              await isolated.query(
+                `SELECT to_jsonb(t) AS value FROM moria.${tablename} t ORDER BY to_jsonb(t)::text`,
+              )
+            ).rows,
+          );
+        }
+        return { definitions: definitions.rows, rows };
+      };
+      const before = await snapshot();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await assert.rejects(
+          schema(isolated, 'apply'),
+          /Unversioned Moria schema: recreate the disposable development database explicitly/,
+        );
+        assert.deepEqual(await snapshot(), before);
+        assert.equal(
+          (await isolated.query("SELECT to_regclass('moria.schema_version') AS name")).rows[0].name,
+          null,
+        );
+        await assert.rejects(schema(isolated, 'verify'), /schema operation failed/);
+      }
+    } finally {
+      await isolated.end();
+      await pool.query(`DROP DATABASE ${name}`);
+    }
+  });
+}
+
+test('lease loss during an active HTTP transaction keeps migration fenced until drain', async (t) => {
+  const runtime = await externalCatalog(t);
+  const entered = Promise.withResolvers<void>();
+  const drain = Promise.withResolvers<void>();
+  const leaseLost = Promise.withResolvers<void>();
+  runtime.pool.once('error', () => leaseLost.resolve());
+  const lease = await pool.query(
+    `SELECT pid FROM pg_stat_activity WHERE usename=$1 ORDER BY backend_start LIMIT 1`,
+    [runtime.pool.options.user],
+  );
+  const server = createHttpServer((_request, response) => {
+    void runtime
+      .transaction(async (client) => {
+        await client.query("INSERT INTO moria.environments(id) VALUES('lease-loss-request')");
+        entered.resolve();
+        await drain.promise;
+        await client.query(
+          "UPDATE moria.environments SET revision=1 WHERE id='lease-loss-request'",
+        );
+      })
+      .then(
+        () => response.end('committed'),
+        () => {
+          response.statusCode = 500;
+          response.end('failed');
+        },
+      );
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const request = fetch(`http://127.0.0.1:${(server.address() as { port: number }).port}`);
+  try {
+    await entered.promise;
+    await pool.query('SELECT pg_terminate_backend($1)', [lease.rows[0].pid]);
+    await leaseLost.promise;
+    await assert.rejects(schema(pool, 'apply'), /busy/);
+    await assert.rejects(runtime.pool.query('SELECT 1'), /lease lost/);
+    drain.resolve();
+    assert.equal(await (await request).text(), 'committed');
+    await runtime.closeExternal();
+    await schema(pool, 'apply');
+    assert.equal(
+      (await pool.query("SELECT revision FROM moria.environments WHERE id='lease-loss-request'"))
+        .rows[0].revision,
+      '1',
+    );
+  } finally {
+    drain.resolve();
+    await request;
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

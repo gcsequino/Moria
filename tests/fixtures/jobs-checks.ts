@@ -17,7 +17,7 @@ export async function jobsChecks(catalog: Catalog) {
       await catalog.transaction(async (c) => {
         await job.guard(c);
         await c.query(
-          'INSERT INTO moria.job_test_publications(id) VALUES($1) ON CONFLICT DO NOTHING',
+          'INSERT INTO public.job_test_publications(id) VALUES($1) ON CONFLICT DO NOTHING',
           [job.id],
         );
         await job.complete(c, { published: true });
@@ -27,7 +27,7 @@ export async function jobsChecks(catalog: Catalog) {
     },
   });
   await jobs.migrate();
-  await catalog.pool.query('CREATE TABLE moria.job_test_publications(id uuid PRIMARY KEY)');
+  await catalog.pool.query('CREATE TABLE public.job_test_publications(id uuid PRIMARY KEY)');
   const unknown = new Jobs(catalog, { 'unregistered-workload': async () => {} });
   await unknown.migrate();
   const unknownJob = await unknown.enqueue(
@@ -120,8 +120,11 @@ export async function jobsChecks(catalog: Catalog) {
   const second = await jobs.enqueue(kind, {}, 'jobs-test:rollback', 'test');
   await jobs.tick();
   assert.equal(
-    (await catalog.pool.query('SELECT 1 FROM moria.job_test_publications WHERE id=$1', [second.id]))
-      .rowCount,
+    (
+      await catalog.pool.query('SELECT 1 FROM public.job_test_publications WHERE id=$1', [
+        second.id,
+      ])
+    ).rowCount,
     0,
   );
   assert.equal(
@@ -189,7 +192,7 @@ export async function jobsChecks(catalog: Catalog) {
       await assert.rejects(
         catalog.transaction(async (c) => {
           await job.guard(c);
-          await c.query('INSERT INTO moria.job_test_publications(id) VALUES($1)', [job.id]);
+          await c.query('INSERT INTO public.job_test_publications(id) VALUES($1)', [job.id]);
         }),
         (e: unknown) => e instanceof MoriaError && e.code === 'LEASE_LOST',
       );
@@ -200,7 +203,7 @@ export async function jobsChecks(catalog: Catalog) {
   const stale = await fenced.enqueue('test-fenced', {}, 'jobs-test:fenced', 'test');
   await fenced.tick();
   assert.equal(
-    (await catalog.pool.query('SELECT 1 FROM moria.job_test_publications WHERE id=$1', [stale.id]))
+    (await catalog.pool.query('SELECT 1 FROM public.job_test_publications WHERE id=$1', [stale.id]))
       .rowCount,
     0,
   );
@@ -224,7 +227,7 @@ export async function jobsChecks(catalog: Catalog) {
         await catalog.transaction(async (c) => {
           await job.guard(c);
           await c.query(
-            'INSERT INTO moria.job_test_publications(id) VALUES($1) ON CONFLICT DO NOTHING',
+            'INSERT INTO public.job_test_publications(id) VALUES($1) ON CONFLICT DO NOTHING',
             [job.id],
           );
           await job.complete(c, { published: true });
@@ -274,7 +277,7 @@ export async function jobsChecks(catalog: Catalog) {
         child.kill('SIGKILL');
       });
       const saved = (
-        await catalog.pool.query('SELECT 1 FROM moria.job_test_publications WHERE id=$1', [
+        await catalog.pool.query('SELECT 1 FROM public.job_test_publications WHERE id=$1', [
           pending.id,
         ])
       ).rowCount;
@@ -288,7 +291,7 @@ export async function jobsChecks(catalog: Catalog) {
       assert.equal(
         (
           await catalog.pool.query(
-            'SELECT count(*)::int AS n FROM moria.job_test_publications WHERE id=$1',
+            'SELECT count(*)::int AS n FROM public.job_test_publications WHERE id=$1',
             [pending.id],
           )
         ).rows[0].n,

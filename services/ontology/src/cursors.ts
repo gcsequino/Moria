@@ -25,11 +25,7 @@ const digest = (token: string) => createHash('sha256').update(token).digest('hex
 export class CursorStore {
   constructor(readonly catalog: Catalog) {}
   async migrate(): Promise<void> {
-    await this.catalog.pool.query(`CREATE TABLE IF NOT EXISTS moria.read_cursors(
-      token_hash text PRIMARY KEY, environment text NOT NULL REFERENCES moria.environments(id),
-      binding_hash text NOT NULL, security_epoch bigint NOT NULL, revision bigint NOT NULL,
-      position jsonb NOT NULL, expires_at timestamptz NOT NULL
-    ); CREATE INDEX IF NOT EXISTS read_cursors_retention ON moria.read_cursors(environment,revision,expires_at)`);
+    await this.catalog.migrate();
   }
   private binding(binding: CursorBinding): string {
     const { securityEpoch, ...rest } = binding;

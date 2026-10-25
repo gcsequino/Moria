@@ -33,11 +33,7 @@ export class IcebergIndexer {
       throw new MoriaError('MARKING_DOWNGRADE', 'Target must preserve source markings');
   }
   async migrate(): Promise<void> {
-    await this.store.catalog.pool.query(`CREATE TABLE IF NOT EXISTS moria.index_provenance(
-      stage uuid PRIMARY KEY REFERENCES moria.source_stages(id),environment text NOT NULL,
-      principal text NOT NULL,application text NOT NULL,contract text NOT NULL,
-      source_dataset text NOT NULL,source_revision bigint NOT NULL,metadata_location text NOT NULL,snapshot_id text NOT NULL,
-      FOREIGN KEY(environment,source_dataset,source_revision) REFERENCES moria.snapshot_history(environment,dataset,revision))`);
+    await this.store.catalog.migrate();
   }
   async runSupervised(
     session: SessionContext,

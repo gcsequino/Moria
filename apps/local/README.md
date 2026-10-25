@@ -46,3 +46,13 @@ The browser UI now lives in `apps/management` and is built with React/Vite. `app
 ## SNOTEL application
 
 `pnpm start` also hosts Snow Observatory at the separately printed port-3211 link. Run `pnpm moria snotel sync` to ingest official NRCS data and `pnpm moria snotel open` to retrieve its scoped access link. See `docs/SNOTEL.md`. Configure its port with `MORIA_SNOTEL_PORT`. Its key and snow warehouse are persisted alongside the asset workspace; its read-only workload cannot administer the instance.
+
+## External PostgreSQL
+
+Set `MORIA_DATABASE_MODE=external` and provide an environment secret reference for
+an already-migrated database and scoped runtime role. Run `pnpm exec tsx apps/local/src/migrate.ts`
+separately as the migration owner. External startup performs no DDL, and stopping
+the APIs closes their pool without stopping PostgreSQL. See
+[database lifecycle](../../docs/DATABASE.md) for validation, role grants, pool
+budgets, version compatibility and explicit recreation of disposable unversioned
+development instances.
