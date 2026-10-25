@@ -750,3 +750,76 @@ cancellations or skips. Formatting, SDK drift, TypeScript, Python checks, both
 application builds and starter checks passed. Required local runtime infrastructure
 was available. Evidence: `/tmp/issue-47-guidance-check.log`.
 Final `git diff --check` passed; only the two scoped files above differ from HEAD.
+
+## Issue #55 — independent static-host lifecycle
+
+Scope: standalone `apps/local/src/static-host.ts`, a shared static listener used
+by the existing custom-app CLI, process integration fixtures and delivery docs.
+The accepted static-host authority boundary and existing AppHost/serveApp
+contracts remain unchanged. Required explicit app/directory/port configuration
+serves only verified promoted artifacts on loopback. Startup performs no build,
+bootstrap, artifact mutation, database initialization or backend composition.
+The shared listener retains exact Host/Origin checks, CSP, safe asset paths and
+release pinning. Signal shutdown closes incomplete connections as well as the
+listener. CLI selection and port restrictions remain intact.
+
+The process tests use temporary synthetic artifacts, credential-free static
+children, and a separate real API child with scoped database credentials supplied
+only in its environment. The API regression uses disposable PostgreSQL and a
+synthetic asset imported/read through authenticated APIs. It checks static
+non-dispatch, restart independence and continued database availability. Generic
+hosting tests are unchanged. No protected paths, API/runtime composition, grants,
+schema, SDK, dependencies or package scripts were changed.
+
+Validation in this checkout (Node 24.21.0, pnpm 11.25.0, non-root Linux, repository
+`.venv`): `pnpm format` completed. Targeted process tests and full `pnpm check`
+results are recorded below after completion. Initial fixture failures were fixed
+by using raw HTTP for a wrong Host header (fetch rewrites it) and a scoped runtime
+PostgreSQL role; no production checks were relaxed.
+
+Limitations: this is local static lifecycle evidence, not production ingress or
+cross-origin management support. Same-origin `/api` needs separate trusted proxy
+routing to the API. No deployment, proxy configuration, external provider/model
+call, live state, capacity claim or publication is included. #14/M1 remains open;
+environment/stream ownership and remaining service separation are later work.
+Independent-environment validation, independent review with no findings,
+current-main integration and exact-revision Linux quality CI are unverified here
+and remain mandatory controller gates. Changes are left uncommitted.
+
+Completed validation on 2026-10-25: targeted
+`pnpm exec tsx --test tests/static-host-process.integration.test.ts` passed all
+3 tests. Full `pnpm check` exited 0: formatting, SDK drift, TypeScript, all 380
+runtime tests (0 failures, 0 skips), Python formatting/specification/workload
+checks, both application builds and Station Explorer type/build/hosting checks
+passed. `git diff --check` passed. Existing generic hosting coverage ran intact.
+No required local infrastructure was unavailable. Independent-environment and
+controller gates above remain unverified; this is not a claim of issue closure.
+
+### Issue #55 malformed-request repair — October 25, 2026
+
+Confirmed that URL parsing in `serveApp` precedes its internal error boundary.
+Added a real child-process raw-socket regression sending `GET http://[ HTTP/1.1`
+with the correct loopback Host. Before the repair, the regression failed because
+the connection ended without an HTTP response. The shared static listener now
+catches request-handler failures, returns an uncached 400 for invalid URLs or a
+generic 500 for other uncaught failures, and closes the affected connection.
+If headers were already sent, it destroys that response instead of writing a
+second status. Error details are not returned. Host/Origin checks and shared
+artifact serving remain unchanged.
+
+The regression asserts the controlled 400, then a successful valid request with
+the expected promoted version from the same still-running process. Targeted
+`pnpm exec tsx --test tests/static-host-process.integration.test.ts` passed all
+3 tests, including the real API/PostgreSQL lifecycle regression, with no skips
+(log: `/tmp/issue-55-repair-targeted.log`). `pnpm format` and `git diff --check`
+passed. Full `pnpm check` exited 0: all 380 runtime tests passed with no failures
+or skips, including unchanged generic hosting tests. Formatting, SDK drift,
+TypeScript, Python checks using the workspace `.venv`, both application builds
+and starter checks passed (log: `/tmp/issue-55-repair-check.log`). Required local
+runtime infrastructure was available.
+
+This repair changes only the shared listener, its scoped process test and this
+record. Existing staged issue work is preserved. No protected paths were changed
+and no credential files were accessed. Independent-environment validation, independent review,
+current-main integration and exact-revision Linux quality CI remain unverified
+controller gates. #14/M1 remains open; changes are uncommitted.
