@@ -1,3 +1,5 @@
+> Historical guide: the bundled Snow/weather POC is retired. Commands and configuration below describe the former composition and must not be used with current default startup. No live installation is changed by this retirement slice. See [retirement scope](production/SNOW-RETIREMENT.md).
+
 # SNOTEL Snow Observatory
 
 Moria hosts a bundled React app on a separate loopback origin, backed by real NRCS AWDB ingestion, Iceberg snapshots, and authorized station/observation objects.

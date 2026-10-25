@@ -427,3 +427,65 @@ readability edits. The Docker provisioning shell and embedded JavaScript pass
 Docker-daemon limitation above. Logs remain local under `/tmp/issue-44-*`.
 No required runtime test infrastructure was unavailable. Changes remain
 uncommitted; independent latest-revision CI and human review are still required.
+
+## Issue #47 — default Snow composition retirement
+
+Before behavior changes, traced runtime, CLI, management, auth and execution
+composition into the coverage-transfer matrix in
+[SNOW-RETIREMENT.md](production/SNOW-RETIREMENT.md). Scope excludes catalog,
+leases, migrations, generated files and protected build/delivery paths. Existing
+standalone domain fixtures remain. Validation and any limitations follow below.
+
+### Implemented scope and evidence — October 25, 2026
+
+- Base checkout: `9f818d230cf95ed1c069d1a0aefaa02f94c10bc4`, branch
+  `delivery/issue-47`. No local main or remote-tracking refs are available to
+  establish current-main integration; no fetch, publication or merge was performed.
+- Default combined/API/worker/scheduler composition no longer initializes Snow or
+  weather. `createPlatformJobs` admits explicit trusted handlers, with an empty
+  default registry. Jobs implementation, scheduling/fencing policy, catalog,
+  storage and database history are unchanged.
+- Management retains asset workflows, administrator authorization, lineage,
+  application inventory and job history. Retry is offered only for registered
+  handlers. Auth defaults to management; required-provider selection preserves
+  shared declaration validation while ignoring unavailable unused credentials.
+  Retired startup settings and POC CLI operations fail explicitly.
+- Synthetic process fixtures retain real PostgreSQL effects, atomic completion,
+  duplicate dispatch, independent restart, stale fences and drain assertions.
+  New composition tests exercise real startup and two neutral hosted applications,
+  cross-app token/origin denial, management isolation, retired routes and invalid
+  retry input. Existing standalone Snow tests remain unchanged.
+- Independent review initially identified missing setup invitation sequencing and
+  retry ID validation before SQL. Both were fixed with regressions. Final review:
+  zero findings. Existing promoted management assets require explicit
+  `pnpm moria apps recover management`; startup does not overwrite them.
+
+Validation on non-root Linux: Node 24.21.0, pnpm 11.25.0, workspace Python 3.11.17.
+Temporary synthetic PostgreSQL clusters and fixture artifacts only; no live data,
+production credentials, external model service or deployment was used.
+
+| Command | Result |
+|---|---|
+| `pnpm format` | Passed; protected files unchanged. |
+| Focused auth/composition/execution/scheduler tests | 6 passed; no skips. Later auth/composition regression run: 4 passed. |
+| `pnpm check` after fixes | Passed: formatting, SDK drift, TypeScript, 348 runtime tests, Python checks, both builds and starter checks; zero failures/skips. |
+| `pnpm check:python` | Passed, including Black, specification/workload validation and 14 Python tests. Run separately because full gate stops at runtime failures. |
+| `pnpm build` | Passed for management and retained Snow fixture. This is required check coverage, not default startup composition. |
+| `pnpm check:starter` | Passed type/build/hosting/static isolation checks. |
+| `git diff --check` | Passed. |
+
+Passing full output for this workspace is in `/tmp/issue47-check-latest.log`;
+supplemental checks are in `/tmp/issue47-python.log`, `/tmp/issue47-build.log` and
+`/tmp/issue47-starter.log`. Earlier full runs failed six S3 tests because
+`/usr/local/bin/minio` was absent; it subsequently became available and the real
+S3 tests passed. No infrastructure provisioning was performed by this task.
+A final authorization recheck before retry-availability diagnostics has also
+received zero review findings; its full rerun passed with 348 tests, zero failures
+and zero skips, plus all subsequent gates (`/tmp/issue47-check-complete.log`).
+
+Limitations: no storage tests were disabled or changed. Exact-head Linux CI and
+integration with current verified main remain controller
+gates; uncommitted local checks cannot establish either. No lease repair or PR39
+changes were reused. The diff contains 32 files, below the 40-file bound, and no
+protected-path edits. Historical domain/UI/generated/build and recovery fixtures
+remain for a separate cleanup. This slice does not complete M1, M3 or parent #14.
