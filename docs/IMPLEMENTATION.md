@@ -848,3 +848,48 @@ cancellations or skips. Formatting, SDK drift, TypeScript, Python checks, both
 application builds and starter checks passed. Required local runtime infrastructure
 was available. Evidence: `/tmp/issue-47-guidance-check.log`.
 Final `git diff --check` passed; only the two scoped files above differ from HEAD.
+
+## Issue #56 — scoped pinned Iceberg snapshot reads (October 25, 2026)
+
+Bounded scope: additive CatalogStorage trusted reader composition, dedicated
+TypeScript/Python scoped readers, disposable Iceberg fixtures/integration tests,
+and storage/worker documentation. Dependencies are the existing #49 catalog pin
+and publication integration, Authority and authorized StreamingStorage adapters,
+PyIceberg 0.12.0 and PyArrow 26.0.0. No dependencies, schemas, adapter internals,
+protected delivery paths or existing runtime consumers changed.
+
+The implementation pins existing catalog provenance, uses exact immutable
+service-owned reference mappings, mediates every manifest/Parquet range in the
+parent, and checks current authority before releasing rows. The fixed Python
+entrypoint has an allowlisted environment, serialized bounded IPC, process memory
+and CPU limits, bounded row frames and deterministic child cleanup. The initial
+fixture run exposed physical names in fixture output handles; those handles now
+preserve logical names in genuine Iceberg manifests. A malformed-reference test
+was corrected to target the current snapshot's manifest list as well as retained
+history. Neither finding was resolved by relaxing reader denial.
+
+Verification on the uncommitted working tree based on
+`c531f72e19b8d557e12160eb4a4e5ed16591c77d`, non-root Linux, Node 24.21.0,
+pnpm 11.25.0 and workspace Python 3.11.17:
+
+- `pnpm typecheck` passed.
+- `pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed
+  all 27 cases, zero skips, using disposable PostgreSQL and both real adapters.
+  Synthetic inputs include two 150-row files with exact int64/decimal/date/time/
+  array values, a competing retained snapshot and a row exceeding the frame limit.
+- `pnpm format` and `.venv/bin/python -m black workers benchmarks docs/spec/schemas
+  tests/fixtures/iceberg-scoped-storage` completed; fixture Black check passed.
+- Full `pnpm check` passed: 444 tests, zero failures/cancellations/skips, plus
+  formatting, SDK drift, TypeScript, Python/spec validation, both application
+  builds and starter build/hosting smoke. Local command output is retained at
+  `/tmp/issue-56-check.log` for this workspace session.
+- `git diff --check` passed. Only the issue's allowed source/test/documentation
+  paths are changed; existing physical-path and storage regressions remain intact.
+
+Limits: fixture-scale unpartitioned, unsorted v2 Parquet snapshots with no deletes;
+no query row policy, arbitrary-code isolation, production capacity or runtime
+rollout claim. Mapping provisioning and immutable retention are trusted composition
+obligations. Database waits remain cooperative. Independent-environment execution,
+clean independent review, current-main integration and Linux CI on the exact head
+are unverified here and remain controller/human gates. #17 remains open. Changes
+are left uncommitted; no publication, deployment or live-installation work occurs.

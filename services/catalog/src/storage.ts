@@ -1,3 +1,8 @@
+import {
+  scopedObjects,
+  scopedRows,
+  type ScopedObject,
+} from '../../../workers/iceberg/scoped-read.js';
 import { authorize } from '../../../packages/authorization/src/access.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 import type { SessionContext } from '../../ontology/src/service.js';
@@ -58,6 +63,8 @@ export interface CatalogStorageBinding {
   readonly tableId: string;
   /** Required for publication; service-owned Iceberg table UUID, never request-selected. */
   readonly icebergTableUuid?: string;
+  /** Exact immutable engine names, supplied only by trusted service composition. */
+  readonly readObjects?: readonly ScopedObject[];
   /** Must compose an existing createAuthorized*Storage adapter with these arguments. */
   readonly storage: (
     scope: StorageAuthorityScope,
@@ -99,7 +106,14 @@ export class CatalogStorage {
         throw new StorageError('INVALID_INPUT');
       }
       keys.add(key);
-      return Object.freeze({ ...binding, markings: Object.freeze([...binding.markings]) });
+      return Object.freeze({
+        ...binding,
+        markings: Object.freeze([...binding.markings]),
+        readObjects:
+          binding.readObjects === undefined
+            ? undefined
+            : scopedObjects(binding.readObjects, binding.warehouseId, binding.tableId),
+      });
     });
   }
 
@@ -285,11 +299,58 @@ export class CatalogStorage {
     return catalog.publish(publication, checkSession);
   }
 
+  async readRows(
+    authenticated: SessionContext,
+    dataset: string,
+    options: { signal?: AbortSignal; timeoutMs?: number } = {},
+  ) {
+    options = Object.freeze({ ...options });
+    const pinned = await this.openRead(authenticated, dataset, options.signal);
+    const { binding, current, logical, storage, ...provenance } = pinned;
+    if (!binding.icebergTableUuid || !binding.readObjects) {
+      throw new StorageError('BINDING_MISMATCH');
+    }
+    const rows = scopedRows(
+      {
+        metadata: (signal) => storage.read(logical, { signal }),
+        snapshotId: pinned.snapshotId,
+        tableUuid: binding.icebergTableUuid,
+        objects: binding.readObjects,
+        check: async () => {
+          await current.checkCurrent({ location: logical, operation: 'read' }, options.signal);
+        },
+        read: async (object, offset, length, signal) => {
+          const storage = await binding.storage(
+            Object.freeze({
+              location: object.location,
+              operations: Object.freeze(['read'] as const),
+            }),
+            current,
+          );
+          return storage.read(object.location, { range: { offset, length }, signal });
+        },
+      },
+      options,
+    );
+    return Object.freeze({ ...provenance, rows });
+  }
+
   async read(
     authenticated: SessionContext,
     dataset: string,
     signal?: AbortSignal,
   ): Promise<PublishedMetadata> {
+    const {
+      binding: _binding,
+      current: _current,
+      logical,
+      storage,
+      ...published
+    } = await this.openRead(authenticated, dataset, signal);
+    return Object.freeze({ ...published, stream: await storage.read(logical, { signal }) });
+  }
+
+  private async openRead(authenticated: SessionContext, dataset: string, signal?: AbortSignal) {
     signal = transferSignal({ signal });
     cancelled(signal);
     // Snapshot trusted authentication before the first await; callers cannot retarget a stream.
@@ -366,14 +427,16 @@ export class CatalogStorage {
       Object.freeze({ location: logical, operations: Object.freeze(['read'] as const) }),
       current,
     );
-    const stream = await storage.read(logical, { signal });
     return Object.freeze({
       environment: session.environment,
       dataset,
       revision: pinned.revision,
       snapshotId: pinned.snapshotId,
       execution: pinned.execution,
-      stream,
+      storage,
+      binding,
+      current,
+      logical,
     });
   }
 }
