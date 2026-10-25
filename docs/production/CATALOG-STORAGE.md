@@ -194,9 +194,10 @@ physical-path worker is switched to this entrypoint.
 Service-owned `readObjects` binds every permitted engine name to an exact logical
 warehouse/table/object and immutable size. Only canonical `moria://` names under
 the bound table are admitted; the inventory is copied, validated and frozen.
-Metadata publication does not create this inventory or upload data objects.
-Trusted composition must supply the real immutable objects and mappings; mapping
-retention/discovery and production writer adoption remain later work. Missing,
+Metadata-only publication does not create this inventory or upload data objects.
+For those publications, trusted composition must supply immutable objects and mappings.
+Complete publications now support durable recovery as described under #65 below;
+production writer adoption remains later work. Missing,
 foreign, physical-path and provider URL references fail closed. No second catalog
 or policy authority is introduced: PyIceberg's NoopCatalog cannot publish, and
 PostgreSQL remains the provenance authority.
@@ -317,8 +318,9 @@ fresh complete inventory without adopting an uncertain earlier write.
 The return value contains `{receipt, outputs: [{dataset, readObjects}]}`. Trusted
 composition may replace the service's immutable binding with the returned
 `readObjects` for `readRows`; there is no dynamic binding registry or caller-chosen
-resolver. Existing pinned readers retain their captured inventory. Mapping retention
-and durable discovery across service restart remain integration gates.
+resolver. Existing pinned readers retain their captured inventory. Complete publications
+now persist that inventory for recovery as described below; explicit mappings remain
+supported for older trusted compositions.
 
 The existing orphan policy applies to every staged object. Failed validation does
 not stage anything. Failed/partial/uncertain writes never initiate a new publication;
@@ -339,3 +341,63 @@ review with no findings, current-main integration and Linux quality CI on the ex
 published head remain controller-owned gates. #17 remains open; #18/#19 remain
 dependency-gated. This slice does not establish production capacity, recovery,
 arbitrary-code isolation, Spark interoperability or runtime rollout.
+
+
+## Durable scoped reference inventory (#65)
+
+Complete publication writes the exact canonical sorted reference array used in the
+existing `moria-complete-snapshot-v1` commitment as a separate immutable object.
+Its logical location keeps the pinned warehouse/table and uses SHA-256 over
+`moria-reference-inventory-v1\0` followed by the canonical JSON metadata
+StorageLocation as its object ID. This is a deterministic service-owned derivation,
+not a catalog, listing, resolver or new source of authority. The same authorized
+create-only StreamingStorage path writes the inventory after the referenced objects
+and root metadata; all acknowledgments precede atomic `Catalog.publish`. Failed,
+partial, cancelled or uncertain inventory writes follow the existing orphan and
+exact-committed-receipt retry rules. Metadata-only publication is unchanged.
+
+A fresh `CatalogStorage` binding needs only the ordinary environment/Dataset,
+markings, warehouse/table/UUID and provider factory. Without explicit `readObjects`,
+`readRows` pins existing catalog provenance and reads the derived inventory under
+an exact read scope. It rejects invalid UTF-8, duplicate/extra fields and names,
+noncanonical JSON, ordering and foreign locations by validating and re-encoding the
+array byte for byte. It then reads bounded root metadata and recomputes the existing
+metadata object commitment using pinned environment, producing execution, Dataset,
+exact metadata bytes and exact inventory bytes. No reference location is opened
+until this commitment matches. Every promised object is read with current authority and checked for exact length
+and the existing scoped content hash. The same isolated complete-snapshot validator
+used for publication then validates UUID, current snapshot and the complete closure
+before any row is released. There is no metadata URL fetch, listing, physical-path fallback or adoption
+of an arbitrary object. Metadata-only and older complete publications missing their
+inventory fail closed; existing explicit trusted mappings still work.
+
+Inventory intake is limited to 256 KiB, 65,536 frames and 256 KiB per frame.
+Metadata remains at most 1 MiB; at most 128 referenced objects, each at most
+16 MiB, plus root metadata total at most 64 MiB per recovered scan. Every object
+uses the same intake frame limits. The reader retains verified bytes for that
+iterator, preventing replacement between verification and row release. Retained
+binary payload is at most 64 MiB plus the 256 KiB inventory, with bounded transient
+intake/identity copies and existing Python/Arrow allocations. The existing child
+limits (8,192 range requests, 256 KiB per range, 128 MiB range transport, 4 MiB
+frames, 100 rows/frame, 100,000 rows and 32 MiB output) remain unchanged.
+Recovery validation reuses the publisher child with its 2 GiB address-space,
+60-second CPU and zero core-dump limits; the outer deadline remains authoritative.
+Publication retains its 64 MiB total input bound across outputs, with at most
+256 KiB additional inventory per output (at most 16 outputs).
+
+The original maximum 60-second reader deadline covers initial SQL pinning,
+inventory/metadata/object recovery and the entire iterator lifetime. Cancellation
+also covers stalled intake; underlying SQL promises retain their cleanup ownership.
+Current session, epoch, scopes, grants and markings remain enforced through the
+existing Authority and adapters, including every emitted row. Provider IO never
+runs inside a SQL transaction. Competing heads and fresh services cannot retarget
+a captured scan. Inventory and objects remain retained for every promised snapshot;
+this adds no expiration, deletion, GC, migration or production recovery guarantee.
+
+`tests/catalog-reference-recovery.integration.test.ts` uses disposable PostgreSQL,
+real multi-file PyIceberg fixtures, local storage and isolated pinned MinIO. A fresh
+Node process receives only ordinary provider/catalog bindings and the authenticated
+session for reads, with no returned reference inventory. Receipt retries reconstruct
+the exact original synthetic request separately. Fault injection modifies only
+synthetic test objects or wraps actual adapter IO. See `docs/IMPLEMENTATION.md` for
+executed results and outstanding acceptance gates.

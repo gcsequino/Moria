@@ -25,17 +25,20 @@ Indexed source markings are persisted with the ontology generation. ObjectServic
 `CatalogStorage.readRows(session, exactDataset, {signal?, timeoutMs?})` is an
 additive trusted-service entrypoint. It returns the existing pinned provenance
 plus an async `rows` iterator. Existing physical-path readers and consumers are
-unchanged. The service binding must supply `icebergTableUuid` and `readObjects`:
-an immutable inventory of exact engine names, logical StorageLocations and byte
+unchanged. The service binding must supply `icebergTableUuid`. An explicit trusted
+`readObjects` inventory remains supported; otherwise complete publications recover
+their durable service-owned inventory from the catalog-pinned commitment (#65).
+The inventory contains exact engine names, logical StorageLocations and byte
 sizes for that Dataset/table. Engine names have the form
 `moria://<warehouseId>/<tableId>/<explicit-object-name>`; slash-separated name
 components are ASCII tokens, with no empty components, traversal, escapes or
 query strings. These are capability names, not provider URLs or filesystem paths.
-The inventory must come from trusted service composition, never request JSON.
+The inventory comes from trusted composition or verified catalog-bound recovery,
+never request JSON.
 Objects and mappings must remain immutable for the scan's lifetime.
 
-The pinned metadata stream and every manifest/data range use parent-owned
-StreamingStorage. `scoped_io.py` implements only InputFile and seek/read; output
+The pinned metadata and manifest/data objects use parent-owned StreamingStorage.
+Recovered scans serve ranges from their verified per-iterator bytes. `scoped_io.py` implements only InputFile and seek/read; output
 and deletion fail. PyIceberg receives this FileIO explicitly, so table properties
 cannot select a different IO implementation. There is no default filesystem,
 PyArrow/S3 fallback or ambient provider credential chain. Unknown references fail
@@ -110,3 +113,24 @@ are documented in [catalog storage](../../docs/production/CATALOG-STORAGE.md#com
 A 60-second whole-attempt deadline and Linux process resource limits bound this
 fixture-scale path; neither this helper nor its successful tests certify production
 capacity, arbitrary-code isolation, schema evolution or Spark interoperability.
+
+
+## Restart recovery (#65)
+
+The service persists the canonical reference inventory before atomic complete
+publication. A fresh service without `readObjects` derives its location from the
+pinned metadata location and verifies exact canonical bytes against the existing
+complete-snapshot commitment. It validates table UUID/snapshot and all referenced
+object lengths/content identities before starting the row iterator. Python receives
+the same scoped FileIO protocol; no provider paths, credentials, listing or fallback
+are introduced. Explicit trusted mappings and physical-path consumers are unchanged.
+
+Recovery retains at most 64 MiB of verified root metadata and referenced bytes plus
+a 256 KiB inventory, with transient intake/identity copies. Inventory and each object
+allow at most 65,536 frames of at most 256 KiB; metadata remains at most 1 MiB,
+objects at most 16 MiB each and 128 per inventory. Existing child and row limits
+remain unchanged. One maximum 60-second deadline covers catalog pinning, recovery
+and consumption. Current authority is rechecked through recovery and row release.
+See [catalog storage](../../docs/production/CATALOG-STORAGE.md#durable-scoped-reference-inventory-65)
+for identity derivation, failure/retry semantics and retention limits. This does not
+establish runtime rollout, live recovery, cleanup or production capacity.

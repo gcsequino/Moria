@@ -1,10 +1,10 @@
-import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { StorageError } from '../../storage/src/locations.js';
 import { cancelled } from '../../storage/src/transfer.js';
 import { scopedObjects, type ScopedObject } from '../../../workers/iceberg/scoped-read.js';
 import { metadataBytes, type MetadataPublication } from './storage-publication.js';
+import { inventoryBytes, snapshotIdentity, snapshotObjectId } from './reference-inventory.js';
 
 export interface SnapshotObject {
   readonly name: string;
@@ -73,14 +73,7 @@ export async function prepareSnapshot(
       65536,
       256 * 1024,
     );
-    const objectId = createHash('sha256')
-      .update('moria-snapshot-object-v1\0')
-      .update(JSON.stringify(identityScope))
-      .update('\0')
-      .update(object.name)
-      .update('\0')
-      .update(bytes)
-      .digest('hex');
+    const objectId = snapshotObjectId(identityScope, object.name, bytes);
     staged.push({
       bytes,
       reference: Object.freeze({
@@ -103,15 +96,11 @@ export async function prepareSnapshot(
   await check();
   // Domain-separated closure commitment enters the existing catalog request hash
   // through metadata_location. Metadata-only identity and APIs remain unchanged.
-  const identityBytes = Buffer.concat([
-    Buffer.from('moria-complete-snapshot-v1\0'),
-    metadata,
-    Buffer.from(JSON.stringify(staged.map(({ reference }) => reference))),
-  ]);
-  return { staged, identityBytes };
+  const inventory = inventoryBytes(staged.map(({ reference }) => reference));
+  return { staged, inventory, identityBytes: snapshotIdentity(metadata, inventory) };
 }
 
-async function validateSnapshot(
+export async function validateSnapshot(
   metadata: Buffer,
   objects: readonly { reference: ScopedObject; bytes: Buffer }[],
   tableUuid: string,
