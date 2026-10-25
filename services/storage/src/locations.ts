@@ -18,7 +18,11 @@ export type StorageErrorCode =
   | 'IO_ERROR';
 
 export class StorageError extends Error {
-  constructor(readonly code: StorageErrorCode) {
+  constructor(
+    readonly code: StorageErrorCode,
+    /** The final name was created, but successful write acknowledgment was not reached. */
+    readonly writeOutcome?: 'uncertain',
+  ) {
     super(code);
     this.name = 'StorageError';
   }
