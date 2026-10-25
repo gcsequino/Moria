@@ -203,8 +203,11 @@ PostgreSQL remains the provenance authority.
 
 Parent-only scoped adapters perform metadata and range IO, with fresh authority
 transactions on access/release. Rows receive an additional current-authority check
-before release. Scan authority waits are abortable with the engine deadline signal
-as well as caller cancellation; a late authorization result cannot release rows.
+before release. The read deadline starts at `readRows`, covers initial catalog
+pinning and remains active through iterator completion, including time paused
+before the first row. Pinning and scan authority waits are abortable with that
+deadline signal as well as caller cancellation; late results cannot start storage
+IO or release rows. Iterator return/throw also cleans up before the first next call.
 The underlying catalog transaction retains ownership of SQL cleanup and can
 remain pending until contention clears or its existing lock timeout expires.
 No provider initialization/network IO occurs in a catalog SQL

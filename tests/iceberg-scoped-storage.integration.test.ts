@@ -242,6 +242,96 @@ for (const provider of ['local', 's3'] as const) {
         assert.deepEqual(await children(), baseline);
       });
     }
+    for (const action of ['cancel', 'deadline'] as const) {
+      await t.test(`${action} interrupts initial pinning before unlock`, async () => {
+        const auth = await session();
+        const abort = new AbortController();
+        const locker = await db.pool.connect();
+        const count = accesses;
+        let pending: Promise<void> | undefined;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const waitFor = async (condition: () => Promise<boolean>) => {
+          const end = Date.now() + 2000;
+          while (!(await condition())) {
+            assert.ok(Date.now() < end, 'PostgreSQL state did not converge');
+            await new Promise((done) => setTimeout(done, 5));
+          }
+        };
+        try {
+          await locker.query(
+            "SELECT pg_advisory_lock(hashtextextended('moria/environment/' || $1,0))",
+            [environment],
+          );
+          pending = assert.rejects(
+            service.readRows(auth, dataset, {
+              signal: abort.signal,
+              timeoutMs: action === 'deadline' ? 1000 : 60000,
+            }),
+            { code: 'CANCELLED' },
+          );
+          await waitFor(async () => {
+            const result = await locker.query(
+              `SELECT 1 FROM pg_stat_activity
+               WHERE datname=current_database() AND pid <> pg_backend_pid()
+               AND wait_event_type='Lock'
+               AND query LIKE 'SELECT pg_advisory_lock_shared%'`,
+            );
+            return result.rowCount === 1;
+          });
+          if (action === 'cancel') abort.abort();
+          await Promise.race([
+            pending,
+            new Promise<never>((_resolve, reject) => {
+              timer = setTimeout(() => reject(new Error('pinning did not settle')), 1500);
+            }),
+          ]);
+          // The transaction is still blocked: rejection cannot depend on unlock.
+          const blocked = await locker.query(
+            `SELECT 1 FROM pg_stat_activity
+             WHERE datname=current_database() AND wait_event_type='Lock'
+             AND query LIKE 'SELECT pg_advisory_lock_shared%'`,
+          );
+          assert.equal(blocked.rowCount, 1);
+          assert.equal(getEventListeners(abort.signal, 'abort').length, 0);
+          assert.equal(accesses, count);
+          assert.deepEqual(await children(), baseline);
+        } finally {
+          clearTimeout(timer);
+          abort.abort();
+          await locker.query(
+            "SELECT pg_advisory_unlock(hashtextextended('moria/environment/' || $1,0))",
+            [environment],
+          );
+          locker.release();
+          await pending;
+        }
+        await waitFor(async () => db.pool.idleCount === db.pool.totalCount);
+        assert.equal(db.pool.waitingCount, 0);
+        const locks = await db.pool.query("SELECT 1 FROM pg_locks WHERE locktype='advisory'");
+        assert.equal(locks.rowCount, 0);
+        assert.equal(accesses, count);
+        assert.deepEqual(await children(), baseline);
+      });
+    }
+    for (const action of ['return', 'throw', 'complete'] as const) {
+      await t.test(`${action} cleans up the readRows lifetime`, async () => {
+        const abort = new AbortController();
+        const scan = await service.readRows(await session(), dataset, { signal: abort.signal });
+        if (action === 'return') {
+          assert.equal((await scan.rows.return()).done, true);
+        } else if (action === 'throw') {
+          const error = new Error('consumer stopped');
+          await assert.rejects(scan.rows.throw(error), (actual) => actual === error);
+        } else {
+          let rows = 0;
+          for await (const _row of scan.rows) rows++;
+          assert.equal(rows, 300);
+        }
+        assert.equal((await scan.rows.next()).done, true);
+        assert.equal(getEventListeners(abort.signal, 'abort').length, 0);
+        assert.deepEqual(await children(), baseline);
+      });
+    }
     for (const phase of ['before startup', 'buffered rows', 'after child exit'] as const) {
       for (const action of ['deadline', 'cancel'] as const) {
         await t.test(`${action} interrupts contended authority ${phase}`, async (t) => {
@@ -450,8 +540,14 @@ for (const provider of ['local', 's3'] as const) {
       const mismatch = await service.readRows(await session(), dataset);
       await assert.rejects(mismatch.rows.next());
       await publish();
-      const timed = await service.readRows(await session(), dataset, { timeoutMs: 1 });
-      await assert.rejects(timed.rows.next());
+      const auth = await session();
+      await assert.rejects(
+        async () => {
+          const timed = await service.readRows(auth, dataset, { timeoutMs: 1 });
+          await timed.rows.next();
+        },
+        { code: 'CANCELLED' },
+      );
       assert.deepEqual(await children(), baseline);
     });
   });

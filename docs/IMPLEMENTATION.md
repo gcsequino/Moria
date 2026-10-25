@@ -1185,3 +1185,44 @@ Environment: non-root Linux, Node 24.21.0, pnpm 11.25.0, repository-local Python
 main integration, exact-head Linux CI and merged-main validation remain
 unverified controller gates. No publication, commits, live operations, external
 contacts or paid model calls were performed. Changes remain uncommitted.
+
+
+## Issue #56 — final focused initial-pinning cancellation pass (2026-10-25)
+
+Scope is the trusted readRows lifecycle in services/catalog/src/storage.ts,
+real PostgreSQL regressions in tests/iceberg-scoped-storage.integration.test.ts,
+and scoped-reader documentation. Accepted C04 exact-snapshot and S06 current
+release authority contracts remain unchanged. No protected paths, dependencies,
+schemas, storage adapters, physical-path readers or runtime adoption changed.
+
+The read deadline and caller cancellation now cover initial catalog pinning,
+starting at readRows invocation and continuing through iterator completion.
+Initial openRead races cancellation while retaining an observer of its eventual
+result. Catalog.transaction retains ownership of rollback, advisory unlock and
+client release; cancellation checkpoints prevent late pinning from initializing
+storage. The iterator owns timer/listener cleanup on completion, error, return
+and throw, including return/throw before its first pull. Existing startup,
+buffered-row and post-child-exit cancellation/deadline guards remain in place.
+
+Added real PostgreSQL advisory-lock regressions for caller cancellation and
+deadline on both local and isolated pinned S3 fixtures. They require CANCELLED
+before unlocking, confirm the backend is still blocked, verify no storage/child
+startup and caller-listener cleanup, then verify pool/lock drainage and no late
+storage startup after unlocking. Additional iterator regressions cover return
+and throw before first pull and normal exhaustion. The existing one-millisecond
+deadline assertion now covers rejection during either initial pinning or first
+pull and requires the CANCELLED code.
+
+Validation: pnpm format passed. Full pnpm check exited 0 in the provided
+non-root Linux checkout with Node 24.21.0, pnpm 11.25.0 and workspace Python
+3.11.17. Formatting, SDK drift, TypeScript, all 471 runtime tests (zero failures
+or skips; 248.79 seconds), Python formatting/schema validation and all 14 Python
+tests, both builds and starter verification passed. Both local and isolated S3
+initial-pinning regressions rejected before unlock and passed drainage assertions;
+all existing startup/buffered-row/post-exit cancellation tests passed. Raw gate
+output is /tmp/issue-56-final-check.log; formatting output is
+/tmp/issue-56-final-format.log. git diff --check passed.
+Independent-environment verification, clean independent review, current-main
+integration and exact-head Linux CI remain controller gates and are unverified.
+No commits, publication, live infrastructure or external contacts; #17 remains
+open and changes remain uncommitted.
