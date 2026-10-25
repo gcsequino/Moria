@@ -88,6 +88,19 @@ async function directory(path: string): Promise<void> {
   }
 }
 
+/** A failed or unsupported directory fsync is a durability failure, never a fallback. */
+async function syncDirectory(path: string): Promise<void> {
+  const handle = await open(
+    path,
+    constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW,
+  );
+  try {
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+}
+
 export async function createLocalStorage(
   configured: LocalStorageBinding,
 ): Promise<StreamingStorage> {
@@ -118,6 +131,11 @@ export async function createLocalStorage(
         }
       }
       await directory(path);
+    }
+    // Include existing entries: another initializer may have created them without
+    // reaching its own sync. The preexisting root's parent is the host's responsibility.
+    for (const path of [objects, staging, table, join(root, binding.warehouseId), root]) {
+      await syncDirectory(path);
     }
   } catch (error) {
     throw failure(error);
@@ -246,6 +264,8 @@ export async function createLocalStorage(
       const temporary = join(staging, randomUUID());
       let file;
       let created = false;
+      let finalized = false;
+      let writeFailure: StorageError | undefined;
       let total = 0;
       const abort = () => {
         void reader?.cancel(new StorageError('CANCELLED')).catch(() => {});
@@ -300,9 +320,15 @@ export async function createLocalStorage(
         cancelled(signal);
         // Atomic no-clobber finalization. Cancellation after this point may lose to success.
         await link(temporary, path);
+        finalized = true;
+        await syncDirectory(objects);
+        await unlink(temporary);
+        created = false;
+        // Persist removal of the second link before acknowledging a readable object.
+        await syncDirectory(staging);
       } catch (error) {
         void reader?.cancel().catch(() => {});
-        throw failure(error);
+        writeFailure = failure(error);
       } finally {
         try {
           if (signal) {
@@ -313,15 +339,20 @@ export async function createLocalStorage(
         }
         try {
           await file?.close();
+        } catch (error) {
+          writeFailure ??= failure(error);
         } finally {
           if (created) {
             try {
               await unlink(temporary);
             } catch (error) {
-              throw failure(error);
+              writeFailure ??= failure(error);
             }
           }
         }
+      }
+      if (writeFailure) {
+        throw new StorageError(writeFailure.code, finalized ? 'uncertain' : undefined);
       }
     },
   };
