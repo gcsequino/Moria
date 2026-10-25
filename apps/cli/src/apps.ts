@@ -7,20 +7,15 @@ import { MoriaError } from '../../../packages/contracts/types.js';
 export async function appCommand(args: string[], values: { directory?: string; port?: string }) {
   const [command, id, argument, ...extra] = args;
   const host = localAppHost(values.directory);
+  if (id === 'snotel' && ['bootstrap', 'recover', 'serve'].includes(command))
+    throw new MoriaError('USAGE', 'The bundled Snow POC is retired.');
   if (extra.length) throw new MoriaError('USAGE', 'Too many arguments.');
   switch (command) {
     case 'bootstrap':
     case 'recover':
-      if ((id && !['management', 'snotel'].includes(id)) || argument)
-        throw new MoriaError(
-          'USAGE',
-          'bootstrap/recover [management|snotel] restores a bundled app.',
-        );
-      return bootstrapBundled(
-        host,
-        (id ?? 'management') as 'management' | 'snotel',
-        command === 'recover',
-      );
+      if ((id && id !== 'management') || argument)
+        throw new MoriaError('USAGE', 'bootstrap/recover [management] restores a bundled app.');
+      return bootstrapBundled(host, (id ?? 'management') as 'management', command === 'recover');
     case 'list':
       if (id) throw new MoriaError('USAGE', 'list takes no arguments.');
       return host.list();

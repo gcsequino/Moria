@@ -428,6 +428,68 @@ Docker-daemon limitation above. Logs remain local under `/tmp/issue-44-*`.
 No required runtime test infrastructure was unavailable. Changes remain
 uncommitted; independent latest-revision CI and human review are still required.
 
+## Issue #47 — default Snow composition retirement
+
+Before behavior changes, traced runtime, CLI, management, auth and execution
+composition into the coverage-transfer matrix in
+[SNOW-RETIREMENT.md](production/SNOW-RETIREMENT.md). Scope excludes catalog,
+leases, migrations, generated files and protected build/delivery paths. Existing
+standalone domain fixtures remain. Validation and any limitations follow below.
+
+### Implemented scope and evidence — October 25, 2026
+
+- Base checkout: `9f818d230cf95ed1c069d1a0aefaa02f94c10bc4`, branch
+  `delivery/issue-47`. No local main or remote-tracking refs are available to
+  establish current-main integration; no fetch, publication or merge was performed.
+- Default combined/API/worker/scheduler composition no longer initializes Snow or
+  weather. `createPlatformJobs` admits explicit trusted handlers, with an empty
+  default registry. Jobs implementation, scheduling/fencing policy, catalog,
+  storage and database history are unchanged.
+- Management retains asset workflows, administrator authorization, lineage,
+  application inventory and job history. Retry is offered only for registered
+  handlers. Auth defaults to management; required-provider selection preserves
+  shared declaration validation while ignoring unavailable unused credentials.
+  Retired startup settings and POC CLI operations fail explicitly.
+- Synthetic process fixtures retain real PostgreSQL effects, atomic completion,
+  duplicate dispatch, independent restart, stale fences and drain assertions.
+  New composition tests exercise real startup and two neutral hosted applications,
+  cross-app token/origin denial, management isolation, retired routes and invalid
+  retry input. Existing standalone Snow tests remain unchanged.
+- Independent review initially identified missing setup invitation sequencing and
+  retry ID validation before SQL. Both were fixed with regressions. Final review:
+  zero findings. Existing promoted management assets require explicit
+  `pnpm moria apps recover management`; startup does not overwrite them.
+
+Validation on non-root Linux: Node 24.21.0, pnpm 11.25.0, workspace Python 3.11.17.
+Temporary synthetic PostgreSQL clusters and fixture artifacts only; no live data,
+production credentials, external model service or deployment was used.
+
+| Command | Result |
+|---|---|
+| `pnpm format` | Passed; protected files unchanged. |
+| Focused auth/composition/execution/scheduler tests | 6 passed; no skips. Later auth/composition regression run: 4 passed. |
+| `pnpm check` after fixes | Passed: formatting, SDK drift, TypeScript, 348 runtime tests, Python checks, both builds and starter checks; zero failures/skips. |
+| `pnpm check:python` | Passed, including Black, specification/workload validation and 14 Python tests. Run separately because full gate stops at runtime failures. |
+| `pnpm build` | Passed for management and retained Snow fixture. This is required check coverage, not default startup composition. |
+| `pnpm check:starter` | Passed type/build/hosting/static isolation checks. |
+| `git diff --check` | Passed. |
+
+Passing full output for this workspace is in `/tmp/issue47-check-latest.log`;
+supplemental checks are in `/tmp/issue47-python.log`, `/tmp/issue47-build.log` and
+`/tmp/issue47-starter.log`. Earlier full runs failed six S3 tests because
+`/usr/local/bin/minio` was absent; it subsequently became available and the real
+S3 tests passed. No infrastructure provisioning was performed by this task.
+A final authorization recheck before retry-availability diagnostics has also
+received zero review findings; its full rerun passed with 348 tests, zero failures
+and zero skips, plus all subsequent gates (`/tmp/issue47-check-complete.log`).
+
+Limitations: no storage tests were disabled or changed. Exact-head Linux CI and
+integration with current verified main remain controller
+gates; uncommitted local checks cannot establish either. No lease repair or PR39
+changes were reused. The diff contains 32 files, below the 40-file bound, and no
+protected-path edits. Historical domain/UI/generated/build and recovery fixtures
+remain for a separate cleanup. This slice does not complete M1, M3 or parent #14.
+
 ### Issue #46 — published catalog metadata to scoped storage
 
 Bounded M2-01f integration after #44: added `services/catalog/src/storage.ts`,
@@ -475,6 +537,39 @@ Temporary evidence logs: `/tmp/issue-46-format.log`,
 `/tmp/issue-46-focused.log`, `/tmp/issue-46-check.log`. These local logs are not
 production or capacity evidence. Changes remain uncommitted for the controller;
 the independent review, CI and current-main gates above remain outstanding.
+
+### Issue #47 — explicit null workload input repair
+
+Review repair on October 25, 2026, against checkout baseline
+`03df0c9f71e8fee1ad3778b1964ae15eeef99fc9`. The existing coverage-transfer matrix
+in `docs/production/SNOW-RETIREMENT.md` remains applicable. Scope is limited to
+the management enqueue route, its existing synthetic execution process test,
+and this implementation record; no Jobs, lease, storage or protected-path changes.
+
+The real PostgreSQL regression reproduced explicit `input: null` being stored as
+`{}` before the fix. The route now defaults only omitted input. Assertions verify
+persisted null, same-key null replay, 409 `IDEMPOTENCY_CONFLICT` for explicit empty
+object and omitted input against that key, and unchanged persisted input after
+conflicts. Omitted input still persists as `{}` and replays with explicit `{}`.
+Existing independent process restart, scheduling, fencing, recovery and drain
+assertions remain intact.
+
+Validation uses non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace `.venv`
+Python 3.11.17 with synthetic PostgreSQL fixtures. `pnpm format` passed. The
+focused `pnpm exec tsx --test tests/execution-process.integration.test.ts` failed
+on the expected stored-payload assertion before the fix, then passed with zero
+skips after the fix. Evidence: `/tmp/issue47-payload-before.log`,
+`/tmp/issue47-payload-after.log` and `/tmp/issue47-payload-format.log`.
+
+Full `pnpm check` passed (exit 0): 377 runtime tests, zero failures or skips,
+formatting, SDK drift, TypeScript, Python checks (14 tests), both application
+builds and starter checks. Evidence: `/tmp/issue47-payload-check.log`.
+`git diff --check` passed. No required runtime infrastructure was unavailable.
+Independent review, exact-head Linux CI and current-main integration remain
+unverified controller-owned gates. Changes
+remain uncommitted; no publication, merge, deployment or live data operation was
+performed. Historical Snow fixtures and the remaining retirement scope are
+unchanged.
 
 ## Issue #53 — deterministic local lease supervision regression
 
@@ -630,3 +725,28 @@ available; independent-environment runtime validation remains unverified.
 Final `git diff --check` passed. Only the authorized test and this record differ
 from HEAD; no protected paths changed. Changes are left uncommitted for the
 controller, preserving the pre-existing staged changes.
+
+### Issue #47 empty-history guidance repair — October 25, 2026
+
+Confirmed that Overview and Executions both mount `Platform` and share its loaded
+empty-history message. That message still directed users to removed sync and
+schedule controls. Replaced it with guidance that executions come from explicitly
+configured workloads and no bundled workloads run by default. The loading state,
+filters, historical job visibility and execution behavior are unchanged.
+
+Reviewed the retirement coverage matrix and accepted runtime contracts R01/R06.
+Source inspection confirms both views use the corrected block, and searching
+management source finds neither obsolete instruction. This bounded copy repair
+changes only `apps/management/src/platform.tsx` and this record; no tests or
+protected paths are changed. Browser interaction was not independently exercised.
+
+Validation: `pnpm format` passed (log: `/tmp/issue-47-guidance-format.log`). Full
+`pnpm check` results are recorded below. Independent review, exact-head Linux CI
+and current-main integration remain controller-owned and unverified in this repair.
+Changes are left uncommitted; no publication, merge or live data operations occurred.
+
+Full `pnpm check` exited 0: 377 runtime tests passed with zero failures,
+cancellations or skips. Formatting, SDK drift, TypeScript, Python checks, both
+application builds and starter checks passed. Required local runtime infrastructure
+was available. Evidence: `/tmp/issue-47-guidance-check.log`.
+Final `git diff --check` passed; only the two scoped files above differ from HEAD.

@@ -1,3 +1,5 @@
+> Issue #47 update: default composition registers no workloads or domain environments. Trusted handlers are supplied explicitly; the process guarantees below remain unchanged. Snow/weather references describe historical fixtures, not current startup. See [SNOW-RETIREMENT.md](SNOW-RETIREMENT.md).
+
 # API, scheduler and worker processes — M1-02b (#35)
 
 This bounded successor to #30/#34 separates the fixed Snow/weather scheduler and

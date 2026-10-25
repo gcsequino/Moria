@@ -13,25 +13,22 @@ export async function authCommand(
   )
     throw new MoriaError(
       'USAGE',
-      'auth setup | configure-google --config downloaded-client.json --email you@gmail.com | grant-admin --email you@gmail.com | recover [--app management|snotel] | disable',
+      'auth setup | configure-google --config downloaded-client.json --email you@gmail.com | grant-admin --email you@gmail.com | recover [--app management] | disable',
     );
   const directory = resolve(options.directory ?? process.env.MORIA_LOCAL_DIR ?? '.local/workspace');
-  if (options.app && !['management', 'snotel'].includes(options.app))
-    throw new MoriaError('USAGE', 'App must be management or snotel.');
-  const management = options.app === 'management';
-  const port = Number(
-    management ? (process.env.MORIA_PORT ?? 3210) : (process.env.MORIA_SNOTEL_PORT ?? 3211),
-  );
+  if (options.app && options.app !== 'management')
+    throw new MoriaError('USAGE', 'The bundled Snow POC is retired; use --app management.');
+  const port = Number(process.env.MORIA_PORT ?? 3210);
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
-    throw new MoriaError('USAGE', 'Invalid SNOTEL port.');
+    throw new MoriaError('USAGE', 'Invalid management port.');
   const origin = `http://127.0.0.1:${port}`,
     callback = `${origin}/api/auth/callback`;
   const authDir = resolve(directory, 'auth'),
     configPath = resolve(authDir, 'providers.json');
   if (command === 'recover') {
-    const key = management
-      ? JSON.parse(await readFile(resolve(directory, 'credentials.json'), 'utf8')).accessKey
-      : (await readFile(resolve(directory, 'snow-access-key'), 'utf8')).trim();
+    const key = JSON.parse(
+      await readFile(resolve(directory, 'credentials.json'), 'utf8'),
+    ).accessKey;
     const response = await fetch(`${origin}/api/auth/recovery-ticket`, {
       method: 'POST',
       headers: { 'x-moria-app-key': key },
@@ -52,7 +49,7 @@ export async function authCommand(
         `Create an OAuth Web application client with this exact authorized redirect URI: ${callback}`,
         'Download the client JSON to a private local folder. Do not paste the client secret into chat or commit it.',
         'Run: pnpm moria auth configure-google --config "C:\\path\\client.json" --email "you@gmail.com"',
-        'Restart pnpm start, then open the snow app and choose Continue with Google.',
+        'Run: pnpm moria auth grant-admin --email your-account. Then restart pnpm start, open management and choose Continue with Google.',
       ],
       configPath,
       recovery: 'pnpm moria auth recover',
@@ -136,6 +133,6 @@ export async function authCommand(
     configured: 'google',
     invitedEmail: options.email,
     callback,
-    next: 'Restart pnpm start, then open /snow/. Credentials remain in your local file.',
+    next: 'Run pnpm moria auth grant-admin --email your-account, then restart pnpm start and open management. Credentials remain in your local file.',
   };
 }

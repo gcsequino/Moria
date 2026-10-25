@@ -1,4 +1,7 @@
-import { createSnowJobs } from '../../../services/execution/src/snow-jobs.js';
+import {
+  createPlatformJobs,
+  type ExecutionFactory,
+} from '../../../services/execution/src/platform.js';
 import type { Jobs } from '../../../services/execution/src/jobs.js';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
@@ -9,13 +12,7 @@ import pg from 'pg';
 import { Catalog } from '../../../services/catalog/src/catalog.js';
 import { createWorkspace, managementOperations } from './workspace.js';
 import { createLocalServer } from './server.js';
-import {
-  localAppHost,
-  bootstrapManagement,
-  bootstrapBundled,
-} from '../../../services/app-host/src/bootstrap.js';
-import { createSnowService } from '../../../services/snotel/src/service.js';
-import { createScopedAppServer } from '../../../services/app-host/src/scoped.js';
+import { localAppHost, bootstrapManagement } from '../../../services/app-host/src/bootstrap.js';
 import { AppAuth } from '../../../services/app-host/src/auth.js';
 import { BrowserSessions } from '../../../services/security/src/browser-sessions.js';
 import { loadAuthConfig } from '../../../services/security/src/auth-config.js';
@@ -26,7 +23,7 @@ export type ProcessRole = 'combined' | 'api' | 'supervisor' | 'scheduler' | 'wor
 
 export async function runProcess(
   role: ProcessRole,
-  executionFactory: typeof createSnowJobs = createSnowJobs,
+  executionFactory: ExecutionFactory = createPlatformJobs,
 ) {
   const mode = process.env.MORIA_DATABASE_MODE ?? 'development';
   if (!['development', 'external'].includes(mode))
@@ -38,8 +35,11 @@ export async function runProcess(
   const connection = mode === 'external' ? externalDatabase(process.env) : undefined;
   const port = integer(process.env, 'MORIA_PORT', 3210, 1024, 65535);
   const dbPort = integer(process.env, 'MORIA_DB_PORT', 55432, 1024, 65535);
-  const snowPort = integer(process.env, 'MORIA_SNOTEL_PORT', 3211, 1024, 65535);
-  const ports = connection ? [port, snowPort] : [port, dbPort, snowPort];
+  for (const name of ['MORIA_SNOTEL_PORT', 'MORIA_SNOW_PUBLIC_ORIGIN', 'MORIA_SNOW_PUBLIC_PORT']) {
+    if (process.env[name] !== undefined)
+      throw new DatabaseError(`${name} configures the retired Snow POC; remove it.`);
+  }
+  const ports = connection ? [port] : [port, dbPort];
   if (new Set(ports).size !== ports.length) throw new DatabaseError('Listener ports must differ.');
   const publicConfig = publicHosting(process.env);
   const publicServers: ReturnType<typeof createLocalServer>[] = [];
@@ -47,7 +47,6 @@ export async function runProcess(
   await mkdir(directory, { recursive: true });
   let pool: pg.Pool | undefined;
   let server: ReturnType<typeof createLocalServer> | undefined;
-  let snowServer: ReturnType<typeof createScopedAppServer> | undefined;
   let jobs: Jobs | undefined;
   let stopDatabase: (() => Promise<void>) | undefined;
   let releaseSchema: (() => void) | undefined;
@@ -83,7 +82,6 @@ export async function runProcess(
     await startupFinished;
     if (server?.listening)
       await new Promise<void>((resolveClose) => server!.close(() => resolveClose()));
-    if (snowServer?.listening) await new Promise<void>((r) => snowServer!.close(() => r()));
     for (const publicServer of publicServers)
       if (publicServer.listening) await new Promise<void>((r) => publicServer.close(() => r()));
     await jobs?.stop();
@@ -113,8 +111,7 @@ export async function runProcess(
       await schema(pool, 'apply');
     }
     const catalog = new Catalog(pool, 'verify');
-    const snow = await createSnowService(catalog, resolve(directory, 'snow-warehouse'));
-    const execution = await executionFactory(catalog, snow);
+    const execution = await executionFactory(catalog);
     jobs = execution.jobs;
     checkStartup();
     if (role === 'supervisor' || role === 'scheduler' || role === 'worker') {
@@ -125,36 +122,9 @@ export async function runProcess(
     const credentials = await localCredentials(directory);
     const appHost = localAppHost(directory);
     await bootstrapManagement(appHost);
-    await bootstrapBundled(appHost, 'snotel');
-    const snowKeyPath = resolve(directory, 'snow-access-key');
-    let snowKey: string;
-    try {
-      snowKey = (await readFile(snowKeyPath, 'utf8')).trim();
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      snowKey = randomBytes(32).toString('base64url');
-      await writeFile(snowKeyPath, snowKey, { mode: 0o600, flag: 'wx' });
-    }
     const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
 
-    const snowStatus = (
-      session?: import('../../../services/ontology/src/service.js').SessionContext,
-    ) => snow.status(session, async (c) => ({ weather: await execution.weather.read(c) }));
-    const authConfig = await loadAuthConfig(directory);
-    const browserSessions = new BrowserSessions(
-      snow.authority,
-      {
-        environment: 'snotel',
-        application: 'snow-browser',
-        origin: `http://127.0.0.1:${snowPort}`,
-        entryPath: '/snow/',
-        initialOperations: ['snow-stations:read', 'snow-observations:read'],
-        recoveryPrincipal: 'snow-reader',
-      },
-      authConfig.providers,
-      authConfig.key,
-    );
-    await browserSessions.initialize();
+    const authConfig = await loadAuthConfig(directory, 'management');
     const managementSessions = new BrowserSessions(
       workspace.authority,
       {
@@ -174,54 +144,30 @@ export async function runProcess(
       workspace,
       credentials.accessKey,
       appHost,
-      snow,
+      undefined,
       new AppAuth(managementSessions, credentials.accessKey),
       undefined,
       jobs,
     );
-    snowServer = createScopedAppServer({
-      app: 'snotel',
-      entryPath: '/snow/',
-      host: appHost,
-      key: snowKey,
-      auth: new AppAuth(browserSessions, snowKey),
-      sessions: snow.sessions,
-      token: snow.token,
-      objects: new Map([
-        ['snow-stations', snow.stations],
-        ['snow-observations', snow.observations],
-      ]),
-      status: snowStatus,
-    });
     await listen(server, port);
-    await listen(snowServer, snowPort);
     for (const entry of publicConfig) {
-      const management = entry.app === 'management';
-      const localSessions = management ? managementSessions : browserSessions;
+      const localSessions = managementSessions;
       const publicSessions = new BrowserSessions(
         localSessions.authority,
         { ...localSessions.binding, origin: entry.origin },
-        management ? authConfig.managementProviders : authConfig.providers,
+        authConfig.managementProviders,
         authConfig.key,
       );
       const publicAuth = new AppAuth(publicSessions, '', false);
-      const publicServer = management
-        ? createLocalServer(workspace, '', appHost, snow, publicAuth, entry.origin, jobs)
-        : createScopedAppServer({
-            app: 'snotel',
-            entryPath: '/snow/',
-            host: appHost,
-            key: '',
-            auth: publicAuth,
-            publicOrigin: entry.origin,
-            sessions: snow.sessions,
-            token: snow.token,
-            objects: new Map([
-              ['snow-stations', snow.stations],
-              ['snow-observations', snow.observations],
-            ]),
-            status: snowStatus,
-          });
+      const publicServer = createLocalServer(
+        workspace,
+        '',
+        appHost,
+        undefined,
+        publicAuth,
+        entry.origin,
+        jobs,
+      );
       publicServers.push(publicServer);
       await listen(publicServer, entry.port);
       console.log(`Public ${entry.app}: ${entry.origin}${localSessions.binding.entryPath}`);
@@ -230,7 +176,6 @@ export async function runProcess(
     if (role === 'combined') jobs.start();
     console.log(`Moria management: http://127.0.0.1:${port}/`);
     console.log('Management recovery: pnpm moria auth recover --app management');
-    console.log(`SNOTEL app: http://127.0.0.1:${snowPort}/snow/`);
     console.log('Google setup: pnpm moria auth setup. Local recovery: pnpm moria auth recover.');
     console.log(`Data persists in ${directory}. Press Ctrl+C to stop.`);
     return { close, jobs };

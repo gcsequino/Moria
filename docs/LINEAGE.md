@@ -1,6 +1,6 @@
 # Data, execution and workflow lineage
 
-Moria's first lineage view connects persisted metadata so an operator can trace the data currently serving Snow, inspect versions and see the work that produced them. The view does not infer causal edges from similar names or close timestamps.
+Moria's first lineage view connects persisted metadata so an operator can trace recorded dataset and object publications, inspect versions and see the work that produced them. The view does not infer causal edges from similar names or close timestamps.
 
 ## Reference model
 

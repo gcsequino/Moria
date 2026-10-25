@@ -5,6 +5,7 @@ import type { OidcProvider } from './oidc.js';
 
 export async function loadAuthConfig(
   directory: string,
+  role: 'all' | 'management' = 'all',
 ): Promise<{ providers: OidcProvider[]; managementProviders: OidcProvider[]; key: Buffer }> {
   const authDir = resolve(directory, 'auth');
   await mkdir(authDir, { recursive: true });
@@ -30,6 +31,7 @@ export async function loadAuthConfig(
   if (!Array.isArray(config.providers)) throw new Error('Expected a providers array.');
   const providers: OidcProvider[] = [];
   const managementProviders: OidcProvider[] = [];
+  const ids = new Set<string>();
   for (const entry of config.providers) {
     if (entry.enabled === false) continue;
     if (
@@ -55,6 +57,9 @@ export async function loadAuthConfig(
       issuer.hash
     )
       throw new Error('Provider issuer must be an HTTPS issuer URL.');
+    if (ids.has(entry.id)) throw new Error('Duplicate provider id.');
+    ids.add(entry.id);
+    if (role === 'management' && !entry.managementEmails?.length) continue;
     let secret;
     try {
       secret = JSON.parse(await readFile(resolve(authDir, entry.credentialsFile), 'utf8'));
@@ -71,7 +76,6 @@ export async function loadAuthConfig(
       throw new Error(
         'Credentials must contain client_id and client_secret (Google Web application JSON is supported).',
       );
-    if (providers.some((p) => p.id === entry.id)) throw new Error('Duplicate provider id.');
     providers.push({
       id: entry.id,
       label: entry.label,

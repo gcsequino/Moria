@@ -1,7 +1,6 @@
 import { Server } from 'node:net';
 import { runProcess, type ProcessRole } from '../../../apps/local/src/runtime.js';
 import { Jobs, type JobContext } from '../../../services/execution/src/jobs.js';
-import { createWeatherService } from '../../../services/weather/src/service.js';
 
 // Only this fixture delays listen; production entry points have no test controls.
 const pausedListen = Number(process.argv[3] ?? 0);
@@ -59,9 +58,9 @@ const handler = async (job: JobContext) => {
   }
 };
 const runtime = await runProcess(process.argv[2] as ProcessRole, async (catalog) => {
-  const jobs = new ObservedJobs(catalog, { snotel: handler, weather: handler });
+  const jobs = new ObservedJobs(catalog, { sample: handler, periodic: handler });
   await jobs.migrate();
-  return { jobs, weather: await createWeatherService(catalog) };
+  return { jobs };
 });
 if (!runtime) {
   if (pausedListen && !process.exitCode) {

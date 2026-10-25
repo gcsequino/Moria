@@ -109,7 +109,7 @@ export function createLocalServer(
         if (path === '/management/v1/jobs' && request.method === 'GET') {
           const result = await jobs.inspect();
           await check();
-          send(200, result);
+          send(200, { ...result, registeredKinds: Object.keys(jobs.handlers) });
           return true;
         }
         if (path === '/management/v1/lineage' && request.method === 'GET') {
@@ -124,6 +124,47 @@ export function createLocalServer(
           send(200, result);
           return true;
         }
+        const workload = /^\/management\/v1\/jobs\/([a-z][a-z0-9-]*)\/(enqueue|schedule)$/.exec(
+          path,
+        );
+        if (workload && request.method === 'POST') {
+          const input = (await body(request)) as Record<string, unknown>;
+          if (!input || typeof input !== 'object' || Array.isArray(input))
+            throw new MoriaError('INPUT_INVALID', 'Expected workload parameters.');
+          if (workload[2] === 'enqueue') {
+            if (
+              Object.keys(input).some((key) => !['requestKey', 'input'].includes(key)) ||
+              typeof input.requestKey !== 'string'
+            )
+              throw new MoriaError('INPUT_INVALID', 'Expected requestKey and optional input.');
+            send(
+              202,
+              await jobs.enqueue(
+                workload[1],
+                input.input === undefined ? {} : input.input,
+                input.requestKey,
+                actor,
+                check,
+              ),
+            );
+          } else {
+            if (
+              Object.keys(input).some((key) => !['enabled', 'intervalMinutes'].includes(key)) ||
+              typeof input.enabled !== 'boolean' ||
+              typeof input.intervalMinutes !== 'number'
+            )
+              throw new MoriaError('INPUT_INVALID', 'Expected enabled and intervalMinutes.');
+            send(
+              200,
+              await jobs.schedule(workload[1], input.enabled, input.intervalMinutes, check),
+            );
+          }
+          return true;
+        }
+        const legacyKind = /^\/management\/v1\/(snotel|weather)\//.exec(path)?.[1];
+        // Standalone legacy fixtures may explicitly compose their old handlers.
+        if (legacyKind && !snow && !Object.hasOwn(jobs.handlers, legacyKind))
+          throw new MoriaError('INPUT_INVALID', 'The bundled Snow/weather POC is retired.');
         const syncKind =
           path === '/management/v1/snotel/sync'
             ? 'snotel'
@@ -165,6 +206,17 @@ export function createLocalServer(
           const input = (await body(request)) as { id: string };
           if (!input || typeof input.id !== 'string' || Object.keys(input).some((k) => k !== 'id'))
             throw new MoriaError('INPUT_INVALID', 'Expected job ID.');
+          if (!/^[0-9a-f-]{36}$/i.test(input.id))
+            throw new MoriaError('INPUT_INVALID', 'Invalid job ID.');
+          const job = (
+            await jobs.catalog.pool.query('SELECT kind FROM moria.jobs WHERE id=$1', [input.id])
+          ).rows[0];
+          await check();
+          if (job && !Object.hasOwn(jobs.handlers, job.kind))
+            throw new MoriaError(
+              'INPUT_INVALID',
+              'This workload has no registered handler; historical jobs cannot be retried.',
+            );
           send(200, await jobs.retry(input.id, check));
           return true;
         }
