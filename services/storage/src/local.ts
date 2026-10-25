@@ -1,3 +1,4 @@
+import { integer, transferSignal, cancelled } from './transfer.js';
 import { constants } from 'node:fs';
 import { lstat, realpath, mkdir, open, link, unlink } from 'node:fs/promises';
 import { isAbsolute, join, parse, resolve } from 'node:path';
@@ -11,7 +12,6 @@ import {
   type StreamingStorage,
   type ReadOptions,
   type WriteOptions,
-  type TransferOptions,
 } from './locations.js';
 
 /** Only trusted service configuration may construct a binding. Never expose this factory to users. */
@@ -21,39 +21,6 @@ export interface LocalStorageBinding {
   readonly tableId: string;
   readonly maxObjectBytes: number;
   readonly chunkBytes: number;
-}
-
-function integer(value: number, minimum: number, maximum: number): void {
-  if (!Number.isSafeInteger(value) || value < minimum || value > maximum) {
-    throw new StorageError('INVALID_INPUT');
-  }
-}
-
-function transferSignal(options: TransferOptions): AbortSignal | undefined {
-  try {
-    if (options === null || typeof options !== 'object' || Array.isArray(options)) {
-      throw new StorageError('INVALID_INPUT');
-    }
-    const signal = options.signal;
-    if (
-      signal !== undefined &&
-      (!(signal instanceof AbortSignal) ||
-        typeof signal.aborted !== 'boolean' ||
-        typeof signal.addEventListener !== 'function' ||
-        typeof signal.removeEventListener !== 'function')
-    ) {
-      throw new StorageError('INVALID_INPUT');
-    }
-    return signal;
-  } catch {
-    throw new StorageError('INVALID_INPUT');
-  }
-}
-
-function cancelled(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw new StorageError('CANCELLED');
-  }
 }
 
 function failure(error: unknown): StorageError {

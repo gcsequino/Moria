@@ -1,3 +1,4 @@
+import { createS3Storage, type S3StorageBinding } from './s3.js';
 import { createLocalStorage, type LocalStorageBinding } from './local.js';
 import {
   location,
@@ -34,6 +35,27 @@ export async function createAuthorizedLocalStorage(
   scope: StorageAuthorityScope,
   authority: TrustedStorageAuthority,
 ): Promise<StreamingStorage> {
+  return Object.freeze(
+    await createLocalStorage(binding, createStorageVerifier(binding, scope, authority)),
+  );
+}
+
+export async function createAuthorizedS3Storage(
+  binding: S3StorageBinding,
+  scope: StorageAuthorityScope,
+  authority: TrustedStorageAuthority,
+): Promise<StreamingStorage> {
+  return Object.freeze(
+    await createS3Storage(binding, createStorageVerifier(binding, scope, authority)),
+  );
+}
+
+/** Shared exact scope and current-authority checks; adapters choose transfer boundaries. */
+function createStorageVerifier(
+  binding: { readonly warehouseId: string; readonly tableId: string },
+  scope: StorageAuthorityScope,
+  authority: TrustedStorageAuthority,
+) {
   let scoped: StorageLocation;
   let operations: Set<StorageOperation>;
   let check: TrustedStorageAuthority['checkCurrent'];
@@ -95,5 +117,5 @@ export async function createAuthorizedLocalStorage(
       }
     }
   };
-  return Object.freeze(await createLocalStorage(binding, verify));
+  return verify;
 }
