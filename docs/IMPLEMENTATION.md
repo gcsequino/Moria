@@ -369,3 +369,61 @@ Remote TLS, actual IPv6 network connectivity, installation cutover/restore,
 mixed-release operation and production capacity remain unverified. Human review
 of migration ownership/role invariants and latest-revision Linux CI remain required
 before manual merge. Changes remain uncommitted for the controller.
+
+## Issue #44 — S3 streaming adapter
+
+Bounded M2-01e work on `delivery/issue-44`, based on
+`863a50896fddf4a34935ee404950f4bdcb077e42`, following dependency #42 and accepted
+C04/C08 and storage authority contracts. The real MinIO conditional multipart
+completion proof passed before adapter implementation. Added the pinned official
+AWS SDK, checksum-verified isolated server provisioning, S3 implementation of the
+existing streaming seam, shared authority/transfer validation, and real-provider
+contract/fault tests. Detailed prerequisite provenance, guarantees, commands and
+limitations are in [STORAGE-S3.md](production/STORAGE-S3.md).
+
+Protected-path use is limited to the explicitly authorized package.json,
+pnpm-lock.yaml and deploy/test/Dockerfile exception. Other changed paths are
+services/storage/src, the two permitted new test suites and fixtures, and the
+requested production/progress documentation. Existing authorization assertions,
+required checks and delivery policy are preserved. No runtime/catalog/lease changes,
+credential-file access, live installation, paid model call or publication action.
+
+Verification uses non-root Linux, Node 24.21.0, pnpm 11.25.0 and repository `.venv`
+Python 3.11.17. The official MinIO package was downloaded, checksum-verified and
+extracted to `/tmp/issue-44-minio-dist`; local commands set
+`MORIA_TEST_S3_BINARY=/tmp/issue-44-minio-dist/usr/local/bin/minio`.
+The ordinary archive returned HTTP 410, so provisioning uses the official GitHub
+release asset. Server readiness and fixture credential-copy bugs found during
+focused testing were corrected. The focused shared/S3/authority run passed 30
+tests with no skips; the final shared/S3 run passed 18 tests. `pnpm format` and
+`pnpm typecheck` passed. Full gate results are recorded below.
+
+The Docker image build is unverified: `docker version` cannot connect to
+`/var/run/docker.sock`. Installing into `/usr/local/bin` is unavailable under the
+container's no-new-privileges setting; the documented environment override uses
+the exact verified executable without requiring root. Real local server tests
+remain mandatory and ran successfully. Runtime integration, byte/Iceberg metadata
+relocation, remote TLS/provider qualification and production lifecycle/recovery
+remain #17 follow-ups. Independent exact-revision CI and human review remain
+controller-owned prerequisites to manual merge.
+
+Initial full `pnpm check` passed (344 tests, zero failures/skips, 104.086 seconds
+runtime-test duration), including real PostgreSQL/Iceberg, SDK drift, TypeScript,
+Python formatting/schema/workload checks, both application builds and starter
+verification. Final review explicitly disabled all ambient SDK profile defaults
+and enabled hard request timeouts. The added subprocess regression intercepts
+profile/credential-file reads before access and observed zero attempts during real
+signed read/write. The focused S3 suite passed five tests. A final full gate covers
+these repairs; logs are `/tmp/issue-44-check-final.log`. Formatting-only braces and
+Dockerfile command layout were also expanded for readability.
+
+Final verification: `MORIA_TEST_S3_BINARY=/tmp/issue-44-minio-dist/usr/local/bin/minio pnpm check`
+passed with exit 0: 345 tests, 345 passed, zero failures/cancellations/skips,
+104.438 seconds runtime-test duration. Formatting, SDK drift, TypeScript, real
+PostgreSQL and Iceberg tests, Python checks, both builds and starter verification
+all passed. `pnpm format:check` and `git diff --check` also passed after final
+readability edits. The Docker provisioning shell and embedded JavaScript pass
+`bash -n` and `node --check`; an actual image build remains unverified for the
+Docker-daemon limitation above. Logs remain local under `/tmp/issue-44-*`.
+No required runtime test infrastructure was unavailable. Changes remain
+uncommitted; independent latest-revision CI and human review are still required.

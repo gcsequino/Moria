@@ -21,7 +21,7 @@ export type StorageErrorCode =
 export class StorageError extends Error {
   constructor(
     readonly code: StorageErrorCode,
-    /** The final name was created, but successful write acknowledgment was not reached. */
+    /** Finalization may have succeeded, but successful write acknowledgment was not reached. */
     readonly writeOutcome?: 'uncertain',
   ) {
     super(code);
