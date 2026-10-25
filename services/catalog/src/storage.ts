@@ -30,6 +30,14 @@ import {
   type MetadataPublication,
 } from './storage-publication.js';
 
+import {
+  prepareSnapshot,
+  snapshotObjects,
+  snapshotBytesLimit,
+  type SnapshotPublication,
+  type SnapshotObject,
+} from './snapshot-publication.js';
+
 const prefix = 'moria-storage:v1:';
 
 /** Canonical encoding: duplicate keys, alternate spellings and extra fields are rejected. */
@@ -122,6 +130,57 @@ export class CatalogStorage {
     request: MetadataPublication,
     signal?: AbortSignal,
   ): Promise<Receipt> {
+    return (await this.publishObjects(authenticated, request, signal)).receipt;
+  }
+
+  async publishSnapshot(
+    authenticated: SessionContext,
+    request: SnapshotPublication,
+    signal?: AbortSignal,
+  ) {
+    const inventories = request.outputs.map((output) => snapshotObjects(output.objects));
+    let total = 0;
+    for (const [index, objects] of inventories.entries()) {
+      total += request.outputs[index].size;
+      for (const object of objects) {
+        if (!Number.isSafeInteger(object.size) || object.size < 1) {
+          throw new StorageError('INVALID_INPUT');
+        }
+        total += object.size;
+      }
+    }
+    if (total > snapshotBytesLimit) throw new StorageError('LIMIT_EXCEEDED');
+    const outputs = request.outputs.map(({ objects: _objects, ...output }) => output);
+    const controller = new AbortController();
+    signal = transferSignal({ signal });
+    const abort = () => controller.abort();
+    const timer = setTimeout(abort, 60000);
+    signal?.addEventListener('abort', abort, { once: true });
+    if (signal?.aborted) abort();
+    let onAbort: (() => void) | undefined;
+    const aborted = new Promise<never>((_resolve, reject) => {
+      onAbort = () => reject(new StorageError('CANCELLED'));
+      controller.signal.addEventListener('abort', onAbort, { once: true });
+    });
+    try {
+      cancelled(controller.signal);
+      return await Promise.race([
+        this.publishObjects(authenticated, { ...request, outputs }, controller.signal, inventories),
+        aborted,
+      ]);
+    } finally {
+      if (onAbort) controller.signal.removeEventListener('abort', onAbort);
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+    }
+  }
+
+  private async publishObjects(
+    authenticated: SessionContext,
+    request: MetadataPublication,
+    signal?: AbortSignal,
+    inventories?: readonly (readonly SnapshotObject[])[],
+  ) {
     signal = transferSignal({ signal });
     cancelled(signal);
     const session = Object.freeze({ ...authenticated });
@@ -226,11 +285,25 @@ export class CatalogStorage {
       binding: CatalogStorageBinding;
       bytes: Buffer;
       logical: StorageLocation;
+      objects: { reference: ScopedObject; bytes: Buffer }[];
     }[] = [];
     for (const [index, output] of declaration.outputs.entries()) {
       const binding = bindings[index];
       const bytes = await metadataBytes(streams[index], output.size, check, signal);
-      await validateMetadata(bytes, binding.icebergTableUuid!, output.snapshotId, signal);
+      if (!inventories) {
+        await validateMetadata(bytes, binding.icebergTableUuid!, output.snapshotId, signal);
+      }
+      const snapshot = inventories
+        ? await prepareSnapshot(
+            bytes,
+            inventories[index],
+            binding,
+            output.snapshotId,
+            [session.environment, declaration.execution, output.dataset],
+            check,
+            signal!,
+          )
+        : undefined;
       const logical = location({
         version: 1,
         warehouseId: binding.warehouseId,
@@ -239,10 +312,10 @@ export class CatalogStorage {
           session.environment,
           declaration.execution,
           output.dataset,
-          bytes,
+          snapshot?.identityBytes ?? bytes,
         ),
       });
-      candidates.push({ binding, bytes, logical });
+      candidates.push({ binding, bytes, logical, objects: snapshot?.staged ?? [] });
     }
     const publication: Publication = {
       environment: session.environment,
@@ -272,8 +345,28 @@ export class CatalogStorage {
         ).rowCount === 1
       );
     };
+    const result = (receipt: Receipt) =>
+      Object.freeze({
+        receipt,
+        outputs: Object.freeze(
+          candidates.map(({ binding, objects }) =>
+            Object.freeze({
+              dataset: binding.dataset,
+              readObjects: Object.freeze(objects.map(({ reference }) => reference)),
+            }),
+          ),
+        ),
+      });
+    const writes = candidates.flatMap(({ binding, bytes, logical, objects }) => [
+      ...objects.map((object) => ({
+        binding,
+        bytes: object.bytes,
+        logical: object.reference.location,
+      })),
+      { binding, bytes, logical },
+    ]);
     if (!(await committed())) {
-      for (const { binding, bytes, logical } of candidates) {
+      for (const { binding, bytes, logical } of writes) {
         await check();
         const storage = await binding.storage(
           Object.freeze({ location: logical, operations: Object.freeze(['create'] as const) }),
@@ -289,14 +382,14 @@ export class CatalogStorage {
             error.code === 'ALREADY_EXISTS' &&
             (await committed())
           ) {
-            return catalog.publish(publication, checkSession);
+            return result(await catalog.publish(publication, checkSession));
           }
           throw error;
         }
       }
     }
     await check();
-    return catalog.publish(publication, checkSession);
+    return result(await catalog.publish(publication, checkSession));
   }
 
   async readRows(

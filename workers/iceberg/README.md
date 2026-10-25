@@ -81,3 +81,32 @@ materialize native batches/files before row slicing: input/transport limits do
 not predict RSS or compressed-data expansion. Exceeding the process envelope can
 kill/fail the scan. These are defensive fixture-scale limits, not production
 capacity targets. A partial iterator is not a successful complete read.
+
+## Complete snapshot validation (#63)
+
+`validate_snapshot.py` is a fixed internal helper for `CatalogStorage.publishSnapshot`.
+It consumes exact byte inventories through bounded stdin frames, uses pinned
+PyIceberg/PyArrow to validate the root and retained metadata/manifest/Parquet closure,
+and returns success only after every supplied object is referenced and every
+referenced object is present. FileIO is read-only and in-memory; no engine-selected
+path, credential, storage provider or catalog connection is available. Deleted
+historical data entries are also parsed; delete-file semantics are unsupported.
+The service owns authorization, scoped create-only writes, immutable name mappings
+and atomic publication. The helper cannot publish.
+
+The supported types and table features are the scoped reader envelope above.
+Partitioned/sorted tables, statistics files, delete files, malformed or foreign
+references, duplicate/conflicting objects and extra objects fail closed. Schema IDs
+are unique per metadata file and cannot change definition across retained history.
+Missing or empty sort orders are rejected before staging. Each metadata file's
+current snapshot projection must match the ordered fields of its current table
+schema, which the reader advertises; a different schema ID alone is compatible.
+Explicit snapshot schema IDs must resolve locally, including in retained metadata;
+unknown IDs cannot use PyIceberg's warning-and-fallback behavior. Scan caching
+includes the resolved projection, including current-schema fallback when a snapshot
+omits its schema ID. Exact
+limits, identity domains, cancellation, orphan/retry behavior and binding replacement
+are documented in [catalog storage](../../docs/production/CATALOG-STORAGE.md#complete-scoped-snapshot-publication-63).
+A 60-second whole-attempt deadline and Linux process resource limits bound this
+fixture-scale path; neither this helper nor its successful tests certify production
+capacity, arbitrary-code isolation, schema evolution or Spark interoperability.

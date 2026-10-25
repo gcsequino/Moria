@@ -232,3 +232,110 @@ real Parquet rows exercise the frame rejection path. No mock-only storage or
 transaction proof replaces the existing suites. Independent-environment checks,
 clean independent review, current-main integration and Linux CI on the exact
 revision remain mandatory before acceptance; #17 remains open.
+
+## Complete scoped snapshot publication (#63)
+
+`CatalogStorage.publishSnapshot(session, request, signal?)` is an additive trusted
+engine seam. It uses the same authenticated Dataset bindings, grants/application
+scopes, inherited markings, execution fence, checkpoint, lineage, request hash and
+atomic `Catalog.publish` transaction as metadata-only publication. Each output adds
+`objects: [{name, size, stream}]` to the existing metadata declaration. Names must
+be canonical `moria://<warehouse>/<table>/...` names for that output's exact binding.
+Object IDs, provider paths, credentials and resolver callbacks are not request
+fields. Existing `publish`, physical-path consumers and reader contracts remain
+unchanged. No public route or runtime adoption is added.
+
+All declarations are captured before asynchronous work. The service copies exact
+bytes with pull-based intake, validates the complete closure using the pinned real
+PyIceberg/PyArrow parser, then stages each object and metadata through scoped
+create-only `StreamingStorage.write`. Every write must acknowledge completion
+before the single catalog transaction. Validation and storage IO run outside SQL
+transactions. The validator receives only bounded byte frames in an isolated-mode
+Python process with a minimal environment; its FileIO resolves exclusively from
+that inventory in memory, with no filesystem, network or provider fallback.
+This is fixed trusted-engine composition, not arbitrary-code isolation.
+
+Closure validation includes retained metadata-log files recursively, every
+retained snapshot's manifest list, manifests and all referenced Parquet files
+(including historical deleted entries). It parses Parquet pages and scans retained
+snapshots through Iceberg. Missing/extra/duplicate objects, conflicting roles or
+sizes/counts, cyclic metadata history, foreign table UUID/location, incorrect
+current snapshot, unsafe names and unsupported features fail closed. Partitioning,
+sorting, delete files, statistics files and unsupported scalar schemas are rejected.
+The existing unpartitioned, unsorted Iceberg v2 Parquet scalar/array envelope applies;
+this does not certify schema evolution or external Spark interoperability.
+Sort orders must be present and nonempty, even for unsorted tables. The selected
+current snapshot's resolved projection must have the same ordered fields as the
+current table schema advertised by the scoped reader; incompatible names, types or
+requiredness are rejected before staging. Schema IDs alone need not match.
+Schema IDs must be unique within each metadata file and retain the same definition
+throughout its metadata history. Current schema IDs and every explicit snapshot
+schema ID must resolve within their own metadata file; parser fallback for an
+unknown ID is rejected. A snapshot without an explicit schema ID uses that file's
+current schema, matching the pinned reader. Scan reuse includes the resolved schema,
+so a historical scan cannot suppress validation under a different root schema.
+
+Limits are at most 16 outputs; 1 MiB per root or retained metadata file; 128
+referenced objects per output; 16 MiB per referenced object; and 64 MiB total
+input bytes across all outputs including root metadata. Referenced-object intake
+allows at most 65,536 chunks per object, each at most 256 KiB. Python transport
+frames are at most 2 MiB, with 256 KiB binary payloads and one acknowledged pipe
+write at a time. Sequential scoped storage writes use 256-byte chunks, as the
+existing metadata path does. The validator's address-space/CPU/core limits are
+2 GiB/60 seconds/zero. Each output permits at most 128 distinct snapshot/resolved-schema scans and
+128 scan tasks per snapshot, 256 columns, 100,000 decoded rows and 32 MiB encoded
+values across unique Parquet files, plus the same row/byte limits across retained
+snapshot scans. Row frames are at most 4 MiB and 100 rows. A 60-second deadline
+covers the whole publication attempt, including intake and storage. These are
+fixture-scale defensive limits, not capacity or production durability claims.
+The service retains at most 64 MiB input bytes plus metadata identity, stream and
+protocol overhead; Python retains its own bounded copy and Arrow allocations.
+
+Cancellation/deadline settles the caller and prevents subsequent publication
+checks from authorizing work. Pending SQL operations retain ownership of their
+transaction cleanup and can remain pending until their lock/pool timeout clears.
+Current authority is checked during intake, at transfer boundaries, after validation
+and inside publication. Revocation during validation is observed before staging;
+session expiry and epoch changes fail closed. A commit that has already crossed
+its final authorization boundary can win a later cancellation; resolve uncertain
+acknowledgments by replaying the exact request under current authorization.
+
+### Content identity and retries
+
+Metadata-only object identity is unchanged. Complete publication uses a separate
+identity domain: each referenced object's SHA-256 covers the domain tag, captured
+`(environment, execution, Dataset)`, logical name and exact bytes. Root metadata
+identity uses the existing metadata identity function over a domain-tagged root
+metadata byte string followed by the sorted immutable reference inventory. The
+resulting `metadata_location` therefore commits to every supplied name, size and
+content through the existing catalog request hash. Object declaration order is
+irrelevant; changing content, names, metadata, lineage or checkpoint cannot recover
+a different receipt silently. Referenced names are never rewritten inside Iceberg
+files. Identity is scoped to execution, so a newly fenced execution can stage a
+fresh complete inventory without adopting an uncertain earlier write.
+
+The return value contains `{receipt, outputs: [{dataset, readObjects}]}`. Trusted
+composition may replace the service's immutable binding with the returned
+`readObjects` for `readRows`; there is no dynamic binding registry or caller-chosen
+resolver. Existing pinned readers retain their captured inventory. Mapping retention
+and durable discovery across service restart remain integration gates.
+
+The existing orphan policy applies to every staged object. Failed validation does
+not stage anything. Failed/partial/uncertain writes never initiate a new publication;
+acknowledged objects can remain unreachable. An existing object is not evidence of
+matching bytes or durability. Only an already committed catalog receipt, validated
+by the existing request hash under current authority, can recover a retry after a
+collision. Uncommitted retries cannot resume in place: fence the old attempt and
+use a fresh execution. No deletion, destructive rollback, GC, automatic location
+migration or legacy adoption is implemented.
+
+`tests/catalog-snapshot-publication.integration.test.ts` uses real PostgreSQL,
+local files, isolated checksum-pinned MinIO and genuine multi-file Iceberg fixtures.
+It covers exact rows/scalars and provenance, two-output atomicity, malformed closure,
+unsafe references, duplicate/content conflicts, partial and uncertain writes,
+cancellation, revocation/expiry, stale fences and lost-ack receipt recovery.
+Executed commands/results are recorded in `docs/IMPLEMENTATION.md`. Fresh independent
+review with no findings, current-main integration and Linux quality CI on the exact
+published head remain controller-owned gates. #17 remains open; #18/#19 remain
+dependency-gated. This slice does not establish production capacity, recovery,
+arbitrary-code isolation, Spark interoperability or runtime rollout.
