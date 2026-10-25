@@ -316,8 +316,8 @@ export class CatalogStorage {
         snapshotId: pinned.snapshotId,
         tableUuid: binding.icebergTableUuid,
         objects: binding.readObjects,
-        check: async () => {
-          await current.checkCurrent({ location: logical, operation: 'read' }, options.signal);
+        check: async (signal) => {
+          await current.checkCurrent({ location: logical, operation: 'read' }, signal);
         },
         read: async (object, offset, length, signal) => {
           const storage = await binding.storage(
@@ -413,9 +413,19 @@ export class CatalogStorage {
       throw new StorageError('BINDING_MISMATCH');
     }
     const current: TrustedStorageAuthority = {
-      checkCurrent: async () => {
+      checkCurrent: async (_request, signal) => {
+        cancelled(signal);
         // A new transaction per check observes current revocation, expiry and policy epoch.
-        await catalog.transaction(checkSession, session.environment, 'repeatable-read', 'shared');
+        await catalog.transaction(
+          async (client) => {
+            cancelled(signal);
+            await checkSession(client);
+          },
+          session.environment,
+          'repeatable-read',
+          'shared',
+        );
+        cancelled(signal);
         return true;
       },
     };

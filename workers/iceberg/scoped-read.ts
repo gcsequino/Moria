@@ -56,7 +56,7 @@ export async function* scopedRows(
     snapshotId: string;
     tableUuid: string;
     objects: readonly ScopedObject[];
-    check: () => Promise<void>;
+    check: (signal: AbortSignal) => Promise<void>;
     read: (
       object: ScopedObject,
       offset: number,
@@ -77,8 +77,20 @@ export async function* scopedRows(
   const timer = setTimeout(abort, timeout);
   const check = async () => {
     cancelled(controller.signal);
-    await pin.check();
-    cancelled(controller.signal);
+    let onAbort: (() => void) | undefined;
+    try {
+      const aborted = new Promise<never>((_resolve, reject) => {
+        onAbort = () => reject(new StorageError('CANCELLED'));
+        controller.signal.addEventListener('abort', onAbort, { once: true });
+      });
+      // The catalog transaction may still be waiting for its environment lock.
+      // Observe its eventual rejection, but never let it delay scan cleanup or
+      // authorize output after cancellation has won the race.
+      await Promise.race([pin.check(controller.signal), aborted]);
+      cancelled(controller.signal);
+    } finally {
+      if (onAbort) controller.signal.removeEventListener('abort', onAbort);
+    }
   };
   let stop: (() => void) | undefined;
   let metadata: ReadableStream<Uint8Array> | undefined;
@@ -131,8 +143,8 @@ export async function* scopedRows(
       });
       child.once('close', (code) => {
         if (!ended || code !== 0) controller.abort();
-        clearTimeout(timer);
-        options.signal?.removeEventListener('abort', abort);
+        // The final authority check still needs deadline/cancellation protection.
+        // Only iterator cleanup owns the timer and caller listener.
         done(code);
       });
     });

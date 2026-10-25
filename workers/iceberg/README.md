@@ -53,8 +53,13 @@ a process-wide Python lock also serializes Arrow's background IO. Each batch wai
 for parent acknowledgment, so a paused consumer applies backpressure. Cancellation,
 deadline, early return and child failure terminate/reap the child; a failed child
 cannot continue releasing a buffered batch. Consumers must exhaust or close the
-iterator. The engine deadline starts on first pull; catalog/authority database
-waits remain cooperative and require deployment connection/statement timeouts.
+iterator. The engine deadline starts on first pull. Scan authority waits race
+that deadline and caller cancellation through the final post-exit authority check
+and iterator cleanup, so a blocked database check cannot delay cleanup or release
+buffered rows. The catalog still owns the underlying
+SQL transaction: it drains after contention clears (or its lock timeout expires),
+and its late result cannot resume the scan. Initial catalog pinning before first
+pull and database connection/statement timeouts remain separate obligations.
 
 The deliberately small supported envelope is Iceberg v2, unpartitioned, unsorted
 Parquet data snapshots without delete files. Scalars follow `worker.wire`: strings,

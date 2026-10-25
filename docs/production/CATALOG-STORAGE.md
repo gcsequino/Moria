@@ -203,7 +203,11 @@ PostgreSQL remains the provenance authority.
 
 Parent-only scoped adapters perform metadata and range IO, with fresh authority
 transactions on access/release. Rows receive an additional current-authority check
-before release. No provider initialization/network IO occurs in a catalog SQL
+before release. Scan authority waits are abortable with the engine deadline signal
+as well as caller cancellation; a late authorization result cannot release rows.
+The underlying catalog transaction retains ownership of SQL cleanup and can
+remain pending until contention clears or its existing lock timeout expires.
+No provider initialization/network IO occurs in a catalog SQL
 transaction. The worker receives no storage or DB credentials. See the
 [worker documentation](../../workers/iceberg/README.md#scoped-pinned-snapshot-reader-56)
 for the exact protocol, process lifecycle, limits and supported feature envelope.
@@ -217,7 +221,10 @@ existing pinned loopback MinIO fixture. The fixture writer preserves logical
 names inside standard Iceberg files; the reader cannot access its physical files.
 Coverage includes exact scalar rows across multiple data files, range offsets,
 pinned provenance across a competing publication, table/reference denial,
-revocation/expiry, cancellation, return, deadline and child failure. Oversized
+revocation/expiry, cancellation, return, deadline and child failure. Real PostgreSQL
+environment-lock contention tests check cancellation/deadline settlement and child
+and listener cleanup before unlocking, then connection/lock cleanup after unlocking.
+Oversized
 real Parquet rows exercise the frame rejection path. No mock-only storage or
 transaction proof replaces the existing suites. Independent-environment checks,
 clean independent review, current-main integration and Linux CI on the exact

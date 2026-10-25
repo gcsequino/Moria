@@ -966,3 +966,70 @@ record. Existing staged issue work is preserved. No protected paths were changed
 and no credential files were accessed. Independent-environment validation, independent review,
 current-main integration and exact-revision Linux quality CI remain unverified
 controller gates. #14/M1 remains open; changes are uncommitted.
+
+### Issue #56 authority-wait repair — October 25, 2026
+
+Confirmed the scoped reader awaited current authority without an abort race and
+passed only the caller signal through CatalogStorage, omitting the engine's
+internal deadline. Scoped authority checks now race the combined scan signal,
+remove their abort listener on every outcome, observe late promise rejection and
+recheck cancellation before allowing output. CatalogStorage forwards that signal
+and denies cancelled checks before/after its current-authority transaction and
+before session validation when a blocked transaction resumes. No authorization
+failure becomes permission to read. Existing catalog transaction ownership,
+physical-path readers, adapters, dependencies and protected paths are unchanged.
+
+Added real PostgreSQL environment advisory-lock contention cases for both local
+and isolated S3 storage, before worker startup and with buffered rows. Each test
+observes an actually blocked authority backend, then verifies deadline or caller
+cancellation rejects pending iteration and completes iterator return while the
+lock remains held. It checks no further storage opens, no remaining child or
+caller abort listener, and then releases the lock and verifies pool and advisory
+lock cleanup. The underlying catalog transaction is not forcibly cancelled: its
+connection drains after lock release or the existing lock timeout. Initial
+catalog pinning precedes the engine deadline; deployment database/pool timeouts
+remain required. This repair does not claim general database cancellation.
+
+Validation: `pnpm format`, `pnpm typecheck` and `git diff --check` passed.
+`pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed
+all 35 tests with no skips, including eight real contention cases
+(log: `/tmp/issue-56-repair-targeted.log`). Full `pnpm check` exited 0:
+all 455 runtime tests passed with zero failures/skips, plus formatting, SDK drift,
+TypeScript, Python formatting/specification/workload checks using the workspace
+`.venv`, both application builds and Station Explorer type/build/hosting checks
+(log: `/tmp/issue-56-repair-check.log`). Required local infrastructure was available.
+Final `git diff --check` passed.
+Independent-environment checks, clean independent review, current-main integration
+and exact-revision Linux CI remain mandatory unverified controller gates. #17
+remains open. Changes remain uncommitted; no credential files were accessed.
+
+### Issue #56 post-exit authority-wait repair — October 25, 2026
+
+Confirmed that successful child close removed the engine deadline timer and caller
+abort listener before the final authority check. Their lifetime now extends through
+that check to the existing iterator cleanup. No authority or storage semantics,
+dependencies, protected paths or existing consumers change.
+
+Extended the real PostgreSQL contention regressions to the post-exit phase for
+local and isolated pinned S3 storage. A test-only transaction wrapper acquires an
+exclusive environment lock once the actual reader child has exited, then delegates
+to the real catalog transaction. Tests observe the blocked PostgreSQL backend and
+require deadline/cancellation rejection, iterator completion, no further storage
+opens and child/listener cleanup before unlocking. Pool and advisory-lock cleanup
+are checked after unlocking. The underlying SQL transaction still drains after
+contention clears; this is not general database cancellation.
+
+Before the repair, all four new post-exit cases failed with missing expected
+rejection (log: `/tmp/issue-56-post-exit-before.log`). After the repair,
+`pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed all
+39 tests with zero failures/skips (log: `/tmp/issue-56-post-exit-targeted.log`).
+`pnpm format`, `pnpm typecheck` and `git diff --check` passed. Full `pnpm check`
+exited 0: all 459 runtime tests passed with zero failures/skips, plus formatting,
+SDK drift, TypeScript, Python formatting/specification/workload checks using the
+workspace `.venv`, both application builds and Station Explorer type/build/hosting
+checks (log: `/tmp/issue-56-post-exit-check.log`). Required local infrastructure
+was available. Final `git diff --check` passed.
+
+Independent-environment validation, clean independent review, current-main
+integration and exact-revision Linux CI remain unverified controller gates; #17
+remains open. Changes are left uncommitted.

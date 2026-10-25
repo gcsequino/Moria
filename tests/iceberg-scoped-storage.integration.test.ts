@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { mkdir, readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { getEventListeners } from 'node:events';
 import {
   CatalogStorage,
   encodeMetadataLocation,
@@ -240,6 +241,110 @@ for (const provider of ['local', 's3'] as const) {
         assert.equal(accesses, count);
         assert.deepEqual(await children(), baseline);
       });
+    }
+    for (const phase of ['before startup', 'buffered rows', 'after child exit'] as const) {
+      for (const action of ['deadline', 'cancel'] as const) {
+        await t.test(`${action} interrupts contended authority ${phase}`, async (t) => {
+          const abort = new AbortController();
+          const scan = await service.readRows(await session(), dataset, {
+            signal: abort.signal,
+            timeoutMs: phase === 'before startup' ? 300 : 5000,
+          });
+          if (phase === 'buffered rows') {
+            assert.equal((await scan.rows.next()).done, false);
+            assert.equal((await children()).length, baseline.length + 1);
+          }
+          if (phase === 'after child exit') {
+            for (let row = 0; row < 300; row++) {
+              assert.equal((await scan.rows.next()).done, false);
+            }
+            assert.equal((await children()).length, baseline.length + 1);
+          }
+          const locker = await db.pool.connect();
+          let postExitLocked = false;
+          let pending: Promise<unknown> | undefined;
+          const within = async <T>(promise: Promise<T>, ms: number): Promise<T> => {
+            let timer: ReturnType<typeof setTimeout> | undefined;
+            try {
+              return await Promise.race([
+                promise,
+                new Promise<never>((_resolve, reject) => {
+                  timer = setTimeout(() => reject(new Error('authority wait did not settle')), ms);
+                }),
+              ]);
+            } finally {
+              clearTimeout(timer);
+            }
+          };
+          const waitFor = async (condition: () => Promise<boolean>) => {
+            const end = Date.now() + 2000;
+            while (!(await condition())) {
+              assert.ok(Date.now() < end, 'PostgreSQL contention state did not converge');
+              await new Promise((done) => setTimeout(done, 5));
+            }
+          };
+          try {
+            const lock = () =>
+              locker.query(
+                "SELECT pg_advisory_lock(hashtextextended('moria/environment/' || $1,0))",
+                [environment],
+              );
+            if (phase === 'after child exit') {
+              const transaction = db.catalog.transaction.bind(db.catalog);
+              const contended: typeof db.catalog.transaction = async (fn, ...args) => {
+                // Insert contention only after the real reader has exited. Every
+                // authority check still runs through the real catalog and PostgreSQL.
+                if (!postExitLocked && (await children()).length === baseline.length) {
+                  await lock();
+                  postExitLocked = true;
+                }
+                return transaction(fn, ...args);
+              };
+              t.mock.method(db.catalog, 'transaction', contended);
+            } else {
+              await lock();
+            }
+            const count = accesses;
+            pending = assert.rejects(scan.rows.next(), { code: 'CANCELLED' });
+            // Observe a real blocked backend, rather than assuming a delay means contention.
+            await waitFor(async () => {
+              const result = await locker.query(
+                `SELECT 1 FROM pg_stat_activity
+                 WHERE pid <> pg_backend_pid() AND wait_event_type='Lock'
+                 AND query LIKE 'SELECT pg_advisory_lock_shared%'`,
+              );
+              return result.rowCount === 1;
+            });
+            if (phase === 'after child exit') {
+              assert.equal(postExitLocked, true);
+              assert.deepEqual(await children(), baseline);
+            }
+            if (action === 'cancel') abort.abort();
+            await within(pending, phase === 'before startup' || action === 'cancel' ? 1000 : 5500);
+            // Cleanup must complete while the exclusive lock is STILL held.
+            assert.equal((await within(scan.rows.return(undefined), 1000)).done, true);
+            assert.equal((await scan.rows.next()).done, true);
+            assert.equal(accesses, count);
+            assert.equal(getEventListeners(abort.signal, 'abort').length, 0);
+            assert.deepEqual(await children(), baseline);
+          } finally {
+            t.mock.restoreAll();
+            await locker.query(
+              "SELECT pg_advisory_unlock(hashtextextended('moria/environment/' || $1,0))",
+              [environment],
+            );
+            locker.release();
+            await pending;
+            await scan.rows.return(undefined);
+          }
+          // The catalog owns SQL cleanup; its late result cannot restart the scan.
+          await waitFor(async () => db.pool.idleCount === db.pool.totalCount);
+          assert.equal(db.pool.waitingCount, 0);
+          const locks = await db.pool.query("SELECT 1 FROM pg_locks WHERE locktype='advisory'");
+          assert.equal(locks.rowCount, 0);
+          assert.deepEqual(await children(), baseline);
+        });
+      }
     }
     await t.test(
       'referenced URLs, physical paths and cross-table manifests never reach storage',
