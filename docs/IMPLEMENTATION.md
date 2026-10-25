@@ -475,3 +475,101 @@ Temporary evidence logs: `/tmp/issue-46-format.log`,
 `/tmp/issue-46-focused.log`, `/tmp/issue-46-check.log`. These local logs are not
 production or capacity evidence. Changes remain uncommitted for the controller;
 the independent review, CI and current-main gates above remain outstanding.
+
+### Issue #49 — durable scoped metadata publication
+
+Bounded M2-01g seam after #46: `CatalogStorage.publish` stages acknowledged
+create-only metadata through the existing authorized adapters and calls existing
+`Catalog.publish` once for atomic publication. Only the allowed catalog storage
+files, new integration tests and production/progress documentation change.
+Catalog transaction/lease code, schemas, adapter internals, existing tests,
+dependencies, protected paths and runtime consumers are unchanged.
+
+Accepted C04/S01/S02/S03/S06/S07/S08 contracts inform current-session and epoch
+checks, Dataset write authority, complete effective markings, terminal restricted
+views, immutable content-bound logical identities and receipt-based retries.
+Pinned PyIceberg validates bounded v2 metadata structure/table/current snapshot;
+manifest/data-file verification and runtime adoption remain follow-up work.
+Uncommitted partial or uncertain staging cannot be resumed over create-only
+collisions: fence the old attempt and schedule a new execution/lease. No deletion,
+GC, second receipt registry or alternate publication authority is introduced.
+
+Tests use synthetic temporary warehouses, real embedded PostgreSQL, filesystem
+and checksum-pinned isolated MinIO with real Iceberg-generated metadata. The
+initial focused run exposed an upload chunk-size mismatch; the seam now emits
+256-byte chunks compatible with the configured adapters. The next run exposed an
+incorrect new-test expectation: session revocation increments the security epoch
+and correctly returns AUTHORIZATION_CHANGED. That expectation was corrected;
+existing assertions were not edited. Additional barriers check session expiry
+inside the final transaction and cancellation of stalled engine intake.
+
+Verification environment: non-root Linux, Node 24.21.0, pnpm 11.25.0,
+repository `.venv` Python 3.11.17. Commands: `pnpm format`, `pnpm typecheck`,
+`pnpm exec tsx --test tests/catalog-storage-publication.integration.test.ts`,
+`pnpm check`, `git diff --check`. Final results are recorded below after execution.
+Independent no-findings review, exact-head Linux quality CI and current-main
+integration remain unverified controller-owned gates. Changes remain uncommitted;
+no publication, deployment, live installation access or external communication
+was performed. #17 remains open. This is not a capacity or full Iceberg IO claim.
+
+Final local results on October 25, 2026, against baseline
+`42491b01e691802becbc4fbf57eb706f84e487b9` with uncommitted issue changes:
+
+- `pnpm format`: passed; no existing tests or protected files changed.
+- Focused publication integration suite: 32 tests passed, zero failures,
+  cancellations or skips; 40.839 seconds. Both real providers and PostgreSQL ran.
+- Initial full `pnpm check`: exit 0, 406 tests passed. Final strengthening checks
+  both failed output heads and unchanged checkpoint state, in addition to absent
+  history and receipt, and expands test control flow for readability.
+- Final `pnpm check`: exit 0, 406 passed, zero failures/cancellations/skips;
+  runtime-test duration 161.732 seconds. Formatting, SDK drift, TypeScript,
+  PostgreSQL/Iceberg/filesystem/pinned-S3 regressions, Python formatting and
+  specification/workload checks, both builds and starter verification passed.
+- `git diff --check`: passed. The five changed files are within issue scope.
+
+No required local runtime infrastructure was unavailable. Logs are local at
+`/tmp/issue-49-format.log`, `/tmp/issue-49-focused-final.log` and
+`/tmp/issue-49-check-final.log`; they are not production or capacity evidence.
+Independent review, exact-head Linux CI and current-main integration remain
+unverified as noted above; local success does not waive those acceptance gates.
+
+### Issue #49 verification repair — lineage authorization
+
+The review finding was confirmed against C04 and S01/S02: the publication success
+fixtures used empty lineage and did not exercise input read permission or the
+inherited-marking union. Added bounded integration coverage in the existing
+publication suite for both real filesystem and isolated pinned S3 adapters with
+real PostgreSQL and PyIceberg-generated metadata. No production implementation,
+existing assertions, dependencies, protected files or delivery policy changed.
+
+New cases declare a nonempty input snapshot map and assert exact persisted
+lineage, producing execution, output snapshot IDs and revisions for both outputs,
+read back the metadata through CatalogStorage, and retry without changing the
+committed catalog state. Separate denials remove only the input read grant, only
+the input application scope, or the inherited marking from only the second
+output while the principal retains every marking. Each denial asserts zero
+writes, identical heads/history/checkpoint/receipt state and invisible outputs.
+These fixtures exercise trusted declared provenance; they do not claim full
+input scheduling or manifest/data-file reader integration.
+
+Validation commands: `pnpm format`,
+`pnpm exec tsx --test tests/catalog-storage-publication.integration.test.ts`,
+`pnpm check`, and `git diff --check`. Final results are recorded below.
+Independent review of the repaired revision, exact-head Linux quality CI and
+current-main integration remain controller-owned and unverified. #17 remains
+open; all changes remain uncommitted.
+
+Repair validation results (October 25, 2026):
+
+- `pnpm format`: passed.
+- Focused publication suite: exit 0; 40 tests passed, zero failures,
+  cancellations or skips (63.870 seconds).
+- Final `pnpm check`: exit 0; 414 runtime tests passed, zero failures or skips
+  (179.665 seconds). Formatting, SDK drift, TypeScript, real PostgreSQL and both
+  storage providers, workspace `.venv` Python checks, both builds and starter
+  verification passed. No required local infrastructure was unavailable.
+- `git diff --check`: passed. Repair edits are limited to the publication
+  integration test and this progress log; pre-existing issue changes remain.
+
+Local logs: `/tmp/issue-49-repair-format.log`,
+`/tmp/issue-49-repair-focused.log`, `/tmp/issue-49-repair-check.log`.
