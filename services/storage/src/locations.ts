@@ -7,6 +7,7 @@ export interface StorageLocation {
 }
 
 export type StorageErrorCode =
+  | 'AUTHORITY_DENIED'
   | 'INVALID_INPUT'
   | 'BINDING_MISMATCH'
   | 'UNSAFE_PATH'

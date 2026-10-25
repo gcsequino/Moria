@@ -103,6 +103,12 @@ async function syncDirectory(path: string): Promise<void> {
 
 export async function createLocalStorage(
   configured: LocalStorageBinding,
+  /** Internal trusted-service hook; never supplied by request options. */
+  verify?: (
+    location: StorageLocation,
+    operation: 'read' | 'create',
+    signal?: AbortSignal,
+  ) => Promise<void>,
 ): Promise<StreamingStorage> {
   const binding = { ...configured };
   identity(binding.warehouseId);
@@ -157,7 +163,8 @@ export async function createLocalStorage(
       }
     },
     async read(input, options: ReadOptions = {}) {
-      const path = target(input);
+      const logical = location(input);
+      const path = target(logical);
       const signal = transferSignal(options);
       cancelled(signal);
       const suppliedRange = options.range;
@@ -174,6 +181,8 @@ export async function createLocalStorage(
         integer(range.offset, 0, binding.maxObjectBytes);
         integer(range.length, 0, binding.maxObjectBytes);
       }
+      await verify?.(logical, 'read', signal);
+      cancelled(signal);
       try {
         await directory(objects);
         const file = await open(
@@ -218,6 +227,7 @@ export async function createLocalStorage(
               },
               async pull(value) {
                 try {
+                  await verify?.(logical, 'read', signal);
                   cancelled(signal);
                   if (offset === end) {
                     await close();
@@ -226,6 +236,7 @@ export async function createLocalStorage(
                   }
                   const buffer = Buffer.alloc(Math.min(binding.chunkBytes, end - offset));
                   const { bytesRead } = await file.read(buffer, 0, buffer.length, offset);
+                  await verify?.(logical, 'read', signal);
                   cancelled(signal);
                   if (bytesRead === 0) {
                     throw new StorageError('IO_ERROR');
@@ -252,7 +263,8 @@ export async function createLocalStorage(
       }
     },
     async write(input, source, options: WriteOptions) {
-      const path = target(input);
+      const logical = location(input);
+      const path = target(logical);
       const signal = transferSignal(options);
       const size = options.size;
       integer(size, 0, binding.maxObjectBytes);
@@ -260,6 +272,8 @@ export async function createLocalStorage(
       if (!(source instanceof ReadableStream) || source.locked) {
         throw new StorageError('INVALID_INPUT');
       }
+      await verify?.(logical, 'create', signal);
+      cancelled(signal);
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
       const temporary = join(staging, randomUUID());
       let file;
@@ -281,8 +295,10 @@ export async function createLocalStorage(
         );
         created = true;
         while (true) {
+          await verify?.(logical, 'create', signal);
           cancelled(signal);
           const part = await reader.read();
+          await verify?.(logical, 'create', signal);
           cancelled(signal);
           if (part.done) {
             break;
@@ -317,6 +333,7 @@ export async function createLocalStorage(
         file = undefined;
         await directory(staging);
         await directory(objects);
+        await verify?.(logical, 'create', signal);
         cancelled(signal);
         // Atomic no-clobber finalization. Cancellation after this point may lose to success.
         await link(temporary, path);
