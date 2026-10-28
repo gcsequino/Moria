@@ -1506,3 +1506,19 @@ Independent
 environment/review, current-main integration and exact-head Linux quality CI
 remain unverified and controller-owned. #17 remains open; #18/#19 remain
 dependency-gated. Changes remain uncommitted.
+
+
+## Protected point-read release check — October 27, 2026
+
+ObjectService.read now rechecks current authority after object evaluation, inside
+the same protected transaction, before returning the result. This aligns point
+reads with queries when a session expires during a blocked database read (#69).
+
+A disposable real-PostgreSQL regression establishes a source-table lock barrier
+after initial authorization, waits for the session deadline pinned before the
+read snapshot, then releases the lock. The original point read returns data and
+fails the regression; the query control denies release. The repaired point read
+also denies release, and subsequent valid and missing-object reads verify cleanup.
+No session-row mutation after snapshot creation is used to simulate wall-clock
+expiry. Full quality results are recorded in the pull request. This narrow repair
+does not implement the shared lifecycle/enforcement work in #72 or resolve #67.

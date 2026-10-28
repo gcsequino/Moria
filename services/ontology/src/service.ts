@@ -221,6 +221,14 @@ export class ObjectService {
         );
         const object = project(row, row);
         if (!object) throw new MoriaError('NOT_FOUND', 'Object not found');
+        await this.authority.assertCurrent(
+          c,
+          session.environment,
+          session.principal,
+          session.application,
+          state.epoch,
+          session.sessionHash,
+        );
         return { revision: env.revision, object };
       },
       session.environment,
