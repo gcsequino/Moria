@@ -1,37 +1,31 @@
-import { spawn } from 'node:child_process';
-import { resolve } from 'node:path';
+import { openPython, ProcessFailure } from '../../services/process/src/python.js';
 
-export function iceberg(request: unknown): Promise<any> {
-  const python =
-    process.env.MORIA_PYTHON ??
-    resolve(process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
-  return new Promise((resolveResult, reject) => {
-    const child = spawn(python, ['workers/iceberg/worker.py'], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PYTHONUTF8: '1' },
-    });
-    let stdout = '',
-      stderr = '';
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error('Iceberg worker timeout'));
-    }, 60000);
-    child.stdout.on('data', (c) => (stdout += c));
-    child.stderr.on('data', (c) => (stderr += c));
-    child.on('error', (e) => {
-      clearTimeout(timer);
-      reject(e);
-    });
-    child.on('close', (code) => {
-      clearTimeout(timer);
-      if (code !== 0) return reject(new Error(`Iceberg worker failed: ${stderr}`));
+export async function iceberg(
+  request: unknown,
+  options: { signal?: AbortSignal } = {},
+): Promise<any> {
+  const worker = openPython('stage', options);
+  try {
+    await worker.writeJson(request);
+    worker.end();
+    let result: unknown,
+      received = false;
+    for await (const line of worker.lines()) {
+      if (received) worker.protocol();
       try {
-        resolveResult(JSON.parse(stdout));
-      } catch (e) {
-        reject(e);
+        result = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(line));
+      } catch {
+        worker.protocol();
       }
-    });
-    child.stdin.on('error', () => {});
-    child.stdin.end(JSON.stringify(request));
-  });
+      received = true;
+    }
+    await worker.finish();
+    if (!received) worker.protocol();
+    return result;
+  } catch (error) {
+    await worker.close();
+    throw error instanceof ProcessFailure ? (worker.failure ?? error) : error;
+  } finally {
+    await worker.close();
+  }
 }

@@ -32,6 +32,17 @@ test('architecture checks reject direct, indirect and unregistered capability ac
     'services/app-host/src/static-server.ts',
     'tests/http-boundary.test.ts',
     'tests/static-host-process.integration.test.ts',
+    'apps/local/src/development-database.ts',
+    'tests/catalog-storage-database.test.ts',
+    'workers/iceberg/stage.ts',
+    'workers/iceberg/stream.ts',
+    'workers/iceberg/scoped-read.ts',
+    'services/catalog/src/storage-publication.ts',
+    'services/catalog/src/snapshot-publication.ts',
+    'tests/process-lifecycle.test.ts',
+    'tests/catalog-storage.integration.test.ts',
+    'tests/catalog-storage-publication.integration.test.ts',
+    'tests/catalog-reference-recovery.integration.test.ts',
     'tests/sql.integration.test.ts',
     'tests/api-only-process.integration.test.ts',
     'tests/platform-composition.test.ts',
@@ -47,7 +58,78 @@ test('architecture checks reject direct, indirect and unregistered capability ac
     'services/http/src/server.ts',
     'export function createHttpServer() {} export function browserProfile() {}',
   );
+  write('services/process/src/python.ts', 'export function openPython() {}');
+  write(
+    'node_modules/@types/node/process.d.ts',
+    'export declare const process: { kill(pid: number, signal?: number | string): void; getBuiltinModule(name: string): any };',
+  );
+  write(
+    'node_modules/@types/node/child_process.d.ts',
+    'export interface ChildProcess { kill(signal?: string): void; }',
+  );
   const cases = [
+    [
+      'builtin module loader',
+      'apps/api/src/new.ts',
+      "import { process } from '../../../node_modules/@types/node/process.js'; process.getBuiltinModule('child_process').spawn('python');",
+      /Builtin capability loaders/,
+    ],
+    [
+      'aliased builtin module loader',
+      'apps/api/src/new.ts',
+      "import { process } from '../../../node_modules/@types/node/process.js'; const { getBuiltinModule: load } = process; load('child_process').spawn('python');",
+      /Builtin capability loaders/,
+    ],
+
+    [
+      'raw spawn alias',
+      'apps/api/src/new.ts',
+      "import { spawn as raw } from 'node:child_process'; raw('python');",
+      /runtime module node:child_process/,
+    ],
+    [
+      'process re-export',
+      'apps/api/src/new.ts',
+      "export { fork } from 'child_process';",
+      /runtime module child_process/,
+    ],
+    [
+      'dynamic process import',
+      'apps/api/src/new.ts',
+      "import('node:child_process');",
+      /runtime module node:child_process/,
+    ],
+    [
+      'required process import',
+      'apps/api/src/new.ts',
+      "require('child_process');",
+      /runtime module child_process/,
+    ],
+    [
+      'unregistered lifecycle caller',
+      'apps/api/src/new.ts',
+      "import { openPython } from '../../../services/process/src/python.js'; openPython();",
+      /registered boundary|boundary loader/,
+    ],
+    [
+      'indirect lifecycle loader',
+      'packages/process-bridge.ts',
+      "export { openPython } from '../services/process/src/python.js';",
+      /boundary loader/,
+    ],
+    [
+      'raw process termination',
+      'apps/api/src/new.ts',
+      "import { process as raw } from '../../../node_modules/@types/node/process.js'; raw.kill(1, 'SIGTERM');",
+      /Process termination/,
+    ],
+    [
+      'raw child termination',
+      'apps/api/src/new.ts',
+      "import type { ChildProcess } from '../../../node_modules/@types/node/child_process.js'; export const stop = (child: ChildProcess) => child.kill('SIGKILL');",
+      /Process termination/,
+    ],
+
     [
       'raw HTTP listener alias',
       'apps/api/src/new.ts',

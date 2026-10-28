@@ -18,6 +18,7 @@ from pyiceberg.catalog.noop import NoopCatalog
 from pyiceberg.io import FileIO, InputFile
 from pyiceberg.manifest import DataFileContent, FileFormat, ManifestContent
 from pyiceberg.table import StaticTable
+from pyiceberg.exceptions import ValidationError
 from pyiceberg.table.metadata import TableMetadataUtil
 from pyiceberg.types import (
     BooleanType,
@@ -327,4 +328,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (ValueError, ValidationError):
+        sys.exit(2)

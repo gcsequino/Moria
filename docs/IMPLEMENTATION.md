@@ -1554,3 +1554,23 @@ factory. Existing SQL auth and independent process suites remain in the full gat
 See docs/production/HTTP-BOUNDARY.md for the inventory, proxy trust assumption,
 intentional response differences and unmet independent enforcement/review gates.
 Full exact-revision verification is recorded in the PR; #73 remains open.
+
+
+## Shared Python lifecycle owner — October 28, 2026
+
+The five direct Python adapters now share fixed task startup, bounded input/output,
+backpressure, deadlines, cancellation, graceful-to-force termination and reaping.
+Streaming protocol checks, materialized compatibility, storage authority and
+publication fencing remain in adapters. Safe outcomes retain actual exit code and
+signal; only explicit validator exit2 means invalid content. Unknown native failures
+remain unknown. No raw stderr or request data enters diagnostics.
+
+Production source guards reject raw process primitives and unregistered callers.
+Every adapter runs the same fixed-child lifecycle contract, with real PID cleanup
+checks; real SQL/PyIceberg/local/S3 suites remain. The dependency-owned development
+database is separately registered. Catalog storage fixtures reuse its actual-client
+drain behavior after a deterministic red regression reproduced early cluster stop.
+This addresses the observed cleanup path without diagnosing #67's validator failure.
+See docs/production/PROCESS-LIFECYCLE.md for limits, outcome mappings, OS/dependency
+assumptions and unmet independent review/enforcement gates. Full exact-revision
+results belong in the PR; #74 remains open.

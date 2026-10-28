@@ -51,6 +51,13 @@ export const protectedClasses: Record<string, readonly string[]> = {
 };
 
 export const protectedFunctions: Record<string, readonly string[]> = {
+  'services/process/src/python.ts#openPython': [
+    'workers/iceberg/stage.ts',
+    'workers/iceberg/stream.ts',
+    'workers/iceberg/scoped-read.ts',
+    'services/catalog/src/storage-publication.ts',
+    'services/catalog/src/snapshot-publication.ts',
+  ],
   'services/http/src/server.ts#cliKeyMatches': [
     'services/app-host/src/auth.ts',
     'services/http/src/server.ts',
@@ -102,6 +109,9 @@ export const objectDispatchers = {
 } as const;
 
 export const protectedModules: Record<string, readonly string[]> = {
+  'node:child_process': ['services/process/src/python.ts'],
+  child_process: ['services/process/src/python.ts'],
+  'embedded-postgres': ['apps/local/src/development-database.ts'],
   'node:http2': [],
   http2: [],
   'node:net': [],
@@ -143,3 +153,24 @@ export const httpClientImports: Record<string, Record<string, readonly string[]>
   'services/storage/src/s3.ts': { 'node:http': ['Agent'], 'node:https': ['Agent'] },
   'services/snotel/src/connector.ts': { 'node:https': ['get'] },
 };
+
+export const processAdapters = {
+  'apps/local/src/development-database.ts': [
+    'tests/catalog-storage-database.test.ts',
+    'tests/platform-composition.test.ts',
+  ],
+  'workers/iceberg/stage.ts': ['tests/process-lifecycle.test.ts', 'tests/sql.integration.test.ts'],
+  'workers/iceberg/stream.ts': ['tests/process-lifecycle.test.ts', 'tests/sql.integration.test.ts'],
+  'workers/iceberg/scoped-read.ts': [
+    'tests/process-lifecycle.test.ts',
+    'tests/catalog-storage.integration.test.ts',
+  ],
+  'services/catalog/src/storage-publication.ts': [
+    'tests/process-lifecycle.test.ts',
+    'tests/catalog-storage-publication.integration.test.ts',
+  ],
+  'services/catalog/src/snapshot-publication.ts': [
+    'tests/process-lifecycle.test.ts',
+    'tests/catalog-reference-recovery.integration.test.ts',
+  ],
+} as const;
