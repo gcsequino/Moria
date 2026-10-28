@@ -9,7 +9,6 @@ import { localAppHost } from '../../../services/app-host/src/bootstrap.js';
 import { serveApp } from '../../../services/app-host/src/http.js';
 import { AppAuth } from '../../../services/app-host/src/auth.js';
 import type { PoolClient } from 'pg';
-import { ObjectService } from '../../../services/ontology/src/service.js';
 import type { SnowService } from '../../../services/snotel/src/service.js';
 import { createApi, body } from '../../api/src/server.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
@@ -51,10 +50,7 @@ export function createLocalServer(
     ]),
   };
   const api = createApi(workspace.sessions, routes);
-  const adminService = new ObjectService(workspace.service.store, workspace.authority, {
-    ...workspace.service.binding,
-    requiredOperations: [{ resource: 'instance', operation: 'manage' }],
-  });
+  const adminService = workspace.service.requiring([{ resource: 'instance', operation: 'manage' }]);
   const browserApi = auth
     ? createApi(auth.sessions, {
         objects: new Map([['assets', adminService]]),
@@ -120,7 +116,7 @@ export function createLocalServer(
           return true;
         }
         if (path === '/management/v1/lineage' && request.method === 'GET') {
-          const result = await readLineage(workspace.service.store.catalog);
+          const result = await readLineage(jobs.catalog);
           const workflow = await readWorkflow(appHost);
           const nodes = new Map(result.nodes.map((n) => [n.id, n]));
           for (const node of workflow.nodes) if (!nodes.has(node.id)) nodes.set(node.id, node);
@@ -215,15 +211,6 @@ export function createLocalServer(
             throw new MoriaError('INPUT_INVALID', 'Expected job ID.');
           if (!/^[0-9a-f-]{36}$/i.test(input.id))
             throw new MoriaError('INPUT_INVALID', 'Invalid job ID.');
-          const job = (
-            await jobs.catalog.pool.query('SELECT kind FROM moria.jobs WHERE id=$1', [input.id])
-          ).rows[0];
-          await check();
-          if (job && !Object.hasOwn(jobs.handlers, job.kind))
-            throw new MoriaError(
-              'INPUT_INVALID',
-              'This workload has no registered handler; historical jobs cannot be retried.',
-            );
           send(200, await jobs.retry(input.id, check));
           return true;
         }

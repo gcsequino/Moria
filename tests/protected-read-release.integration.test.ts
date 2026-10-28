@@ -6,6 +6,8 @@ import { database } from './fixtures/catalog-storage/database.js';
 import { ObjectStore, type ObjectSchema } from '../services/ontology/src/store.js';
 import { ObjectService, type SessionContext } from '../services/ontology/src/service.js';
 import { Authority } from '../services/security/src/authority.js';
+import { createApi } from '../apps/api/src/server.js';
+import { MoriaError } from '../packages/contracts/types.js';
 import { WorkloadSessions } from '../services/security/src/sessions.js';
 
 test(
@@ -55,17 +57,60 @@ test(
       },
     });
     const sessions = new WorkloadSessions(authority);
+    const tokens = new Map<string, string>();
     const session = async () => {
       const minted = await sessions.mint(
         { environment, principal: 'reader', application: 'app' },
         'operator',
       );
-      return sessions.authenticate(`Bearer ${minted.token}`);
+      const context = await sessions.authenticate(`Bearer ${minted.token}`);
+      tokens.set(context.sessionHash!, minted.token);
+      return context;
+    };
+    const api = createApi(sessions, {
+      objects: new Map([['assets', service]]),
+      actions: new Map(),
+    });
+    await new Promise<void>((ready) => api.listen(0, '127.0.0.1', ready));
+    t.after(
+      () =>
+        new Promise<void>((done, reject) => api.close((error) => (error ? reject(error) : done()))),
+    );
+    const base = `http://127.0.0.1:${(api.address() as { port: number }).port}`;
+    const routed = async (context: SessionContext, query: boolean) => {
+      const response = await fetch(`${base}/api/v1/objects/assets/${query ? 'query' : uid}`, {
+        method: query ? 'POST' : 'GET',
+        headers: {
+          authorization: `Bearer ${tokens.get(context.sessionHash!)}`,
+          'content-type': 'application/json',
+        },
+        ...(query ? { body: '{}' } : {}),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new MoriaError(result.error.code, result.error.message);
+      return result;
     };
     const operations: [string, (context: SessionContext) => Promise<unknown>][] = [
       ['point read', (context) => service.read(context, uid)],
       ['query control', (context) => service.query(context, {})],
+      ['HTTP point read', (context) => routed(context, false)],
+      ['HTTP query', (context) => routed(context, true)],
     ];
+    await t.test('composition cannot expose stores or weaken existing gates', async () => {
+      const current = await session();
+      assert.equal('store' in service, false);
+      assert.equal('authority' in service, false);
+      const restricted = service.requiring([{ resource: 'instance', operation: 'manage' }]);
+      const declaration = restricted.binding;
+      declaration.requiredOperations = [];
+      declaration.policies.markings.push('changed-outside');
+      await assert.rejects(restricted.read(current, uid), { code: 'FORBIDDEN' });
+      assert.deepEqual(restricted.binding.requiredOperations, [
+        { resource: 'instance', operation: 'manage' },
+      ]);
+      assert.deepEqual(service.binding.policies.markings, []);
+      assert.equal((await service.read(current, uid)).object.value, 'protected');
+    });
     for (const [name, operation] of operations) {
       await t.test(name, async () => {
         const context = await session();
