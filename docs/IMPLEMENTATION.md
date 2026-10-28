@@ -1539,3 +1539,18 @@ HTTP point/query requests as well as real database barriers. See
 docs/production/PROTECTED-OPERATIONS.md for owners, proof boundaries and unmet
 external enforcement. #72 remains open until independently enforced review and
 all required evidence are satisfied. Full check results belong in the PR.
+
+
+## Shared HTTP transport owner — October 28, 2026
+
+All four native listener factories and their nested workload dispatchers now use
+one transport owner. Trusted profiles preserve workload, browser/CLI, static and
+public-proxy contracts; browser headers cannot select local CLI/recovery authority.
+Body parsing, transport admission, baseline headers, timeouts and safe failure
+handling are shared. Resource authorization remains in the protected-operation
+owners. Architecture fixtures reject raw listeners, unregistered profiles/callers
+and request-event bypasses; real HTTP barriers cover every profile and actual
+factory. Existing SQL auth and independent process suites remain in the full gate.
+See docs/production/HTTP-BOUNDARY.md for the inventory, proxy trust assumption,
+intentional response differences and unmet independent enforcement/review gates.
+Full exact-revision verification is recorded in the PR; #73 remains open.

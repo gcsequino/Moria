@@ -9,6 +9,8 @@ import {
   protectedModules,
   objectServiceMethods,
   objectDispatchers,
+  httpListeners,
+  httpClientImports,
 } from './protected-boundaries.js';
 
 const production = ['apps', 'packages', 'services', 'workers'];
@@ -45,10 +47,16 @@ export function architectureViolations(root: string): string[] {
       const line = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
       violations.push(`${name(source.fileName)}:${line}: ${reason}`);
     };
-    const moduleCheck = (source: ts.SourceFile, node: ts.Node, specifier: string) => {
+    const moduleCheck = (
+      source: ts.SourceFile,
+      node: ts.Node,
+      specifier: string,
+      clientImport = false,
+    ) => {
       if (
         Object.hasOwn(protectedModules, specifier) &&
-        !protectedModules[specifier].includes(name(source.fileName))
+        !protectedModules[specifier].includes(name(source.fileName)) &&
+        !clientImport
       )
         report(source, node, `Unregistered runtime module ${specifier}`);
       if (specifier.startsWith('.') || isAbsolute(specifier) || specifier.startsWith('file:')) {
@@ -61,6 +69,14 @@ export function architectureViolations(root: string): string[] {
           path.replace(/\.mjs$/, '.mts'),
           path.replace(/\.cjs$/, '.cts'),
         ];
+        const functionOwners = Object.entries(protectedFunctions).filter(([key]) =>
+          candidates.some((candidate) => name(candidate) === key.split('#')[0]),
+        );
+        if (
+          functionOwners.length &&
+          !functionOwners.some(([, owners]) => owners.includes(name(source.fileName)))
+        )
+          report(source, node, 'Unregistered boundary loader');
         for (const [key, owners] of Object.entries(protectedClasses)) {
           if (
             candidates.some((candidate) => name(candidate) === key.split('#')[0]) &&
@@ -112,6 +128,66 @@ export function architectureViolations(root: string): string[] {
           }
         }
         if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+          if (name(file) !== 'services/http/src/server.ts') {
+            const type = checker.getTypeAtLocation(node.expression);
+            const declarations = type?.getSymbol()?.declarations ?? [];
+            const httpServer = declarations.some((handle) => {
+              const declaration = handle.resolve();
+              return (
+                !!declaration &&
+                (ts.isClassDeclaration(declaration) || ts.isInterfaceDeclaration(declaration)) &&
+                declaration.name?.text === 'Server' &&
+                /(?:^|\/)https?\.d\.ts$/.test(slash(declaration.getSourceFile().fileName))
+              );
+            });
+            const member = ts.isPropertyAccessExpression(node)
+              ? node.name.text
+              : ts.isStringLiteral(node.argumentExpression)
+                ? node.argumentExpression.text
+                : '';
+            if (
+              httpServer &&
+              [
+                'requestTimeout',
+                'headersTimeout',
+                'maxHeadersCount',
+                'maxRequestsPerSocket',
+                'timeout',
+                'setTimeout',
+              ].includes(member)
+            )
+              report(
+                source,
+                node,
+                'HTTP timeout and limit policy belongs to the transport boundary',
+              );
+            if (
+              httpServer &&
+              [
+                'on',
+                'once',
+                'addListener',
+                'prependListener',
+                'prependOnceListener',
+                'emit',
+                'removeListener',
+                'off',
+                'removeAllListeners',
+                'listeners',
+                'rawListeners',
+              ].includes(member)
+            ) {
+              const call = node.parent;
+              if (
+                !ts.isCallExpression(call) ||
+                call.expression !== node ||
+                !call.arguments[0] ||
+                !ts.isStringLiteral(call.arguments[0]) ||
+                !['error', 'close', 'listening'].includes(call.arguments[0].text)
+              )
+                report(source, node, 'HTTP request listeners belong to the transport boundary');
+            }
+          }
           const symbol = checker.getSymbolAtLocation(
             ts.isPropertyAccessExpression(node) ? node.name : node.argumentExpression,
           );
@@ -130,7 +206,21 @@ export function architectureViolations(root: string): string[] {
                   clause.namedBindings.elements.length > 0 &&
                   clause.namedBindings.elements.every((element) => element.isTypeOnly))
               : node.isTypeOnly;
-            if (!typeOnly) moduleCheck(source, node, specifier.text);
+            if (!typeOnly) {
+              const allowed = httpClientImports[name(file)]?.[specifier.text];
+              const imports = clause?.namedBindings;
+              const clientImport =
+                !!allowed &&
+                !clause?.name &&
+                !!imports &&
+                ts.isNamedImports(imports) &&
+                imports.elements.every(
+                  (element) =>
+                    element.isTypeOnly ||
+                    allowed.includes((element.propertyName ?? element.name).text),
+                );
+              moduleCheck(source, node, specifier.text, clientImport);
+            }
             const target = checker
               .getSymbolAtLocation(specifier)
               ?.declarations[0]?.resolve()
@@ -170,7 +260,7 @@ export function architectureViolations(root: string): string[] {
       };
       visitor(source);
     }
-    for (const [dispatcher, tests] of Object.entries(objectDispatchers)) {
+    for (const [dispatcher, tests] of Object.entries({ ...objectDispatchers, ...httpListeners })) {
       if (!files.some((file) => name(file) === dispatcher))
         violations.push(`Missing registered dispatcher ${dispatcher}`);
       for (const test of tests)
@@ -188,5 +278,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   if (violations.length) {
     console.error(violations.join('\n'));
     process.exitCode = 1;
-  } else console.log('Protected-operation architecture checks passed.');
+  } else console.log('Protected boundary architecture checks passed.');
 }

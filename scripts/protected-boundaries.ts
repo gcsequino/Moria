@@ -51,6 +51,36 @@ export const protectedClasses: Record<string, readonly string[]> = {
 };
 
 export const protectedFunctions: Record<string, readonly string[]> = {
+  'services/http/src/server.ts#cliKeyMatches': [
+    'services/app-host/src/auth.ts',
+    'services/http/src/server.ts',
+  ],
+  'services/http/src/server.ts#appHeaders': [
+    'services/app-host/src/http.ts',
+    'services/http/src/server.ts',
+  ],
+  'services/http/src/server.ts#requireBrowserOrigin': [
+    'services/app-host/src/auth.ts',
+    'services/http/src/server.ts',
+  ],
+  'services/http/src/server.ts#requireRecoveryAllowed': [
+    'services/app-host/src/auth.ts',
+    'services/http/src/server.ts',
+  ],
+  'services/http/src/server.ts#createHttpServer': [
+    'apps/api/src/server.ts',
+    'apps/local/src/server.ts',
+    'services/app-host/src/scoped.ts',
+    'services/app-host/src/static-server.ts',
+  ],
+  'services/http/src/server.ts#browserProfile': [
+    'apps/local/src/server.ts',
+    'services/app-host/src/scoped.ts',
+  ],
+  'services/http/src/server.ts#dispatchHttp': [
+    'apps/local/src/server.ts',
+    'services/app-host/src/scoped.ts',
+  ],
   'services/ontology/src/query.ts#queryRows': ['services/ontology/src/service.ts'],
   'apps/api/src/server.ts#createApi': [
     'apps/local/src/server.ts',
@@ -72,6 +102,16 @@ export const objectDispatchers = {
 } as const;
 
 export const protectedModules: Record<string, readonly string[]> = {
+  'node:http2': [],
+  http2: [],
+  'node:net': [],
+  net: [],
+  'node:tls': [],
+  tls: [],
+  'node:http': ['services/http/src/server.ts'],
+  http: ['services/http/src/server.ts'],
+  'node:https': ['services/http/src/server.ts'],
+  https: ['services/http/src/server.ts'],
   pg: [
     'apps/local/src/runtime.ts',
     'apps/local/src/migrate.ts',
@@ -79,4 +119,27 @@ export const protectedModules: Record<string, readonly string[]> = {
   ],
   'node:module': ['packages/compiler/src/index.ts'],
   module: [],
+};
+
+export const httpListeners = {
+  'apps/api/src/server.ts': ['tests/http-boundary.test.ts', 'tests/sql.integration.test.ts'],
+  'apps/local/src/server.ts': [
+    'tests/http-boundary.test.ts',
+    'tests/platform-composition.test.ts',
+    'tests/api-only-process.integration.test.ts',
+  ],
+  'services/app-host/src/scoped.ts': [
+    'tests/http-boundary.test.ts',
+    'tests/platform-composition.test.ts',
+  ],
+  'services/app-host/src/static-server.ts': [
+    'tests/http-boundary.test.ts',
+    'tests/static-host-process.integration.test.ts',
+  ],
+} as const;
+
+// These imports provide outbound clients only; namespace/dynamic imports are not exceptions.
+export const httpClientImports: Record<string, Record<string, readonly string[]>> = {
+  'services/storage/src/s3.ts': { 'node:http': ['Agent'], 'node:https': ['Agent'] },
+  'services/snotel/src/connector.ts': { 'node:https': ['get'] },
 };

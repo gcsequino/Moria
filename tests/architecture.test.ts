@@ -29,13 +29,87 @@ test('architecture checks reject direct, indirect and unregistered capability ac
     'apps/api/src/server.ts',
     'apps/local/src/server.ts',
     'services/app-host/src/scoped.ts',
+    'services/app-host/src/static-server.ts',
+    'tests/http-boundary.test.ts',
+    'tests/static-host-process.integration.test.ts',
     'tests/sql.integration.test.ts',
     'tests/api-only-process.integration.test.ts',
     'tests/platform-composition.test.ts',
   ])
     write(path, '');
   assert.deepEqual(architectureViolations(root), []);
+  write('node_modules/@types/node/package.json', '{"types":"http.d.ts"}');
+  write(
+    'node_modules/@types/node/http.d.ts',
+    'export interface Server { on(event: string, callback: () => void): this; emit(event: string): boolean; removeAllListeners(): this; listeners(event: string): unknown[]; requestTimeout: number; }',
+  );
+  write(
+    'services/http/src/server.ts',
+    'export function createHttpServer() {} export function browserProfile() {}',
+  );
   const cases = [
+    [
+      'raw HTTP listener alias',
+      'apps/api/src/new.ts',
+      "import { createServer as raw } from 'node:http'; raw();",
+      /runtime module node:http/,
+    ],
+    ['raw HTTP re-export', 'apps/api/src/new.ts', "export * from 'http';", /runtime module http/],
+    [
+      'dynamic HTTPS listener',
+      'apps/api/src/new.ts',
+      "import('node:https');",
+      /runtime module node:https/,
+    ],
+    [
+      'unregistered boundary listener',
+      'apps/api/src/new.ts',
+      "import { createHttpServer } from '../../../services/http/src/server.js'; createHttpServer();",
+      /registered boundary|boundary loader/,
+    ],
+    [
+      'unregistered profile',
+      'apps/api/src/new.ts',
+      "import { browserProfile } from '../../../services/http/src/server.js'; browserProfile();",
+      /registered boundary|boundary loader/,
+    ],
+    [
+      'request event bypass',
+      'apps/api/src/new.ts',
+      "import type { Server } from '../../../node_modules/@types/node/http.js'; export const attach = (server: Server) => server.on('request', () => {});",
+      /HTTP request listeners/,
+    ],
+    [
+      'request emit bypass',
+      'apps/api/src/new.ts',
+      "import type { Server } from '../../../node_modules/@types/node/http.js'; export const attach = (server: Server) => server.emit('request');",
+      /HTTP request listeners/,
+    ],
+    [
+      'request listener removal',
+      'apps/api/src/new.ts',
+      "import type { Server } from '../../../node_modules/@types/node/http.js'; export const attach = (server: Server) => server.removeAllListeners();",
+      /HTTP request listeners/,
+    ],
+    [
+      'request listener retrieval',
+      'apps/api/src/new.ts',
+      "import type { Server } from '../../../node_modules/@types/node/http.js'; export const leak = (server: Server) => server.listeners('request');",
+      /HTTP request listeners/,
+    ],
+    [
+      'timeout override',
+      'apps/api/src/new.ts',
+      "import type { Server } from '../../../node_modules/@types/node/http.js'; export const disable = (server: Server) => server.requestTimeout = 0;",
+      /HTTP timeout and limit/,
+    ],
+    [
+      'outbound client exception cannot construct servers',
+      'services/storage/src/s3.ts',
+      "import { Agent, createServer } from 'node:http'; createServer();",
+      /runtime module node:http/,
+    ],
+
     [
       'direct aliased store import',
       'apps/api/src/new.ts',
