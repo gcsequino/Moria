@@ -1522,3 +1522,20 @@ also denies release, and subsequent valid and missing-object reads verify cleanu
 No session-row mutation after snapshot creation is used to simulate wall-clock
 expiry. Full quality results are recorded in the pull request. This narrow repair
 does not implement the shared lifecycle/enforcement work in #72 or resolve #67.
+
+
+## Protected-operation owner — October 27, 2026
+
+The object point/query release lifecycle now has one private owner. Store and
+authority handles no longer escape ObjectService; binding declarations are copied,
+and requiring adds gates without weakening previous requirements. Action commit
+ownership remains in Catalog.action. The management server delegates retired-job
+retry validation into Jobs instead of issuing raw catalog queries itself.
+
+A TypeScript semantic architecture gate and negative fixtures reject direct and
+indirect raw access, unregistered callers/operations, runtime database imports,
+computed imports and missing registered tests. Shared release tests include actual
+HTTP point/query requests as well as real database barriers. See
+docs/production/PROTECTED-OPERATIONS.md for owners, proof boundaries and unmet
+external enforcement. #72 remains open until independently enforced review and
+all required evidence are satisfied. Full check results belong in the PR.

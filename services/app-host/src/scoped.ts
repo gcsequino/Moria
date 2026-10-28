@@ -4,7 +4,7 @@ import { AppHost } from './store.js';
 import { serveApp } from './http.js';
 import { createApi } from '../../../apps/api/src/server.js';
 import { WorkloadSessions } from '../../security/src/sessions.js';
-import { ObjectService, type SessionContext } from '../../ontology/src/service.js';
+import type { ObjectService, SessionContext } from '../../ontology/src/service.js';
 import { AppAuth } from './auth.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 
