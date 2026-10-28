@@ -542,6 +542,21 @@ export async function checkManagementAuth(catalog: Catalog) {
 
     // Google can be unavailable; operator CLI and short-lived recovery still work.
     issuer.state.mode = 'unavailable';
+    const browserRequests: Record<string, string>[] = [
+      { origin: binding.origin },
+      { 'sec-fetch-site': 'same-origin' },
+    ];
+    for (const browserHeaders of browserRequests) {
+      assert.equal(
+        (
+          await fetch(binding.origin + '/api/auth/recovery-ticket', {
+            method: 'POST',
+            headers: { 'x-moria-app-key': 'operator-key', ...browserHeaders },
+          })
+        ).status,
+        401,
+      );
+    }
     const ticketResponse = await fetch(binding.origin + '/api/auth/recovery-ticket', {
       method: 'POST',
       headers: { 'x-moria-app-key': 'operator-key' },
