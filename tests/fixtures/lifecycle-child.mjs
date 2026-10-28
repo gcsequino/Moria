@@ -35,7 +35,7 @@ if (mode === 'stall' || mode === 'ignore-term') {
   };
   const run = () => {
     if (mode === 'exit') process.exit(7);
-    if (mode === 'invalid') process.exit(2);
+    if (mode === 'invalid') process.exit(task === 'metadata' || task === 'snapshot' ? 65 : 2);
     if (mode === 'signal') process.kill(process.pid, 'SIGUSR2');
     if (mode === 'utf8') {
       process.stdout.write(Buffer.from([255, 10]));

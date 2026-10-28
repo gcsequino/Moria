@@ -53,8 +53,9 @@ Categories are startup, IPC, unexpected exit, signal, timeout, cancellation, lim
 protocol and explicit invalid input. Termination signals caused by cleanup do not
 replace the earlier IPC/deadline/cancellation cause. A signal does not imply OOM.
 Unexplained nonzero exits remain unexplained rather than becoming invalid content.
-Only the fixed metadata/snapshot validators' deliberate exit 2 for ValueError or
-PyIceberg ValidationError denotes rejected content; uncaught exceptions/import failures/native crashes retain other outcomes.
+Only the fixed metadata/snapshot validators' deliberate exit 65 for ValueError or
+PyIceberg ValidationError denotes rejected content; Python's own launch-error exit 2 remains an unexplained execution failure.
+Uncaught exceptions/import failures/native crashes retain other outcomes.
 
 Materialized staging throws a safe ProcessFailure, retaining its generic HTTP 500
 behavior. Streaming retains existing Moria error codes with the safe process failure

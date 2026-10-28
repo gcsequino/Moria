@@ -147,7 +147,7 @@ export function openPython(
     signal = exitSignal;
     if (!reason || reason === 'ipc') {
       if (signal && !reason) reason = 'signal';
-      else if (code === 2 && ['metadata', 'snapshot'].includes(task)) reason = 'invalid-input';
+      else if (code === 65 && ['metadata', 'snapshot'].includes(task)) reason = 'invalid-input';
       else if (code !== null && code !== 0) reason = 'exit';
     }
   };

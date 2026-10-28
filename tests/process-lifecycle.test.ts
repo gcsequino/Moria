@@ -68,6 +68,7 @@ test(
         'success',
         'missing',
         'invalid',
+        'launch-error',
         'exit',
         'signal',
         'partial',
@@ -93,11 +94,17 @@ test(
             const child =
               mode === 'missing'
                 ? spawn('/nonexistent/moria-python', [], options)
-                : spawn(
-                    process.execPath,
-                    [resolve('tests/fixtures/lifecycle-child.mjs'), selected, task],
-                    options,
-                  );
+                : mode === 'launch-error'
+                  ? spawn(
+                      resolve('.venv/bin/python'),
+                      ['-I', '/nonexistent/moria-validator.py'],
+                      options,
+                    )
+                  : spawn(
+                      process.execPath,
+                      [resolve('tests/fixtures/lifecycle-child.mjs'), selected, task],
+                      options,
+                    );
             children.push(child);
             if (mode === 'cancel') child.stderr?.once('data', () => controller.abort());
             return child;
@@ -150,7 +157,7 @@ test(
                         ? task === 'metadata' || task === 'snapshot'
                           ? 'invalid-input'
                           : 'exit'
-                        : mode === 'exit'
+                        : mode === 'exit' || mode === 'launch-error'
                           ? 'exit'
                           : mode === 'signal'
                             ? 'signal'
@@ -165,7 +172,9 @@ test(
                                     : 'ipc';
                   assert.equal(outcome.kind, expected);
                   if (mode === 'exit') assert.equal(outcome.code, 7);
-                  if (mode === 'invalid') assert.equal(outcome.code, 2);
+                  if (mode === 'invalid')
+                    assert.equal(outcome.code, task === 'metadata' || task === 'snapshot' ? 65 : 2);
+                  if (mode === 'launch-error') assert.equal(outcome.code, 2);
                   if (mode === 'signal') assert.equal(outcome.signal, 'SIGUSR2');
                   if (mode === 'ignore-term' || mode === 'cancel')
                     assert.equal(outcome.signal, 'SIGKILL');

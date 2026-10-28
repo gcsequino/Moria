@@ -22,4 +22,4 @@ if __name__ == "__main__":
     try:
         main()
     except (ValueError, ValidationError):
-        sys.exit(2)
+        sys.exit(65)

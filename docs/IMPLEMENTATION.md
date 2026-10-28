@@ -1562,7 +1562,7 @@ The five direct Python adapters now share fixed task startup, bounded input/outp
 backpressure, deadlines, cancellation, graceful-to-force termination and reaping.
 Streaming protocol checks, materialized compatibility, storage authority and
 publication fencing remain in adapters. Safe outcomes retain actual exit code and
-signal; only explicit validator exit2 means invalid content. Unknown native failures
+signal; only explicit validator exit65 means invalid content. Unknown native failures
 remain unknown. No raw stderr or request data enters diagnostics.
 
 Production source guards reject raw process primitives and unregistered callers.
