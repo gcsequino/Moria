@@ -10,6 +10,7 @@ import {
   objectServiceMethods,
   objectDispatchers,
   httpListeners,
+  processAdapters,
   httpClientImports,
 } from './protected-boundaries.js';
 
@@ -108,6 +109,13 @@ export function architectureViolations(root: string): string[] {
         if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
           const signature = checker.getResolvedSignature(node);
           const declaration = signature?.declaration?.resolve();
+          if (
+            declaration &&
+            'name' in declaration &&
+            (declaration.name as ts.Node | undefined)?.getText() === 'getBuiltinModule' &&
+            /(?:^|\/)process\.d\.ts$/.test(slash(declaration.getSourceFile().fileName))
+          )
+            report(source, node, 'Builtin capability loaders are unsupported in production');
           guarded(source, node, classKey(declaration), protectedClasses);
           if (declaration && ts.isFunctionDeclaration(declaration) && declaration.name) {
             guarded(
@@ -128,6 +136,14 @@ export function architectureViolations(root: string): string[] {
           }
         }
         if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+          const accessed = ts.isPropertyAccessExpression(node)
+            ? node.name.text
+            : ts.isStringLiteral(node.argumentExpression)
+              ? node.argumentExpression.text
+              : '';
+          if (accessed === 'getBuiltinModule')
+            report(source, node, 'Builtin capability loaders are unsupported in production');
+
           if (name(file) !== 'services/http/src/server.ts') {
             const type = checker.getTypeAtLocation(node.expression);
             const declarations = type?.getSymbol()?.declarations ?? [];
@@ -177,7 +193,7 @@ export function architectureViolations(root: string): string[] {
                 'rawListeners',
               ].includes(member)
             ) {
-              const call = node.parent;
+              const call: ts.Node = node.parent;
               if (
                 !ts.isCallExpression(call) ||
                 call.expression !== node ||
@@ -191,8 +207,31 @@ export function architectureViolations(root: string): string[] {
           const symbol = checker.getSymbolAtLocation(
             ts.isPropertyAccessExpression(node) ? node.name : node.argumentExpression,
           );
-          for (const declaration of symbol?.declarations ?? [])
-            guarded(source, node, classKey(declaration.resolve()), protectedClasses);
+          for (const handle of symbol?.declarations ?? []) {
+            const declaration = handle.resolve();
+            guarded(source, node, classKey(declaration), protectedClasses);
+            const path = slash(declaration?.getSourceFile().fileName ?? '');
+            const member = ts.isPropertyAccessExpression(node)
+              ? node.name.text
+              : ts.isStringLiteral(node.argumentExpression)
+                ? node.argumentExpression.text
+                : '';
+            if (
+              member === 'kill' &&
+              /(?:^|\/)(?:child_process|process)\.d\.ts$/.test(path) &&
+              name(file) !== 'services/process/src/python.ts'
+            ) {
+              const call: ts.Node = node.parent;
+              const probe =
+                name(file) === 'services/app-host/src/store.ts' &&
+                ts.isCallExpression(call) &&
+                call.expression === node &&
+                call.arguments.length === 2 &&
+                call.arguments[1].getText(source) === '0';
+              if (!probe)
+                report(source, node, 'Process termination belongs to the lifecycle owner');
+            }
+          }
         }
         if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
           const specifier = node.moduleSpecifier;
@@ -260,7 +299,11 @@ export function architectureViolations(root: string): string[] {
       };
       visitor(source);
     }
-    for (const [dispatcher, tests] of Object.entries({ ...objectDispatchers, ...httpListeners })) {
+    for (const [dispatcher, tests] of Object.entries({
+      ...objectDispatchers,
+      ...httpListeners,
+      ...processAdapters,
+    })) {
       if (!files.some((file) => name(file) === dispatcher))
         violations.push(`Missing registered dispatcher ${dispatcher}`);
       for (const test of tests)

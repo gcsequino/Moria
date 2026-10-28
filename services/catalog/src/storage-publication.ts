@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { spawn } from 'node:child_process';
-import { resolve } from 'node:path';
+import { openPython, ProcessFailure } from '../../process/src/python.js';
+import { storageProcessError } from '../../../workers/iceberg/process-errors.js';
 import type { Publication } from './catalog.js';
 import { StorageError } from '../../storage/src/locations.js';
 import { cancelled, integer } from '../../storage/src/transfer.js';
@@ -81,48 +81,18 @@ export async function validateMetadata(
   signal?: AbortSignal,
 ): Promise<void> {
   cancelled(signal);
-  const program = `
-import sys
-from pyiceberg.table.metadata import TableMetadataUtil
-try:
-    metadata = TableMetadataUtil.parse_raw(sys.stdin.buffer.read())
-    snapshot = metadata.current_snapshot()
-    if metadata.format_version != 2 or str(metadata.table_uuid) != sys.argv[1]:
-        raise ValueError()
-    if snapshot is None or str(snapshot.snapshot_id) != sys.argv[2]:
-        raise ValueError()
-except Exception:
-    sys.exit(1)
-`;
-  await new Promise<void>((done, reject) => {
-    const child = spawn(resolve('.venv/bin/python'), ['-c', program, tableUuid, snapshotId], {
-      stdio: ['pipe', 'ignore', 'ignore'],
-    });
-    const abort = () => child.kill();
-    const timeout = setTimeout(abort, 30000);
-    signal?.addEventListener('abort', abort, { once: true });
-    if (signal?.aborted) {
-      abort();
-    }
-    child.stdin.on('error', () => {});
-    child.on('error', () => {
-      clearTimeout(timeout);
-      signal?.removeEventListener('abort', abort);
-      reject(new StorageError('IO_ERROR'));
-    });
-    child.on('close', (code) => {
-      clearTimeout(timeout);
-      signal?.removeEventListener('abort', abort);
-      if (signal?.aborted) {
-        reject(new StorageError('CANCELLED'));
-      } else if (code !== 0) {
-        reject(new StorageError('INVALID_INPUT'));
-      } else {
-        done();
-      }
-    });
-    child.stdin.end(bytes);
-  });
+  const worker = openPython('metadata', { signal });
+  try {
+    await worker.writeJson({ metadata: bytes.toString('base64'), tableUuid, snapshotId });
+    worker.end();
+    for await (const _line of worker.lines()) worker.protocol();
+    await worker.finish();
+  } catch (error) {
+    await worker.close();
+    throw error instanceof ProcessFailure ? storageProcessError(worker.failure ?? error) : error;
+  } finally {
+    await worker.close();
+  }
 }
 
 export function metadataObjectId(
