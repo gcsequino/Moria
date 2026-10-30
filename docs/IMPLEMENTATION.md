@@ -47,7 +47,13 @@ build and the workflow's repeated bootstrap passed. Commands include
 shell steps in `.github/workflows/quality.yml`. The complete `pnpm check` and
 latest-revision hosted Linux job remain required acceptance gates before merge;
 the PR records their final revision-specific results. Earlier failed runs and
-the bearer red/green proof are retained as diagnostic evidence. Synthetic
+the bearer red/green proof are retained as diagnostic evidence. A subsequent
+875-test workflow run exposed a test setup race: its five-second deadline expired
+while consuming setup rows before the intended post-exit authority barrier. The
+test now holds only its configured read timers until actual SQL contention is
+observed, then advances them and requires cleanup within one real second while
+the lock remains held. Production limits are unchanged; the separate real
+one-millisecond expiry check and all real process/SQL assertions remain. Synthetic
 test fixtures only; no live installation, deployment, schema migration or main
 branch update is part of this work. The release requires a fresh schema version 3
 database; older databases continue to fail without automatic mutation. A passing

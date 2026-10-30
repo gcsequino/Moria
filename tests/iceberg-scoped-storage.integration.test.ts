@@ -336,9 +336,39 @@ for (const provider of ['local', 's3'] as const) {
       for (const action of ['deadline', 'cancel'] as const) {
         await t.test(`${action} interrupts contended authority ${phase}`, async (t) => {
           const abort = new AbortController();
+          const timeoutMs = phase === 'before startup' ? 300 : 5000;
+          const deadlines = new Map<ReturnType<typeof setTimeout>, () => void>();
+          const schedule = globalThis.setTimeout;
+          const clear = globalThis.clearTimeout;
+          // Advance the configured deadlines only after real SQL/child barriers exist.
+          t.mock.method(globalThis, 'setTimeout', ((
+            callback: (...args: unknown[]) => void,
+            ms?: number,
+            ...args: unknown[]
+          ) => {
+            if (ms !== timeoutMs) return schedule(callback, ms, ...args);
+            const timer = schedule(() => {}, 2147483647).unref();
+            deadlines.set(timer, () => callback(...args));
+            return timer;
+          }) as typeof setTimeout);
+          t.mock.method(globalThis, 'clearTimeout', (timer: Parameters<typeof clearTimeout>[0]) => {
+            deadlines.delete(timer as ReturnType<typeof setTimeout>);
+            clear(timer);
+          });
+          t.after(() => {
+            for (const timer of deadlines.keys()) clear(timer);
+          });
+          const expire = () => {
+            assert.ok(deadlines.size > 0, 'the real reader must register its configured deadline');
+            for (const [timer, callback] of [...deadlines]) {
+              if (!deadlines.delete(timer)) continue;
+              clear(timer);
+              callback();
+            }
+          };
           const scan = await service.readRows(await session(), dataset, {
             signal: abort.signal,
-            timeoutMs: phase === 'before startup' ? 300 : 5000,
+            timeoutMs,
           });
           if (phase === 'buffered rows') {
             assert.equal((await scan.rows.next()).done, false);
@@ -410,7 +440,8 @@ for (const provider of ['local', 's3'] as const) {
               assert.deepEqual(await children(), baseline);
             }
             if (action === 'cancel') abort.abort();
-            await within(pending, phase === 'before startup' || action === 'cancel' ? 1000 : 5500);
+            else expire();
+            await within(pending, 1000);
             // Cleanup must complete while the exclusive lock is STILL held.
             assert.equal((await within(scan.rows.return(undefined), 1000)).done, true);
             assert.equal((await scan.rows.next()).done, true);
