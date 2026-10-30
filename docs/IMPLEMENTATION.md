@@ -43,6 +43,10 @@ PostgreSQL relation-lock barrier before terminating the lifetime lease. That run
 also exhausted two existing filesystem/function fixture deadlines under host-wide
 parallelism. Failed evidence is retained; the repeated local gate uses two CPU
 cores, matching the bounded CI runner, with every assertion and deadline intact.
+The first hosted run hit its 30-minute job envelope after a 9m41s cold image build
+and a still-progressing full gate; its native indexing cases passed and no test
+failure was reported before cancellation. The workflow envelope is now 45 minutes
+to include native compilation. Test and production deadlines remain unchanged.
 No live installation was migrated or deployed. Human review of authorization,
 publication and recovery invariants is required before merge.
 
