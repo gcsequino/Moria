@@ -36,6 +36,7 @@ test('architecture checks reject direct, indirect and unregistered capability ac
     'workers/functions/runner.mjs',
     'tests/functions-runner.test.ts',
     'tests/functions.integration.test.ts',
+    'tests/functions-docker-compat.integration.test.ts',
     'tests/functions-platform.integration.test.ts',
     'tests/filesystem-http.integration.test.ts',
     'tests/http-boundary.test.ts',

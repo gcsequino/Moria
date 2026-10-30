@@ -29,7 +29,8 @@ async function cpuUsage(id: string): Promise<number> {
     const connection = request(
       {
         socketPath: '/var/run/docker.sock',
-        path: `/v1.51/containers/${name(id)}/stats?stream=false&one-shot=true`,
+        // Use the daemon's default API so older worker hosts remain supported.
+        path: `/containers/${name(id)}/stats?stream=false&one-shot=true`,
       },
       (response) => {
         const chunks: Buffer[] = [];

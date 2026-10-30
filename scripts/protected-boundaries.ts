@@ -186,7 +186,10 @@ export const httpClientImports: Record<string, Record<string, readonly string[]>
 };
 
 export const processAdapters = {
-  'services/functions/src/docker.ts': ['tests/functions.integration.test.ts'],
+  'services/functions/src/docker.ts': [
+    'tests/functions.integration.test.ts',
+    'tests/functions-docker-compat.integration.test.ts',
+  ],
   'apps/cli/src/filesystem.ts': ['tests/filesystem-http.integration.test.ts'],
   'apps/local/src/development-database.ts': [
     'tests/catalog-storage-database.test.ts',

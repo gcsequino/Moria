@@ -66,6 +66,20 @@ combined gate does not establish the cause of historical issue #67 or production
 capacity, and human invariant review remains required before merge.
 
 
+### Hosted Docker compatibility correction
+
+Head `84b442e` passed all 877 runtime/16 Python tests locally but failed the hosted
+function-container suite (864/877 passed; 13 failed, including the enclosing
+suite). The CPU stats request pinned API 1.51 even though the Docker CLI negotiates
+the host's API. A real-daemon regression rejects newer API requests and serves
+actual stats through an older API; it reproduced FUNCTION_WORKER_UNAVAILABLE before
+the correction. The supervisor now uses the daemon's default API endpoint, with
+the same bounded response, status checks, timeout and fail-closed CPU enforcement.
+The regression requires a real successful invocation and an actual CPU-limit
+rejection through that older stats API. CI records client/daemon versions for
+environment evidence. No resource limit or isolation assertion is relaxed.
+Exact-head complete local/hosted results are recorded in the PR.
+
 ## Remaining component work
 
 - Production function infrastructure: implement the planned Firecracker adapter
