@@ -54,6 +54,7 @@ export interface CatalogStorageBinding {
 }
 
 export interface PublishedMetadata {
+  readonly markings: readonly string[];
   readonly environment: string;
   readonly dataset: string;
   readonly revision: string;
@@ -116,7 +117,15 @@ export class CatalogStorage {
     );
     authorize(state.identity, dataset, 'read', binding.markings);
     const catalog = this.authority.catalog;
+    let filesystemMarkings: string[] | undefined;
     const checkSession = async (client: import('pg').PoolClient) => {
+      const labels = await this.authority.resourceAccess(client, session, dataset);
+      if (filesystemMarkings && JSON.stringify(labels) !== JSON.stringify(filesystemMarkings))
+        throw new MoriaError(
+          'AUTHORIZATION_CHANGED',
+          'Dataset filesystem markings changed during transfer',
+        );
+      filesystemMarkings = labels;
       await this.authority.assertCurrent(
         client,
         session.environment,
@@ -174,6 +183,7 @@ export class CatalogStorage {
     );
     const stream = await storage.read(logical, { signal });
     return Object.freeze({
+      markings: Object.freeze([...new Set([...binding.markings, ...filesystemMarkings!])]),
       environment: session.environment,
       dataset,
       revision: pinned.revision,

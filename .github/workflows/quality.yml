@@ -26,5 +26,13 @@ jobs:
         run: docker build -f deploy/test/Dockerfile -t moria-test:ci .
       - name: Verify repeatable bootstrap
         run: docker run --rm moria-test:ci bash -c 'bash .openhands/setup.sh && bash .openhands/setup.sh'
+      - name: Preload pinned function test images
+        run: |
+          docker pull node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+          docker pull registry@sha256:d4032d4cc323c1731c707931ecada07a53076eac38e3b61ae57533f170f2c6c3
       - name: Verify quality gate and completion hook offline as non-root
-        run: docker run --rm --network none moria-test:ci bash .openhands/hooks/quality-gate.sh
+        run: |
+          docker run --rm --network none \
+            --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+            --group-add "$(stat -c '%g' /var/run/docker.sock)" \
+            moria-test:ci bash .openhands/hooks/quality-gate.sh

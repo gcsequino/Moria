@@ -20,6 +20,9 @@ import {
 import { database } from './fixtures/catalog-storage/database.js';
 import { startS3 } from './fixtures/storage-s3/server.js';
 import { iceberg } from './iceberg-helper.js';
+import { FilesystemStore } from '../services/filesystem/src/store.js';
+import { FilesystemAuthority } from '../services/security/src/filesystem.js';
+import { filesystemRoot } from '../packages/contracts/filesystem.js';
 
 const logical = {
   version: 1 as const,
@@ -189,6 +192,7 @@ for (const provider of ['local', 's3'] as const) {
           const pinned = await service.read(auth, dataset);
           assert.equal(pinned.revision, '1');
           assert.equal(pinned.snapshotId, staged.snapshotId);
+          assert.deepEqual(pinned.markings, ['protected']);
           assert.equal(pinned.execution, execution);
           const reader = pinned.stream.getReader();
           const first = (await reader.read()).value!;
@@ -424,6 +428,85 @@ for (const provider of ['local', 's3'] as const) {
           assert.equal((await cancelled.read()).done, true);
           cancelled.releaseLock();
           assert.deepEqual(await collect((await service.read(auth, dataset)).stream), bytes);
+        },
+      );
+      await t.test(
+        'filesystem classifications are returned and changes abort even a cleared reader mid-stream',
+        async () => {
+          const security = new FilesystemAuthority(authority),
+            store = new FilesystemStore(catalog),
+            resourceId = randomUUID();
+          const instanceId = await security.createPrincipal('admin', 'workload');
+          await security.bindPrincipal('admin', environment, 'reader', instanceId);
+          const operations = [`${dataset}:read`, `${resourceId}:read`, 'filesystem:read'];
+          await authority.setApplication(environment, 'admin', 'app', operations);
+          await authority.setGrants(environment, 'admin', 'reader', 'app', operations);
+          await authority.syncPrincipal(environment, 'admin', 'reader', {
+            kind: 'workload',
+            enabled: true,
+            attributes: {},
+            markings: ['protected', 'restricted'],
+          });
+          await security.setPolicy('admin', filesystemRoot, '0', {
+            markings: [],
+            grants: [
+              {
+                subject: { kind: 'principal', id: instanceId },
+                operations: ['read'],
+                inherit: true,
+                effect: 'allow',
+              },
+            ],
+          });
+          const actor = { environment, principal: 'admin', application: 'app' };
+          const parentReceipt = await store.apply(actor, randomUUID(), [
+            {
+              op: 'create',
+              kind: 'directory',
+              parentId: filesystemRoot,
+              expectedParentRevision: (await store.get(filesystemRoot)).revision,
+              name: 'runtime',
+              scope: { projectId: randomUUID(), environmentId: environment },
+            },
+          ]);
+          const parent = parentReceipt.entries.find((entry) => entry.name === 'runtime')!;
+          const receipt = await store.apply(actor, randomUUID(), [
+            {
+              op: 'create',
+              kind: 'resource',
+              parentId: parent.id,
+              expectedParentRevision: parent.revision,
+              name: 'dataset',
+              resourceId,
+            },
+          ]);
+          const entry = receipt.entries.find((item) => item.name === 'dataset')!;
+          await security.setPolicy('admin', entry.id, '0', {
+            markings: [{ environment, marking: 'protected' }],
+            grants: [],
+          });
+          await pool.query(
+            'INSERT INTO moria.dataset_heads SELECT environment,$3,revision,metadata_location,snapshot_id FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2',
+            [environment, dataset, resourceId],
+          );
+          await pool.query(
+            'INSERT INTO moria.snapshot_history SELECT environment,$3,revision,metadata_location,snapshot_id,execution,lineage FROM moria.snapshot_history WHERE environment=$1 AND dataset=$2',
+            [environment, dataset, resourceId],
+          );
+          const scoped = new CatalogStorage(authority, [{ ...configuration, dataset: resourceId }]);
+          const opened = await scoped.read(await session(), resourceId),
+            reader = opened.stream.getReader();
+          assert.deepEqual(opened.markings, ['protected']);
+          assert.equal((await reader.read()).done, false);
+          await security.setPolicy('admin', entry.id, '1', {
+            markings: [
+              { environment, marking: 'protected' },
+              { environment, marking: 'restricted' },
+            ],
+            grants: [],
+          });
+          await assert.rejects(reader.read(), { code: 'AUTHORITY_DENIED' });
+          reader.releaseLock();
         },
       );
     },

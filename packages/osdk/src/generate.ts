@@ -1,8 +1,9 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { format } from 'prettier';
 import { fingerprint, canonical } from '../../compiler/src/index.js';
 import type { ApiType, AppContract } from './contract.js';
+import { normalizeType } from '../../contracts/values.js';
 const quote = JSON.stringify;
 const record = (x: unknown): x is Record<string, any> =>
   !!x && typeof x === 'object' && !Array.isArray(x);
@@ -24,6 +25,15 @@ const reserved = new Set([
   'ObjectResult',
   'AllOptions',
   'Transport',
+  'JsonValue',
+  'TypeSchema',
+  'ResolvedType',
+  'Value',
+  'ValueType',
+  'Scalar',
+  'ScalarType',
+  'MoriaError',
+  'OntologyObject',
 ]);
 export function validateContract(input: unknown): AppContract {
   if (!record(input)) throw new Error('Invalid OSDK contract');
@@ -38,6 +48,7 @@ export function validateContract(input: unknown): AppContract {
     fail('unknown root field');
   const c = input as unknown as AppContract;
   const allNames = new Set<string>();
+  const objectIds = new Set<string>();
   const typeName = (n: string) => {
     if (!/^[A-Z][A-Za-z0-9]*$/.test(n) || reserved.has(n) || allNames.has(n))
       fail('duplicate or invalid type name: ' + n);
@@ -47,43 +58,26 @@ export function validateContract(input: unknown): AppContract {
   for (const [resource, object] of Object.entries(c.objects)) {
     if (!name(resource) || !record(object) || typeof object.type !== 'string') fail('object');
     typeName(object.type);
+    typeName(object.type + 'Properties');
+    if (
+      typeof object.id !== 'string' ||
+      !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(object.id) ||
+      objectIds.has(object.id)
+    )
+      fail('unique object type ID required');
+    objectIds.add(object.id);
     if (!record(object.properties) || !Object.keys(object.properties).length)
       fail('empty properties');
   }
-  let nodes = 0;
-  function validate(t: any, stack: string[] = [], depth = 0): void {
-    if (++nodes > 10000 || depth > 20 || !record(t)) fail('type complexity');
-    if ('ref' in t) {
-      if (Object.keys(t).length !== 1 || !Object.hasOwn(c.types, t.ref) || stack.includes(t.ref))
-        fail('unknown/cyclic type reference');
-      return validate(c.types[t.ref], [...stack, t.ref], depth + 1);
-    }
-    if (t.nullable !== undefined && typeof t.nullable !== 'boolean') fail('nullable');
-    if (t.type === 'object') {
-      if (
-        !record(t.properties) ||
-        (t.optional &&
-          (!Array.isArray(t.optional) ||
-            t.optional.some((n: any) => !Object.hasOwn(t.properties, n))))
-      )
-        fail('object type');
-      for (const [n, v] of Object.entries(t.properties)) {
-        if (!name(n)) fail('property name');
-        validate(v, stack, depth + 1);
-      }
-    } else if (t.type === 'list' || t.type === 'array') validate(t.items, stack, depth + 1);
-    else if (
-      !['string', 'uid', 'date', 'timestamp', 'int64', 'decimal', 'boolean', 'float64'].includes(
-        t.type,
-      )
-    )
-      fail('unsupported type');
+  for (const t of Object.values(c.types)) normalizeType(t, c.types);
+  for (const o of Object.values(c.objects)) {
+    normalizeType({ type: 'object', properties: o.properties }, c.types);
+    for (const type of Object.values(o.properties)) normalizeType(type, {}, 'column');
   }
-  for (const t of Object.values(c.types)) validate(t);
-  for (const o of Object.values(c.objects)) validate({ type: 'object', properties: o.properties });
   for (const [r, a] of Object.entries(c.actions)) {
     if (!name(r) || !record(a)) fail('action');
-    validate({ type: 'object', properties: a.inputs });
+    normalizeType({ type: 'object', properties: a.inputs }, c.types);
+    for (const type of Object.values(a.inputs)) normalizeType(type, {}, 'column');
   }
   for (const [n, e] of Object.entries(c.endpoints)) {
     if (
@@ -97,54 +91,72 @@ export function validateContract(input: unknown): AppContract {
       (e.method === 'GET' && e.input)
     )
       fail('endpoint');
-    if (e.input) validate(e.input);
-    validate(e.output);
+    if (e.input) normalizeType(e.input, c.types);
+    normalizeType(e.output, c.types);
+  }
+  const checkObjects = (type: ApiType) => {
+    const resolved = normalizeType(type, c.types);
+    function visit(t: typeof resolved) {
+      if (t.type === 'ontologyObject' && !objectIds.has(t.objectType!))
+        fail('ontology value type is not bound');
+      if (t.items) visit(t.items);
+      for (const child of Object.values(t.properties ?? {})) visit(child);
+    }
+    visit(resolved);
+  };
+  for (const type of Object.values(c.types)) checkObjects(type);
+  for (const endpoint of Object.values(c.endpoints)) {
+    if (endpoint.input) checkObjects(endpoint.input);
+    checkObjects(endpoint.output);
   }
   return c;
 }
-function type(t: ApiType): string {
+function type(t: ApiType, objects: AppContract['objects']): string {
   if ('ref' in t) return t.ref;
   let text: string;
   if (t.type === 'object')
     text =
       '{' +
       Object.entries(t.properties)
-        .map(([k, v]) => `${quote(k)}${t.optional?.includes(k) ? '?' : ''}: ${type(v)}`)
+        .map(([k, v]) => `${quote(k)}${t.optional?.includes(k) ? '?' : ''}: ${type(v, objects)}`)
         .join(';') +
       '}';
-  else if (t.type === 'list' || t.type === 'array') text = `(${type(t.items!)})[]`;
+  else if (t.type === 'list' || t.type === 'array') text = `(${type(t.items!, objects)})[]`;
+  else if (t.type === 'ontologyObject')
+    text = Object.values(objects).find((object) => object.id === t.objectType)!.type;
   else text = t.type === 'float64' ? 'number' : t.type === 'boolean' ? 'boolean' : 'string';
   return text + (t.nullable ? ' | null' : '');
 }
 export async function generate(input: unknown) {
   const c = validateContract(JSON.parse(canonical(input)));
+  const ts = (t: ApiType) => type(t, c.objects);
   const lines = [
     '// Generated by moria sdk generate. Do not edit; regenerate from the app contract.',
-    `import { createTransport, objectClient, actionClient, type ClientOptions, type RequestOptions } from './runtime.js';`,
+    `import { createTransport, objectClient, actionClient, typedRequest, bindObject, type OntologyObject, type ClientOptions, type RequestOptions, type TypeSchema } from './runtime.js';`,
     `export * from './runtime.js';`,
     `export const contractFingerprint = ${quote(fingerprint(c))};`,
-    ...Object.entries(c.types).map(([n, t]) => `export type ${n} = ${type(t)};`),
+    `const valueDefinitions: {[name:string]:TypeSchema} = ${quote(c.types)};`,
+    ...Object.entries(c.types).map(([n, t]) => `export type ${n} = ${ts(t)};`),
     ...Object.values(c.objects).map(
-      (o) => `export type ${o.type} = ${type({ type: 'object', properties: o.properties })};`,
+      (o) =>
+        `export type ${o.type}Properties = ${ts({ type: 'object', properties: o.properties })};\nexport type ${o.type} = OntologyObject<${quote(o.id)}, ${o.type}Properties>;`,
     ),
-    'export function createClient(options: ClientOptions = {}) { const transport = createTransport(options); return {',
-    'auth: transport.auth,',
-    'objects: {',
+    'export function createClient(options: ClientOptions = {}) { const transport = createTransport(options); const objects = {',
     ...Object.entries(c.objects).map(
       ([n, o]) =>
-        `${quote(n)}: objectClient<${o.type}>(transport, ${quote(n)}, ${quote(Object.keys(o.properties))}),`,
+        `${quote(n)}: objectClient<${o.type}Properties, ${quote(o.id)}>(transport, ${quote(n)}, ${quote(o.properties)}, ${quote(o.id)}),`,
     ),
-    '},',
+    '}; return { auth: transport.auth, objects,',
     'actions: {',
     ...Object.entries(c.actions).map(
       ([n, a]) =>
-        `${quote(n)}: actionClient<${type({ type: 'object', properties: a.inputs })}>(transport, ${quote(n)}),`,
+        `${quote(n)}: actionClient<${ts({ type: 'object', properties: a.inputs })}>(transport, ${quote(n)},${quote(a.inputs)}),`,
     ),
     '},',
     'endpoints: {',
     ...Object.entries(c.endpoints).map(
       ([n, e]) =>
-        `${quote(n)}: (${e.input ? `input: ${type(e.input)}, ` : ''}settings?: RequestOptions) => transport.request<${type(e.output)}>(${quote(e.path)},${quote(e.method)},${e.input ? 'input' : e.method === 'POST' ? '{}' : 'undefined'},settings),`,
+        `${quote(n)}: (${e.input ? `input: ${ts(e.input)}, ` : ''}settings?: RequestOptions) => typedRequest<${ts(e.output)}>(transport,${quote(e.path)},${quote(e.method)},${e.input ? 'input' : e.method === 'POST' ? '{}' : 'undefined'},${e.input ? quote(e.input) : 'undefined'},${quote(e.output)},valueDefinitions,settings, identity => bindObject({objects},identity)),`,
     ),
     '}',
     '}; }',
@@ -155,13 +167,42 @@ export async function generate(input: unknown) {
       singleQuote: true,
       printWidth: 100,
     }),
-    'runtime.ts': await readFile(new URL('./runtime.ts', import.meta.url), 'utf8'),
+    'runtime.ts': await format(
+      (await readFile(new URL('./runtime.ts', import.meta.url), 'utf8'))
+        .replaceAll('../../platform/src/transport.js', './transport.js')
+        .replaceAll('../../contracts/values.js', './values.js')
+        .replaceAll('../../contracts/value-types.js', './value-types.js'),
+      { parser: 'typescript', singleQuote: true, printWidth: 100 },
+    ),
+    'transport.ts': (
+      await readFile(new URL('../../platform/src/transport.ts', import.meta.url), 'utf8')
+    ).replaceAll('../../contracts/values.js', './values.js'),
     'contract.json': await format(JSON.stringify(c), { parser: 'json', printWidth: 100 }),
+    'values.ts': await readFile(new URL('../../contracts/values.ts', import.meta.url), 'utf8'),
+    'value-types.ts': await readFile(
+      new URL('../../contracts/value-types.ts', import.meta.url),
+      'utf8',
+    ),
+    'errors.ts': await readFile(new URL('../../contracts/errors.ts', import.meta.url), 'utf8'),
   };
 }
 export async function writeSdk(contract: unknown, directory: string, check = false) {
   const files = await generate(contract);
   if (!check) await mkdir(directory, { recursive: true });
+  for (const name of [
+    'filesystem.ts',
+    'filesystem-contracts.ts',
+    'storage.ts',
+    'functions.ts',
+    'functions-contracts.ts',
+    'function-values.ts',
+  ]) {
+    const target = resolve(directory, name);
+    if (check) {
+      if ((await readFile(target, 'utf8').catch(() => undefined)) !== undefined)
+        throw new Error(`Obsolete generated SDK file: ${target}`);
+    } else await rm(target, { force: true });
+  }
   for (const [name, content] of Object.entries(files)) {
     const target = resolve(directory, name);
     if (check) {

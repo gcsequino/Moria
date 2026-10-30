@@ -6,6 +6,7 @@
   },
   "objects": {
     "snow-observations": {
+      "id": "00000000-0000-4000-8000-000000000003",
       "properties": {
         "date": { "nullable": false, "type": "date" },
         "depthQa": { "nullable": false, "type": "string" },
@@ -23,6 +24,7 @@
       "type": "Observation"
     },
     "snow-stations": {
+      "id": "00000000-0000-4000-8000-000000000002",
       "properties": {
         "county": { "nullable": false, "type": "string" },
         "elevationFt": { "nullable": false, "type": "float64" },
@@ -67,7 +69,9 @@
         "latest": {
           "nullable": true,
           "properties": {
+            "completed_at": { "nullable": true, "type": "string" },
             "error": { "nullable": true, "type": "string" },
+            "id": { "nullable": false, "type": "string" },
             "started_at": { "nullable": false, "type": "string" },
             "status": { "nullable": false, "type": "string" }
           },

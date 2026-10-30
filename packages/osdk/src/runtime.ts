@@ -1,33 +1,35 @@
-/** Browser-safe runtime copied into generated SDKs. No credentials or server imports. */
-export interface ClientOptions {
-  /** Same origin by default. Cross-origin cookies are deliberately unsupported. */
-  baseUrl?: string;
-  fetch?: typeof fetch;
-  onUnauthenticated?: () => void;
-}
-export interface RequestOptions {
-  signal?: AbortSignal;
-}
-export interface ActionOptions extends RequestOptions {
-  idempotencyKey: string;
-}
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly code: string,
-    message: string,
-    public readonly correlationId?: string,
-    public readonly retryable = false,
-    public readonly details?: unknown,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-export interface AuthState {
-  user: null | { principal: string; name: string; recovery: boolean; expiresAt: string };
-  providers: { id: string; label: string }[];
-}
+/** Ontology client helpers; HTTP transport is shared with the platform API client. */
+import {
+  ApiError,
+  type Transport,
+  type RequestOptions,
+  type ActionOptions,
+} from '../../platform/src/transport.js';
+import {
+  decodeValue,
+  encodeValue,
+  normalizeType,
+  validateRow,
+  validateValue,
+  bindOntologyObjects,
+} from '../../contracts/values.js';
+import {
+  ONTOLOGY_OBJECT,
+  type TypeSchema,
+  type ValueType,
+  type ObjectIdentity,
+} from '../../contracts/value-types.js';
+export { VALUE_VERSION } from '../../contracts/value-types.js';
+export { decodeValue, encodeValue, canonicalValue } from '../../contracts/values.js';
+export type { TypeSchema, ValueType, ScalarType, JsonValue } from '../../contracts/value-types.js';
+export { createTransport, ApiError } from '../../platform/src/transport.js';
+export type {
+  ClientOptions,
+  RequestOptions,
+  ActionOptions,
+  AuthState,
+  Transport,
+} from '../../platform/src/transport.js';
 export interface Page<T> {
   revision: string;
   objects: T[];
@@ -39,6 +41,30 @@ export interface ObjectResult<T> {
 }
 export interface ActionResult {
   revision: string;
+  proposed?: boolean;
+}
+
+/** An identity handle; every property fetch uses the current authorized transport. */
+export interface OntologyObject<T extends string, P> {
+  readonly objectType: T;
+  readonly uid: string;
+  readonly [ONTOLOGY_OBJECT]: ObjectIdentity & { objectType: T };
+  get<K extends Extract<keyof P, string> = Extract<keyof P, string>>(
+    properties?: readonly K[],
+    settings?: RequestOptions,
+  ): Promise<ObjectResult<Pick<P, K>>>;
+}
+
+export function bindObject(
+  client: { objects: Record<string, { objectType: string; object(uid: string): unknown }> },
+  identity: ObjectIdentity,
+): unknown {
+  const candidates = Object.values(client.objects).filter(
+    (value) => value.objectType === identity.objectType,
+  );
+  if (candidates.length !== 1)
+    throw new ApiError(400, 'OBJECT_TYPE_UNBOUND', 'Ontology object type is not bound by this SDK');
+  return candidates[0].object(identity.uid);
 }
 type Key<T> = Extract<keyof T, string>;
 export type Filter<T> =
@@ -62,88 +88,71 @@ export interface AllOptions extends RequestOptions {
   maxRows?: number;
 }
 
-export function createTransport(options: ClientOptions = {}) {
-  const base = options.baseUrl ?? '';
-  if (base) {
-    const url = new URL(base);
-    if (
-      !['https:', 'http:'].includes(url.protocol) ||
-      url.origin !== base ||
-      url.username ||
-      url.password
-    )
-      throw new Error('baseUrl must be an HTTP(S) origin without a path or trailing slash.');
-    if (typeof location !== 'undefined' && url.origin !== location.origin)
-      throw new Error('Browser SDK calls must use the current application origin.');
-  }
-  const fetcher = options.fetch ?? globalThis.fetch.bind(globalThis);
-  async function request<T>(
-    path: string,
-    method: 'GET' | 'POST',
-    input?: unknown,
-    settings: RequestOptions & { idempotencyKey?: string } = {},
-  ): Promise<T> {
-    if (!path.startsWith('/api/') || path.includes('://')) throw new Error('Invalid SDK route.');
-    const response = await fetcher(base + path, {
-      method,
-      credentials: 'same-origin',
-      redirect: 'error',
-      signal: settings.signal,
-      headers: {
-        'content-type': 'application/json',
-        ...(settings.idempotencyKey ? { 'idempotency-key': settings.idempotencyKey } : {}),
-      },
-      ...(input === undefined ? {} : { body: JSON.stringify(input) }),
-    });
-    if (response.status === 401) options.onUnauthenticated?.();
-    let data: any;
-    try {
-      data = await response.json();
-    } catch {
-      throw new ApiError(
-        response.status,
-        'INVALID_RESPONSE',
-        `Expected JSON from Moria (${response.status}).`,
-      );
-    }
-    if (!response.ok)
-      throw new ApiError(
-        response.status,
-        data?.error?.code ?? 'HTTP_ERROR',
-        data?.error?.message ?? `Request failed (${response.status}).`,
-        data?.error?.correlationId ?? data?.error?.requestId,
-        data?.error?.retryable === true,
-        data?.error?.details,
-      );
-    return data as T;
-  }
-  return {
-    request,
-    auth: {
-      session: (settings?: RequestOptions) =>
-        request<AuthState>('/api/auth/session', 'GET', undefined, settings),
-      login: (provider: string, settings?: RequestOptions) =>
-        request<{ url: string }>('/api/auth/login', 'POST', { provider }, settings),
-      logout: (settings?: RequestOptions) =>
-        request<{ signedOut: boolean }>('/api/auth/logout', 'POST', {}, settings),
-      recover: (ticket: string, settings?: RequestOptions) =>
-        request<{ recovered: boolean }>('/api/auth/recover', 'POST', { ticket }, settings),
-    },
-  };
+const text: TypeSchema = { type: 'string', nullable: false };
+export async function typedRequest<T>(
+  transport: Transport,
+  path: string,
+  method: 'GET' | 'POST',
+  input: unknown,
+  inputType: TypeSchema | undefined,
+  outputType: TypeSchema,
+  definitions: Record<string, TypeSchema>,
+  settings?: RequestOptions,
+  bind?: (identity: ObjectIdentity) => unknown,
+): Promise<T> {
+  const result = await transport.request(
+    path,
+    method,
+    inputType ? encodeValue(input, inputType, definitions) : input,
+    settings,
+  );
+  return (
+    bind
+      ? await bindOntologyObjects(result, outputType, bind, definitions)
+      : decodeValue(result, outputType, definitions)
+  ) as T;
 }
-export type Transport = ReturnType<typeof createTransport>;
-export function objectClient<T>(transport: Transport, resource: string, fields: readonly Key<T>[]) {
-  const route = '/api/v1/objects/' + encodeURIComponent(resource);
+export function objectClient<T, I extends string = string>(
+  transport: Transport,
+  resource: string,
+  properties: Record<string, ValueType>,
+  objectType?: I,
+) {
+  for (const type of Object.values(properties)) normalizeType(type, {}, 'column');
+  const fields = Object.keys(properties) as Key<T>[];
+  const row = (selected: readonly Key<T>[]): TypeSchema => ({
+    type: 'object',
+    properties: Object.fromEntries(
+      selected.map((key) => {
+        if (!Object.hasOwn(properties, key))
+          throw new ApiError(400, 'QUERY_INVALID', 'Unknown projected property');
+        return [key, properties[key]];
+      }),
+    ),
+  });
+  const route = '/api/v1/objects/' + encodeURIComponent(objectType ?? resource);
   // Explicit projection: the server rejects inaccessible fields instead of silently
   // omitting them while the TypeScript result promises they exist.
   async function query<K extends Key<T> = Key<T>>(
     input: Query<T, K> = {},
     settings?: RequestOptions,
   ) {
-    return transport.request<Page<Pick<T, K>>>(
+    return typedRequest<Page<Pick<T, K>>>(
+      transport,
       route + '/query',
       'POST',
       { ...input, projection: input.projection ?? fields },
+      undefined,
+      {
+        type: 'object',
+        properties: {
+          revision: text,
+          objects: { type: 'list', items: row(input.projection ?? fields) },
+          nextCursor: text,
+        },
+        optional: ['nextCursor'],
+      },
+      {},
       settings,
     );
   }
@@ -162,23 +171,42 @@ export function objectClient<T>(transport: Transport, resource: string, fields: 
       if (cursor) seen.add(cursor);
     } while (cursor);
   }
+  const get = <K extends Key<T> = Key<T>>(
+    uid: string,
+    properties?: readonly K[],
+    settings?: RequestOptions,
+  ) => {
+    validateValue(uid, { type: 'uid', nullable: false });
+    return typedRequest<ObjectResult<Pick<T, K>>>(
+      transport,
+      route +
+        '/' +
+        encodeURIComponent(uid) +
+        '?properties=' +
+        encodeURIComponent((properties ?? fields).join(',')),
+      'GET',
+      undefined,
+      undefined,
+      { type: 'object', properties: { revision: text, object: row(properties ?? fields) } },
+      {},
+      settings,
+    );
+  };
   return {
+    objectType: objectType ?? '',
+    object(uid: string): OntologyObject<I, T> {
+      validateValue(objectType, { type: 'uid', nullable: false });
+      validateValue(uid, { type: 'uid', nullable: false });
+      const identity = Object.freeze({ objectType: objectType!, uid });
+      return Object.freeze({
+        ...identity,
+        [ONTOLOGY_OBJECT]: identity,
+        get: <K extends Key<T> = Key<T>>(properties?: readonly K[], settings?: RequestOptions) =>
+          get(uid, properties, settings),
+      });
+    },
     query,
-    get: <K extends Key<T> = Key<T>>(
-      uid: string,
-      properties?: readonly K[],
-      settings?: RequestOptions,
-    ) =>
-      transport.request<ObjectResult<Pick<T, K>>>(
-        route +
-          '/' +
-          encodeURIComponent(uid) +
-          '?properties=' +
-          encodeURIComponent((properties ?? fields).join(',')),
-        'GET',
-        undefined,
-        settings,
-      ),
+    get,
     pages,
     async all<K extends Key<T> = Key<T>>(
       input: Query<T, K> = {},
@@ -196,16 +224,28 @@ export function objectClient<T>(transport: Transport, resource: string, fields: 
     },
   };
 }
-export function actionClient<I>(transport: Transport, resource: string) {
+export function actionClient<I>(
+  transport: Transport,
+  resource: string,
+  inputs: Record<string, ValueType>,
+) {
   return (input: I, settings: ActionOptions): Promise<ActionResult> => {
     if (!settings?.idempotencyKey)
       throw new Error(
         'An explicit idempotencyKey is required. Reuse it when retrying the same operation.',
       );
-    return transport.request(
+    return typedRequest<ActionResult>(
+      transport,
       '/api/v1/actions/' + encodeURIComponent(resource) + '/invoke',
       'POST',
-      { input },
+      { input: validateRow(input, inputs) },
+      undefined,
+      {
+        type: 'object',
+        properties: { revision: text, proposed: { type: 'boolean', nullable: false } },
+        optional: ['proposed'],
+      },
+      {},
       settings,
     );
   };

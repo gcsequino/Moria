@@ -64,11 +64,14 @@ const handler = async (job: JobContext) => {
     throw error;
   }
 };
-const runtime = await runProcess(process.argv[2] as ProcessRole, async (catalog) => {
-  const jobs = new ObservedJobs(catalog, { snotel: handler, weather: handler });
-  await jobs.migrate();
-  return { jobs, weather: await createWeatherService(catalog) };
-});
+const runtime = await runProcess(
+  process.argv[2] as Exclude<ProcessRole, 'function-worker'>,
+  async (catalog) => {
+    const jobs = new ObservedJobs(catalog, { snotel: handler, weather: handler });
+    await jobs.migrate();
+    return { jobs, weather: await createWeatherService(catalog) };
+  },
+);
 if (!runtime) {
   process.exit(1);
 } else {

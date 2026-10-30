@@ -99,3 +99,47 @@ test('UID cannot be an action edit', () =>
       (d) => d.code === 'EDIT_INVALID',
     ),
   ));
+
+test('function-backed actions require matching inputs and editable typed outputs', () => {
+  const manifest = structuredClone(fixture);
+  const action = manifest.resources.find((resource) => resource.kind === 'Action')!;
+  const fn = manifest.resources.find((resource) => resource.kind === 'Function')!;
+  const target = manifest.resources.find(
+    (resource) => resource.kind === 'ObjectType' && resource.metadata.name === 'WorkOrder',
+  )!;
+  action.spec.function = 'maintenance/Function/Summarize';
+  delete action.spec.edits;
+  fn.spec.effect = 'editProposal';
+  fn.spec.inputs = structuredClone(action.spec.inputs);
+  fn.spec.outputs = { assignee: structuredClone(target.spec.properties.assignee) };
+  assert.deepEqual(validateManifest(manifest), []);
+  delete fn.spec.inputs.assignee;
+  assert(validateManifest(manifest).some((diagnostic) => diagnostic.code === 'ACTION_FUNCTION'));
+  fn.spec.inputs = structuredClone(action.spec.inputs);
+  for (const outputs of [
+    { missing: { type: 'string', nullable: false } },
+    { [target.spec.primaryKey]: target.spec.properties[target.spec.primaryKey] },
+    { assignee: { type: 'float64', nullable: false } },
+  ]) {
+    fn.spec.outputs = outputs;
+    assert(validateManifest(manifest).some((diagnostic) => diagnostic.code === 'ACTION_FUNCTION'));
+  }
+});
+
+test('function declarations accept ontology identities in nested and list envelopes only', () => {
+  const manifest = structuredClone(fixture);
+  const fn = manifest.resources.find((resource) => resource.kind === 'Function')!;
+  const customer = {
+    type: 'ontologyObject',
+    objectType: '00000000-0000-4000-8000-000000000004',
+    nullable: false,
+  };
+  fn.spec.inputs = { customer };
+  fn.spec.outputs = {
+    customers: { type: 'list', items: customer },
+    nested: { type: 'object', properties: { customer } },
+  };
+  assert.deepEqual(validateManifest(manifest), []);
+  customer.objectType = 'Customer';
+  assert(validateManifest(manifest).some((item) => item.code === 'SCHEMA_INVALID'));
+});

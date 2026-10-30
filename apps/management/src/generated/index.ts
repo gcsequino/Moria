@@ -3,19 +3,143 @@ import {
   createTransport,
   objectClient,
   actionClient,
+  typedRequest,
+  bindObject,
+  type OntologyObject,
   type ClientOptions,
   type RequestOptions,
+  type TypeSchema,
 } from './runtime.js';
 export * from './runtime.js';
 export const contractFingerprint =
-  'sha256:583a1897295f6e7cb0098f311b10dfc89f53b4e253bb15ae6b563b19f3c6ba32';
+  'sha256:4cf661ca03a280db9ac0a62aaed44ccde2c403246c0bc1049fb7867b2533703e';
+const valueDefinitions: { [name: string]: TypeSchema } = {
+  HostedApp: {
+    nullable: false,
+    optional: ['deployment', 'error'],
+    properties: {
+      app: { nullable: false, type: 'string' },
+      deployment: {
+        nullable: false,
+        optional: ['previous'],
+        properties: {
+          current: { nullable: false, type: 'string' },
+          previous: { nullable: false, type: 'string' },
+          promotedAt: { nullable: false, type: 'string' },
+        },
+        type: 'object',
+      },
+      error: { nullable: false, type: 'string' },
+      versions: { items: { nullable: false, type: 'string' }, type: 'list' },
+    },
+    type: 'object',
+  },
+  ImportResult: {
+    nullable: false,
+    properties: {
+      revision: { nullable: false, type: 'string' },
+      rows: { nullable: false, type: 'float64' },
+      stage: { nullable: false, type: 'string' },
+    },
+    type: 'object',
+  },
+  Job: {
+    nullable: false,
+    properties: {
+      attempt: { nullable: false, type: 'float64' },
+      created_at: { nullable: false, type: 'string' },
+      error: { nullable: true, type: 'string' },
+      id: { nullable: false, type: 'string' },
+      kind: { nullable: false, type: 'string' },
+      phase: { nullable: false, type: 'string' },
+      requested_by: { nullable: false, type: 'string' },
+      result: { nullable: true, type: 'string' },
+      status: { nullable: false, type: 'string' },
+      updated_at: { nullable: false, type: 'string' },
+    },
+    type: 'object',
+  },
+  Jobs: {
+    nullable: false,
+    properties: {
+      jobs: { items: { ref: 'Job' }, type: 'list' },
+      schedules: { items: { ref: 'Schedule' }, type: 'list' },
+    },
+    type: 'object',
+  },
+  Lineage: {
+    nullable: false,
+    properties: {
+      edges: {
+        items: {
+          nullable: false,
+          properties: {
+            from: { nullable: false, type: 'string' },
+            label: { nullable: false, type: 'string' },
+            to: { nullable: false, type: 'string' },
+          },
+          type: 'object',
+        },
+        type: 'list',
+      },
+      limitations: { items: { nullable: false, type: 'string' }, type: 'list' },
+      nodes: {
+        items: {
+          nullable: false,
+          properties: {
+            detail: { nullable: false, type: 'string' },
+            id: { nullable: false, type: 'string' },
+            kind: { nullable: false, type: 'string' },
+            label: { nullable: false, type: 'string' },
+            status: { nullable: true, type: 'string' },
+          },
+          type: 'object',
+        },
+        type: 'list',
+      },
+    },
+    type: 'object',
+  },
+  Schedule: {
+    nullable: false,
+    properties: {
+      enabled: { nullable: false, type: 'boolean' },
+      interval_minutes: { nullable: false, type: 'float64' },
+      kind: { nullable: false, type: 'string' },
+      next_run: { nullable: false, type: 'string' },
+    },
+    type: 'object',
+  },
+  SourceRow: {
+    nullable: false,
+    properties: {
+      id: { nullable: false, type: 'string' },
+      notes: { nullable: false, type: 'string' },
+      region: { nullable: false, type: 'string' },
+      status: { nullable: false, type: 'string' },
+      title: { nullable: false, type: 'string' },
+    },
+    type: 'object',
+  },
+  WorkspaceStatus: {
+    nullable: false,
+    properties: {
+      administrator: { nullable: false, type: 'boolean' },
+      importing: { nullable: false, type: 'boolean' },
+      principal: { nullable: false, type: 'string' },
+      ready: { nullable: false, type: 'boolean' },
+      revision: { nullable: false, type: 'string' },
+    },
+    type: 'object',
+  },
+};
 export type HostedApp = {
   app: string;
   deployment?: { current: string; previous?: string; promotedAt: string };
   error?: string;
   versions: string[];
 };
-export type ImportResult = { revision: string; rows: number };
+export type ImportResult = { revision: string; rows: number; stage: string };
 export type Job = {
   attempt: number;
   created_at: string;
@@ -54,7 +178,7 @@ export type WorkspaceStatus = {
   ready: boolean;
   revision: string;
 };
-export type Asset = {
+export type AssetProperties = {
   id: string;
   notes: string;
   region: string;
@@ -62,66 +186,206 @@ export type Asset = {
   title: string;
   uid: string;
 };
+export type Asset = OntologyObject<'00000000-0000-4000-8000-000000000001', AssetProperties>;
 export function createClient(options: ClientOptions = {}) {
   const transport = createTransport(options);
+  const objects = {
+    assets: objectClient<AssetProperties, '00000000-0000-4000-8000-000000000001'>(
+      transport,
+      'assets',
+      {
+        id: { nullable: false, type: 'string' },
+        notes: { nullable: false, type: 'string' },
+        region: { nullable: false, type: 'string' },
+        status: { nullable: false, type: 'string' },
+        title: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+      },
+      '00000000-0000-4000-8000-000000000001',
+    ),
+  };
   return {
     auth: transport.auth,
-    objects: {
-      assets: objectClient<Asset>(transport, 'assets', [
-        'id',
-        'notes',
-        'region',
-        'status',
-        'title',
-        'uid',
-      ]),
-    },
+    objects,
     actions: {
       'edit-asset': actionClient<{ notes: string; status: string; title: string; uid: string }>(
         transport,
         'edit-asset',
+        {
+          notes: { nullable: false, type: 'string' },
+          status: { nullable: false, type: 'string' },
+          title: { nullable: false, type: 'string' },
+          uid: { nullable: false, type: 'uid' },
+        },
       ),
-      'edit-notes': actionClient<{ notes: string; uid: string }>(transport, 'edit-notes'),
-      'edit-status': actionClient<{ status: string; uid: string }>(transport, 'edit-status'),
-      'edit-title': actionClient<{ title: string; uid: string }>(transport, 'edit-title'),
-      'reset-asset': actionClient<{ uid: string }>(transport, 'reset-asset'),
+      'edit-notes': actionClient<{ notes: string; uid: string }>(transport, 'edit-notes', {
+        notes: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+      }),
+      'edit-status': actionClient<{ status: string; uid: string }>(transport, 'edit-status', {
+        status: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+      }),
+      'edit-title': actionClient<{ title: string; uid: string }>(transport, 'edit-title', {
+        title: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+      }),
+      'reset-asset': actionClient<{ uid: string }>(transport, 'reset-asset', {
+        uid: { nullable: false, type: 'uid' },
+      }),
     },
     endpoints: {
       apps: (settings?: RequestOptions) =>
-        transport.request<HostedApp[]>('/api/management/v1/apps', 'GET', undefined, settings),
+        typedRequest<HostedApp[]>(
+          transport,
+          '/api/management/v1/apps',
+          'GET',
+          undefined,
+          undefined,
+          { items: { ref: 'HostedApp' }, type: 'list' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       importAssets: (input: SourceRow[], settings?: RequestOptions) =>
-        transport.request<ImportResult>(
+        typedRequest<ImportResult>(
+          transport,
           '/api/management/v1/datasets/assets/import',
           'POST',
           input,
+          { items: { ref: 'SourceRow' }, type: 'list' },
+          { ref: 'ImportResult' },
+          valueDefinitions,
           settings,
+          (identity) => bindObject({ objects }, identity),
         ),
       jobs: (settings?: RequestOptions) =>
-        transport.request<Jobs>('/api/management/v1/jobs', 'GET', undefined, settings),
+        typedRequest<Jobs>(
+          transport,
+          '/api/management/v1/jobs',
+          'GET',
+          undefined,
+          undefined,
+          { ref: 'Jobs' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       lineage: (settings?: RequestOptions) =>
-        transport.request<Lineage>('/api/management/v1/lineage', 'GET', undefined, settings),
+        typedRequest<Lineage>(
+          transport,
+          '/api/management/v1/lineage',
+          'GET',
+          undefined,
+          undefined,
+          { ref: 'Lineage' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       retryJob: (input: { id: string }, settings?: RequestOptions) =>
-        transport.request<Job>('/api/management/v1/jobs/retry', 'POST', input, settings),
+        typedRequest<Job>(
+          transport,
+          '/api/management/v1/jobs/retry',
+          'POST',
+          input,
+          {
+            nullable: false,
+            properties: { id: { nullable: false, type: 'string' } },
+            type: 'object',
+          },
+          { ref: 'Job' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       setSnowSchedule: (
         input: { enabled: boolean; intervalMinutes: number },
         settings?: RequestOptions,
       ) =>
-        transport.request<Schedule>('/api/management/v1/snotel/schedule', 'POST', input, settings),
+        typedRequest<Schedule>(
+          transport,
+          '/api/management/v1/snotel/schedule',
+          'POST',
+          input,
+          {
+            nullable: false,
+            properties: {
+              enabled: { nullable: false, type: 'boolean' },
+              intervalMinutes: { nullable: false, type: 'float64' },
+            },
+            type: 'object',
+          },
+          { ref: 'Schedule' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       setWeatherSchedule: (
         input: { enabled: boolean; intervalMinutes: number },
         settings?: RequestOptions,
       ) =>
-        transport.request<Schedule>('/api/management/v1/weather/schedule', 'POST', input, settings),
+        typedRequest<Schedule>(
+          transport,
+          '/api/management/v1/weather/schedule',
+          'POST',
+          input,
+          {
+            nullable: false,
+            properties: {
+              enabled: { nullable: false, type: 'boolean' },
+              intervalMinutes: { nullable: false, type: 'float64' },
+            },
+            type: 'object',
+          },
+          { ref: 'Schedule' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       syncSnow: (input: { requestKey: string }, settings?: RequestOptions) =>
-        transport.request<Job>('/api/management/v1/snotel/sync', 'POST', input, settings),
+        typedRequest<Job>(
+          transport,
+          '/api/management/v1/snotel/sync',
+          'POST',
+          input,
+          {
+            nullable: false,
+            properties: { requestKey: { nullable: false, type: 'string' } },
+            type: 'object',
+          },
+          { ref: 'Job' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       syncWeather: (input: { requestKey: string }, settings?: RequestOptions) =>
-        transport.request<Job>('/api/management/v1/weather/sync', 'POST', input, settings),
+        typedRequest<Job>(
+          transport,
+          '/api/management/v1/weather/sync',
+          'POST',
+          input,
+          {
+            nullable: false,
+            properties: { requestKey: { nullable: false, type: 'string' } },
+            type: 'object',
+          },
+          { ref: 'Job' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
       workspace: (settings?: RequestOptions) =>
-        transport.request<WorkspaceStatus>(
+        typedRequest<WorkspaceStatus>(
+          transport,
           '/api/management/v1/workspace',
           'GET',
           undefined,
+          undefined,
+          { ref: 'WorkspaceStatus' },
+          valueDefinitions,
           settings,
+          (identity) => bindObject({ objects }, identity),
         ),
     },
   };

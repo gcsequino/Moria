@@ -7,6 +7,7 @@ import { WorkloadSessions } from '../../security/src/sessions.js';
 import { ObjectService, type SessionContext } from '../../ontology/src/service.js';
 import { AppAuth } from './auth.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
+import type { Functions } from '../../functions/src/service.js';
 
 /** Trusted server binding. Artifact manifests and browser headers cannot expand it. */
 export function createScopedAppServer(options: {
@@ -19,6 +20,7 @@ export function createScopedAppServer(options: {
   auth?: AppAuth;
   publicOrigin?: string;
   objects: Map<string, ObjectService>;
+  functions?: Functions;
   status: (session?: SessionContext) => Promise<unknown>;
 }) {
   if (
@@ -31,7 +33,11 @@ export function createScopedAppServer(options: {
   const api = createApi(options.auth?.sessions ?? options.sessions, {
     objects: options.objects,
     actions: new Map(),
+    functions: options.functions,
   });
+  const served = (path: string) =>
+    path.startsWith('/api/v1/objects/') ||
+    Boolean(options.functions && /^\/api\/v1\/(functions|invocations)(?:\/|$)/.test(path));
   const server = createServer(async (req, res) => {
     const send = (status: number, data: unknown) => {
       res.writeHead(status, {
@@ -66,7 +72,7 @@ export function createScopedAppServer(options: {
         if (path === '/api/v1/status' && req.method === 'GET') {
           const session = await options.auth.sessions.authenticate(req.headers.authorization);
           send(200, await options.status(session));
-        } else if (path.startsWith('/api/v1/objects/')) api.emit('request', req, res);
+        } else if (served(path)) api.emit('request', req, res);
         else send(404, { error: { code: 'NOT_FOUND', message: 'Endpoint not found.' } });
         return;
       }
@@ -85,7 +91,7 @@ export function createScopedAppServer(options: {
         send(200, await options.status());
         return;
       }
-      if (!path.startsWith('/api/v1/objects/')) {
+      if (!served(path)) {
         send(404, { error: { code: 'NOT_FOUND', message: 'Endpoint not found.' } });
         return;
       }

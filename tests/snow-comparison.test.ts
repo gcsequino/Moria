@@ -8,7 +8,10 @@ import {
   daysBefore,
   snowChange,
 } from '../apps/snotel/src/snow-comparison.js';
-import type { Observation, Station } from '../apps/snotel/src/generated/index.js';
+import type {
+  ObservationProperties as Observation,
+  StationProperties as Station,
+} from '../apps/snotel/src/generated/index.js';
 const station = (triplet: string, latitude: number, longitude: number): Station => ({
   triplet,
   latitude,

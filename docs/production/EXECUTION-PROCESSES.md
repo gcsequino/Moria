@@ -4,6 +4,10 @@ This bounded successor to #30/#34 separates the fixed Snow/weather scheduler and
 worker. Parent #14 remains open. It adds no execution concurrency, arbitrary
 handlers, environment ownership, schema migration or capacity claim.
 
+User Function execution uses a separate explicit `function-worker` process; it
+does not expand these fixed-handler workers. See [Functions](../FUNCTIONS.md) for
+its OCI protocol, host-control boundary, invocation lifecycle and verification status.
+
 ## Commands and prerequisites
 
 Use non-root Linux, Node 24, pnpm 11.25.0 and the repository-local Python 3.11

@@ -13,7 +13,7 @@ pnpm moria sdk generate apps/snotel/src/generated/contract.json --out ./work/my-
 
 The bundled contracts live in packages/osdk/src/bundled.ts. Their object properties and action inputs are imported from packages/contracts/bundled-objects.ts, also used by the server bindings. Generated files are checked in under each app's src/generated. pnpm check rejects stale generated artifacts. Run generation after editing the contract and before building/recovering a bundle.
 
-Each generated directory is standalone: index.ts, runtime.ts and contract.json. Copy it into a TypeScript app and import index.js (NodeNext-compatible source imports; Vite resolves the TypeScript source). No Moria server package or additional runtime dependency is needed. This is generated source distribution, not an npm registry publication.
+Each generated directory is standalone: index.ts, runtime.ts, transport.ts, contract.json and the shared values.ts, value-types.ts and errors.ts codecs. Copy the complete directory into a TypeScript app and import index.js (NodeNext-compatible source imports; Vite resolves the TypeScript source). No Moria server package or additional runtime dependency is needed. This is generated source distribution, not an npm registry publication.
 
 ## Use the scoped client
 
@@ -39,10 +39,21 @@ The JSON contract uses version: 1, app, types, objects, actions and endpoints. O
 
 ## Query and mutation semantics
 
+Each object contract supplies an immutable ObjectType UUID in `id`. The generated
+ontology type (`Customer`, for example) is an identity handle; `CustomerProperties`
+is its fetched property shape. Create a handle with
+`client.objects.customers.object(uid)` and read authorized current properties with
+`customer.get(['name'])`. Construction performs no fetch. Named endpoint envelopes
+can use `ontologyObject` descriptors and are decoded into matching handles.
+Transport serialization sends exactly `{objectType, uid}`, preserving reference
+semantics across function invocation without copying properties. Generated reads
+use the type's UUID route; the server still resolves and authorizes its trusted
+binding. Function APIs remain in the separate platform client.
+
 - query returns a page with revision, objects and optional nextCursor. get returns revision and object. pages is an async iterator; all collects pages with a default 20,000-row cap.
 - Filters type-check field names and literal values. Projection changes the result type. The default explicitly requests all declared fields; use a smaller projection for callers with restricted property access. A forbidden requested property fails instead of being silently represented as a guaranteed field.
 - Pagination preserves the query and projection. It never restarts after an expired or invalidated cursor. Repeated cursors fail. Every page remains subject to current server authorization.
-- int64 and decimal values remain strings. Date/timestamp values remain wire-format strings. Nullable measurements remain null, not zero. Successful JSON responses are typed from the contract, not runtime schema-decoded; the server is responsible for validation.
+- int64 and decimal values remain strings. Date/timestamp values remain canonical wire-format strings. Nullable measurements remain null, not zero. The shared version-1 codecs validate and normalize action/endpoint inputs and successful responses, including named endpoint types and projected object rows. Invalid values fail before request serialization or result exposure. The server independently enforces types and authority.
 - AbortSignal is forwarded to Fetch, including each page. Snow cancels old station/observation requests when selection or login changes. Network cancellation does not guarantee a server-side mutation was rolled back.
 - Actions require an explicit idempotencyKey. Retain the same input and key when retrying an uncertain result. The SDK never automatically retries mutations or generates a fresh retry key.
 

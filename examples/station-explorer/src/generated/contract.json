@@ -4,6 +4,7 @@
   "endpoints": {},
   "objects": {
     "snow-stations": {
+      "id": "00000000-0000-4000-8000-000000000002",
       "properties": {
         "elevationFt": { "nullable": false, "type": "float64" },
         "name": { "nullable": false, "type": "string" },

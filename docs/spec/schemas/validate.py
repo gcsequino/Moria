@@ -21,13 +21,17 @@ def load(path):
 
 resources_schema = load("schemas/resources.schema.json")
 manifest_schema = load("schemas/manifest.schema.json")
+values_schema = load("schemas/values.schema.json")
 registry = Registry().with_resources(
-    [(s["$id"], Resource.from_contents(s)) for s in (resources_schema, manifest_schema)]
+    [
+        (s["$id"], Resource.from_contents(s))
+        for s in (resources_schema, manifest_schema, values_schema)
+    ]
 )
 assert {"uri", "uuid"} <= set(
     FormatChecker.checkers
 ), "Install jsonschema[format] so URI/UUID checks cannot silently be skipped."
-for schema in (resources_schema, manifest_schema):
+for schema in (resources_schema, manifest_schema, values_schema):
     Draft202012Validator.check_schema(schema)
 rv = Draft202012Validator(resources_schema, registry=registry, format_checker=FormatChecker())
 mv = Draft202012Validator(manifest_schema, registry=registry, format_checker=FormatChecker())
@@ -317,18 +321,10 @@ semantic_negative = [
         ),
     ),
     (
-        "bad array nullability",
+        "missing dataset primary key",
         mutation(
             "Dataset",
-            lambda r: r["spec"]["columns"].update(
-                {
-                    "tags": {
-                        "type": "array",
-                        "nullable": True,
-                        "items": {"type": "string", "nullable": True},
-                    }
-                }
-            ),
+            lambda r: r["spec"].update({"primaryKey": ["missing"]}),
         ),
     ),
     (
@@ -382,7 +378,7 @@ report = f"""# Specification validation report
 
 Executed locally for the review package. This is not a platform runtime test report.
 
-- JSON Schema Draft 2020-12 meta-validation: 2 schemas passed.
+- JSON Schema Draft 2020-12 meta-validation: 3 schemas passed.
 - Resource examples: {len(manifest['resources'])} passed; all {len(kinds)} declared kinds covered.
 - Negative structural cases: {len(negative)} rejected as expected.
 - Static cross-resource checks: example manifest passed.

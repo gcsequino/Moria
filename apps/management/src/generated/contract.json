@@ -111,6 +111,7 @@
   },
   "objects": {
     "assets": {
+      "id": "00000000-0000-4000-8000-000000000001",
       "properties": {
         "id": { "nullable": false, "type": "string" },
         "notes": { "nullable": false, "type": "string" },
@@ -147,7 +148,8 @@
       "nullable": false,
       "properties": {
         "revision": { "nullable": false, "type": "string" },
-        "rows": { "nullable": false, "type": "float64" }
+        "rows": { "nullable": false, "type": "float64" },
+        "stage": { "nullable": false, "type": "string" }
       },
       "type": "object"
     },

@@ -4,6 +4,7 @@
   "types": {},
   "objects": {
     "snow-stations": {
+      "id": "00000000-0000-4000-8000-000000000002",
       "type": "Station",
       "properties": {
         "uid": { "type": "uid", "nullable": false },

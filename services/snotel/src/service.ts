@@ -11,6 +11,7 @@ import { iceberg } from '../../../workers/iceberg/stage.js';
 import { icebergRows } from '../../../workers/iceberg/stream.js';
 import type { JobContext } from '../../execution/src/jobs.js';
 import { fingerprint } from '../../../packages/compiler/src/index.js';
+import { icebergSchema } from '../../../packages/contracts/iceberg.js';
 import { downloadSnow, type JsonLoader } from './connector.js';
 
 export const snowEnvironment = 'snotel';
@@ -24,7 +25,11 @@ const ingest = {
   principal: 'snow-connector',
   application: 'snow-ingestion',
 };
-import { stationSchema, observationSchema } from '../../../packages/contracts/bundled-objects.js';
+import {
+  stationSchema,
+  observationSchema,
+  builtinObjectTypes,
+} from '../../../packages/contracts/bundled-objects.js';
 export { stationSchema, observationSchema };
 const str: ValueType = { type: 'string', nullable: false },
   uid: ValueType = { type: 'uid', nullable: false };
@@ -32,18 +37,6 @@ const rawSchema: ObjectSchema = {
   primaryKey: 'uid',
   properties: { uid, url: str, sha256: str, body: str, retrievedAt: str },
 };
-function icebergSchema(schema: ObjectSchema) {
-  return {
-    type: 'struct',
-    'schema-id': 0,
-    fields: Object.entries(schema.properties).map(([name, type], i) => ({
-      id: i + 1,
-      name,
-      required: !type.nullable,
-      type: type.type === 'float64' ? 'double' : 'string',
-    })),
-  };
-}
 export async function createSnowService(catalog: Catalog, warehouse: string) {
   await catalog.migrate();
   await catalog.ensureEnvironment(snowEnvironment);
@@ -89,6 +82,10 @@ export async function createSnowService(catalog: Catalog, warehouse: string) {
   }
   const service = (resource: string, schema: ObjectSchema) =>
     new ObjectService(store, authority, {
+      objectTypeId:
+        resource === 'snow-stations'
+          ? builtinObjectTypes.stations
+          : builtinObjectTypes.observations,
       schema,
       policies: {
         resource,
@@ -244,7 +241,7 @@ export async function createSnowService(catalog: Catalog, warehouse: string) {
           const pin = await iceberg({
             operation: 'stage',
             warehouse,
-            schema: icebergSchema(set.schema),
+            schema: icebergSchema(set.schema.properties),
             rows,
             ...(head.metadataLocation ? { baseMetadataLocation: head.metadataLocation } : {}),
           });

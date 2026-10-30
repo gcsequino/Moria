@@ -12,6 +12,10 @@ import type { PoolClient } from 'pg';
 import { ObjectService } from '../../../services/ontology/src/service.js';
 import type { SnowService } from '../../../services/snotel/src/service.js';
 import { createApi, body } from '../../api/src/server.js';
+import { filesystemHandler } from '../../api/src/filesystem.js';
+import type { FilesystemRuntime } from '../../../services/filesystem/src/local.js';
+import type { Functions } from '../../../services/functions/src/service.js';
+import { functionsHandler } from '../../api/src/functions.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 import {
   editAction,
@@ -30,7 +34,11 @@ export function createLocalServer(
   auth?: AppAuth,
   publicOrigin?: string,
   jobs?: Jobs,
+  filesystem?: FilesystemRuntime,
+  functions?: Functions,
 ) {
+  const handleFilesystem = filesystem ? filesystemHandler(filesystem) : undefined;
+  const handleFunctions = functions ? functionsHandler(functions) : undefined;
   if (
     publicOrigin &&
     (!auth || auth.allowRecovery || auth.sessions.binding.origin !== publicOrigin)
@@ -170,6 +178,34 @@ export function createLocalServer(
         }
         return false;
       };
+      if (
+        (handleFilesystem && path.startsWith('/management/v1/fs')) ||
+        (handleFunctions && /^\/api\/v1\/(functions|invocations)(?:\/|$)/.test(path))
+      ) {
+        const browser = Boolean(request.headers.origin || request.headers['sec-fetch-site']);
+        let session: import('../../../services/ontology/src/service.js').SessionContext;
+        if (browser) {
+          if (!auth) throw new MoriaError('UNAUTHENTICATED', 'Browser authentication is required');
+          if (request.method !== 'GET' && request.headers.origin !== origin)
+            throw new MoriaError('FORBIDDEN', 'An exact same-origin request is required');
+          session = await auth.sessions.authenticate(`Bearer ${auth.cookie(request)}`);
+        } else if (cli) {
+          const profile = (request.headers['x-moria-profile'] ?? 'operator') as Profile;
+          if (!profiles.includes(profile))
+            throw new MoriaError('INPUT_INVALID', 'Unknown local profile');
+          session = await workspace.sessions.authenticate(
+            `Bearer ${await workspace.token(profile)}`,
+          );
+        } else if (request.headers.authorization) {
+          session = await workspace.sessions.authenticate(request.headers.authorization);
+        } else if (auth) {
+          if (request.method !== 'GET' && request.headers.origin !== origin)
+            throw new MoriaError('FORBIDDEN', 'An exact same-origin request is required');
+          session = await auth.sessions.authenticate(`Bearer ${auth.cookie(request)}`);
+        } else throw new MoriaError('UNAUTHENTICATED', 'Authentication is required');
+        if (handleFilesystem && (await handleFilesystem(request, response, { session }))) return;
+        if (handleFunctions && (await handleFunctions(request, response, { session }))) return;
+      }
       if (auth && !cli) {
         if (request.method !== 'GET' && request.headers.origin !== origin)
           throw new MoriaError('FORBIDDEN', 'An exact same-origin request is required.');

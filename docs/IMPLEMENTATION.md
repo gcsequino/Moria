@@ -1,5 +1,451 @@
 # Implementation checkpoint
 
+## Remaining component work
+
+- Production function infrastructure: implement the planned Firecracker adapter
+  and validate fleet ownership, cleanup routing and capacity separately. Docker
+  remains the backend for the current function release. Additional function
+  languages are separate from this release.
+- Independent latest-revision Linux CI and human review remain required before
+  merge. The approved test-daemon wiring is now configured below.
+
+Functions and universal value model v1 are implemented and locally accepted.
+Current implementation and verification are recorded below. Historical
+entries retain the evidence and limitations that applied when they were written.
+
+## October 29 ontology object values in functions
+
+Status: implementation and local acceptance complete.
+
+Implemented the shared `ontologyObject` envelope type, keyed by immutable type
+UUID with UID-only identity transport. TypeScript and Python codecs, shared
+conformance cases and compatibility checks cover nullable/nested/list values.
+Generated ontology names (`Customer`, `Order`, etc.) denote handles; fetched
+records use `CustomerProperties`/`OrderProperties`. There is no public `Ref` suffix.
+SDK object factories construct handles without reading data, `get` explicitly
+loads projected properties, and transport strips the handle to its identity.
+Named endpoint results bind through the matching generated SDK. Built-in
+ontology IDs are reserved constants shared by server and generated contracts;
+custom bindings use their registered ObjectType UUIDs.
+
+Function acceptance checks reference type, existence and current row access,
+then retains markings, read grants and identity evidence in the acceptance
+transaction. Output references receive equivalent checks before success or a
+proposal commit. The runner hydrates typed handles through the exported OSDK
+factory, awaits the result and encodes identities before JSON. UUID object routes
+resolve only the matching trusted type binding. Named serving routes remain
+available; their authority and property-policy checks are unchanged. Empty
+projections permit identity checks without accidentally reading hidden fields.
+
+Focused tests cover revoked access, hidden rows/properties, malformed and
+cross-environment identities, unknown/mismatched types, duplicate lists, output
+authorization, type rebinding and deletion. The real Docker suite hydrates
+generated ontology types, reads their authorized properties and awaits promised
+object/list results, retaining only identities in invocation input/output. The
+complete Linux `pnpm check` passed: 522 runtime tests and all 16 Python tests,
+zero failures/cancellations/skips, formatting, SDK drift, TypeScript including
+nominal object-type negative cases, specification checks, both app builds and
+starter verification. Full output is retained in
+`.review-tools/function-object-values-check.log`. No test sandbox or registry
+remains; the pre-existing baseline containers are unchanged. Hosted latest-revision
+CI, publication and production-scale operation were not performed.
+
+A regression also exposed transient inspection contention during nested action
+proposals; bounded synchronous waits now retry that read-side contention within
+their existing deadline, without repeating function code or mutations. The
+contention regression and actual nested action commits/rollback passed in the
+complete gate. No dependency, migration, deployment or external publication was
+added. Regenerate custom SDKs to supply type UUIDs and use the generated property
+record names where application code needs fetched snapshots.
+
+## October 29 approved CI Docker wiring
+
+The Linux quality job preloads the exact Node and registry digests used by the
+function integration fixture, then mounts the ephemeral runner's Docker socket
+only into the non-root offline quality container. A supplemental group matches
+the socket's actual host GID. Bootstrap retains no daemon access; user function
+sandboxes retain their existing isolation and receive no host socket. Checkout
+credentials remain unpersisted and workflow permissions remain read-only.
+
+Local verification built a fresh image tag using the actual
+`deploy/test/Dockerfile` and final workflow. Parsed workflow commands passed Bash syntax checks, and
+the image pins matched the integration fixture. The actual workflow commands
+then passed repeatable bootstrap twice, prerequisite image pulls, and the
+complete offline quality hook: 511 runtime tests and 16 Python tests, zero
+failures/cancellations/skips, formatting, SDK drift, TypeScript, schema validation,
+both app builds and starter verification. Runtime inspection confirmed user
+`node`, network `none`, no privileged mode, the socket's numeric supplemental
+group and exactly one bind mount for the test socket. Real function isolation,
+resource, cancellation and crash tests passed through that supervisor.
+
+Build and gate logs are retained in `.review-tools/ci-docker-wiring-build.log`
+and `.review-tools/ci-docker-wiring-check.log`. The temporary CI image and all
+test containers were removed; only the pre-existing baseline containers remain.
+A hosted GitHub Actions run is not claimed; changes remain local and uncommitted.
+
+## October 29 function audit and corrections
+
+Audited the declared single-host, four-active-invocation release: API and runner
+inputs, identity/marking flow, action and filesystem commits, durable call keys,
+leases/deadlines, container accounting and cleanup, CLI and SDK consumers.
+Four concrete findings were corrected before starting the value-system milestone:
+
+1. Missing-object outcomes were not part of read evidence. Caught failures now
+   retain their value hash, revision, resource and markings. If the object later
+   appears, the earlier result is withheld. Both HTTP and legacy read transports
+   retain that evidence before returning the error.
+2. Progress polling repeated the function's queries. When data and security
+   revisions are unchanged, polling checks current authority and stored evidence
+   in one transaction without rerunning user queries. Changed authority still
+   requires strict content checks. Verification checks its abort/deadline between
+   reads, and API-only inspection expires deadlines even before a lease expires.
+3. Validation errors left undispatched calls marked with an unknown outcome.
+   Deterministic failures now retain a failed response and replay it. Calls that
+   reached a mutating service retain the conservative unknown-outcome rule when
+   their commit receipt is uncertain.
+4. Jobs finishing before the CPU timer could avoid accounting. The runner now
+   waits for a completion acknowledgement; the supervisor measures CPU while the
+   container is live before acknowledging success. A real one-millisecond-budget
+   regression rejects a short job. Completed runners also exit promptly on stop.
+
+The full Linux gate passed after these fixes, with real Docker execution,
+PostgreSQL, Python, SDK, application and starter checks and no skipped tests.
+All 498 runtime tests passed.
+Evidence is retained in `.review-tools/functions-audit-check.log`. Firecracker,
+fleet routing, production capacity and unrelated components were not audited.
+
+## October 29 universal value system completion
+
+Status: implementation and local acceptance complete for value model v1,
+TypeScript/Python codecs and the existing execution engines.
+
+Implemented one versioned descriptor/wire contract, strict normalization and
+schema validation, TypeScript and Python codecs, shared conformance vectors,
+explicit compatibility rules, and compiler/storage/API/SDK/function integration.
+The scalar family remains string, boolean, int64, float64, decimal, date,
+timestamp and UID. Stored columns/action parameters retain non-null scalar-array
+elements. API/function envelopes additionally support nested records/lists,
+nullable containers/elements and optional nested fields. Scoped named aliases
+resolve through app-contract registries; Function declarations use inline types.
+See [C03](spec/core-contracts.md#c03--values-rows-and-schema-evolution) for exact
+wire/native bindings, normalization, limits and compatibility.
+
+`packages/contracts/value-types.ts` supplies shared discriminated TypeScript
+descriptors, `values.ts` supplies browser-safe normalization/canonical codecs,
+and `workers/value_codec.py` supplies exact Python native bindings. Shared vectors
+prove both languages emit equal normalized values, canonical bytes and SHA-256
+fingerprints, including binary64 extremes, precision-38 decimals, microseconds,
+Unicode and invalid descriptors. Typed fingerprints include the normalized
+resolved schema and value-model version. Generic JSON transport rejects values
+that serialization would otherwise silently change, and SDK response parsing
+rejects malformed UTF-8. Generated clients carry the same codecs and decode
+projected rows, action responses and named endpoint envelopes. Stricter decoding
+also corrected existing Snow status and import-result contract omissions.
+
+The compiler resolves both value profiles through one validator. Stored schema
+activation permits nullable additions and rejects destructive/type/primary-key
+changes with `MIGRATION_REQUIRED`. One shared physical mapper creates initial
+Iceberg schemas; UUIDs are physical UUIDs, integers/decimals retain exact values,
+and Python handles all scalar arrays, including UUID extension arrays and empty
+tables. Engine boundary conversion explicitly rejects unsafe JSON integers and
+lossy float32 narrowing. Read and stream frames carry value version 1.
+
+Functions pin value version 1 and original input/output schemas. Request replay
+hashes normalized typed input against the original declaration across releases.
+Nested records, optional fields and empty signatures execute through real pipes.
+The prepared runner packages the shared codec and validates before JSON
+serialization; the supervisor independently validates before publication. Tests
+reject native NaN/undefined results even when the declared field is nullable.
+The documented multi-stage example image also built offline and returned 42
+under an unprivileged, network-disabled, read-only sandbox; its temporary image
+and container were removed.
+
+Final Linux `pnpm check` passed: 511 runtime tests, zero failures/cancellations/
+skips, plus formatting, generated SDK drift, TypeScript (including negative
+descriptor cases), Python formatting, three declaration schemas, 36 example
+resources, 13 structural and 12 semantic rejection cases, all 16 Python unit
+tests, both bundled app builds and the standalone starter's type/build/HTTP
+verification. This includes real PostgreSQL, Iceberg, local/S3 storage, function
+containers, authorization, transactional publication, cancellation and crash
+regressions. Full output is retained in `.review-tools/universal-types-check.log`.
+Only the pre-existing baseline containers remain; no test function sandbox or
+registry is left behind. No required local test infrastructure was unavailable.
+
+Enum/union expansion, stored nested structures and additional execution engines
+remain separate from this release. Firecracker, multi-host topology, production
+capacity/security certification and independent CI were not verified. The CI
+test-daemon privilege decision remains pending. No migration, live instance
+change, deployment, commit or external publication occurred. The fresh schema-3
+baseline changed; recreate disposable development databases.
+
+## October 29 function completion verification
+
+Status: implementation and local acceptance complete for the agreed
+TypeScript/Docker release. Independent CI integration/review remains pending.
+
+The TypeScript/Docker release now includes generated ontology clients through
+`context.osdk`, separate supported platform routes through `context.platform.fetch`,
+read-only, staged edit-proposal and immediate read-write effects, durable logical
+call receipts, and bounded nested invocations. No filesystem or function client
+was added to the generated OSDK. Existing value types remain the release contract;
+the shared multilingual type-system milestone above is separate.
+
+The trusted worker binds the same object/actions as the normal workspace API.
+Its platform bridge supports filesystem metadata/source/content operations and
+function invocation/inspection/events/cancellation. Other platform services need
+their own trusted integration. No image receives host credentials, daemon access
+or an external network. Read permissions and classifications survive caught
+data-dependent API failures. Mutation destination checks include all consumed
+markings before commit. Own writes advance read anchors; filesystem versions are
+captured within the mutation transaction so concurrent changes cannot replace
+those anchors. Results and logs recheck current grants, newly applied binding
+markings and input evidence. Child acceptance checks its resolved effect inside
+the acceptance transaction; brokered cancellation checks the parent fence,
+effect and destination markings inside the cancellation transaction.
+
+Staged actions commit as one transaction after typed output validation, with
+complete rollback if any later condition fails. Declared function-backed actions
+compute typed target property maps outside the action transaction, then recheck
+point reads, current permissions, markings, conditions and post-state. Proposals
+reject unconstrained predicate dependencies. Immediate writes commit per call;
+later failure or cancellation does not imply rollback. Call traces retain
+unresolved outcomes without automatically repeating user code.
+
+The approved local Docker test socket enabled real digest-pinned OCI build/push
+and execution. The container suite passed actual generated SDK/platform calls,
+nested containers, CPU/memory/PID exhaustion, network/root/socket/credential
+denials, protocol faults, cancellation, deadlines and SIGKILL of a supervisor.
+A replacement fenced the lost lease and removed the surviving sandbox without
+rerunning code. Authenticated CLI tests invoke, inspect, read events and cancel
+real containers. A disposable browser fixture rendered the actual
+`FunctionInvocations` React component against the real service and Docker worker:
+input 41 returned 42, retry retained the invocation ID, events stayed ordered,
+and a live invocation cancelled with subsequent sandbox removal. The fixture,
+registry, image, database and browser tab were cleaned up.
+
+The final Linux `pnpm check` gate passed all 497 runtime tests with no failures,
+cancellations or skips, plus formatting, SDK drift, TypeScript, schema checks,
+all 14 Python tests, both application builds and standalone starter verification.
+This includes the final current-binding marking rechecks for captured error-read
+grants, retained failed filesystem-read evidence, and transactional child-effect/
+cancellation checks. All 31 focused function tests also passed. Full-run evidence
+is retained locally in `.review-tools/functions-complete-check.log`. CI daemon
+access remains a separate approval decision; no CI privilege change has been applied.
+
+This is the existing single-host Docker topology. Firecracker, multi-host cleanup
+routing, other languages, delegation, record garbage collection and production
+capacity/security certification remain separate. The fresh schema version 3
+baseline changed; recreate disposable development databases. No live migration,
+deployment, commit or external publication occurred.
+
+## October 28 function client boundary
+
+Function invocation, inspection, events and cancellation belong to the platform
+API. The client helper moved from `packages/osdk` to `packages/platform`; the CLI,
+management console and authenticated service tests use it there. Generated OSDKs
+no longer expose `client.functions` or ship function client/contract artifacts.
+Regeneration removes those obsolete files, and SDK boundary tests cover their
+absence and cleanup. Existing endpoint authorization, effects, idempotency and
+runtime behavior are preserved. Linux `pnpm check` passed formatting, SDK drift,
+TypeScript and 463 of 464 runtime tests, with no cancellations/skips. All function
+service/runner and SDK boundary tests passed. The sole failure was the known
+unavailable Docker socket prerequisite; the previously intermittent SQL lease
+case passed in this run. Both application builds, standalone starter checks,
+Python formatting/schema checks and all 14 Python unit tests passed separately.
+Full-run evidence is retained in `.review-tools/functions-client-boundary-check.log`.
+Real Docker isolation and the complete gate remain unverified pending the earlier
+test-supervisor access decision. General platform API access from function
+sandboxes remains proposed, not implemented.
+
+## October 28 filesystem client boundary
+
+Filesystem operations belong to the platform API, independently of the ontology
+SDK. The HTTP client helper moved from `packages/osdk` to `packages/platform`,
+sharing the existing browser-safe transport with ontology clients. The CLI and
+Files console use that platform helper directly. Generated OSDKs no longer expose
+`client.filesystem` or include filesystem/storage client artifacts. Regeneration
+removes the formerly generated artifacts and drift checks reject their presence.
+Function response marking types no longer pull in the filesystem contract bundle.
+Existing routes, permissions and runtime behavior are preserved. SDK boundary
+assertions and real filesystem HTTP/client coverage passed. The Linux full gate
+passed formatting, SDK drift and TypeScript, then reported 464 runtime tests:
+462 passed, two failed, no cancellations/skips. Failures were the existing missing
+Docker socket prerequisite and SQL lease supervision case previously observed in
+the full run; neither was suppressed or weakened. Evidence is retained locally in
+`.review-tools/filesystem-client-boundary-check.log`. Both bundled builds, the
+standalone starter's typecheck/build/publication/HTTP checks, Python formatting,
+schema validation and all 14 Python unit tests passed separately. Full-gate and
+container-isolation verification remain pending. General platform API access
+inside function sandboxes is still proposed, not implemented.
+
+## October 28 function backend boundary
+
+Docker remains the implemented function backend. Firecracker is the planned
+production backend; the staged artifact, guest transport, isolation and acceptance
+work is recorded in [FUNCTIONS.md](FUNCTIONS.md#production-backend-plan).
+The shared `FunctionWorker` interface and limit validation now live in `worker.ts`.
+The service has no Docker import or implicit backend default. The explicit worker
+launcher injects Docker; API processes still have no backend. Tests and fixtures
+use the shared interface, including a missing-backend startup assertion.
+No backend selector, Firecracker stub, dependency, schema or privilege change was
+added.
+
+The Linux `pnpm check` attempt passed formatting, SDK drift and TypeScript.
+All 13 function service/runner tests passed, including injected execution,
+competing workers and missing-backend startup. The complete runtime run reported
+464 tests: 462 passed, two failed, no cancellations/skips. One failure is the
+known missing Docker socket prerequisite; the other was the existing SQL lease
+supervision test reporting `LEASE_LOST` under the full run. A separate rerun of
+the entire SQL integration file passed all 48 tests, including that case. No lease
+code or test timing was changed; the intermittent full-suite failure remains
+unresolved. Full-run evidence is in `.review-tools/functions-backend-check.log`.
+The gate stopped before Python/build/starter checks. Firecracker execution and
+real Docker isolation remain unverified; the previous test-supervisor access
+decision is still pending.
+
+## October 28 function execution implementation
+
+First-release scope is TypeScript OCI invocation: activated repository exports,
+durable private invocation records, immutable code/input binding, typed values,
+current authorization, supervised worker limits, cancellation, result/event
+inspection, API/SDK/CLI and Files-console controls. Function-backed action commits,
+delegation, other languages and production capacity remain separate milestones.
+
+Container control is confined to the explicit `function-worker` process. API
+instances have no container backend; they persist acceptance/cancellation and read
+authorized records. Worker leases/fences prevent stale result publication, and
+maintenance handles expired attempts and terminal container cleanup without
+automatically rerunning user code. See [FUNCTIONS.md](FUNCTIONS.md).
+
+The focused Node 24/Linux verification passed 13 new service/runner tests with no
+failures or skips, including real PostgreSQL, authenticated HTTP/SDK/CLI, concurrent
+worker claims, API-only process boundaries, current output classifications, input
+revocation and stale/cancelled attempt publication. Service tests use a controlled
+computation adapter; the runner test executes known TypeScript in a child process.
+Explicit hosted-app function bindings preserve the verified app identity and do
+not expose function endpoints on unbound apps. Five existing execution-process,
+scheduler-process and SDK tests also passed.
+TypeScript, formatting, SDK drift and both bundled application builds passed.
+Real OCI/container cases are implemented but could not run. The final Linux
+`pnpm check` attempt passed formatting, SDK drift and TypeScript, then reported
+464 runtime tests: 463 passed, one failed, zero cancellations/skips. The sole
+failure is the container suite's unavailable `/var/run/docker.sock`; the harness
+has the pinned Docker CLI but no daemon access. The dedicated test-supervisor
+access decision remains pending before container verification and the full gate
+can pass. Output is retained locally in `.review-tools/functions-check-blocked.log`.
+
+A deterministic real-PostgreSQL regression reproduced a teardown race: Pool.end
+resolved before idle client sockets closed, allowing owned-cluster shutdown to
+terminate them. The shared fixture now drains those sockets before stopping its
+database. The regression and the final full run passed this check without hiding
+errors or relaxing assertions.
+
+No isolation, full-gate or completion claim is made yet. The fresh schema version 3
+baseline changed; recreate disposable development databases. No live deployment,
+migration, Git commit or external publication occurred.
+
+## October 28 filesystem complete
+
+Status: complete for the agreed first release, accepted on October 28. Namespace,
+human and agent homes, group projects, inherited authorization and markings,
+versioned local/S3 content, ontology and repository roots, checkout/CI publication,
+resource placements, activation, HTTP, SDK, CLI and console workflows are delivered.
+Adversarial fixes and the passing 449-test Linux gate are recorded below.
+
+Production capacity validation remains separate from this completed milestone.
+The release uses the existing execution runtimes and a fresh version 3 database;
+the operating bounds and excluded features remain documented in
+[FILESYSTEM.md](FILESYSTEM.md).
+
+## October 28 filesystem adversarial exercises
+
+Exercised real PostgreSQL, local storage, MinIO, HTTP, generated clients and CLI
+against permission boundaries, publication, replay, upload races, disconnects and
+retained history. Three deterministic seeds drive 420 mixed metadata/content
+operations against an independent journal, then check all retained bytes after
+orphan collection. No live instances or production credentials were used.
+
+Reproduced and fixed movable agent configuration inheriting memory write grants,
+activation bypassing placement publish/delete denies, and replacement/omission
+losing future restrictions on old source. Verified upload chunks are copied before
+an authorization await so a producer cannot mutate bytes after hashing. Concurrent
+different uploads commit one head; identical retries share one receipt. Interrupted
+HTTP uploads leave no visible file, parent change or private staging residue.
+
+Resource bindings and dependency edges now qualify names by project. Independent
+projects can activate identical namespaces; named lookups require projectId (CLI
+--project), while UUID lookup remains unambiguous. Read endpoints conceal inaccessible
+identities. Cross-project pinned imports preserve owning-project restrictions and
+ambiguous imported names cannot activate. Transform outputs require active writable
+placements. Retirement checks transitive pins and ignores retired consumers.
+
+The fresh version 3 baseline changed; recreate disposable development databases.
+No migration, deployment, new execution engine or production capacity test is in scope.
+Final verification: the complete Linux `pnpm check` passed with 449 runtime tests,
+zero failures/cancellations/skips, all 14 Python unit tests, formatting, SDK drift,
+TypeScript, schema checks, both application builds and starter checks. The final
+run includes matching 404 status, code and message for hidden versus unknown
+resources, roles, policies, source checkouts and releases. Node 24.19.0, pnpm 11.25.0
+and Python 3.11 ran in a non-root disposable Docker container without external
+network access. The earlier complete run also passed all 449 runtime tests.
+
+## October 28 platform filesystem integration
+
+The filesystem exposes protected HTTP, generated SDK, CLI and console workflows,
+with instance identities, private human and managed agent homes, group projects,
+ontology and code repository directories, inherited grants and markings, stable
+resource placements, copy provenance, immutable byte and metadata history,
+coherent checkout, CI export publication and explicit plan/apply activation.
+Local and S3 backends share verified streaming and reference-aware collection.
+Persisted backend bindings prevent accidental physical-store relocation. Schema
+version 3 requires a fresh development database; no migration or deployment occurred.
+
+Bound object reads/actions, indexing and dataset metadata access recheck filesystem
+policy for resource references and UUIDs. Raw persistence remains trusted internal
+composition. Source activation publishes definitions with runtimeReady=false; it
+does not provision a generic executor, ingest data or deploy application assets.
+Ordinary policy edits cannot remove markings. Declassification, FUSE, cross-project
+transfer, hosted Git and history purging are outside this release. See
+[FILESYSTEM.md](FILESYSTEM.md) for contracts, commands, CI, bounds and operations.
+
+Final verification: the complete Linux `pnpm check` gate passed on October 28 with
+430 runtime tests, zero failures/cancellations/skips, Node 24.19.0, pnpm 11.25.0 and
+Python 3.11. The non-root container ran with networking disabled. Formatting, SDK
+drift, TypeScript, real PostgreSQL/Iceberg/MinIO, crash/concurrency/authorization,
+Python checks, both application builds and the starter check passed. Package-policy
+metadata was refreshed separately before the offline run, without changing the lockfile
+or disabling verification. Console QA used an isolated synthetic instance: browsing,
+text editing to revision 2, reopening the file and retained revisions 1 and 2 passed.
+An earlier run reported one PostgreSQL teardown termination after its assertions
+passed; it did not recur in the final full gate. No fixture or criterion was relaxed.
+No production deployment, new engine, paid model call or capacity benchmark was run.
+
+
+## October 28 filesystem metadata foundation
+
+The filesystem starts with a fresh version 2 schema; version 1 development databases
+must be recreated. No deployed instances or migration/backfill path are in scope.
+Added internal filesystem contracts and PostgreSQL storage for stable directory,
+file and resource entries, immutable entry versions and actor-scoped replay receipts.
+Ordered mutation batches provide expected-revision checks, atomic rollback,
+identity-preserving moves, cycle/path bounds, tombstones and project/environment
+scope preservation. Catalog transactions now accept a separate admission key so
+the filesystem can serialize metadata writes without inventing an environment.
+
+The store is deliberately unexposed. Policy/marking inheritance, principal homes,
+ontology/repository registration, content transfer and checkout/deployment remain
+separate implementation slices. Content descriptors are metadata, not proof that
+referenced bytes exist or are authorized. See [the filesystem guide](FILESYSTEM.md).
+
+Verification: the complete Linux `pnpm check` gate passed on October 28 with Node
+24.19.0, pnpm 11.25.0 and Python 3.11 in an isolated non-root container with external
+networking disabled during checks. All 382 runtime tests passed with no failures or
+skips, including the real PostgreSQL filesystem scenarios, existing Iceberg/S3 and
+process/authorization coverage. Formatting, SDK drift, TypeScript, Python checks,
+both bundled application builds and the starter hosting check passed. The cached
+test image's missing declared Black dependency was installed in the isolated test
+workspace before the successful run; no acceptance gate was disabled.
+
 For the current review summary, start with [the October 15 morning report](MORNING-REPORT-2026-10-15.md). The sections below preserve chronological checkpoints; later entries supersede earlier status and remaining-work notes.
 
 Current work is an internal prototype, not the completed first slice. Private remote: gcsequino/Moria. User authorized autonomous local development, WSL/Docker and local inference. No shared deployment or paid model use.

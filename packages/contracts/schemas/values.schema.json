@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.example.invalid/moria/types/v1/schema.json",
+  "title": "Moria value model version 1",
+  "$ref": "#/$defs/Type",
+  "$defs": {
+    "Scalar": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": ["string", "boolean", "int64", "float64", "date", "timestamp", "uid"]
+            },
+            "nullable": {
+              "type": "boolean"
+            }
+          },
+          "required": ["type", "nullable"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "decimal"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "precision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 38
+            },
+            "scale": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 38
+            }
+          },
+          "required": ["type", "nullable", "precision", "scale"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Column": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Scalar"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "array"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Scalar"
+                },
+                {
+                  "properties": {
+                    "nullable": {
+                      "const": false
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type", "nullable", "items"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Type": {
+      "oneOf": [
+        { "$ref": "#/$defs/OntologyObject" },
+        {
+          "$ref": "#/$defs/Scalar"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "array"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "items": {
+              "$ref": "#/$defs/Type"
+            }
+          },
+          "required": ["type", "nullable", "items"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "list"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "items": {
+              "$ref": "#/$defs/Type"
+            }
+          },
+          "required": ["type", "items"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "object"
+            },
+            "nullable": {
+              "type": "boolean"
+            },
+            "properties": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,99}$",
+                "not": {
+                  "enum": ["constructor", "prototype", "__proto__"]
+                }
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Type"
+              }
+            },
+            "optional": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": ["type", "properties"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["ref"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "OntologyObject": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "ontologyObject" },
+        "nullable": { "type": "boolean" },
+        "objectType": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+        }
+      },
+      "required": ["type", "nullable", "objectType"],
+      "additionalProperties": false
+    },
+    "Fields": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+        "maxLength": 100,
+        "not": {
+          "enum": ["constructor", "prototype", "__proto__"]
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/Column"
+      },
+      "minProperties": 1
+    },
+    "FunctionFields": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+        "maxLength": 100,
+        "not": {
+          "enum": ["constructor", "prototype", "__proto__"]
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/Type"
+      },
+      "minProperties": 0
+    }
+  }
+}

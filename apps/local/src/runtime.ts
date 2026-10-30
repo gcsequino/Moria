@@ -7,7 +7,13 @@ import { externalDatabase, integer } from '../../../services/database/src/config
 import { DatabaseError, holdSchema, schema } from '../../../services/database/src/schema.js';
 import pg from 'pg';
 import { Catalog } from '../../../services/catalog/src/catalog.js';
-import { createWorkspace, managementOperations } from './workspace.js';
+import {
+  createWorkspace,
+  managementOperations,
+  editAction,
+  resetAction,
+  fieldActions,
+} from './workspace.js';
 import { createLocalServer } from './server.js';
 import {
   localAppHost,
@@ -21,9 +27,22 @@ import { BrowserSessions } from '../../../services/security/src/browser-sessions
 import { loadAuthConfig } from '../../../services/security/src/auth-config.js';
 
 import { publicHosting } from '../../../services/app-host/src/public-hosting.js';
+import { configuredFilesystem } from '../../../services/filesystem/src/local.js';
+import { Functions } from '../../../services/functions/src/service.js';
+import { DockerFunctionWorker } from '../../../services/functions/src/docker.js';
+import { functionFilesystem } from '../../api/src/function-platform.js';
 
-export type ProcessRole = 'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker';
+export type ProcessRole =
+  'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker' | 'function-worker';
 
+export function runProcess(
+  role: Exclude<ProcessRole, 'function-worker'>,
+  executionFactory?: typeof createSnowJobs,
+): Promise<{ close: () => Promise<void>; jobs: Jobs } | undefined>;
+export function runProcess(
+  role: ProcessRole,
+  executionFactory?: typeof createSnowJobs,
+): Promise<{ close: () => Promise<void>; jobs?: Jobs; functions?: Functions } | undefined>;
 export async function runProcess(
   role: ProcessRole,
   executionFactory: typeof createSnowJobs = createSnowJobs,
@@ -49,6 +68,7 @@ export async function runProcess(
   let server: ReturnType<typeof createLocalServer> | undefined;
   let snowServer: ReturnType<typeof createScopedAppServer> | undefined;
   let jobs: Jobs | undefined;
+  let functions: Functions | undefined;
   let stopDatabase: (() => Promise<void>) | undefined;
   let releaseSchema: (() => void) | undefined;
   let closing: Promise<void> | undefined;
@@ -87,6 +107,7 @@ export async function runProcess(
     for (const publicServer of publicServers)
       if (publicServer.listening) await new Promise<void>((r) => publicServer.close(() => r()));
     await jobs?.stop();
+    await functions?.close();
     releaseSchema?.();
     await pool?.end();
     await stopDatabase?.();
@@ -113,6 +134,32 @@ export async function runProcess(
       await schema(pool, 'apply');
     }
     const catalog = new Catalog(pool, 'verify');
+    if (role === 'function-worker') {
+      const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
+      const filesystem = await configuredFilesystem(
+        catalog,
+        resolve(directory, 'filesystem-warehouse'),
+      );
+      functions = new Functions(
+        filesystem,
+        new Map([['assets', workspace.service]]),
+        new DockerFunctionWorker(),
+        {
+          filesystem: functionFilesystem(filesystem),
+          actions: new Map(
+            [editAction, resetAction, ...fieldActions].map((action) => [
+              action.resource,
+              { service: workspace.service, action },
+            ]),
+          ),
+        },
+      );
+      workspace.service.functions = functions;
+      checkStartup();
+      functions.startWorker();
+      console.log('Moria function worker ready.');
+      return { close, functions };
+    }
     const snow = await createSnowService(catalog, resolve(directory, 'snow-warehouse'));
     const execution = await executionFactory(catalog, snow);
     jobs = execution.jobs;
@@ -136,6 +183,12 @@ export async function runProcess(
       await writeFile(snowKeyPath, snowKey, { mode: 0o600, flag: 'wx' });
     }
     const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
+    const filesystem = await configuredFilesystem(
+      catalog,
+      resolve(directory, 'filesystem-warehouse'),
+    );
+    functions = new Functions(filesystem, new Map([['assets', workspace.service]]));
+    workspace.service.functions = functions;
 
     const snowStatus = (
       session?: import('../../../services/ontology/src/service.js').SessionContext,
@@ -178,6 +231,8 @@ export async function runProcess(
       new AppAuth(managementSessions, credentials.accessKey),
       undefined,
       jobs,
+      filesystem,
+      functions,
     );
     snowServer = createScopedAppServer({
       app: 'snotel',
@@ -206,7 +261,17 @@ export async function runProcess(
       );
       const publicAuth = new AppAuth(publicSessions, '', false);
       const publicServer = management
-        ? createLocalServer(workspace, '', appHost, snow, publicAuth, entry.origin, jobs)
+        ? createLocalServer(
+            workspace,
+            '',
+            appHost,
+            snow,
+            publicAuth,
+            entry.origin,
+            jobs,
+            filesystem,
+            functions,
+          )
         : createScopedAppServer({
             app: 'snotel',
             entryPath: '/snow/',

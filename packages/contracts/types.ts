@@ -1,13 +1,16 @@
-export type Scalar = string | number | boolean | null;
-export type Value = Scalar | Scalar[];
-export type ValueType = {
-  type:
-    'string' | 'boolean' | 'int64' | 'float64' | 'decimal' | 'date' | 'timestamp' | 'uid' | 'array';
-  nullable: boolean;
-  precision?: number;
-  scale?: number;
-  items?: ValueType;
-};
+import type { Value } from './value-types.js';
+export type {
+  Scalar,
+  ScalarType,
+  ObjectIdentity,
+  Value,
+  ValueType,
+  JsonValue,
+  TypeSchema,
+  ResolvedType,
+} from './value-types.js';
+export { VALUE_VERSION, ONTOLOGY_OBJECT } from './value-types.js';
+export { MoriaError } from './errors.js';
 export type Expr =
   | { literal: Value }
   | { field: string }
@@ -32,16 +35,6 @@ export interface Diagnostic {
   code: string;
   path: string;
   message: string;
-}
-export class MoriaError extends Error {
-  constructor(
-    public code: string,
-    message: string,
-    public details: unknown = undefined,
-  ) {
-    super(message);
-    this.name = 'MoriaError';
-  }
 }
 export const resourceRef = (r: Resource): string =>
   `${r.metadata.namespace}/${r.kind}/${r.metadata.name}`;

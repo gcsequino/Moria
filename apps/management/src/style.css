@@ -944,3 +944,28 @@ dd {
   border-left: 2px solid #d4ab6d;
   padding-left: 10px;
 }
+
+.filesystem-panel .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+.filesystem-panel input:not([type='file']) {
+  padding: 8px;
+  max-width: 100%;
+  border: 1px solid #ced8d0;
+  border-radius: 6px;
+  font: inherit;
+}
+.filesystem-panel form,
+.filesystem-panel details {
+  margin: 16px 0;
+}
+.filesystem-panel > code {
+  overflow-wrap: anywhere;
+}
+.filesystem-panel summary {
+  cursor: pointer;
+  padding: 8px 0;
+}

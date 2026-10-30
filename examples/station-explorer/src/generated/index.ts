@@ -3,33 +3,40 @@ import {
   createTransport,
   objectClient,
   actionClient,
+  typedRequest,
+  bindObject,
+  type OntologyObject,
   type ClientOptions,
   type RequestOptions,
+  type TypeSchema,
 } from './runtime.js';
 export * from './runtime.js';
 export const contractFingerprint =
-  'sha256:cba6b3dd715ce91cc77d37995fd24efd7100e28974ca2ebe123b95ea932f95cd';
-export type Station = {
+  'sha256:ce674cf291c046b64d5e4fe94d5e4a7c2ca1890807d2101f9306623e64cf8392';
+const valueDefinitions: { [name: string]: TypeSchema } = {};
+export type StationProperties = {
   elevationFt: number;
   name: string;
   state: string;
   triplet: string;
   uid: string;
 };
+export type Station = OntologyObject<'00000000-0000-4000-8000-000000000002', StationProperties>;
 export function createClient(options: ClientOptions = {}) {
   const transport = createTransport(options);
-  return {
-    auth: transport.auth,
-    objects: {
-      'snow-stations': objectClient<Station>(transport, 'snow-stations', [
-        'elevationFt',
-        'name',
-        'state',
-        'triplet',
-        'uid',
-      ]),
-    },
-    actions: {},
-    endpoints: {},
+  const objects = {
+    'snow-stations': objectClient<StationProperties, '00000000-0000-4000-8000-000000000002'>(
+      transport,
+      'snow-stations',
+      {
+        elevationFt: { nullable: false, type: 'float64' },
+        name: { nullable: false, type: 'string' },
+        state: { nullable: false, type: 'string' },
+        triplet: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+      },
+      '00000000-0000-4000-8000-000000000002',
+    ),
   };
+  return { auth: transport.auth, objects, actions: {}, endpoints: {} };
 }

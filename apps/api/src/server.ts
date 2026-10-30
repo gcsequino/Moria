@@ -2,12 +2,16 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import {
   ObjectService,
+  resolveObject,
   type ActionBinding,
   type SessionContext,
 } from '../../../services/ontology/src/service.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
+import { functionsHandler } from './functions.js';
+import type { Functions } from '../../../services/functions/src/service.js';
 
 interface Routes {
+  functions?: Functions;
   objects: Map<string, ObjectService>;
   actions: Map<string, { service: ObjectService; action: ActionBinding }>;
 }
@@ -58,10 +62,12 @@ export function createApi(
   sessions: { authenticate(header: string | undefined): Promise<SessionContext> },
   routes: Routes,
 ) {
+  const handleFunctions = routes.functions ? functionsHandler(routes.functions) : undefined;
   const server = createServer(async (request, response) => {
     const requestId = randomUUID();
     try {
       const session = await sessions.authenticate(request.headers.authorization);
+      if (handleFunctions && (await handleFunctions(request, response, { session }))) return;
       const url = new URL(request.url ?? '/', 'http://localhost');
       let segments: string[];
       try {
@@ -80,7 +86,7 @@ export function createApi(
         segments[3] === 'query'
       ) {
         if (url.search) throw new MoriaError('INPUT_INVALID', 'Unsupported query parameter');
-        const service = routes.objects.get(segments[2]);
+        const service = resolveObject(routes.objects, segments[2]);
         if (!service) throw new MoriaError('NOT_FOUND', 'Resource not found');
         send(response, 200, await service.query(session, await body(request)));
         return;
@@ -90,10 +96,12 @@ export function createApi(
           throw new MoriaError('INPUT_INVALID', 'Unsupported query parameter');
         if (url.searchParams.getAll('properties').length > 1)
           throw new MoriaError('INPUT_INVALID', 'Duplicate properties parameter');
-        const service = routes.objects.get(segments[2]);
+        const service = resolveObject(routes.objects, segments[2]);
         if (!service) throw new MoriaError('NOT_FOUND', 'Resource not found');
         const properties = url.searchParams.has('properties')
-          ? url.searchParams.get('properties')!.split(',')
+          ? url.searchParams.get('properties') === ''
+            ? []
+            : url.searchParams.get('properties')!.split(',')
           : undefined;
         send(response, 200, await service.read(session, segments[3], properties));
         return;
@@ -148,7 +156,11 @@ export function createApi(
                     ? 410
                     : e.code === 'QUERY_TIMEOUT'
                       ? 504
-                      : ['RESOURCE_BUSY', 'CONCURRENT_MODIFICATION'].includes(e.code)
+                      : [
+                            'RESOURCE_BUSY',
+                            'CONCURRENT_MODIFICATION',
+                            'FUNCTION_IN_PROGRESS',
+                          ].includes(e.code)
                         ? 503
                         : [
                               'AUTHORIZATION_CHANGED',
@@ -172,10 +184,17 @@ export function createApi(
             message: e.message,
             requestId,
             correlationId: requestId,
-            retryable: ['RESOURCE_BUSY', 'CONCURRENT_MODIFICATION', 'QUERY_TIMEOUT'].includes(
-              e.code,
-            ),
-            details: {},
+            retryable: [
+              'RESOURCE_BUSY',
+              'CONCURRENT_MODIFICATION',
+              'QUERY_TIMEOUT',
+              'FUNCTION_IN_PROGRESS',
+            ].includes(e.code),
+            details:
+              typeof (e.details as any)?.invocationId === 'string' &&
+              /^[0-9a-f-]{36}$/.test((e.details as any).invocationId)
+                ? { invocationId: (e.details as any).invocationId }
+                : {},
           },
         });
       } else response.destroy();

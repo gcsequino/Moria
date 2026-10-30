@@ -67,7 +67,8 @@ test(
         );
       }
       storage.requireCapability('range');
-      for (const capability of ['delete', 'multipart', 'overwrite', 'catalog-publication']) {
+      storage.requireCapability('delete');
+      for (const capability of ['multipart', 'overwrite', 'catalog-publication']) {
         assert.throws(() => storage.requireCapability(capability), code('UNSUPPORTED_CAPABILITY'));
       }
       await assert.rejects(storage.read(logical), code('NOT_FOUND'));

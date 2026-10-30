@@ -88,6 +88,7 @@ test(
       const storage = await scoped();
       assert.deepEqual(Object.keys(storage).sort(), [
         'read',
+        'remove',
         'requireCapability',
         'version',
         'write',
@@ -244,7 +245,8 @@ test(
         code('INVALID_INPUT'),
       );
       const count = state.checks;
-      assert.throws(() => storage.requireCapability('delete'), code('UNSUPPORTED_CAPABILITY'));
+      storage.requireCapability('delete');
+      await assert.rejects(storage.remove!(logical), code('AUTHORITY_DENIED'));
       assert.equal(state.checks, count);
       assert.deepEqual(await readdir(join(table, 'staging')), []);
       assert.deepEqual(

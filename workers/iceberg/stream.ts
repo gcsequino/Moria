@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
-import { MoriaError } from '../../packages/contracts/types.js';
+import { MoriaError, VALUE_VERSION } from '../../packages/contracts/types.js';
 
 /** Trusted local adapter, not a caller-facing metadata/path authorization API.
  * Pulling stdout applies pipe backpressure while ObjectStore awaits DB batches.
@@ -52,6 +52,7 @@ export async function* icebergRows(
   child.stdin.end(
     JSON.stringify({
       operation: 'stream',
+      valueVersion: VALUE_VERSION,
       metadataLocation: pin.metadataLocation,
       snapshotId: pin.snapshotId,
       batchRows,
@@ -78,7 +79,7 @@ export async function* icebergRows(
         } catch {
           invalid();
         }
-        if (!frame || ended) invalid();
+        if (!frame || frame.valueVersion !== VALUE_VERSION || ended) invalid();
         if (!started) {
           if (
             frame.type !== 'start' ||

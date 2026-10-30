@@ -7,7 +7,7 @@ import {
   type StreamingStorage,
 } from './locations.js';
 
-export type StorageOperation = 'read' | 'create';
+export type StorageOperation = 'read' | 'create' | 'delete';
 
 /** Exact logical object scope selected by the trusted service, never a request grant. */
 export interface StorageAuthorityScope {
@@ -63,7 +63,7 @@ function createStorageVerifier(
     scoped = location(scope.location);
     if (
       !Array.isArray(scope.operations) ||
-      scope.operations.some((operation) => operation !== 'read' && operation !== 'create') ||
+      scope.operations.some((operation) => !['read', 'create', 'delete'].includes(operation)) ||
       typeof authority.checkCurrent !== 'function'
     ) {
       throw new StorageError('INVALID_INPUT');

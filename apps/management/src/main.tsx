@@ -4,6 +4,7 @@ import { parseCSV, sdk, sample, type Asset, type HostedApp, type Page } from './
 import './style.css';
 import { Platform } from './platform.js';
 import { Lineage } from './lineage.js';
+import { Filesystem } from './filesystem.js';
 import { useAppSession } from '../../shared/auth.js';
 
 function App() {
@@ -13,9 +14,9 @@ function App() {
   const administrator = !!principal && authorizedPrincipal === principal;
   const currentPrincipal = useRef(principal);
   currentPrincipal.current = principal;
-  const [view, setView] = useState<'overview' | 'assets' | 'apps' | 'executions' | 'lineage'>(
-    'overview',
-  );
+  const [view, setView] = useState<
+    'overview' | 'assets' | 'apps' | 'executions' | 'lineage' | 'files'
+  >('overview');
   const [busy, setBusy] = useState(false),
     gate = useRef(false);
   const [notice, setNotice] = useState('Connecting to your workspace…'),
@@ -134,7 +135,8 @@ function App() {
           <div className="eyebrow">MORIA / INSTANCE MANAGEMENT</div>
           <h1>Welcome to your workspace.</h1>
           <p>
-            Sign in with an explicitly authorized administrator account to manage this instance.
+            Sign in to open your files. Managing the instance requires an explicit administrator
+            grant.
           </p>
           {auth.error && (
             <p role="alert" className="error">
@@ -176,13 +178,14 @@ function App() {
               ['apps', 'Applications'],
               ['executions', 'Executions'],
               ['lineage', 'Lineage'],
+              ['files', 'Files'],
             ] as const
           ).map(([key, label]) => (
             <button
               key={key}
               className={`nav ${view === key ? 'active' : ''}`}
               aria-current={view === key ? 'page' : undefined}
-              disabled={busy || !administrator}
+              disabled={busy || (!administrator && key !== 'files')}
               onClick={() =>
                 void run(async () => {
                   setView(key);
@@ -214,6 +217,7 @@ function App() {
                   apps: 'A home for your applications.',
                   executions: 'Keep your data moving.',
                   lineage: 'Trace your data and workflows.',
+                  files: 'Your platform, organized.',
                 }[view]
               }
             </h1>
@@ -228,6 +232,8 @@ function App() {
                     'Schedule refreshes, follow progress and inspect the data behind each run.',
                   lineage:
                     'Explore recorded relationships between sources, datasets and executions.',
+                  files:
+                    'Manage source, configuration and private workspaces with inherited access.',
                 }[view]
               }
             </p>
@@ -249,12 +255,14 @@ function App() {
         <div id="notice" className={error ? 'error' : ''} role="status" aria-live="polite">
           {notice}
         </div>
-        {!administrator ? (
+        {view === 'files' ? (
+          <Filesystem key={principal} />
+        ) : !administrator ? (
           <section className="panel apps-panel">
             <h2>Administrator access required</h2>
             <p>
-              This management console currently requires an explicit instance administrator grant.
-              Signing in does not grant access to other applications or their data.
+              This view requires an explicit instance administrator grant. Open Files to browse your
+              authorized workspace. Signing in does not grant access to other data.
             </p>
           </section>
         ) : view === 'lineage' ? (

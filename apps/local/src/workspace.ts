@@ -14,11 +14,14 @@ import { MoriaError, type Expr, type ValueType } from '../../../packages/contrac
 import { validateValue } from '../../../packages/contracts/values.js';
 import { authorize } from '../../../packages/authorization/src/access.js';
 import { iceberg } from '../../../workers/iceberg/stage.js';
+import { icebergSchema } from '../../../packages/contracts/iceberg.js';
+import { filesystemOperations } from '../../../packages/contracts/filesystem.js';
 
 import {
   assetFields,
   assetSchema,
   assetActionInputs,
+  builtinObjectTypes,
 } from '../../../packages/contracts/bundled-objects.js';
 export const fields = assetFields;
 export const profiles = ['operator', 'west-editor', 'east-reader'] as const;
@@ -62,6 +65,8 @@ export const fieldActions: ActionBinding[] = ['title', 'status', 'notes'].map((p
 }));
 export const managementOperations = [
   'instance:manage',
+  'functions:invoke',
+  ...filesystemOperations.map((operation) => `filesystem:${operation}`),
   ...fieldActions.map((action) => `${action.resource}:invoke`),
   'assets:read',
   'assets:index',
@@ -144,15 +149,17 @@ export async function createWorkspace(catalog: Catalog, warehouse: string) {
         ? operations
         : profile === 'west-editor'
           ? [
+              ...filesystemOperations.map((operation) => `filesystem:${operation}`),
               'assets:read',
               'edit-asset:invoke',
               'reset-asset:invoke',
               ...fieldActions.map((action) => `${action.resource}:invoke`),
             ]
-          : ['assets:read'],
+          : ['assets:read', ...filesystemOperations.map((operation) => `filesystem:${operation}`)],
     );
   }
   const service = new ObjectService(store, authority, {
+    objectTypeId: builtinObjectTypes.assets,
     schema,
     policies: {
       resource: 'assets',
@@ -257,16 +264,7 @@ export async function createWorkspace(catalog: Catalog, warehouse: string) {
           operation: 'stage',
           warehouse,
           ...(head.metadataLocation ? { baseMetadataLocation: head.metadataLocation } : {}),
-          schema: {
-            type: 'struct',
-            'schema-id': 0,
-            fields: Object.keys(properties).map((name, i) => ({
-              id: i + 1,
-              name,
-              required: true,
-              type: 'string',
-            })),
-          },
+          schema: icebergSchema(properties),
           rows: resolved,
         });
         const execution = randomUUID(),

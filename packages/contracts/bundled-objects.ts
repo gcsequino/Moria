@@ -1,4 +1,10 @@
 import type { ValueType } from './types.js';
+/** Reserved identities for the built-in ontology; custom bindings use registered resource UUIDs. */
+export const builtinObjectTypes = {
+  assets: '00000000-0000-4000-8000-000000000001',
+  stations: '00000000-0000-4000-8000-000000000002',
+  observations: '00000000-0000-4000-8000-000000000003',
+} as const;
 export interface ObjectSchema {
   primaryKey: string;
   properties: Record<string, ValueType>;

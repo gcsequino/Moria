@@ -27,8 +27,11 @@ export async function database() {
     onError: () => {},
   });
   let pool: pg.Pool | undefined;
+  const clients = new Set<Promise<void>>();
   const close = async () => {
     await pool?.end();
+    // Pool.end resolves before idle Client.end callbacks have drained their sockets.
+    await Promise.all(clients);
     await db.stop();
     await rm(root, { recursive: true, force: true });
   };
@@ -41,6 +44,11 @@ export async function database() {
       user: 'moria_test',
       password,
       database: 'postgres',
+    });
+    pool.on('connect', (client) => {
+      const ended = new Promise<void>((resolve) => client.once('end', resolve));
+      clients.add(ended);
+      void ended.then(() => clients.delete(ended));
     });
     const catalog = new Catalog(pool);
     await catalog.migrate();

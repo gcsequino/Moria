@@ -1,6 +1,6 @@
 import { integer, transferSignal, cancelled } from './transfer.js';
 import { constants } from 'node:fs';
-import { lstat, realpath, mkdir, open, link, unlink } from 'node:fs/promises';
+import { lstat, realpath, mkdir, open, link, unlink, readdir } from 'node:fs/promises';
 import { isAbsolute, join, parse, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { setImmediate } from 'node:timers/promises';
@@ -21,6 +21,30 @@ export interface LocalStorageBinding {
   readonly tableId: string;
   readonly maxObjectBytes: number;
   readonly chunkBytes: number;
+}
+
+/** Trusted maintenance only; an exact-object worker handle cannot invoke this. */
+export async function collectLocalStaging(binding: LocalStorageBinding) {
+  await createLocalStorage(binding);
+  const staging = join(binding.root, binding.warehouseId, binding.tableId, 'staging');
+  await directory(staging);
+  let removed = 0;
+  const entries = await readdir(staging);
+  for (const name of entries.slice(0, 1000)) {
+    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(name))
+      throw new StorageError('UNSAFE_PATH');
+    const path = join(staging, name),
+      stat = await lstat(path);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink > 2)
+      throw new StorageError('UNSAFE_PATH');
+    if (stat.mtimeMs < Date.now() - 24 * 60 * 60 * 1000) {
+      await unlink(path);
+      removed++;
+    }
+    if (removed === 50) break;
+  }
+  if (removed) await syncDirectory(staging);
+  return removed;
 }
 
 function failure(error: unknown): StorageError {
@@ -73,7 +97,7 @@ export async function createLocalStorage(
   /** Internal trusted-service hook; never supplied by request options. */
   verify?: (
     location: StorageLocation,
-    operation: 'read' | 'create',
+    operation: 'read' | 'create' | 'delete',
     signal?: AbortSignal,
   ) => Promise<void>,
 ): Promise<StreamingStorage> {
@@ -125,8 +149,27 @@ export async function createLocalStorage(
   return {
     version: 1,
     requireCapability(capability) {
-      if (!['read', 'range', 'create'].includes(capability)) {
+      if (!['read', 'range', 'create', 'delete'].includes(capability)) {
         throw new StorageError('UNSUPPORTED_CAPABILITY');
+      }
+    },
+    async remove(input, options = {}) {
+      const logical = location(input),
+        path = target(logical),
+        signal = transferSignal(options);
+      cancelled(signal);
+      await verify?.(logical, 'delete', signal);
+      try {
+        await directory(objects);
+        const stat = await lstat(path);
+        if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1)
+          throw new StorageError('UNSAFE_PATH');
+        await verify?.(logical, 'delete', signal);
+        cancelled(signal);
+        await unlink(path);
+        await syncDirectory(objects);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw failure(error);
       }
     },
     async read(input, options: ReadOptions = {}) {

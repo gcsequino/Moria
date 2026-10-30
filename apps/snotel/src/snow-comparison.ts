@@ -1,4 +1,7 @@
-import type { Observation, Station } from './generated/index.js';
+import type {
+  ObservationProperties as Observation,
+  StationProperties as Station,
+} from './generated/index.js';
 
 export function distanceMiles(
   a: { latitude: number; longitude: number },
