@@ -599,19 +599,34 @@ test(
 
     await t.test(
       'loss of the lifetime schema lease stops admission while checked-out connections fence migration',
-      async () => {
+      async (t) => {
         const next = await publish();
         await start('plan').done;
-        let paused = false;
-        const running = start('worker', connection, () => {
-          if (!paused) {
-            paused = true;
-            running.process.kill('SIGSTOP');
-          }
-        });
+        const blocker = await db.pool.connect();
+        await blocker.query('BEGIN');
+        await blocker.query('LOCK moria.instance_state IN ACCESS EXCLUSIVE MODE');
+        const running = start('worker');
         t.after(() => running.process.kill('SIGKILL'));
-        for (let i = 0; i < 200 && !paused; i++) await delay(10);
-        assert.equal(paused, true);
+        t.after(async () => {
+          await blocker.query('ROLLBACK');
+          blocker.release();
+        });
+        let checkedOut = false;
+        for (let i = 0; i < 200 && !checkedOut; i++) {
+          checkedOut = (
+            await db.pool.query(
+              "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1 AND wait_event_type='Lock' AND query='SELECT moria.indexing_check($1)') AS waiting",
+              [role],
+            )
+          ).rows[0].waiting;
+          if (!checkedOut) await delay(10);
+        }
+        assert.equal(
+          checkedOut,
+          true,
+          'Rust must hold a checked-out connection at the SQL barrier',
+        );
+        running.process.kill('SIGSTOP');
         const lifetime = (
           await db.pool.query(
             "SELECT pid FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1 AND query LIKE 'SELECT rolsuper%'",
@@ -635,6 +650,7 @@ test(
             false,
             'a checked-out Rust connection must still exclude migration',
           );
+          await blocker.query('ROLLBACK');
           running.process.kill('SIGCONT');
           await assert.rejects(running.done);
           let acquired = false;

@@ -37,6 +37,12 @@ tests include all 100 shared value vectors and kernel-enforced path isolation.
 `pnpm check:indexing` rejects stale compiled artifacts and zero native cases.
 The pinned test image builds the native runtime/test executables; the full Linux
 quality gate and revision-specific hosted CI results are recorded in the PR.
+An initial complete run exposed a schema-lease fixture race: pausing after a claim
+did not establish that a connection was checked out. The test now waits at a real
+PostgreSQL relation-lock barrier before terminating the lifetime lease. That run
+also exhausted two existing filesystem/function fixture deadlines under host-wide
+parallelism. Failed evidence is retained; the repeated local gate uses two CPU
+cores, matching the bounded CI runner, with every assertion and deadline intact.
 No live installation was migrated or deployed. Human review of authorization,
 publication and recovery invariants is required before merge.
 
