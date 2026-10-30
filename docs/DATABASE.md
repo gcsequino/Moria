@@ -129,7 +129,10 @@ then restart the scoped runtime and verify identities, grants, edits and auth
 before enabling routing/jobs. Older binaries do not honor the advisory lock and
 must remain stopped. No live migration or restore is performed by this issue.
 
-This development release supports schema version 3 with its exact baseline checksum.
+This development release supports schema version 4 with its exact baseline checksum.
+Version 4 adds the Rust indexing protocol's durable work and shared publication
+authority. It requires a fresh isolated database; no automatic version-3 upgrade
+or live installation migration is included.
 Version 1 and 2 databases must be recreated using a new disposable directory; no upgrade
 or data-preservation path is provided. Unknown versions fail closed; there is no
 automatic downgrade, security rollback, rolling-upgrade or zero-downtime promise.

@@ -103,7 +103,11 @@ export function validateImport(input: unknown): Record<string, string>[] {
     return { ...row };
   });
 }
-export async function createWorkspace(catalog: Catalog, warehouse: string) {
+export async function createWorkspace(
+  catalog: Catalog,
+  warehouse: string,
+  options: { distributedIndexing?: boolean } = {},
+) {
   await catalog.migrate();
   await catalog.ensureEnvironment(environment);
   await catalog.ensureDataset(environment, 'assets-source');
@@ -226,7 +230,31 @@ export async function createWorkspace(catalog: Catalog, warehouse: string) {
         'SELECT revision FROM moria.source_generations WHERE environment=$1 AND object_type=$2 ORDER BY revision DESC LIMIT 1',
         [environment, 'assets'],
       );
-      return { ready: result.rowCount !== 0, revision: result.rows[0]?.revision ?? '0', importing };
+      const latest = (
+        await catalog.pool.query(
+          `SELECT b.status,b.source_revision::text,b.error,
+        (SELECT p.source_revision::text FROM moria.index_provenance p JOIN moria.source_generations g ON g.stage=p.stage
+          WHERE g.environment=$1 AND g.object_type='assets' ORDER BY g.revision DESC LIMIT 1) AS served
+        FROM moria.indexing_builds b WHERE b.environment=$1 AND b.target='assets' ORDER BY b.source_revision DESC,b.created_at DESC LIMIT 1`,
+          [environment],
+        )
+      ).rows[0];
+      return {
+        ready: result.rowCount !== 0,
+        revision: result.rows[0]?.revision ?? '0',
+        importing:
+          importing ||
+          (!!latest &&
+            ['pending', 'planning', 'running', 'preparing', 'ready'].includes(latest.status)),
+        ...(latest
+          ? {
+              indexingStatus: latest.status,
+              sourceRevision: latest.source_revision,
+              servedSourceRevision: latest.served ?? '0',
+              indexingError: latest.error ?? '',
+            }
+          : {}),
+      };
     },
     async ingest(
       actor: Profile | SessionContext,
@@ -281,7 +309,12 @@ export async function createWorkspace(catalog: Catalog, warehouse: string) {
         const current = await authority.current(environment, session.principal, application);
         authorize(current.identity, 'assets-source', 'write', markings);
         if (typeof actor !== 'string') authorize(current.identity, 'instance', 'manage');
-        await catalog.publish(
+        if (options.distributedIndexing)
+          await indexer.registerDistributed(session, {
+            targetId: builtinObjectTypes.assets,
+            warehouse,
+          });
+        const receipt = await catalog.publish(
           {
             environment,
             execution,
@@ -309,13 +342,32 @@ export async function createWorkspace(catalog: Catalog, warehouse: string) {
             ),
         );
         published = true;
+        if (options.distributedIndexing) {
+          const build = (
+            await catalog.pool.query(
+              'SELECT id,status FROM moria.indexing_builds WHERE environment=$1 AND target=$2 AND source_revision=$3 ORDER BY created_at DESC LIMIT 1',
+              [environment, 'assets', receipt.outputs[0].revision],
+            )
+          ).rows[0];
+          if (!build)
+            throw new MoriaError('INDEXING_FAILED', 'Durable indexing intent is missing.');
+          return {
+            stage: build.id,
+            revision: (await this.status()).revision,
+            rows: rows.length,
+            indexing: build.status as string,
+            sourceRevision: receipt.outputs[0].revision,
+          };
+        }
         const result = await indexer.runSupervised(session, { execution, worker, fence });
         return { ...result, rows: rows.length };
       } catch (error) {
         if (published)
           throw new MoriaError(
             'INDEX_FAILED',
-            'Dataset saved, but indexing failed. The prior objects remain visible; import the file again to retry.',
+            options.distributedIndexing
+              ? 'Dataset saved with durable indexing work. Inspect indexing status before retrying.'
+              : 'Dataset saved, but indexing failed. The prior objects remain visible; import the file again to retry.',
           );
         throw error;
       } finally {

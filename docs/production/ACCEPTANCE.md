@@ -36,6 +36,17 @@ Roles are responsibilities to assign to implementers, not claims that staffing h
 
 These are implementation proof gates. Owners may choose mechanisms within existing contracts without asking for approval of implementation trivia. An inability to meet a contract is a blocker or an explicitly reviewed semantic change, never an implicit relaxation.
 
+## Distributed indexing protocol gates
+
+[INDEXING-PROTOCOL.md](INDEXING-PROTOCOL.md) defines IDX-01 through IDX-12
+for the Rust implementation: durable handoff, parallel partitions, crash and
+receipt recovery, destination fencing, rebuild/replay continuity, complete-
+transaction search visibility, current authorization, idempotent delivery,
+bounded verification, retention/restore and mixed-workload capacity. These
+are unexecuted acceptance obligations. Language-neutral traces and model
+checks cannot close real-engine, transaction or isolation gates. P01–P06 and
+the existing numeric-approval/evidence requirements remain in force.
+
 ## Evidence and closure discipline
 
 Each executed gate must record source revision, contract/profile revision, exact component versions, topology, dataset/seed, commands, raw output, fault point, observed invariant, limitations, and pass/fail status. Include the verification identity and date. Never record a proposed test as passed, and never use mock-only evidence for transaction, authorization, or runtime isolation claims.

@@ -1,7 +1,25 @@
 # Test harness only, not a production deployment image.
+FROM rust:bookworm@sha256:114c7a4425406451c2866b6aafe69fe29b1b298832db1277d411ac73c82d04d6 AS indexing-toolchain
+RUN rustup component add rustfmt clippy
+FROM indexing-toolchain AS indexing-build
+RUN useradd --create-home --uid 1000 builder && mkdir /build && chown builder:builder /build
+ENV CARGO_HOME=/home/builder/.cargo
+WORKDIR /build/services/indexing
+COPY --chown=builder:builder services/indexing/ ./
+COPY --chown=builder:builder packages/contracts/value-conformance.json /build/packages/contracts/value-conformance.json
+USER builder
+RUN --mount=type=cache,target=/home/builder/.cargo/registry,uid=1000,gid=1000 \
+    --mount=type=cache,target=/build/services/indexing/target,uid=1000,gid=1000 \
+    cargo fmt --check && cargo build --release --locked -j 2 \
+    && cargo test --release --locked --lib --no-run -j 2 --message-format=json > /tmp/indexing-tests.json \
+    && mkdir /build/out && cp target/release/moria-indexing /build/out/moria-indexing \
+    && test_binary="$(sed -n 's/^.*"executable":"\([^"]*\)".*$/\1/p' /tmp/indexing-tests.json)" \
+    && test -x "$test_binary" && cp "$test_binary" /build/out/moria-indexing-tests
 FROM docker:cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS docker-cli
 FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=indexing-build /build/out/moria-indexing /usr/local/bin/moria-indexing
+COPY --from=indexing-build /build/out/moria-indexing-tests /usr/local/bin/moria-indexing-tests
 RUN apt-get update && apt-get install -y --no-install-recommends python3-venv libicu72 libxml2 libreadline8 libxslt1.1 && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm@11.25.0 && mkdir /app && chown node:node /app
 # Isolated S3 conformance server only: MinIO RELEASE.2025-09-07T16-13-09Z, AGPLv3.

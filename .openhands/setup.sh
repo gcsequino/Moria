@@ -17,6 +17,10 @@ if [ "$(pnpm --version)" != "11.25.0" ]; then
   exit 1
 fi
 # Provision OS libraries using deploy/test/Dockerfile before running this script.
+if [ ! -x "${MORIA_INDEXING_BINARY:-/usr/local/bin/moria-indexing}" ] || [ ! -x "${MORIA_INDEXING_TEST_BINARY:-/usr/local/bin/moria-indexing-tests}" ]; then
+  echo "Build the Rust indexing runtime/tests and set MORIA_INDEXING_BINARY and MORIA_INDEXING_TEST_BINARY; deploy/test/Dockerfile supplies both." >&2
+  exit 1
+fi
 python3 -m venv .venv
 .venv/bin/python -m pip install -r workers/iceberg/requirements.txt -r requirements-dev.txt -r docs/spec/schemas/requirements.txt
 pnpm install --frozen-lockfile

@@ -283,6 +283,13 @@ export class Catalog {
         )
       ).rows[0].revision;
       const receipt = { revision, outputs };
+      for (const output of outputs)
+        await c.query('SELECT moria.indexing_enqueue($1,$2,$3,$4)', [
+          request.environment,
+          output.dataset,
+          output.revision,
+          revision,
+        ]);
       await c.query('INSERT INTO moria.publications VALUES($1,$2,$3,$4)', [
         request.environment,
         request.execution,

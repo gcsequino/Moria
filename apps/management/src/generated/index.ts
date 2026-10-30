@@ -12,7 +12,7 @@ import {
 } from './runtime.js';
 export * from './runtime.js';
 export const contractFingerprint =
-  'sha256:6506ce1800a2142c066dee88a3498fe7794cb7da9de996d7d1f6eb22932d269b';
+  'sha256:1188f010edb07bd194910fdc3f95ba9c3661b80c6a2c4a9c80c1ffcc124eb59a';
 const valueDefinitions: { [name: string]: TypeSchema } = {
   HostedApp: {
     nullable: false,
@@ -36,9 +36,12 @@ const valueDefinitions: { [name: string]: TypeSchema } = {
   },
   ImportResult: {
     nullable: false,
+    optional: ['indexing', 'sourceRevision'],
     properties: {
+      indexing: { nullable: false, type: 'string' },
       revision: { nullable: false, type: 'string' },
       rows: { nullable: false, type: 'float64' },
+      sourceRevision: { nullable: false, type: 'string' },
       stage: { nullable: false, type: 'string' },
     },
     type: 'object',
@@ -125,12 +128,17 @@ const valueDefinitions: { [name: string]: TypeSchema } = {
   },
   WorkspaceStatus: {
     nullable: false,
+    optional: ['indexingStatus', 'sourceRevision', 'servedSourceRevision', 'indexingError'],
     properties: {
       administrator: { nullable: false, type: 'boolean' },
       importing: { nullable: false, type: 'boolean' },
+      indexingError: { nullable: false, type: 'string' },
+      indexingStatus: { nullable: false, type: 'string' },
       principal: { nullable: false, type: 'string' },
       ready: { nullable: false, type: 'boolean' },
       revision: { nullable: false, type: 'string' },
+      servedSourceRevision: { nullable: false, type: 'string' },
+      sourceRevision: { nullable: false, type: 'string' },
     },
     type: 'object',
   },
@@ -141,7 +149,13 @@ export type HostedApp = {
   error?: string;
   versions: string[];
 };
-export type ImportResult = { revision: string; rows: number; stage: string };
+export type ImportResult = {
+  indexing?: string;
+  revision: string;
+  rows: number;
+  sourceRevision?: string;
+  stage: string;
+};
 export type Job = {
   attempt: number;
   created_at: string;
@@ -176,9 +190,13 @@ export type SourceRow = {
 export type WorkspaceStatus = {
   administrator: boolean;
   importing: boolean;
+  indexingError?: string;
+  indexingStatus?: string;
   principal: string;
   ready: boolean;
   revision: string;
+  servedSourceRevision?: string;
+  sourceRevision?: string;
 };
 export type AssetProperties = {
   id: string;

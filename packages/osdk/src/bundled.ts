@@ -90,14 +90,24 @@ export const managementContract: AppContract = {
       },
       ['deployment', 'error'],
     ),
-    WorkspaceStatus: obj({
-      ready: bool,
-      administrator: bool,
-      revision: str,
-      importing: bool,
-      principal: str,
-    }),
-    ImportResult: obj({ rows: num, revision: str, stage: str }),
+    WorkspaceStatus: obj(
+      {
+        ready: bool,
+        administrator: bool,
+        revision: str,
+        importing: bool,
+        principal: str,
+        indexingStatus: str,
+        sourceRevision: str,
+        servedSourceRevision: str,
+        indexingError: str,
+      },
+      ['indexingStatus', 'sourceRevision', 'servedSourceRevision', 'indexingError'],
+    ),
+    ImportResult: obj(
+      { rows: num, revision: str, stage: str, indexing: str, sourceRevision: str },
+      ['indexing', 'sourceRevision'],
+    ),
   },
   objects: {
     assets: { id: builtinObjectTypes.assets, type: 'Asset', properties: assetSchema.properties },

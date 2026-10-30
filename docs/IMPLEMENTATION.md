@@ -1,5 +1,60 @@
 # Implementation checkpoint
 
+## October 30 Rust dataset-to-object indexing
+
+Implemented the first execution slice of the indexing protocol in
+`services/indexing`. Independent Rust processes claim PostgreSQL scan/reduce
+tasks with renewable leases and fences. Dataset publication captures immutable
+build intent in the same transaction. Native Iceberg/Arrow reads, exact value
+normalization, global UID checks and unpublished generation loading run outside
+the environment publication lock. Both runtimes now share the SQL activation
+function; activation retains edits, verifies current authority and atomically
+records the generation, receipt and change marker.
+
+Production API composition defaults to distributed indexing and reports saved
+versus served source revisions. Node executes no distributed indexing tasks.
+Trusted binding registration rechecks permissions and schema compatibility;
+explicit retry reuses pinned inputs, and cancellation cannot revoke a committed
+generation. Attempt history survives executor replacement and retry. Schema
+version 4 and its exact checksum are required on a fresh isolated database;
+there is no automatic version-3 upgrade or live migration.
+
+The reader supports immutable shared POSIX, unpartitioned copy-on-write Iceberg
+v2 and same-name declared columns. Unsupported delete files, partition specs,
+name mappings and direct S3 reads fail closed. Protobuf scan plans pin the reader
+ABI; control and claims use PostgreSQL directly, with no gRPC listener yet.
+Search projection, separate-host recovery, retention/restore operations and the
+complete IDX-01–IDX-12 workload/cost ladder remain open. This functional slice
+does not certify million-object throughput or remove the environment commit
+capacity boundary. See `services/indexing/README.md` for operator prerequisites
+and explicit bounds.
+
+Verification uses actual Rust children, PostgreSQL and PyIceberg files, including
+concurrent scans, paused-owner takeover, lost COMMIT acknowledgment, duplicate
+UID rejection, retry after file-access failure, cancellation, corrupt protocol
+data, schema-lease loss, authority revocation and generic-import recovery. Native
+tests include all 100 shared value vectors and kernel-enforced path isolation.
+`pnpm check:indexing` rejects stale compiled artifacts and zero native cases.
+The pinned test image builds the native runtime/test executables; the full Linux
+quality gate and revision-specific hosted CI results are recorded in the PR.
+No live installation was migrated or deployed. Human review of authorization,
+publication and recovery invariants is required before merge.
+
+## October 30 distributed indexing protocol
+
+Recorded [the Rust indexing protocol](production/INDEXING-PROTOCOL.md) and
+linked it from production architecture and acceptance. Settled durable intent
+capture, immutable build inputs, partition leases/fences, atomic generation
+activation, snapshot/replay handoff, search visibility, current permission
+checks and retention. Existing environment transaction ordering is retained;
+parallel processing is not claimed to remove that capacity boundary.
+
+This is documentation only. No temporary Node runtime, Rust service, schema
+migration, dependency, queue, deployment or capacity result is introduced.
+IDX-01–IDX-12 are required future experiments, not passed checks. Design
+verification checks local links, protocol structure and whitespace; existing
+runtime tests are not rerun for this documentation-only working change.
+
 ## October 29 local and published source reconciliation
 
 Reconciled the filesystem, TypeScript function and value-model source with main

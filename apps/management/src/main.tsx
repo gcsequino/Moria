@@ -29,6 +29,7 @@ function App() {
   const [field, setField] = useState<'title' | 'status' | 'notes'>('status'),
     [value, setValue] = useState('');
   const [apps, setApps] = useState<HostedApp[]>([]);
+  const [indexing, setIndexing] = useState<string>();
   const pending = useRef<{ invoke: () => Promise<unknown> } | undefined>(undefined);
   const say = (text: string) => {
     setNotice(text);
@@ -62,6 +63,11 @@ function App() {
     const status = await sdk.endpoints.workspace({ signal });
     if (signal?.aborted || currentPrincipal.current !== requestedPrincipal) return;
     setReady(status.ready);
+    setIndexing(
+      status.indexingStatus && status.sourceRevision !== status.servedSourceRevision
+        ? `Dataset ${status.sourceRevision}; objects ${status.servedSourceRevision}. Indexing ${status.indexingStatus}${status.indexingError ? `: ${status.indexingError}` : ''}.`
+        : undefined,
+    );
     setAuthorizedPrincipal(status.administrator ? requestedPrincipal : undefined);
     if (!status.ready) {
       setPage({ revision: '0', objects: [] });
@@ -255,6 +261,7 @@ function App() {
         <div id="notice" className={error ? 'error' : ''} role="status" aria-live="polite">
           {notice}
         </div>
+        {indexing && <p role="status">{indexing}</p>}
         {view === 'files' ? (
           <Filesystem key={principal} />
         ) : !administrator ? (
@@ -430,7 +437,9 @@ function App() {
                       const result = await sdk.endpoints.importAssets(data);
                       await load();
                       say(
-                        `Imported ${result.rows} rows at revision ${result.revision}; existing overrides retained.`,
+                        result.indexing
+                          ? `Saved ${result.rows} rows to dataset revision ${result.sourceRevision}. Indexing ${result.indexing}; existing objects and overrides remain available.`
+                          : `Imported ${result.rows} rows at revision ${result.revision}; existing overrides retained.`,
                       );
                     })
                   }

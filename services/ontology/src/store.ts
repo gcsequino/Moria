@@ -276,59 +276,28 @@ export class ObjectStore {
     ).rows[0];
     const current = await this.lock(c, staged.environment, staged.security_epoch);
     await checkCurrent?.(c);
-    if (staged.status === 'published') return staged.published_revision;
-    if (staged.status !== 'ready')
-      throw new MoriaError('STAGE_INVALID', 'Source stage is not ready');
-    if (staged.lease_binding) {
-      const lease = staged.lease_binding as StageLease;
-      // The binding is persisted at staging, never supplied by the publisher.
-      // Lock the lease until COMMIT so a replacement cannot race publication.
-      const live = await c.query(
-        'SELECT 1 FROM moria.leases WHERE environment=$1 AND execution=$2 AND worker=$3 AND fence=$4 AND expires_at>clock_timestamp() FOR UPDATE',
-        [staged.environment, lease.execution, lease.worker, lease.fence],
-      );
-      if (!live.rowCount)
-        throw new MoriaError('LEASE_LOST', 'Staging worker lease expired or was replaced');
-    }
-    const head = (
-      await c.query(
-        'SELECT revision,object_schema,required_markings FROM moria.source_generations WHERE environment=$1 AND object_type=$2 ORDER BY revision DESC LIMIT 1',
-        [staged.environment, staged.object_type],
-      )
-    ).rows[0];
-    if (
-      head?.required_markings?.some((label: string) => !staged.required_markings?.includes(label))
-    )
-      throw new MoriaError('MARKING_DOWNGRADE', 'Refresh cannot remove active source markings');
-    if ((admissionRevision ?? current) !== staged.expected_revision) {
-      // Only unchanged-source, identical-schema refreshes can cross edits.
-      // Every new edit validates against this persisted active schema below.
-      // Legacy metadata and schema migrations retain strict environment CAS.
+    try {
+      return (
+        await c.query('SELECT moria.activate_source_stage($1,$2)::text AS revision', [
+          stage,
+          admissionRevision ?? current,
+        ])
+      ).rows[0].revision;
+    } catch (error) {
+      const code = (error as Error).message;
       if (
-        !head?.object_schema ||
-        !staged.object_schema ||
-        head.revision !== staged.base_source_revision ||
-        fingerprint(head.object_schema) !== fingerprint(staged.object_schema)
+        [
+          'STAGE_INVALID',
+          'AUTHORIZATION_CHANGED',
+          'LEASE_LOST',
+          'MARKING_DOWNGRADE',
+          'HEAD_CONFLICT',
+          'MIGRATION_REQUIRED',
+        ].includes(code)
       )
-        throw new MoriaError('HEAD_CONFLICT', 'Source head or schema changed before activation');
+        throw new MoriaError(code, 'Source generation could not be activated.');
+      throw error;
     }
-    const revision = await this.advance(c, staged.environment);
-    await c.query(
-      'INSERT INTO moria.source_generations(environment,object_type,revision,stage,object_schema,required_markings) VALUES($1,$2,$3,$4,$5,$6)',
-      [
-        staged.environment,
-        staged.object_type,
-        revision,
-        stage,
-        staged.object_schema,
-        staged.required_markings,
-      ],
-    );
-    await c.query(
-      "UPDATE moria.source_stages SET status='published',published_revision=$2 WHERE id=$1",
-      [stage, revision],
-    );
-    return revision;
   }
   async activate(
     environment: string,

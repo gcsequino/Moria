@@ -1,0 +1,36 @@
+syntax = "proto3";
+package moria.indexing.v1;
+
+// Identifiers are canonical lowercase UUIDs. A lease is authority metadata, not a credential.
+message Lease {
+  uint32 protocol_version = 1;
+  string incarnation = 2;
+  string build_id = 3;
+  string task_id = 4;
+  string owner_id = 5;
+  uint64 fence = 6;
+}
+
+// Native engine plans are pinned to an exact reader ABI and never contain user code.
+message ScanPlan {
+  uint32 protocol_version = 1;
+  string reader_abi = 2;
+  bytes native_plan_json = 3;
+}
+
+message BuildRequest {
+  uint32 protocol_version = 1;
+  string environment_id = 2;
+  string target_id = 3;
+  string binding_revision = 4;
+  string request_key = 5;
+}
+
+message BuildStatus {
+  uint32 protocol_version = 1;
+  string build_id = 2;
+  string state = 3;
+  uint64 source_revision = 4;
+  uint64 object_revision = 5;
+  string safe_error_code = 6;
+}

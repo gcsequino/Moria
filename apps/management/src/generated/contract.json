@@ -146,9 +146,12 @@
     },
     "ImportResult": {
       "nullable": false,
+      "optional": ["indexing", "sourceRevision"],
       "properties": {
+        "indexing": { "nullable": false, "type": "string" },
         "revision": { "nullable": false, "type": "string" },
         "rows": { "nullable": false, "type": "float64" },
+        "sourceRevision": { "nullable": false, "type": "string" },
         "stage": { "nullable": false, "type": "string" }
       },
       "type": "object"
@@ -235,12 +238,17 @@
     },
     "WorkspaceStatus": {
       "nullable": false,
+      "optional": ["indexingStatus", "sourceRevision", "servedSourceRevision", "indexingError"],
       "properties": {
         "administrator": { "nullable": false, "type": "boolean" },
         "importing": { "nullable": false, "type": "boolean" },
+        "indexingError": { "nullable": false, "type": "string" },
+        "indexingStatus": { "nullable": false, "type": "string" },
         "principal": { "nullable": false, "type": "string" },
         "ready": { "nullable": false, "type": "boolean" },
-        "revision": { "nullable": false, "type": "string" }
+        "revision": { "nullable": false, "type": "string" },
+        "servedSourceRevision": { "nullable": false, "type": "string" },
+        "sourceRevision": { "nullable": false, "type": "string" }
       },
       "type": "object"
     }

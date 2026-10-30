@@ -9,3 +9,5 @@ coverage/
 __pycache__/
 .venv/
 artifacts/
+**/target/
+.pnpm-store/

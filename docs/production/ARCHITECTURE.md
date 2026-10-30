@@ -19,6 +19,16 @@ One repository may supply several binaries/entry points. Initial logical schemas
 
 Do not stop or initialize an external PostgreSQL server from an API lifecycle hook. The development launcher may coordinate an explicitly development-only database.
 
+## Distributed indexing implementation boundary
+
+[INDEXING-PROTOCOL.md](INDEXING-PROTOCOL.md) defines durable intent, partition
+claims and destination fencing, atomic generation activation, snapshot/replay
+handoff, search visibility, current authorization and recovery gates for Rust
+indexing services. It introduces no runtime implementation or capacity claim.
+The management API remains a control plane; no temporary Node bulk-processing
+or distributed-worker implementation is required. Processing parallelism does
+not supersede the environment transaction boundary or P03 proof obligation.
+
 ## Transaction and publication boundaries
 
 Actions preserve C06: serializable authorization/condition checks plus all edits, audit, outbox, and receipt in one transaction. No provider call or arbitrary code runs inside it. Cross-environment edits remain rejected.

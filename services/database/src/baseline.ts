@@ -288,4 +288,6 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
       singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
       job_id text NOT NULL REFERENCES moria.weather_publications(job_id)
     );
+  ${indexingSchema}
   `;
+import { indexingSchema } from './indexing-schema.js';

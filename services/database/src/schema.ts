@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { baseline } from './baseline.js';
 
-export const schemaVersion = 3;
+export const schemaVersion = 4;
 const checksum = createHash('sha256').update(baseline).digest('hex');
 // Separate from environment publication/authorization locks.
 const lock = '731804135219';

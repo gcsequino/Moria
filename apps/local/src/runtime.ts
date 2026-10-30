@@ -46,6 +46,11 @@ export async function runProcess(
   executionFactory: ExecutionFactory = createPlatformJobs,
 ) {
   const mode = process.env.MORIA_DATABASE_MODE ?? 'development';
+  const indexingMode =
+    process.env.MORIA_INDEXING_MODE ??
+    (process.env.NODE_ENV === 'production' ? 'distributed' : 'legacy');
+  if (!['distributed', 'legacy'].includes(indexingMode))
+    throw new DatabaseError('MORIA_INDEXING_MODE must be distributed or legacy.');
   if (!['development', 'external'].includes(mode))
     throw new DatabaseError('MORIA_DATABASE_MODE must be development or external.');
   if (process.env.NODE_ENV === 'production' && mode !== 'external')
@@ -170,7 +175,9 @@ export async function runProcess(
     const credentials = await localCredentials(directory);
     const appHost = localAppHost(directory);
     if (role === 'combined') await bootstrapManagement(appHost);
-    const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
+    const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'), {
+      distributedIndexing: indexingMode === 'distributed',
+    });
     const filesystem = await configuredFilesystem(
       catalog,
       resolve(directory, 'filesystem-warehouse'),

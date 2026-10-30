@@ -6,6 +6,8 @@ import { MoriaError } from '../../../packages/contracts/types.js';
 import { fingerprint } from '../../../packages/compiler/src/index.js';
 import { icebergRows } from '../../../workers/iceberg/stream.js';
 import { withLease } from './lease.js';
+import { normalizeType } from '../../../packages/contracts/values.js';
+import { compareColumns } from '../../../packages/contracts/compatibility.js';
 
 /** Trusted release configuration, never request JSON. This initial adapter only
  * supports Dataset sources; restricted-view object sources need policy binding.
@@ -16,8 +18,8 @@ export interface IndexBinding {
   target: { resource: string; markings: string[]; schema: ObjectSchema };
 }
 
-/** Internal single-attempt coordinator. Callers supervise/renew the worker lease.
- * A crash can leave an unpublished stage; durable scheduling/recovery is pending.
+/** Trusted binding registration and the legacy single-attempt fixture runner.
+ * Distributed execution belongs to services/indexing; legacy callers own recovery.
  * No source path or snapshot supplied by the caller is accepted. */
 export class IcebergIndexer {
   private readonly binding: IndexBinding;
@@ -34,6 +36,158 @@ export class IcebergIndexer {
   }
   async migrate(): Promise<void> {
     await this.store.catalog.migrate();
+  }
+  /** Trusted composition only; workers receive immutable bindings, never request-supplied paths. */
+  async registerDistributed(
+    session: SessionContext,
+    configuration: {
+      targetId: string;
+      warehouse: string;
+      partitions?: number;
+      timeoutSeconds?: number;
+    },
+  ): Promise<void> {
+    session = structuredClone(session);
+    configuration = structuredClone(configuration);
+    const partitions = configuration.partitions ?? 64;
+    const timeoutSeconds = configuration.timeoutSeconds ?? 1800;
+    if (
+      session.execution ||
+      !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(configuration.targetId) ||
+      (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(this.binding.target.resource) &&
+        this.binding.target.resource !== configuration.targetId) ||
+      !configuration.warehouse.startsWith('/') ||
+      configuration.warehouse.split('/').some((part) => part === '..') ||
+      !Number.isInteger(partitions) ||
+      partitions < 1 ||
+      partitions > 4096 ||
+      (partitions & (partitions - 1)) !== 0 ||
+      !Number.isInteger(timeoutSeconds) ||
+      timeoutSeconds < 1 ||
+      timeoutSeconds > 86400
+    )
+      throw new MoriaError('INDEXING_INVALID', 'Invalid distributed indexing configuration.');
+    const properties = Object.fromEntries(
+      Object.entries(this.binding.target.schema.properties).map(([name, type]) => [
+        name,
+        normalizeType(type, {}, 'column'),
+      ]),
+    );
+    if (
+      properties[this.binding.target.schema.primaryKey]?.type !== 'uid' ||
+      properties[this.binding.target.schema.primaryKey].nullable
+    )
+      throw new MoriaError('SCHEMA_INVALID', 'Object key must be non-null UID.');
+    await this.store.catalog.transaction(async (c) => {
+      const state = await this.authority.current(
+        session.environment,
+        session.principal,
+        session.application,
+        c,
+      );
+      const { source, target } = this.binding;
+      authorize(state.identity, source.resource, 'read', source.markings);
+      authorize(state.identity, target.resource, 'index', target.markings);
+      const sourceLabels = await this.authority.resourceAccess(c, session, source.resource);
+      const labels = [
+        ...new Set([
+          ...target.markings,
+          ...(await this.authority.resourceAccess(c, session, target.resource, 'write')),
+        ]),
+      ].sort();
+      if ([...source.markings, ...sourceLabels].some((label) => !labels.includes(label)))
+        throw new MoriaError('MARKING_DOWNGRADE', 'Index target must preserve source markings.');
+      await this.authority.assertCurrent(
+        c,
+        session.environment,
+        session.principal,
+        session.application,
+        state.epoch,
+        session.sessionHash,
+      );
+      const instanceEpoch = (await c.query('SELECT security_epoch FROM moria.instance_state'))
+        .rows[0].security_epoch;
+      const environmentId = (
+        await c.query(
+          'INSERT INTO moria.indexing_environments(environment) VALUES($1) ON CONFLICT(environment) DO UPDATE SET environment=EXCLUDED.environment RETURNING id',
+          [session.environment],
+        )
+      ).rows[0].id;
+      const incarnation = (await c.query('SELECT incarnation FROM moria.indexing_instance')).rows[0]
+        .incarnation;
+      const previous = (
+        await c.query(
+          'SELECT object_schema FROM moria.source_generations WHERE environment=$1 AND object_type=$2 ORDER BY revision DESC LIMIT 1',
+          [session.environment, target.resource],
+        )
+      ).rows[0]?.object_schema;
+      if (
+        previous &&
+        (previous.primaryKey !== target.schema.primaryKey ||
+          !compareColumns(previous.properties, target.schema.properties).compatible)
+      )
+        throw new MoriaError(
+          'MIGRATION_REQUIRED',
+          'Destructive schema changes require an explicit migration.',
+        );
+      const definition = {
+        version: 1,
+        valueVersion: 1,
+        environmentId,
+        incarnation,
+        targetId: configuration.targetId,
+        warehouse: configuration.warehouse,
+        partitions,
+        timeoutSeconds,
+        schema: { primaryKey: target.schema.primaryKey, properties },
+        markings: labels,
+      };
+      const revision = fingerprint({
+        definition,
+        context: session,
+        epoch: state.epoch,
+        instanceEpoch,
+      });
+      const registered = await c.query(
+        `INSERT INTO moria.indexing_bindings(environment,target,target_id,source,revision,definition,context,security_epoch,instance_epoch)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(environment,target) DO UPDATE SET target_id=EXCLUDED.target_id,
+        source=EXCLUDED.source,revision=EXCLUDED.revision,definition=EXCLUDED.definition,context=EXCLUDED.context,
+        security_epoch=EXCLUDED.security_epoch,instance_epoch=EXCLUDED.instance_epoch,enabled=true WHERE moria.indexing_bindings.target_id=EXCLUDED.target_id`,
+        [
+          session.environment,
+          target.resource,
+          configuration.targetId,
+          source.resource,
+          revision,
+          definition,
+          session,
+          state.epoch,
+          instanceEpoch,
+        ],
+      );
+      if (!registered.rowCount)
+        throw new MoriaError(
+          'BINDING_CONFLICT',
+          'A target cannot change immutable object type identity.',
+        );
+      const head = (
+        await c.query(
+          'SELECT revision FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2 AND metadata_location IS NOT NULL',
+          [session.environment, source.resource],
+        )
+      ).rows[0];
+      if (head)
+        await c.query('SELECT moria.indexing_enqueue($1,$2,$3,$4)', [
+          session.environment,
+          source.resource,
+          head.revision,
+          (
+            await c.query('SELECT revision FROM moria.environments WHERE id=$1', [
+              session.environment,
+            ])
+          ).rows[0].revision,
+        ]);
+    }, session.environment);
   }
   async runSupervised(
     session: SessionContext,

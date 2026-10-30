@@ -15,7 +15,11 @@ Default startup hosts management only. The bundled Snow/weather POC is retired; 
 The [platform filesystem](docs/FILESYSTEM.md) organizes human and agent homes,
 group projects, ontologies and code repositories with inherited access, verified
 versioned files and checkout/push/publication. Open **Files** in the management
-console or run `pnpm moria fs home`. This requires a fresh schema version 3 database.
+console or run `pnpm moria fs home`. This requires a fresh schema version 4 database.
+
+The [Rust indexing service](services/indexing/README.md) captures durable
+dataset-to-object work and runs concurrent, fenced executors independently of
+the API. Its first supported input is copy-on-write Iceberg on shared POSIX storage.
 
 [TypeScript functions](docs/FUNCTIONS.md) connect repository exports to private,
 versioned invocations through API/SDK/CLI and the Files console. An explicit
