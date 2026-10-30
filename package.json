@@ -11,7 +11,7 @@
   "scripts": {
     "moria": "tsx apps/cli/src/main.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test --test-reporter=./scripts/test-reporter.ts tests/*.test.ts",
     "check": "pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm test && pnpm check:python && pnpm build && pnpm check:starter",
     "check:python": "node scripts/check-python.mjs",
     "build": "pnpm build:management && pnpm build:snotel",

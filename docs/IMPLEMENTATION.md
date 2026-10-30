@@ -52,7 +52,12 @@ the bearer red/green proof are retained as diagnostic evidence. A subsequent
 while consuming setup rows before the intended post-exit authority barrier. The
 test now holds only its configured read timers until actual SQL contention is
 observed, then advances them and requires cleanup within one real second while
-the lock remains held. Production limits are unchanged; the separate real
+the lock remains held. A subsequent nominally successful run reported only 852
+cases: the durable-reference recovery module emitted an opaque file-level pass
+instead of its 24 cases. That run is incomplete evidence. The normal test command
+now rejects this outcome through a small standard spec reporter adapter; a real
+zero-exit fixture proves the guard fails and a real executed fixture proves normal
+reporting still works. No database test is skipped or replaced. Production limits are unchanged; the separate real
 one-millisecond expiry check and all real process/SQL assertions remain. Synthetic
 test fixtures only; no live installation, deployment, schema migration or main
 branch update is part of this work. The release requires a fresh schema version 3
