@@ -65,7 +65,14 @@ export const managementContract: AppContract = {
   types: {
     Job: jobType,
     Schedule: scheduleType,
-    Jobs: obj({ jobs: list({ ref: 'Job' }), schedules: list({ ref: 'Schedule' }) }),
+    Jobs: obj(
+      {
+        jobs: list({ ref: 'Job' }),
+        schedules: list({ ref: 'Schedule' }),
+        registeredKinds: list(str),
+      },
+      ['registeredKinds'],
+    ),
     Lineage: obj({
       nodes: list(obj({ id: str, label: str, kind: str, status: nullableString, detail: str })),
       edges: list(obj({ from: str, to: str, label: str })),

@@ -171,8 +171,10 @@
     },
     "Jobs": {
       "nullable": false,
+      "optional": ["registeredKinds"],
       "properties": {
         "jobs": { "items": { "ref": "Job" }, "type": "list" },
+        "registeredKinds": { "items": { "nullable": false, "type": "string" }, "type": "list" },
         "schedules": { "items": { "ref": "Schedule" }, "type": "list" }
       },
       "type": "object"

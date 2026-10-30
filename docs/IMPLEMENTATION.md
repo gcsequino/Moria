@@ -1,5 +1,60 @@
 # Implementation checkpoint
 
+## October 29 local and published source reconciliation
+
+Reconciled the filesystem, TypeScript function and value-model source with main
+`a24ea469676aef2daafb04c5a57dd9119fd3cf75` and the protected-read, HTTP and Python
+lifecycle stack through `5c112abb7f4f717853049464281503655070e32e`. Local feature
+contracts take precedence; the published management-only default, independent
+service roles, scoped snapshot publication and durable recovery are retained.
+The original local source is preserved separately before reconciliation.
+
+Shared read admission now supports function-owned transactions without exposing
+object stores or authority, and it performs the final session check for both
+point reads and queries. Restricted composition preserves the function runtime.
+Tests that previously mutated a live object binding now install a new trusted
+binding; existing denial, marking and result-evidence assertions are retained.
+
+All HTTP listeners, including the private filesystem broker, use shared transport
+admission. Only the exact bounded binary file-upload routes admit bodies larger
+than the ordinary 64 KiB JSON limit. Function retry/error metadata is preserved. Browser-enabled management hosts also
+admit explicit non-browser bearer calls to filesystem/function routes; valid
+workload sessions are authenticated by the handler. Cookie or browser requests
+and unrelated routes retain same-origin enforcement. Real authenticated HTTP and
+transport-profile regressions fail before this correction and pass afterward.
+Generated management SDKs accept the registered workload kinds returned by the
+generic execution API. Default startup still creates no Snow/weather workload.
+
+Iceberg staging, streaming, scoped reads and complete-snapshot validation share
+the value-model codecs while retaining bounded Python lifecycle ownership and
+redacted process outcomes. Publication checks current filesystem read/write
+authority and rejects outputs missing inherited input classifications. Real
+PostgreSQL/local/S3 tests cover the latter before any object write, and recovery
+provenance explicitly retains its classifications.
+
+Source ownership checks register the existing CLI Git adapter, Docker supervisor,
+filesystem services and isolated function-image entrypoint with their contract
+tests. Unregistered loaders, persistence access, listeners and process primitives
+remain rejected. The function image is the only computed code-import entrypoint;
+it has no host network, daemon socket or host credentials.
+
+Verification before publication: 137 targeted PostgreSQL/local/S3 publication,
+process-lifecycle, static-host and value-system regressions passed, with zero
+failures or skips. The bearer regressions first failed on the uncorrected source,
+then all 17 authenticated filesystem/transport tests passed. The actual Dockerfile
+build and the workflow's repeated bootstrap passed. Commands include
+`pnpm exec tsx --test` against the affected suites, `pnpm typecheck`, and the exact
+shell steps in `.github/workflows/quality.yml`. The complete `pnpm check` and
+latest-revision hosted Linux job remain required acceptance gates before merge;
+the PR records their final revision-specific results. Earlier failed runs and
+the bearer red/green proof are retained as diagnostic evidence. Synthetic
+test fixtures only; no live installation, deployment, schema migration or main
+branch update is part of this work. The release requires a fresh schema version 3
+database; older databases continue to fail without automatic mutation. A passing
+combined gate does not establish the cause of historical issue #67 or production
+capacity, and human invariant review remains required before merge.
+
+
 ## Remaining component work
 
 - Production function infrastructure: implement the planned Firecracker adapter
@@ -874,6 +929,68 @@ Docker-daemon limitation above. Logs remain local under `/tmp/issue-44-*`.
 No required runtime test infrastructure was unavailable. Changes remain
 uncommitted; independent latest-revision CI and human review are still required.
 
+## Issue #47 — default Snow composition retirement
+
+Before behavior changes, traced runtime, CLI, management, auth and execution
+composition into the coverage-transfer matrix in
+[SNOW-RETIREMENT.md](production/SNOW-RETIREMENT.md). Scope excludes catalog,
+leases, migrations, generated files and protected build/delivery paths. Existing
+standalone domain fixtures remain. Validation and any limitations follow below.
+
+### Implemented scope and evidence — October 25, 2026
+
+- Base checkout: `9f818d230cf95ed1c069d1a0aefaa02f94c10bc4`, branch
+  `delivery/issue-47`. No local main or remote-tracking refs are available to
+  establish current-main integration; no fetch, publication or merge was performed.
+- Default combined/API/worker/scheduler composition no longer initializes Snow or
+  weather. `createPlatformJobs` admits explicit trusted handlers, with an empty
+  default registry. Jobs implementation, scheduling/fencing policy, catalog,
+  storage and database history are unchanged.
+- Management retains asset workflows, administrator authorization, lineage,
+  application inventory and job history. Retry is offered only for registered
+  handlers. Auth defaults to management; required-provider selection preserves
+  shared declaration validation while ignoring unavailable unused credentials.
+  Retired startup settings and POC CLI operations fail explicitly.
+- Synthetic process fixtures retain real PostgreSQL effects, atomic completion,
+  duplicate dispatch, independent restart, stale fences and drain assertions.
+  New composition tests exercise real startup and two neutral hosted applications,
+  cross-app token/origin denial, management isolation, retired routes and invalid
+  retry input. Existing standalone Snow tests remain unchanged.
+- Independent review initially identified missing setup invitation sequencing and
+  retry ID validation before SQL. Both were fixed with regressions. Final review:
+  zero findings. Existing promoted management assets require explicit
+  `pnpm moria apps recover management`; startup does not overwrite them.
+
+Validation on non-root Linux: Node 24.21.0, pnpm 11.25.0, workspace Python 3.11.17.
+Temporary synthetic PostgreSQL clusters and fixture artifacts only; no live data,
+production credentials, external model service or deployment was used.
+
+| Command | Result |
+|---|---|
+| `pnpm format` | Passed; protected files unchanged. |
+| Focused auth/composition/execution/scheduler tests | 6 passed; no skips. Later auth/composition regression run: 4 passed. |
+| `pnpm check` after fixes | Passed: formatting, SDK drift, TypeScript, 348 runtime tests, Python checks, both builds and starter checks; zero failures/skips. |
+| `pnpm check:python` | Passed, including Black, specification/workload validation and 14 Python tests. Run separately because full gate stops at runtime failures. |
+| `pnpm build` | Passed for management and retained Snow fixture. This is required check coverage, not default startup composition. |
+| `pnpm check:starter` | Passed type/build/hosting/static isolation checks. |
+| `git diff --check` | Passed. |
+
+Passing full output for this workspace is in `/tmp/issue47-check-latest.log`;
+supplemental checks are in `/tmp/issue47-python.log`, `/tmp/issue47-build.log` and
+`/tmp/issue47-starter.log`. Earlier full runs failed six S3 tests because
+`/usr/local/bin/minio` was absent; it subsequently became available and the real
+S3 tests passed. No infrastructure provisioning was performed by this task.
+A final authorization recheck before retry-availability diagnostics has also
+received zero review findings; its full rerun passed with 348 tests, zero failures
+and zero skips, plus all subsequent gates (`/tmp/issue47-check-complete.log`).
+
+Limitations: no storage tests were disabled or changed. Exact-head Linux CI and
+integration with current verified main remain controller
+gates; uncommitted local checks cannot establish either. No lease repair or PR39
+changes were reused. The diff contains 32 files, below the 40-file bound, and no
+protected-path edits. Historical domain/UI/generated/build and recovery fixtures
+remain for a separate cleanup. This slice does not complete M1, M3 or parent #14.
+
 ### Issue #46 — published catalog metadata to scoped storage
 
 Bounded M2-01f integration after #44: added `services/catalog/src/storage.ts`,
@@ -921,3 +1038,1040 @@ Temporary evidence logs: `/tmp/issue-46-format.log`,
 `/tmp/issue-46-focused.log`, `/tmp/issue-46-check.log`. These local logs are not
 production or capacity evidence. Changes remain uncommitted for the controller;
 the independent review, CI and current-main gates above remain outstanding.
+
+### Issue #49 — durable scoped metadata publication
+
+Bounded M2-01g seam after #46: `CatalogStorage.publish` stages acknowledged
+create-only metadata through the existing authorized adapters and calls existing
+`Catalog.publish` once for atomic publication. Only the allowed catalog storage
+files, new integration tests and production/progress documentation change.
+Catalog transaction/lease code, schemas, adapter internals, existing tests,
+dependencies, protected paths and runtime consumers are unchanged.
+
+Accepted C04/S01/S02/S03/S06/S07/S08 contracts inform current-session and epoch
+checks, Dataset write authority, complete effective markings, terminal restricted
+views, immutable content-bound logical identities and receipt-based retries.
+Pinned PyIceberg validates bounded v2 metadata structure/table/current snapshot;
+manifest/data-file verification and runtime adoption remain follow-up work.
+Uncommitted partial or uncertain staging cannot be resumed over create-only
+collisions: fence the old attempt and schedule a new execution/lease. No deletion,
+GC, second receipt registry or alternate publication authority is introduced.
+
+Tests use synthetic temporary warehouses, real embedded PostgreSQL, filesystem
+and checksum-pinned isolated MinIO with real Iceberg-generated metadata. The
+initial focused run exposed an upload chunk-size mismatch; the seam now emits
+256-byte chunks compatible with the configured adapters. The next run exposed an
+incorrect new-test expectation: session revocation increments the security epoch
+and correctly returns AUTHORIZATION_CHANGED. That expectation was corrected;
+existing assertions were not edited. Additional barriers check session expiry
+inside the final transaction and cancellation of stalled engine intake.
+
+Verification environment: non-root Linux, Node 24.21.0, pnpm 11.25.0,
+repository `.venv` Python 3.11.17. Commands: `pnpm format`, `pnpm typecheck`,
+`pnpm exec tsx --test tests/catalog-storage-publication.integration.test.ts`,
+`pnpm check`, `git diff --check`. Final results are recorded below after execution.
+Independent no-findings review, exact-head Linux quality CI and current-main
+integration remain unverified controller-owned gates. Changes remain uncommitted;
+no publication, deployment, live installation access or external communication
+was performed. #17 remains open. This is not a capacity or full Iceberg IO claim.
+
+Final local results on October 25, 2026, against baseline
+`42491b01e691802becbc4fbf57eb706f84e487b9` with uncommitted issue changes:
+
+- `pnpm format`: passed; no existing tests or protected files changed.
+- Focused publication integration suite: 32 tests passed, zero failures,
+  cancellations or skips; 40.839 seconds. Both real providers and PostgreSQL ran.
+- Initial full `pnpm check`: exit 0, 406 tests passed. Final strengthening checks
+  both failed output heads and unchanged checkpoint state, in addition to absent
+  history and receipt, and expands test control flow for readability.
+- Final `pnpm check`: exit 0, 406 passed, zero failures/cancellations/skips;
+  runtime-test duration 161.732 seconds. Formatting, SDK drift, TypeScript,
+  PostgreSQL/Iceberg/filesystem/pinned-S3 regressions, Python formatting and
+  specification/workload checks, both builds and starter verification passed.
+- `git diff --check`: passed. The five changed files are within issue scope.
+
+No required local runtime infrastructure was unavailable. Logs are local at
+`/tmp/issue-49-format.log`, `/tmp/issue-49-focused-final.log` and
+`/tmp/issue-49-check-final.log`; they are not production or capacity evidence.
+Independent review, exact-head Linux CI and current-main integration remain
+unverified as noted above; local success does not waive those acceptance gates.
+
+### Issue #49 verification repair — lineage authorization
+
+The review finding was confirmed against C04 and S01/S02: the publication success
+fixtures used empty lineage and did not exercise input read permission or the
+inherited-marking union. Added bounded integration coverage in the existing
+publication suite for both real filesystem and isolated pinned S3 adapters with
+real PostgreSQL and PyIceberg-generated metadata. No production implementation,
+existing assertions, dependencies, protected files or delivery policy changed.
+
+New cases declare a nonempty input snapshot map and assert exact persisted
+lineage, producing execution, output snapshot IDs and revisions for both outputs,
+read back the metadata through CatalogStorage, and retry without changing the
+committed catalog state. Separate denials remove only the input read grant, only
+the input application scope, or the inherited marking from only the second
+output while the principal retains every marking. Each denial asserts zero
+writes, identical heads/history/checkpoint/receipt state and invisible outputs.
+These fixtures exercise trusted declared provenance; they do not claim full
+input scheduling or manifest/data-file reader integration.
+
+Validation commands: `pnpm format`,
+`pnpm exec tsx --test tests/catalog-storage-publication.integration.test.ts`,
+`pnpm check`, and `git diff --check`. Final results are recorded below.
+Independent review of the repaired revision, exact-head Linux quality CI and
+current-main integration remain controller-owned and unverified. #17 remains
+open; all changes remain uncommitted.
+
+Repair validation results (October 25, 2026):
+
+- `pnpm format`: passed.
+- Focused publication suite: exit 0; 40 tests passed, zero failures,
+  cancellations or skips (63.870 seconds).
+- Final `pnpm check`: exit 0; 414 runtime tests passed, zero failures or skips
+  (179.665 seconds). Formatting, SDK drift, TypeScript, real PostgreSQL and both
+  storage providers, workspace `.venv` Python checks, both builds and starter
+  verification passed. No required local infrastructure was unavailable.
+- `git diff --check`: passed. Repair edits are limited to the publication
+  integration test and this progress log; pre-existing issue changes remain.
+
+Local logs: `/tmp/issue-49-repair-format.log`,
+`/tmp/issue-49-repair-focused.log`, `/tmp/issue-49-repair-check.log`.
+
+### Issue #47 — explicit null workload input repair
+
+Review repair on October 25, 2026, against checkout baseline
+`03df0c9f71e8fee1ad3778b1964ae15eeef99fc9`. The existing coverage-transfer matrix
+in `docs/production/SNOW-RETIREMENT.md` remains applicable. Scope is limited to
+the management enqueue route, its existing synthetic execution process test,
+and this implementation record; no Jobs, lease, storage or protected-path changes.
+
+The real PostgreSQL regression reproduced explicit `input: null` being stored as
+`{}` before the fix. The route now defaults only omitted input. Assertions verify
+persisted null, same-key null replay, 409 `IDEMPOTENCY_CONFLICT` for explicit empty
+object and omitted input against that key, and unchanged persisted input after
+conflicts. Omitted input still persists as `{}` and replays with explicit `{}`.
+Existing independent process restart, scheduling, fencing, recovery and drain
+assertions remain intact.
+
+Validation uses non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace `.venv`
+Python 3.11.17 with synthetic PostgreSQL fixtures. `pnpm format` passed. The
+focused `pnpm exec tsx --test tests/execution-process.integration.test.ts` failed
+on the expected stored-payload assertion before the fix, then passed with zero
+skips after the fix. Evidence: `/tmp/issue47-payload-before.log`,
+`/tmp/issue47-payload-after.log` and `/tmp/issue47-payload-format.log`.
+
+Full `pnpm check` passed (exit 0): 377 runtime tests, zero failures or skips,
+formatting, SDK drift, TypeScript, Python checks (14 tests), both application
+builds and starter checks. Evidence: `/tmp/issue47-payload-check.log`.
+`git diff --check` passed. No required runtime infrastructure was unavailable.
+Independent review, exact-head Linux CI and current-main integration remain
+unverified controller-owned gates. Changes
+remain uncommitted; no publication, merge, deployment or live data operation was
+performed. Historical Snow fixtures and the remaining retirement scope are
+unchanged.
+
+## Issue #53 — deterministic local lease supervision regression
+
+Scope is limited to `local lease supervision renews a live fence and aborts on
+replacement` in `tests/sql.integration.test.ts` and this record. Baseline:
+`42491b01e691802becbc4fbf57eb706f84e487b9`, branch `delivery/issue-53`.
+Read `withLease`, `Catalog.claim`/`renew`, the indexing supervision caller,
+accepted C04/R01 contracts and production acceptance obligations before changing
+the test. No production semantics, schemas, deadlines, dependencies, delivery
+policy, protected paths or other tests changed. The #37 repair loop remains
+stopped; #47/#50 remain blocked pending this repair's merge and integration.
+
+Diagnosis on October 25, 2026 used the original test with temporary observation
+of real `Catalog.renew` and a synthetic 1100 ms event-loop stall at work entry.
+Command: `pnpm exec tsx --test --test-name-pattern='^local lease supervision renews a live fence and aborts on replacement$' tests/sql.integration.test.ts`.
+Recorded execution order in `/tmp/issue-53-race.log`:
+
+- Startup renewal began at 0.155 ms and succeeded at 1.325 ms.
+- Work entered; the event loop resumed at 1101.619 ms after the injected stall.
+- The scheduled renewal began at 1101.922 ms and failed at 1105.303 ms with
+  `MoriaError: Worker lease expired or was replaced`, code `LEASE_LOST`, at
+  `services/catalog/src/catalog.ts:170`.
+- The test failed before replacement was attempted (one failure, zero skips).
+
+This reproduces the expiry mechanism under controlled scheduling starvation,
+not a captured historical full-suite failure. A one-second PostgreSQL lease
+expires against `clock_timestamp()` while a 333 ms Node timer can be delayed
+past that expiry under contention. Renewal correctly rejects that expired
+lease. The original 2200 ms and 450 ms sleeps neither synchronize SQL completion
+nor reserve the event loop. A `LEASE_LOST` after actual replacement or expiry is
+required behavior, not automatically a flaky error. Diagnostic instrumentation
+and the synthetic stall were removed.
+
+The regression now controls only Node `setTimeout`, leaving PostgreSQL time and
+all Catalog operations real. It uses the existing 60-second default lease and
+unchanged 15-second test timeout. A call-through Node spy observes each renewal
+promise; after SQL completion an unmocked `setImmediate` turn lets supervision
+schedule its successor or propagate cancellation before the next controlled
+tick. Four 20-second ticks each require exactly one renewal with the original
+execution/worker/fence and default duration. Before each tick, SQL sets the
+synthetic row's expiry to 30 seconds ahead (longer than the entire test timeout)
+so every renewal must observably extend it. Assertions check SQL liveness,
+strict expiry extension and exact worker/fence, rather than relying on timestamp
+rounding or wall-clock sleeps. Work completion must remove the timer and preserve
+the exact SQL expiry through another 40 seconds of controlled scheduling.
+
+Replacement is ordered explicitly: expire the original row, claim through
+Catalog, assert the live replacement and fence increment of exactly one, then
+advance the old worker's renewal. It must abort with `LEASE_LOST` without changing
+the replacement row. Stale startup is rejected. A separate expired-start probe
+uses the current replacement worker/fence and verifies `LEASE_LOST`, no entry to
+work and no resurrection or mutation of the expired row. This distinguishes
+expiry from fencing replacement with real SQL effects.
+
+Validation uses non-root Linux, Node 24.21.0, pnpm 11.25.0, workspace `.venv`
+Python 3.11.17 and disposable embedded PostgreSQL with synthetic data. No model
+inference is needed. Initial focused validation passed. Initial `pnpm typecheck`
+reported TS2769 because the spy's return type permits undefined; an explicit
+assertion now requires the actual Catalog promise before awaiting it. Twelve
+focused runs before that additional assertion passed, four concurrent fresh
+processes/databases at a time, with no retries, failures or skips. Final repeated
+validation and the complete gate are recorded below.
+
+Limitations: this checkout has no local `main` or remote-tracking refs, so current
+main freshness is unverified. Independent-environment full validation and
+independent assertion review are not established by same-host repeated tests.
+Those gates, Linux quality CI on the exact published head, current-main
+integration and merged-main validation remain mandatory controller-owned work.
+No commit, push, PR, merge, deployment, live-data operation or external contact
+was performed. Changes remain uncommitted; this record does not unblock #47/#50.
+
+Executed validation:
+
+- `pnpm format`: passed with changes confined to the scoped test. Initial
+  `pnpm typecheck` failed as described above; the complete gate subsequently
+  passed TypeScript checking.
+- The focused command above ran another twelve times after the promise assertion,
+  using Python `ThreadPoolExecutor(max_workers=4)` to launch twelve independent
+  `subprocess.run` calls (no retry). All twelve exited 0 with one test passed,
+  zero failures/cancellations/skips each. These runs overlapped `pnpm check`.
+  Evidence: `/tmp/issue-53-final-repeat-{1..12}.log`; the preceding batch is
+  `/tmp/issue-53-repeat-{1..12}.log`.
+- First full `pnpm check`: exit 0, 374 runtime tests passed, zero failures,
+  cancellations or skips; runtime test duration 115.906 seconds. Formatting,
+  SDK drift, TypeScript, Python formatting/specification/workload checks,
+  application builds and starter checks all passed. Evidence:
+  `/tmp/issue-53-check.log`. All required local runtime infrastructure was
+  available. After expanding the observer's if/else into readable blocks, the
+  complete gate was run again on the final source; result follows below.
+- `git diff --check`: passed. No protected paths changed.
+
+Final-source `pnpm format` and `pnpm check` both exited 0. The final gate passed
+374 runtime tests with zero failures/cancellations/skips in 99.111 seconds,
+including the revised real-PostgreSQL regression; all other gate stages passed.
+Evidence: `/tmp/issue-53-final-format.log` and `/tmp/issue-53-final-check.log`.
+The two complete gates ran in this implementation environment; neither is
+claimed as independent-environment validation or an independent review.
+
+### Issue #53 verification repair — October 25, 2026
+
+Verified the review finding against `withLease` and its actual Catalog and
+indexer callers: after abort, the callback catch replaces any callback error
+with `signal.reason`. An assertion inside that callback can therefore be
+misclassified as the expected `LEASE_LOST`. The existing expiry diagnostic log
+was also inspected; its recorded SQL failure precedes replacement, as described
+above. No production defect or change to lease semantics is required.
+
+The replacement phase now uses explicit work-entry and work-completion promises.
+All replacement, renewal-barrier and post-abort assertions execute outside the
+callback. The captured replacement snapshot is compared after supervision rejects
+with `LEASE_LOST`, including its exact expiry, worker and fence. Cleanup releases
+and drains work even when an assertion fails, preserving the original assertion
+error. The live-renewal, stopped-timer, stale-start and expired-start checks and
+15-second timeout remain intact. Changes remain limited to the scoped test and
+this record.
+
+Validation commands and evidence:
+
+- `pnpm format`: exit 0 (`/tmp/issue-53-review-format.log`).
+- `pnpm exec tsx --test --test-name-pattern='^local lease supervision renews a live fence and aborts on replacement$' tests/sql.integration.test.ts`:
+  exit 0, one pass, zero failures/cancellations/skips
+  (`/tmp/issue-53-review-focused.log`).
+- The same focused command ran twelve times via workspace `.venv/bin/python`,
+  `ThreadPoolExecutor(max_workers=4)` and independent `subprocess.run` calls,
+  overlapping the complete gate. All twelve exited 0, each with one pass and
+  zero failures/cancellations/skips. No retries. Logs:
+  `/tmp/issue-53-review-repeat-{1..12}.log`.
+- Temporary test copies at `tests/.issue-53-negative.ts` used the same focused
+  command with that path. The staged pre-repair test passed despite replacing
+  the expected replacement snapshot with an intentionally wrong object (exit 0).
+  The repaired test rejected that mutation (exit 1, `ERR_ASSERTION`). Separate
+  mutations forcing unconditional assertion failures at the post-abort check
+  and inside the lost-renewal barrier also exited 1 with `ERR_ASSERTION`, rather
+  than being accepted as `LEASE_LOST`. Logs:
+  `/tmp/issue-53-review-negative-{baseline-row,repaired-row,repaired-abort,repaired-barrier}.log`.
+  Temporary copies were removed; the actual test was not mutated.
+
+These checks use real disposable PostgreSQL and synthetic data on the same
+non-root Linux host and workspace `.venv`; no model smoke test is needed. They
+are not independent-environment validation or independent review. This checkout
+still has only `delivery/issue-53` at baseline
+`42491b01e691802becbc4fbf57eb706f84e487b9`; current-main freshness cannot be verified
+from local refs. Independent validation/review, exact-head Linux quality CI,
+current-main integration and merged-main validation remain outstanding and
+controller-owned. No publication or merge was performed; #47/#50 remain blocked.
+
+Full `pnpm check` on the repaired source exited 0: 374 runtime tests passed,
+zero failures/cancellations/skips, runtime duration 108.864 seconds. Formatting,
+SDK drift, TypeScript, Python formatting/specification/workload validation,
+both application builds and starter checks passed. Evidence:
+`/tmp/issue-53-review-check.log`. Required local runtime infrastructure was
+available; independent-environment runtime validation remains unverified.
+Final `git diff --check` passed. Only the authorized test and this record differ
+from HEAD; no protected paths changed. Changes are left uncommitted for the
+controller, preserving the pre-existing staged changes.
+
+### Issue #47 empty-history guidance repair — October 25, 2026
+
+Confirmed that Overview and Executions both mount `Platform` and share its loaded
+empty-history message. That message still directed users to removed sync and
+schedule controls. Replaced it with guidance that executions come from explicitly
+configured workloads and no bundled workloads run by default. The loading state,
+filters, historical job visibility and execution behavior are unchanged.
+
+Reviewed the retirement coverage matrix and accepted runtime contracts R01/R06.
+Source inspection confirms both views use the corrected block, and searching
+management source finds neither obsolete instruction. This bounded copy repair
+changes only `apps/management/src/platform.tsx` and this record; no tests or
+protected paths are changed. Browser interaction was not independently exercised.
+
+Validation: `pnpm format` passed (log: `/tmp/issue-47-guidance-format.log`). Full
+`pnpm check` results are recorded below. Independent review, exact-head Linux CI
+and current-main integration remain controller-owned and unverified in this repair.
+Changes are left uncommitted; no publication, merge or live data operations occurred.
+
+Full `pnpm check` exited 0: 377 runtime tests passed with zero failures,
+cancellations or skips. Formatting, SDK drift, TypeScript, Python checks, both
+application builds and starter checks passed. Required local runtime infrastructure
+was available. Evidence: `/tmp/issue-47-guidance-check.log`.
+Final `git diff --check` passed; only the two scoped files above differ from HEAD.
+
+## Issue #56 — scoped pinned Iceberg snapshot reads (October 25, 2026)
+
+Bounded scope: additive CatalogStorage trusted reader composition, dedicated
+TypeScript/Python scoped readers, disposable Iceberg fixtures/integration tests,
+and storage/worker documentation. Dependencies are the existing #49 catalog pin
+and publication integration, Authority and authorized StreamingStorage adapters,
+PyIceberg 0.12.0 and PyArrow 26.0.0. No dependencies, schemas, adapter internals,
+protected delivery paths or existing runtime consumers changed.
+
+The implementation pins existing catalog provenance, uses exact immutable
+service-owned reference mappings, mediates every manifest/Parquet range in the
+parent, and checks current authority before releasing rows. The fixed Python
+entrypoint has an allowlisted environment, serialized bounded IPC, process memory
+and CPU limits, bounded row frames and deterministic child cleanup. The initial
+fixture run exposed physical names in fixture output handles; those handles now
+preserve logical names in genuine Iceberg manifests. A malformed-reference test
+was corrected to target the current snapshot's manifest list as well as retained
+history. Neither finding was resolved by relaxing reader denial.
+
+Verification on the uncommitted working tree based on
+`c531f72e19b8d557e12160eb4a4e5ed16591c77d`, non-root Linux, Node 24.21.0,
+pnpm 11.25.0 and workspace Python 3.11.17:
+
+- `pnpm typecheck` passed.
+- `pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed
+  all 27 cases, zero skips, using disposable PostgreSQL and both real adapters.
+  Synthetic inputs include two 150-row files with exact int64/decimal/date/time/
+  array values, a competing retained snapshot and a row exceeding the frame limit.
+- `pnpm format` and `.venv/bin/python -m black workers benchmarks docs/spec/schemas
+  tests/fixtures/iceberg-scoped-storage` completed; fixture Black check passed.
+- Full `pnpm check` passed: 444 tests, zero failures/cancellations/skips, plus
+  formatting, SDK drift, TypeScript, Python/spec validation, both application
+  builds and starter build/hosting smoke. Local command output is retained at
+  `/tmp/issue-56-check.log` for this workspace session.
+- `git diff --check` passed. Only the issue's allowed source/test/documentation
+  paths are changed; existing physical-path and storage regressions remain intact.
+
+Limits: fixture-scale unpartitioned, unsorted v2 Parquet snapshots with no deletes;
+no query row policy, arbitrary-code isolation, production capacity or runtime
+rollout claim. Mapping provisioning and immutable retention are trusted composition
+obligations. Database waits remain cooperative. Independent-environment execution,
+clean independent review, current-main integration and Linux CI on the exact head
+are unverified here and remain controller/human gates. #17 remains open. Changes
+are left uncommitted; no publication, deployment or live-installation work occurs.
+
+## Issue #55 — independent static-host lifecycle
+
+Scope: standalone `apps/local/src/static-host.ts`, a shared static listener used
+by the existing custom-app CLI, process integration fixtures and delivery docs.
+The accepted static-host authority boundary and existing AppHost/serveApp
+contracts remain unchanged. Required explicit app/directory/port configuration
+serves only verified promoted artifacts on loopback. Startup performs no build,
+bootstrap, artifact mutation, database initialization or backend composition.
+The shared listener retains exact Host/Origin checks, CSP, safe asset paths and
+release pinning. Signal shutdown closes incomplete connections as well as the
+listener. CLI selection and port restrictions remain intact.
+
+The process tests use temporary synthetic artifacts, credential-free static
+children, and a separate real API child with scoped database credentials supplied
+only in its environment. The API regression uses disposable PostgreSQL and a
+synthetic asset imported/read through authenticated APIs. It checks static
+non-dispatch, restart independence and continued database availability. Generic
+hosting tests are unchanged. No protected paths, API/runtime composition, grants,
+schema, SDK, dependencies or package scripts were changed.
+
+Validation in this checkout (Node 24.21.0, pnpm 11.25.0, non-root Linux, repository
+`.venv`): `pnpm format` completed. Targeted process tests and full `pnpm check`
+results are recorded below after completion. Initial fixture failures were fixed
+by using raw HTTP for a wrong Host header (fetch rewrites it) and a scoped runtime
+PostgreSQL role; no production checks were relaxed.
+
+Limitations: this is local static lifecycle evidence, not production ingress or
+cross-origin management support. Same-origin `/api` needs separate trusted proxy
+routing to the API. No deployment, proxy configuration, external provider/model
+call, live state, capacity claim or publication is included. #14/M1 remains open;
+environment/stream ownership and remaining service separation are later work.
+Independent-environment validation, independent review with no findings,
+current-main integration and exact-revision Linux quality CI are unverified here
+and remain mandatory controller gates. Changes are left uncommitted.
+
+Completed validation on 2026-10-25: targeted
+`pnpm exec tsx --test tests/static-host-process.integration.test.ts` passed all
+3 tests. Full `pnpm check` exited 0: formatting, SDK drift, TypeScript, all 380
+runtime tests (0 failures, 0 skips), Python formatting/specification/workload
+checks, both application builds and Station Explorer type/build/hosting checks
+passed. `git diff --check` passed. Existing generic hosting coverage ran intact.
+No required local infrastructure was unavailable. Independent-environment and
+controller gates above remain unverified; this is not a claim of issue closure.
+
+### Issue #55 malformed-request repair — October 25, 2026
+
+Confirmed that URL parsing in `serveApp` precedes its internal error boundary.
+Added a real child-process raw-socket regression sending `GET http://[ HTTP/1.1`
+with the correct loopback Host. Before the repair, the regression failed because
+the connection ended without an HTTP response. The shared static listener now
+catches request-handler failures, returns an uncached 400 for invalid URLs or a
+generic 500 for other uncaught failures, and closes the affected connection.
+If headers were already sent, it destroys that response instead of writing a
+second status. Error details are not returned. Host/Origin checks and shared
+artifact serving remain unchanged.
+
+The regression asserts the controlled 400, then a successful valid request with
+the expected promoted version from the same still-running process. Targeted
+`pnpm exec tsx --test tests/static-host-process.integration.test.ts` passed all
+3 tests, including the real API/PostgreSQL lifecycle regression, with no skips
+(log: `/tmp/issue-55-repair-targeted.log`). `pnpm format` and `git diff --check`
+passed. Full `pnpm check` exited 0: all 380 runtime tests passed with no failures
+or skips, including unchanged generic hosting tests. Formatting, SDK drift,
+TypeScript, Python checks using the workspace `.venv`, both application builds
+and starter checks passed (log: `/tmp/issue-55-repair-check.log`). Required local
+runtime infrastructure was available.
+
+This repair changes only the shared listener, its scoped process test and this
+record. Existing staged issue work is preserved. No protected paths were changed
+and no credential files were accessed. Independent-environment validation, independent review,
+current-main integration and exact-revision Linux quality CI remain unverified
+controller gates. #14/M1 remains open; changes are uncommitted.
+
+### Issue #56 authority-wait repair — October 25, 2026
+
+Confirmed the scoped reader awaited current authority without an abort race and
+passed only the caller signal through CatalogStorage, omitting the engine's
+internal deadline. Scoped authority checks now race the combined scan signal,
+remove their abort listener on every outcome, observe late promise rejection and
+recheck cancellation before allowing output. CatalogStorage forwards that signal
+and denies cancelled checks before/after its current-authority transaction and
+before session validation when a blocked transaction resumes. No authorization
+failure becomes permission to read. Existing catalog transaction ownership,
+physical-path readers, adapters, dependencies and protected paths are unchanged.
+
+Added real PostgreSQL environment advisory-lock contention cases for both local
+and isolated S3 storage, before worker startup and with buffered rows. Each test
+observes an actually blocked authority backend, then verifies deadline or caller
+cancellation rejects pending iteration and completes iterator return while the
+lock remains held. It checks no further storage opens, no remaining child or
+caller abort listener, and then releases the lock and verifies pool and advisory
+lock cleanup. The underlying catalog transaction is not forcibly cancelled: its
+connection drains after lock release or the existing lock timeout. Initial
+catalog pinning precedes the engine deadline; deployment database/pool timeouts
+remain required. This repair does not claim general database cancellation.
+
+Validation: `pnpm format`, `pnpm typecheck` and `git diff --check` passed.
+`pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed
+all 35 tests with no skips, including eight real contention cases
+(log: `/tmp/issue-56-repair-targeted.log`). Full `pnpm check` exited 0:
+all 455 runtime tests passed with zero failures/skips, plus formatting, SDK drift,
+TypeScript, Python formatting/specification/workload checks using the workspace
+`.venv`, both application builds and Station Explorer type/build/hosting checks
+(log: `/tmp/issue-56-repair-check.log`). Required local infrastructure was available.
+Final `git diff --check` passed.
+Independent-environment checks, clean independent review, current-main integration
+and exact-revision Linux CI remain mandatory unverified controller gates. #17
+remains open. Changes remain uncommitted; no credential files were accessed.
+
+### Issue #56 post-exit authority-wait repair — October 25, 2026
+
+Confirmed that successful child close removed the engine deadline timer and caller
+abort listener before the final authority check. Their lifetime now extends through
+that check to the existing iterator cleanup. No authority or storage semantics,
+dependencies, protected paths or existing consumers change.
+
+Extended the real PostgreSQL contention regressions to the post-exit phase for
+local and isolated pinned S3 storage. A test-only transaction wrapper acquires an
+exclusive environment lock once the actual reader child has exited, then delegates
+to the real catalog transaction. Tests observe the blocked PostgreSQL backend and
+require deadline/cancellation rejection, iterator completion, no further storage
+opens and child/listener cleanup before unlocking. Pool and advisory-lock cleanup
+are checked after unlocking. The underlying SQL transaction still drains after
+contention clears; this is not general database cancellation.
+
+Before the repair, all four new post-exit cases failed with missing expected
+rejection (log: `/tmp/issue-56-post-exit-before.log`). After the repair,
+`pnpm exec tsx --test tests/iceberg-scoped-storage.integration.test.ts` passed all
+39 tests with zero failures/skips (log: `/tmp/issue-56-post-exit-targeted.log`).
+`pnpm format`, `pnpm typecheck` and `git diff --check` passed. Full `pnpm check`
+exited 0: all 459 runtime tests passed with zero failures/skips, plus formatting,
+SDK drift, TypeScript, Python formatting/specification/workload checks using the
+workspace `.venv`, both application builds and Station Explorer type/build/hosting
+checks (log: `/tmp/issue-56-post-exit-check.log`). Required local infrastructure
+was available. Final `git diff --check` passed.
+
+Independent-environment validation, clean independent review, current-main
+integration and exact-revision Linux CI remain unverified controller gates; #17
+remains open. Changes are left uncommitted.
+
+
+## Issue #58 — API-only management artifact lifecycle separation (2026-10-25)
+
+Scope: the existing runtime skips management bootstrap for API-only, and the
+shared server accepts an optional static-serving composition flag with its
+existing behavior as the default. Both local and public API-only listeners
+return controlled uncached JSON 404s for UI/static/release routes. Auth and API
+routing retain the existing Host/Origin, trusted HTTPS proxy, administrator,
+session, CSRF, recovery and protected operation checks. Combined development
+still bootstraps/serves management; execution-only roles remain independent.
+AppHost inventory and lineage are read-only at API startup/request time.
+
+Dependency: the #55 standalone static lifecycle already present in this checkout.
+No schema, dependency, Catalog/storage/engine, Jobs/lease, generated-client,
+protected-path or delivery-policy changes. No existing tests changed. Acceptance
+is bounded to lifecycle separation, not management/object privilege separation,
+multi-environment scheduling or arbitrary-code execution.
+
+New real child-process/PostgreSQL coverage uses a disposable synthetic cluster,
+scoped runtime grants and the repository-local Python 3.11 Iceberg worker.
+Runtime and existing API entrypoint start without UI source/dist or promoted
+artifacts; a fixture rejects importing the UI builder. Coverage includes real
+recovery, inventory/lineage/object reads, Iceberg import, action mutation,
+unauthenticated/wrong-origin/non-administrator session denial, current-grant
+revocation, public binding/recovery checks, non-serving after later promotion,
+and static/API/external-database lifecycle independence. No live installation,
+credential-file inspection, provider account or model API is used.
+
+Local validation on non-root Linux, Node 24.21.0, pnpm 11.25.0 and workspace
+Python 3.11.17, based on checkout revision
+`2b8d405144bafad1c14d9724b35767e70db7ed0c` plus these uncommitted changes:
+
+- `pnpm format`: passed; no out-of-scope changes.
+- `pnpm exec tsx --test tests/api-only-process.integration.test.ts`: passed,
+  one real process/PostgreSQL test, no skips (4.35 seconds).
+- Final `pnpm check`: passed, exit 0. All 421 runtime tests passed with zero
+  failures or skips (148.22 seconds). Formatting, SDK drift, TypeScript,
+  Python validation/formatting and all 14 Python tests, both application builds
+  and starter verification passed. Existing combined-mode, scheduler/execution
+  and static-process regressions passed unchanged.
+- `git diff --check`: passed. Required local infrastructure was available.
+
+Initial fixture runs corrected flat object-field assertions, allowed the existing
+inventory operation to create an empty AppHost root, and replaced an incorrect
+origin-bound-session assumption with denial through a real non-administrator
+session. The first full gate caught test header type inference; it was corrected
+before the passing gate. No production authentication behavior or existing test
+was changed. No checks were disabled. Local logs are
+`/tmp/issue-58-format.log`, `/tmp/issue-58-targeted.log` and
+`/tmp/issue-58-check.log`; these are ephemeral evidence, not CI.
+
+Independent-environment full checks, clean independent review, current-main
+integration and exact-head Linux CI are unverified controller gates, not local
+claims. Publication belongs to the controller and merges remain manual. #14/M1
+remains open for environment/stream ownership and remaining role separation.
+Changes remain uncommitted.
+
+## Issue #61 — platform composition PostgreSQL teardown repair (2026-10-25)
+
+Scope: tests/platform-composition.test.ts, the directly owned development
+cluster in apps/local/src/development-database.ts, and this record. Base revision
+is `55cbdb125b8a5fcf4b7f126ae447749bf2bcd94a`. Runtime composition, external
+PostgreSQL semantics, signal handling, leases, schemas, dependencies, storage
+engines and delivery policy are unchanged. All original test bodies/assertions
+are byte-for-byte unchanged. No protected paths changed.
+
+The initial CI-log access blocker was resolved by the controller supplying
+`/tmp/issue61-ci-failed.log`. Read it before implementing the repair. The offline,
+non-root Linux gate passed formatting, SDK drift and TypeScript, then failed
+with 420/421 runtime tests passing, zero skips. Its sole failure was the default
+composition test at line 40, with `terminating connection due to administrator
+command` and the pg-protocol parser stack. Startup had reached readiness.
+Python/build/starter stages were not reached in that failed CI run. Log contents
+were used as diagnostic evidence only; no credential files were inspected.
+
+Read the accepted core/security/runtime contracts, production acceptance,
+development setup and database lifecycle documentation. Inspected runtime entry
+points and all runProcess/startDevelopmentDatabase callers, composition cleanup,
+Jobs loops/stop, schema release, embedded-postgres stop and exit-hook ownership,
+and pg pool/client teardown. Runtime already waits for startup, listeners, jobs,
+schema release and pool.end() before stopping its development cluster. External
+mode has no cluster owner. The defect is in assuming pool.end() means every
+socket is disconnected: pg-pool removes idle clients from its tracked list
+before their asynchronous end callbacks finish.
+
+Local evidence matched the CI signature:
+
+- Baseline focused test passed both tests, but temporary instrumentation recorded
+  pool.end requested; three client.end requests; pool.end resolved; cluster.stop
+  requested; then three client end events (`/tmp/issue-61-ordering.log`).
+- Temporarily delaying client disconnect by 100 ms reproduced the same test
+  failure and PostgreSQL error/parser stack (`/tmp/issue-61-reproduction.log`).
+  This was diagnostic fault injection only. No timeout or retry was added to
+  the final tests. All temporary logging/delay instrumentation was removed.
+- The initial unchanged `pnpm check` passed 421/421 runtime tests and 14 Python
+  tests (`/tmp/issue-61-check.log`), which did not rule out this teardown race.
+
+The development database owner now tracks each connected client until its real
+`end` event, removes completed promises, and waits for remaining disconnects
+before invoking embedded cluster stop. The existing caller still drains and
+ends its pool first. Tracking begins at connection time so clients already
+removed from the pool are covered. There is no error suppression or alteration
+to persistent paths, initialization or external PostgreSQL behavior.
+
+The added regression uses a real disposable PostgreSQL cluster and two real
+clients, holding their end calls with explicit barriers. One client is removed
+before pool.end(), the other is idle. It proves pool.totalCount can reach zero
+while both disconnects remain pending, checks cluster stop has not been requested,
+queries real persisted data while waiting, releases the idle client first and
+proves the removed client still prevents shutdown. Both end events must precede
+the stop request. A transparent stop wrapper waits for cleanup even on the old
+ordering, without suppressing errors or allowing the ordering assertion to pass.
+A real restart verifies the marker persists. No mock substitutes for SQL or
+cluster start/stop, and no live installation is used.
+
+Validation:
+
+- The final regression against the original development-database.ts exits 1 at
+  `cluster stop must wait for actual client disconnections` (actual 1, expected
+  0); the two original tests pass (`/tmp/issue-61-regression-red-final.log`).
+- With the repair, all three focused tests pass, zero skips
+  (`/tmp/issue-61-regression-green.log`). Six further runs in two batches of
+  three concurrent processes all exit 0, with three tests passing in each and
+  no skips (`/tmp/issue-61-repeat-1.log` through `-6.log`). Fixed run counts;
+  no retry-until-pass behavior.
+- `pnpm format` and `git diff --check` passed. The complete repaired `pnpm
+  check` exited 1: formatting, SDK drift and TypeScript passed; 421/422 runtime
+  tests passed, zero skips (156.84 seconds). Both the new regression and the
+  original composition test passed. The sole failure is
+  `tests/api-only-process.integration.test.ts:78`: `TypeError: fetch failed`,
+  caused by `read ECONNRESET` (`/tmp/issue-61-repair-check.log`). The fixed-count
+  focused batches overlapped the beginning of this gate; the log does not
+  establish the cause of the reset. It must not be dismissed as transient.
+- The runtime failure prevented the gate's downstream stages from executing.
+  Ran `pnpm check:python && pnpm build && pnpm check:starter` separately: exit 0,
+  including Python formatting/validation and all 14 Python tests, both builds,
+  and starter type/build/hosting verification. These passes do not override the
+  failed full gate.
+
+Remaining blocker: diagnose the API-only integration connection reset in an
+explicitly authorized follow-up. That test is outside issue #61's allowed files;
+no changes or retries were made to obtain a green gate. The scoped lifecycle
+repair and deterministic regression are complete locally, but issue acceptance
+and roadmap resumption remain blocked by the failed complete quality gate and
+independent validation/review requirements.
+
+Environment: non-root Linux, Node 24.21.0, pnpm 11.25.0, repository-local Python
+3.11.17. Independent-environment validation, clean independent review, current
+main integration, exact-head Linux CI and merged-main validation remain
+unverified controller gates. No publication, commits, live operations, external
+contacts or paid model calls were performed. Changes remain uncommitted.
+
+
+## Issue #56 — final focused initial-pinning cancellation pass (2026-10-25)
+
+Scope is the trusted readRows lifecycle in services/catalog/src/storage.ts,
+real PostgreSQL regressions in tests/iceberg-scoped-storage.integration.test.ts,
+and scoped-reader documentation. Accepted C04 exact-snapshot and S06 current
+release authority contracts remain unchanged. No protected paths, dependencies,
+schemas, storage adapters, physical-path readers or runtime adoption changed.
+
+The read deadline and caller cancellation now cover initial catalog pinning,
+starting at readRows invocation and continuing through iterator completion.
+Initial openRead races cancellation while retaining an observer of its eventual
+result. Catalog.transaction retains ownership of rollback, advisory unlock and
+client release; cancellation checkpoints prevent late pinning from initializing
+storage. The iterator owns timer/listener cleanup on completion, error, return
+and throw, including return/throw before its first pull. Existing startup,
+buffered-row and post-child-exit cancellation/deadline guards remain in place.
+
+Added real PostgreSQL advisory-lock regressions for caller cancellation and
+deadline on both local and isolated pinned S3 fixtures. They require CANCELLED
+before unlocking, confirm the backend is still blocked, verify no storage/child
+startup and caller-listener cleanup, then verify pool/lock drainage and no late
+storage startup after unlocking. Additional iterator regressions cover return
+and throw before first pull and normal exhaustion. The existing one-millisecond
+deadline assertion now covers rejection during either initial pinning or first
+pull and requires the CANCELLED code.
+
+Validation: pnpm format passed. Full pnpm check exited 0 in the provided
+non-root Linux checkout with Node 24.21.0, pnpm 11.25.0 and workspace Python
+3.11.17. Formatting, SDK drift, TypeScript, all 471 runtime tests (zero failures
+or skips; 248.79 seconds), Python formatting/schema validation and all 14 Python
+tests, both builds and starter verification passed. Both local and isolated S3
+initial-pinning regressions rejected before unlock and passed drainage assertions;
+all existing startup/buffered-row/post-exit cancellation tests passed. Raw gate
+output is /tmp/issue-56-final-check.log; formatting output is
+/tmp/issue-56-final-format.log. git diff --check passed.
+Independent-environment verification, clean independent review, current-main
+integration and exact-head Linux CI remain controller gates and are unverified.
+No commits, publication, live infrastructure or external contacts; #17 remains
+open and changes remain uncommitted.
+
+## Issue #63 — bounded complete scoped snapshot publication (2026-10-25)
+
+Scope: additive trusted `CatalogStorage.publishSnapshot`, one dedicated publication
+helper, fixed Python closure validation, genuine Iceberg fixture support, dedicated
+integration tests and storage/worker documentation. Dependencies #49/#56 and accepted
+C04/S01/S02/S06/S08 contracts are preserved. No dependencies, schemas, protected paths,
+storage adapter internals, physical-path consumers, runtime rollout or delivery
+policy changed. Work is on `delivery/issue-63`; changes remain uncommitted.
+
+The new seam binds every exact-size immutable object's content and canonical logical
+name into the existing catalog request hash, validates retained metadata/manifests/
+Parquet through real pinned parsers, stages through existing scoped create-only
+adapters and publishes only after acknowledged completion. It returns the existing
+receipt and service-owned immutable references for trusted reader binding replacement.
+The metadata-only API and object identity remain unchanged. Full limits and retry,
+orphan and uncertain-acknowledgment semantics are in CATALOG-STORAGE.md.
+
+Initial validation: workspace Python 3.11 real fixture/validator smoke passed.
+Initial TypeScript checking found a missing explicit fixture array type. Initial
+focused tests exercised both local and isolated S3 adapters; the only runtime
+failures were new expiry assertions expecting AUTHORIZATION_CHANGED rather than
+Authority's existing UNAUTHENTICATED contract. First repair pass corrected these
+test declarations/expectations without changing authority behavior or weakening
+assertions, strengthened stalled-intake cancellation and unsafe-reference cases,
+and completed validation bounds. Subsequent check results are recorded below.
+
+No live installation, credential file, paid model, external person, commit, push,
+PR, merge or deployment was involved. Fresh independent no-findings review,
+current-main integration and successful Linux quality CI on the exact published
+head remain unverified controller gates. #17 stays open and #18/#19 remain
+dependency-gated; production durability/capacity, recovery, Spark interoperability,
+arbitrary-code isolation and runtime adoption are outside this slice.
+
+The repaired focused integration command
+`pnpm exec tsx --test tests/catalog-snapshot-publication.integration.test.ts`
+passed 62 tests with no failures/skips in 93.28 seconds (raw output:
+`/tmp/issue-63-focused-repair1.log`). `pnpm typecheck`, `pnpm format`, workspace
+Black formatting and `git diff --check` passed. A subsequent parser probe showed
+that PyIceberg accepts an unresolved current-snapshot ID at model-parse time.
+The second repair pass added explicit current/reference snapshot resolution and
+cross-history immutable snapshot-definition checks, plus a dangling-snapshot
+regression. The full gate below includes that final regression. The two-repair
+budget is exhausted; further failures must be reported rather than repaired here.
+
+Final verification: `pnpm check` exited 0 on the uncommitted issue changes above
+base `aff3d976075db3d2c965cfe0bab1cb383275ee53`. All 535 runtime tests passed
+(zero failures, cancellations or skips; 338.94 seconds), including 64 complete
+snapshot tests across real PostgreSQL/local storage and isolated checksum-pinned
+MinIO, and all existing metadata publication/scoped reader tests. Formatting,
+SDK drift, TypeScript, Python formatting/specification/workload validation, all
+14 Python tests, both application builds and Station Explorer type/build/hosting
+verification passed. Raw full-gate output: `/tmp/issue-63-check.log`; formatting:
+`/tmp/issue-63-format.log`; Black: `/tmp/issue-63-black.log`. Final
+`git diff --check` passed. Environment: non-root Linux, Node 24.21.0,
+pnpm 11.25.0, workspace Python 3.11.17, PyIceberg 0.12.0 and PyArrow 26.0.0.
+Only synthetic disposable databases, warehouses and S3 fixtures were used.
+No required local infrastructure gate was skipped. Controller-owned independent
+review, current-main integration and exact-head Linux CI remain unverified;
+local success does not satisfy or replace those acceptance gates.
+
+### Issue #63 — schema validation review repair (2026-10-25)
+
+This follow-up addresses the explicitly requested schema-validation findings only.
+The earlier two-pass repair history above is preserved; this repair does not change
+delivery policy or authorize further unrelated repairs. Regressions use genuine
+Iceberg metadata and Parquet containing nulls, retaining integer snapshot IDs
+without JavaScript number coercion. They retain the original metadata while changing
+root nullability, exercise a different resolved current schema for snapshots with
+omitted schema IDs, and supply unknown or duplicate schema IDs in root/retained
+metadata. Repeated snapshot definitions stay consistent so unrelated snapshot
+checks cannot mask the schema-resolution gap. Every rejection asserts zero storage
+writes and unchanged heads, history/lineage, checkpoints and publication receipts.
+
+Verification commands and final results for this repair are recorded below.
+
+The pre-fix reproduction (`pnpm exec tsx --test
+ tests/catalog-snapshot-publication.integration.test.ts`, output
+`/tmp/issue-63-schema-reproduction.log`) reproduced all six schema rejection gaps
+on both adapters: each candidate incorrectly succeeded. Twelve failing subtests
+plus their two parent tests were reported. The retained-schema regression was
+subsequently tightened to make the unknown ID valid only in the root, isolating
+resolution inside retained metadata.
+
+The validator now rejects duplicate schema IDs within a metadata file, conflicting
+schema definitions across history, and unresolved current/explicit snapshot schema
+IDs. Its scan cache includes PyIceberg's resolved projection, so snapshots without
+schema IDs cannot reuse a historical scan under a different current schema. These
+scan contexts share the existing 128-scan and aggregate row/byte bounds.
+
+Final focused command: `pnpm exec tsx --test
+ tests/catalog-snapshot-publication.integration.test.ts` passed all 76 tests,
+zero failures/cancellations/skips, in 116.29 seconds. Output:
+`/tmp/issue-63-schema-focused.log`. This includes real disposable PostgreSQL,
+local storage and isolated S3, original successful publication/read/retry cases,
+and all new pre-staging schema regressions. `pnpm format`, workspace Black and
+`git diff --check` passed; no protected paths or dependencies changed.
+
+Full `pnpm check` exited 0: all 547 runtime tests passed, zero failures,
+cancellations or skips (366.40 seconds); all 14 Python tests, formatting, SDK drift,
+TypeScript, specification/workload validation, application builds and Station
+Explorer verification passed. Output: `/tmp/issue-63-schema-check.log`. The final
+retained-metadata test refinement also passed the focused suite above and a fresh
+`pnpm format:check` (`/tmp/issue-63-schema-format-check.log`). Validator source was
+unchanged throughout the full gate. Final `git diff --check` passed.
+
+Changes remain uncommitted. No required local infrastructure was unavailable or
+skipped. Fresh independent no-findings review, current-main integration and Linux
+quality CI on the exact published head remain unverified controller-owned gates.
+The scope and production/runtime limitations recorded above remain unchanged;
+#17 remains open and #18/#19 remain dependency-gated.
+
+### Issue #63 reader compatibility repair
+
+Verified the two additional review findings against the pinned PyIceberg parser
+and unchanged scoped reader. New real PostgreSQL/local/S3 regressions reproduced
+successful publication of missing sort orders, empty sort orders, and a current
+schema renaming `value` to `renamed` while the selected snapshot retains schema 0.
+The pre-fix run is recorded in `/tmp/issue-63-reader-regressions-before.log`.
+
+The fixed validator requires nonempty sort orders and compares each metadata
+file's current snapshot resolved projection fields with its advertised current
+table schema before scan-cache reuse. Ordered field definitions must match;
+schema IDs alone may differ. Validation still precedes all scoped writes and
+catalog publication. Regressions on both adapters require `INVALID_INPUT`, zero
+writes and unchanged heads, history/lineage, checkpoint and receipt state.
+No reader, dependency, schema, protected path or delivery policy changed.
+
+Verification: `pnpm format`, `.venv/bin/python -m black workers benchmarks
+docs/spec/schemas` and `git diff --check` passed. `pnpm exec tsx --test
+tests/catalog-snapshot-publication.integration.test.ts` passed all 82 tests, zero
+failures/cancellations/skips, in 124.76 seconds with real disposable PostgreSQL,
+local storage and isolated S3 (`/tmp/issue-63-reader-focused.log`). Full
+`pnpm check` exited 0: all 553 runtime tests passed with zero failures,
+cancellations or skips (363.91 seconds), and all 14 Python tests, formatting,
+SDK drift, TypeScript, specification/workload validation, application builds and
+Station Explorer verification passed (`/tmp/issue-63-reader-check.log`). Final
+`git diff --check` passed. No required local infrastructure was unavailable.
+Fresh independent review, current-main integration and exact-head Linux quality
+CI remain unverified controller-owned gates. Changes remain uncommitted; the
+existing production/runtime limitations and dependency gates remain in force.
+
+## Issue #65 — durable scoped reference recovery (2026-10-25)
+
+Scope: existing catalog publication/read seams, one dedicated inventory helper,
+dedicated recovery integration tests and a fresh-process fixture under
+`tests/fixtures/iceberg-scoped-storage`, plus catalog/worker documentation.
+Dependency #63's domain-separated complete-snapshot commitment already binds the
+canonical reference inventory; no schema, dependency, adapter, runtime, protected
+path or delivery-policy change is needed. Accepted C01/C04/C08 and S01–S03/S06
+remain the governing contracts. Changes are uncommitted on `delivery/issue-65`, based on
+`7fce280b0d49c22be35b7641db7c13c50186f43f`.
+
+Complete publication persists the exact committed reference array through the
+existing authorized create-only StreamingStorage path before Catalog.publish.
+Its service-derived location hashes the canonical pinned metadata StorageLocation
+with `moria-reference-inventory-v1\0`. Fresh bindings recover only from catalog
+provenance, reject noncanonical/duplicate/extra fields and names, verify metadata
+and inventory commitment, validate UUID/snapshot, then verify every object's size
+and scoped content hash before any row release. The iterator retains verified
+bytes and provenance; current Authority checks continue through consumption.
+Explicit trusted mappings and metadata-only APIs are preserved. Missing older
+inventories fail closed. No registry, provider listing, metadata URL fetching,
+physical fallback, cleanup, adoption or migration is introduced.
+
+Limits: inventory 256 KiB; intake at most 65,536 frames of at most 256 KiB per
+object; root metadata 1 MiB; 128 referenced objects each at most 16 MiB; total
+verified metadata/objects 64 MiB per scan, plus inventory and bounded transient
+copies. Publication retains 64 MiB input across at most 16 outputs, plus at most
+256 KiB inventory per output. Existing child request/transport/row limits are
+unchanged. One maximum 60-second reader deadline covers pinning, recovery and the
+iterator lifetime, with safely observed pending SQL cleanup. Inventory failures
+preserve heads/history/lineage/checkpoint/receipt and existing orphan semantics.
+Only the committed exact request recovers its receipt; collisions cannot establish
+durability. All promised snapshots' objects and inventories remain retained.
+
+Environment: non-root Linux uid 10001; Node 24.21.0; pnpm 11.25.0; repository-local
+Python 3.11.17; PyIceberg 0.12.0; PyArrow 26.0.0; embedded-postgres package
+18.4.0-beta.17 (PostgreSQL 18.4); MinIO RELEASE.2025-09-07T16-13-09Z
+(Go 1.24.6 linux/amd64), isolated fixture SHA-256
+`7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f`.
+Only disposable synthetic PostgreSQL/provider fixtures and generated ephemeral
+sessions/credentials are used; no credential file or live installation is read.
+
+Initial verification: `pnpm typecheck` passed. The first
+`pnpm exec tsx --test tests/catalog-reference-recovery.integration.test.ts` passed
+20 tests, zero skips, across local storage and isolated S3 (72.275 seconds;
+`/tmp/issue-65-focused.log`). This includes fresh-process rows/scalars/provenance,
+receipt recovery after lease expiry, competing publication, malformed/swapped/
+missing/oversized durable data, failed/uncertain/cancelled inventory writes,
+revocation/expiry and cancellation/deadline during inventory intake and SQL pinning.
+Additional metadata-only and partial-inventory cases and exact-scope assertions
+are undergoing verification. `pnpm format` and full `pnpm check` were started;
+final results are recorded below when available.
+
+Scope conflict: the existing complete-publication regression counts exactly one
+metadata write plus the referenced objects per output. The required durable
+inventory necessarily adds one write per output. The file containing that
+assertion is outside the issue's listed test scope. Permission for that one expected
+write-count update is pending; the assertion has not been weakened or changed.
+
+Independent-environment full check, independent no-findings review, current-main
+integration and exact-head Linux quality CI remain unverified/controller-owned.
+No publication, merge or deployment is performed. #17 remains open and #18/#19
+remain dependency-gated. This is not production recovery/capacity certification,
+runtime rollout or a new retention/expiration policy.
+
+Final focused verification:
+
+- `pnpm exec tsx --test tests/catalog-reference-recovery.integration.test.ts`:
+  24 passed, zero failed/skipped (90.943 seconds;
+  `/tmp/issue-65-recovery-verified.log`). Includes partial inventory intake,
+  metadata-only compatibility, exact read/create scopes, same-environment/table
+  publication inventory swaps and unchanged committed state after fresh-process
+  receipt recovery. Both local and isolated S3 variants passed.
+- `pnpm format`, `pnpm format:check`, `pnpm typecheck` and `git diff --check`:
+  passed (`/tmp/issue-65-format.log`, `/tmp/issue-65-format-final.log`).
+- `pnpm check:python && pnpm build && pnpm check:starter`: passed, run separately
+  to exercise the checks after the full gate's expected runtime-test failure
+  (`/tmp/issue-65-remaining-checks.log`). This does not turn a failed full gate
+  into a pass. No database tests were skipped or checks disabled.
+
+
+Bounded review repair 1: recovery initially reused the metadata-only Python
+validator. To preserve the complete publisher's child isolation/resource envelope,
+recovery now reuses `validateSnapshot` after content verification and before row
+release. This also revalidates the entire closure, with the existing 2 GiB
+address-space/60-second CPU/zero-core limits and isolated minimal child environment.
+No worker or adapter changes were needed. `pnpm format` and full `pnpm check`
+were rerun against this final implementation (`/tmp/issue-65-check-final.log`).
+The focused 24-test result above precedes this repair; final-gate recovery results
+below supersede it for the final source.
+
+The first full `pnpm check` completed with exit 1: 577 tests, 573 passed, four
+reported failures (the two provider-specific write-count assertions and their two
+enclosing tests), zero cancelled/skipped, 456.590 seconds. Both assertions at
+`tests/catalog-snapshot-publication.integration.test.ts:212` expected 18 writes
+and observed 20: the additional durable inventory for each of two outputs.
+No other failures occurred. Formatting, SDK drift and TypeScript stages passed.
+The assertion remains unchanged because its file is outside the authorized scope;
+the required minimal follow-up is changing only `fixture.objects.length + 1` to
+`fixture.objects.length + 2`, then rerunning the full gate. No missing infrastructure
+caused this failure. The host kernel is Linux 6.18.33.2-microsoft-standard-WSL2;
+the checkout and test data are on the Linux filesystem, using the non-root user.
+
+Final-source full gate: `pnpm check` exited 1 after 427.817 seconds
+(`/tmp/issue-65-check-final.log`): 577 tests, 573 passed, four reported failures,
+zero cancelled/skipped. All 24 dedicated recovery tests passed with the reused
+complete-snapshot validator. The only failures remain the two expected-write-count
+assertions (20 actual versus 18 expected) and their enclosing local/S3 tests.
+Formatting, SDK drift and TypeScript stages passed on this final source. The later
+Python/build/starter stages were already verified separately; the full gate itself
+is failed, not accepted. One bounded review repair was used; no checks or existing
+tests were weakened. `git diff --check` passes and all changes remain uncommitted.
+Acceptance is blocked on the narrowly identified test-scope decision and then a
+passing full gate, in addition to the independent review/environment, current-main
+integration and exact-head Linux CI gates listed above.
+
+Bounded review repair 2 (#65 verification feedback): the requested repair resolves
+the test-scope decision above. Updated only the existing complete-publication
+regression's exact write count to include one durable inventory per output, in
+addition to root metadata and referenced objects (20 writes for the two-output
+fixture). The assertion still requires an exact count; its per-write unchanged
+catalog-state checks and all row/provenance/receipt checks remain intact. No
+production code, protected path, dependency or delivery policy changes are needed
+for this repair. The original failed-gate results above remain historical evidence.
+
+Repair verification uses the same non-root Linux environment and repository-local
+Python 3.11.17, Node 24.21.0 and pnpm 11.25.0. `pnpm format` passed
+(`/tmp/issue-65-repair-format.log`). Full `pnpm check` passed (exit 0;
+`/tmp/issue-65-repair-check.log`): all 577 tests passed, zero failed/cancelled/skipped,
+runtime-test duration 427.231 seconds. Both local and isolated S3 publication and
+recovery suites passed, using real disposable PostgreSQL and PyIceberg fixtures.
+Formatting, SDK drift, TypeScript, Python formatting/specification/workload checks,
+both application builds and starter verification all passed in the same full gate.
+`git diff --check` also passed. This supersedes the local full-gate blocker above.
+Independent
+environment/review, current-main integration and exact-head Linux quality CI
+remain unverified and controller-owned. #17 remains open; #18/#19 remain
+dependency-gated. Changes remain uncommitted.
+
+
+## Protected point-read release check — October 27, 2026
+
+ObjectService.read now rechecks current authority after object evaluation, inside
+the same protected transaction, before returning the result. This aligns point
+reads with queries when a session expires during a blocked database read (#69).
+
+A disposable real-PostgreSQL regression establishes a source-table lock barrier
+after initial authorization, waits for the session deadline pinned before the
+read snapshot, then releases the lock. The original point read returns data and
+fails the regression; the query control denies release. The repaired point read
+also denies release, and subsequent valid and missing-object reads verify cleanup.
+No session-row mutation after snapshot creation is used to simulate wall-clock
+expiry. Full quality results are recorded in the pull request. This narrow repair
+does not implement the shared lifecycle/enforcement work in #72 or resolve #67.
+
+
+## Protected-operation owner — October 27, 2026
+
+The object point/query release lifecycle now has one private owner. Store and
+authority handles no longer escape ObjectService; binding declarations are copied,
+and requiring adds gates without weakening previous requirements. Action commit
+ownership remains in Catalog.action. The management server delegates retired-job
+retry validation into Jobs instead of issuing raw catalog queries itself.
+
+A TypeScript semantic architecture gate and negative fixtures reject direct and
+indirect raw access, unregistered callers/operations, runtime database imports,
+computed imports and missing registered tests. Shared release tests include actual
+HTTP point/query requests as well as real database barriers. See
+docs/production/PROTECTED-OPERATIONS.md for owners, proof boundaries and unmet
+external enforcement. #72 remains open until independently enforced review and
+all required evidence are satisfied. Full check results belong in the PR.
+
+
+## Shared HTTP transport owner — October 28, 2026
+
+All four native listener factories and their nested workload dispatchers now use
+one transport owner. Trusted profiles preserve workload, browser/CLI, static and
+public-proxy contracts; browser headers cannot select local CLI/recovery authority.
+Body parsing, transport admission, baseline headers, timeouts and safe failure
+handling are shared. Resource authorization remains in the protected-operation
+owners. Architecture fixtures reject raw listeners, unregistered profiles/callers
+and request-event bypasses; real HTTP barriers cover every profile and actual
+factory. Existing SQL auth and independent process suites remain in the full gate.
+See docs/production/HTTP-BOUNDARY.md for the inventory, proxy trust assumption,
+intentional response differences and unmet independent enforcement/review gates.
+Full exact-revision verification is recorded in the PR; #73 remains open.
+
+
+## Shared Python lifecycle owner — October 28, 2026
+
+The five direct Python adapters now share fixed task startup, bounded input/output,
+backpressure, deadlines, cancellation, graceful-to-force termination and reaping.
+Streaming protocol checks, materialized compatibility, storage authority and
+publication fencing remain in adapters. Safe outcomes retain actual exit code and
+signal; only explicit validator exit65 means invalid content. Unknown native failures
+remain unknown. No raw stderr or request data enters diagnostics.
+
+Production source guards reject raw process primitives and unregistered callers.
+Every adapter runs the same fixed-child lifecycle contract, with real PID cleanup
+checks; real SQL/PyIceberg/local/S3 suites remain. The dependency-owned development
+database is separately registered. Catalog storage fixtures reuse its actual-client
+drain behavior after a deterministic red regression reproduced early cluster stop.
+This addresses the observed cleanup path without diagnosing #67's validator failure.
+See docs/production/PROCESS-LIFECYCLE.md for limits, outcome mappings, OS/dependency
+assumptions and unmet independent review/enforcement gates. Full exact-revision
+results belong in the PR; #74 remains open.

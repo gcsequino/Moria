@@ -43,7 +43,9 @@ test(
       (await p.pool.query('SELECT revision FROM moria.environments WHERE id=$1', [p.environment]))
         .rows[0].revision,
     );
-    p.records.binding.policies.markings = ['protected'];
+    p.configureRecords((binding) => {
+      binding.policies.markings = ['protected'];
+    });
     const declaration = {
       ...p.declaration,
       spec: {
@@ -64,7 +66,9 @@ test(
     await t.test(
       'reference parameters do not request or snapshot protected properties',
       async () => {
-        p.records.binding.policies.propertyRead = { value: { literal: false } };
+        p.configureRecords((binding) => {
+          binding.policies.propertyRead = { value: { literal: false } };
+        });
         const key = randomUUID();
         const accepted = await p.functions.invoke(context, p.resourceId, key, input);
         const result = await p.functions.wait(context, accepted.id);
@@ -109,11 +113,15 @@ test(
           }),
           { code: 'NOT_FOUND' },
         );
-        p.records.binding.policies.objectRead = { literal: false };
+        p.configureRecords((binding) => {
+          binding.policies.objectRead = { literal: false };
+        });
         await assert.rejects(p.functions.invoke(context, p.resourceId, randomUUID(), input), {
           code: 'NOT_FOUND',
         });
-        delete p.records.binding.policies.objectRead;
+        p.configureRecords((binding) => {
+          delete binding.policies.objectRead;
+        });
         assert.equal(executions, before);
       },
     );
@@ -169,12 +177,16 @@ test(
         assert.equal(missing.result, undefined);
         await p.publish({ ...declaration, spec: { ...declaration.spec, inputs: {} } });
         output = input;
-        p.records.binding.policies.objectRead = { literal: false };
+        p.configureRecords((binding) => {
+          binding.policies.objectRead = { literal: false };
+        });
         const hidden = await invoke({});
         assert.equal(hidden.status, 'failed');
         assert.equal(hidden.error?.code, 'NOT_FOUND');
         assert.equal(hidden.result, undefined);
-        delete p.records.binding.policies.objectRead;
+        p.configureRecords((binding) => {
+          delete binding.policies.objectRead;
+        });
         await p.publish(declaration);
         output = undefined;
       },
@@ -183,7 +195,7 @@ test(
       'UUID OSDK routes preserve projection policy and never fall back to a name binding',
       async () => {
         const server = createApi(p.sessions, {
-          objects: new Map([['records', p.records]]),
+          objects: p.objects,
           actions: new Map(),
         });
         await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -205,10 +217,14 @@ test(
         const customer = records.object(uid);
         assert.deepEqual((await customer.get([])).object, {});
         await assert.rejects(customer.get(['value']), { code: 'PROPERTY_FORBIDDEN' });
-        p.records.binding.objectTypeId = randomUUID();
+        p.configureRecords((binding) => {
+          binding.objectTypeId = randomUUID();
+        });
         await assert.rejects(customer.get([]), { code: 'NOT_FOUND' });
         await assert.rejects(p.functions.get(context, retained));
-        p.records.binding.objectTypeId = objectType;
+        p.configureRecords((binding) => {
+          binding.objectTypeId = objectType;
+        });
       },
     );
     await t.test(

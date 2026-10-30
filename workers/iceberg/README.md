@@ -19,3 +19,118 @@ For process-local renewal/cancellation, use `IcebergIndexer.runSupervised(sessio
 `runSupervised` also accepts `timeoutMs` (default and maximum 30 minutes), covering the whole attempt from initial renewal. Expiry aborts the reader and prevents publication once observed; database waits remain cooperative and require appropriate database/pool timeouts. The reader checks its own timeout between buffered rows as well as at process completion, so killing the child cannot leave buffered rows flowing after its deadline.
 
 Indexed source markings are persisted with the ontology generation. ObjectService checks serving label inclusion for reads, queries, actions and action replay; refreshes cannot remove an active required marking. Legacy generations lack this metadata and require an authoritative migration before production. This protection does not replace release binding resolution or restricted-view policy integration.
+
+## Scoped pinned snapshot reader (#56)
+
+`CatalogStorage.readRows(session, exactDataset, {signal?, timeoutMs?})` is an
+additive trusted-service entrypoint. It returns the existing pinned provenance
+plus an async `rows` iterator. Existing physical-path readers and consumers are
+unchanged. The service binding must supply `icebergTableUuid`. An explicit trusted
+`readObjects` inventory remains supported; otherwise complete publications recover
+their durable service-owned inventory from the catalog-pinned commitment (#65).
+The inventory contains exact engine names, logical StorageLocations and byte
+sizes for that Dataset/table. Engine names have the form
+`moria://<warehouseId>/<tableId>/<explicit-object-name>`; slash-separated name
+components are ASCII tokens, with no empty components, traversal, escapes or
+query strings. These are capability names, not provider URLs or filesystem paths.
+The inventory comes from trusted composition or verified catalog-bound recovery,
+never request JSON.
+Objects and mappings must remain immutable for the scan's lifetime.
+
+The pinned metadata and manifest/data objects use parent-owned StreamingStorage.
+Recovered scans serve ranges from their verified per-iterator bytes. `scoped_io.py` implements only InputFile and seek/read; output
+and deletion fail. PyIceberg receives this FileIO explicitly, so table properties
+cannot select a different IO implementation. There is no default filesystem,
+PyArrow/S3 fallback or ambient provider credential chain. Unknown references fail
+before storage access. Each parent access creates an exact read-only object scope
+using the original Authority epoch/session. Authority is checked again before
+each released row (including buffered rows), outside storage/network transactions.
+
+The fixed repository `.venv/bin/python -I` entrypoint gets only metadata bytes,
+pinned table/snapshot IDs, logical names and sizes. Its environment is an explicit
+allowlist (locale, nonexistent HOME, fixed thread limits); it receives no provider
+or database credentials, physical warehouse root, executable choice or source.
+This is trusted platform code, not an arbitrary-code sandbox or network isolation
+claim. Parent/child pipes serialize one request or row acknowledgment at a time;
+a process-wide Python lock also serializes Arrow's background IO. Each batch waits
+for parent acknowledgment, so a paused consumer applies backpressure. Cancellation,
+deadline, early return and child failure terminate/reap the child; a failed child
+cannot continue releasing a buffered batch. Consumers must exhaust or close the
+iterator. The read deadline starts when `readRows` is called, before initial
+catalog pinning, and includes pauses before the first pull. Initial pinning and
+scan authority waits race that deadline and caller cancellation through the final
+post-exit authority check and iterator cleanup, so a blocked database check cannot
+delay cancellation or release buffered rows. Return/throw before the first pull
+also removes the caller listener and timer. The catalog still owns the underlying
+SQL transaction: it drains after contention clears (or its lock timeout expires),
+and its late result cannot start storage IO or resume the scan. Database
+connection/statement timeouts remain separate operational obligations.
+
+The deliberately small supported envelope is Iceberg v2, unpartitioned, unsorted
+Parquet data snapshots without delete files. Scalars follow `worker.wire`: strings,
+booleans, finite numbers, string-encoded integers/decimals, dates, UTC microsecond
+timestamps and UUIDs; one-dimensional arrays require non-null scalar elements.
+Nested structs/maps, binary, timezone-free timestamps, other data formats,
+partition/sort semantics and delete semantics are rejected. Schema evolution and
+arbitrary external Iceberg/Spark compatibility are not certified.
+
+Hard limits are 1 MiB metadata; 128 mapped objects/scan tasks; 16 MiB per object;
+64 MiB aggregate mapped sizes; 256 KiB per range; 8,192 range requests and 128 MiB
+transferred ranges; 4 MiB JSON frames; 100 rows per batch; 100,000 rows and 32 MiB
+encoded row frames per scan; 256 columns. The default and maximum engine deadline
+is 60 seconds. Linux RLIMIT_AS caps the child address space at 2 GiB, RLIMIT_CPU
+caps CPU time at 60 seconds, and core dumps are disabled. Planning and Arrow can
+materialize native batches/files before row slicing: input/transport limits do
+not predict RSS or compressed-data expansion. Exceeding the process envelope can
+kill/fail the scan. These are defensive fixture-scale limits, not production
+capacity targets. A partial iterator is not a successful complete read.
+
+## Complete snapshot validation (#63)
+
+`validate_snapshot.py` is a fixed internal helper for `CatalogStorage.publishSnapshot`.
+It consumes exact byte inventories through bounded stdin frames, uses pinned
+PyIceberg/PyArrow to validate the root and retained metadata/manifest/Parquet closure,
+and returns success only after every supplied object is referenced and every
+referenced object is present. FileIO is read-only and in-memory; no engine-selected
+path, credential, storage provider or catalog connection is available. Deleted
+historical data entries are also parsed; delete-file semantics are unsupported.
+The service owns authorization, scoped create-only writes, immutable name mappings
+and atomic publication. The helper cannot publish.
+
+The supported types and table features are the scoped reader envelope above.
+Partitioned/sorted tables, statistics files, delete files, malformed or foreign
+references, duplicate/conflicting objects and extra objects fail closed. Schema IDs
+are unique per metadata file and cannot change definition across retained history.
+Missing or empty sort orders are rejected before staging. Each metadata file's
+current snapshot projection must match the ordered fields of its current table
+schema, which the reader advertises; a different schema ID alone is compatible.
+Explicit snapshot schema IDs must resolve locally, including in retained metadata;
+unknown IDs cannot use PyIceberg's warning-and-fallback behavior. Scan caching
+includes the resolved projection, including current-schema fallback when a snapshot
+omits its schema ID. Exact
+limits, identity domains, cancellation, orphan/retry behavior and binding replacement
+are documented in [catalog storage](../../docs/production/CATALOG-STORAGE.md#complete-scoped-snapshot-publication-63).
+A 60-second whole-attempt deadline and Linux process resource limits bound this
+fixture-scale path; neither this helper nor its successful tests certify production
+capacity, arbitrary-code isolation, schema evolution or Spark interoperability.
+
+
+## Restart recovery (#65)
+
+The service persists the canonical reference inventory before atomic complete
+publication. A fresh service without `readObjects` derives its location from the
+pinned metadata location and verifies exact canonical bytes against the existing
+complete-snapshot commitment. It validates table UUID/snapshot and all referenced
+object lengths/content identities before starting the row iterator. Python receives
+the same scoped FileIO protocol; no provider paths, credentials, listing or fallback
+are introduced. Explicit trusted mappings and physical-path consumers are unchanged.
+
+Recovery retains at most 64 MiB of verified root metadata and referenced bytes plus
+a 256 KiB inventory, with transient intake/identity copies. Inventory and each object
+allow at most 65,536 frames of at most 256 KiB; metadata remains at most 1 MiB,
+objects at most 16 MiB each and 128 per inventory. Existing child and row limits
+remain unchanged. One maximum 60-second deadline covers catalog pinning, recovery
+and consumption. Current authority is rechecked through recovery and row release.
+See [catalog storage](../../docs/production/CATALOG-STORAGE.md#durable-scoped-reference-inventory-65)
+for identity derivation, failure/retry semantics and retention limits. This does not
+establish runtime rollout, live recovery, cleanup or production capacity.

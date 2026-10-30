@@ -317,22 +317,6 @@ function App() {
                 Refresh applications
               </button>
             </section>
-            <section className="panel apps-panel">
-              <div className="eyebrow">BUNDLED CUSTOM APPLICATION</div>
-              <h2>Snow & climate observations</h2>
-              <p>
-                Snow Observatory browses NRCS stations and charts snow depth and SWE through scoped
-                Moria queries. Run <code>pnpm moria snotel sync</code> to ingest observations and{' '}
-                <code>pnpm moria snotel open</code> for its separate read-only access link.
-              </p>
-              <a
-                href="https://www.nrcs.usda.gov/resources/data-and-reports/snow-and-climate-monitoring-predefined-reports-and-maps"
-                target="_blank"
-                rel="noreferrer"
-              >
-                NRCS snow and climate data →
-              </a>
-            </section>
           </>
         ) : (
           <>

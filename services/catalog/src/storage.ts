@@ -1,3 +1,8 @@
+import {
+  scopedObjects,
+  scopedRows,
+  type ScopedObject,
+} from '../../../workers/iceberg/scoped-read.js';
 import { authorize } from '../../../packages/authorization/src/access.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 import type { SessionContext } from '../../ontology/src/service.js';
@@ -14,6 +19,34 @@ import {
   type StorageLocation,
   type StreamingStorage,
 } from '../../storage/src/locations.js';
+
+import type { Publication, Receipt } from './catalog.js';
+import {
+  metadataBytes,
+  metadataLimit,
+  metadataObjectId,
+  metadataStream,
+  validateMetadata,
+  type MetadataPublication,
+} from './storage-publication.js';
+
+import {
+  prepareSnapshot,
+  validateSnapshot,
+  snapshotObjects,
+  snapshotBytesLimit,
+  type SnapshotPublication,
+  type SnapshotObject,
+} from './snapshot-publication.js';
+
+import {
+  boundedBytes,
+  inventoryLimit,
+  inventoryLocation,
+  parseInventory,
+  snapshotIdentity,
+  snapshotObjectId,
+} from './reference-inventory.js';
 
 const prefix = 'moria-storage:v1:';
 
@@ -46,6 +79,10 @@ export interface CatalogStorageBinding {
   readonly markings: readonly string[];
   readonly warehouseId: string;
   readonly tableId: string;
+  /** Required for publication; service-owned Iceberg table UUID, never request-selected. */
+  readonly icebergTableUuid?: string;
+  /** Explicit trusted mappings; when absent, recover a complete publication inventory. */
+  readonly readObjects?: readonly ScopedObject[];
   /** Must compose an existing createAuthorized*Storage adapter with these arguments. */
   readonly storage: (
     scope: StorageAuthorityScope,
@@ -88,8 +125,471 @@ export class CatalogStorage {
         throw new StorageError('INVALID_INPUT');
       }
       keys.add(key);
-      return Object.freeze({ ...binding, markings: Object.freeze([...binding.markings]) });
+      return Object.freeze({
+        ...binding,
+        markings: Object.freeze([...binding.markings]),
+        readObjects:
+          binding.readObjects === undefined
+            ? undefined
+            : scopedObjects(binding.readObjects, binding.warehouseId, binding.tableId),
+      });
     });
+  }
+
+  async publish(
+    authenticated: SessionContext,
+    request: MetadataPublication,
+    signal?: AbortSignal,
+  ): Promise<Receipt> {
+    return (await this.publishObjects(authenticated, request, signal)).receipt;
+  }
+
+  async publishSnapshot(
+    authenticated: SessionContext,
+    request: SnapshotPublication,
+    signal?: AbortSignal,
+  ) {
+    const inventories = request.outputs.map((output) => snapshotObjects(output.objects));
+    let total = 0;
+    for (const [index, objects] of inventories.entries()) {
+      total += request.outputs[index].size;
+      for (const object of objects) {
+        if (!Number.isSafeInteger(object.size) || object.size < 1) {
+          throw new StorageError('INVALID_INPUT');
+        }
+        total += object.size;
+      }
+    }
+    if (total > snapshotBytesLimit) throw new StorageError('LIMIT_EXCEEDED');
+    const outputs = request.outputs.map(({ objects: _objects, ...output }) => output);
+    const controller = new AbortController();
+    signal = transferSignal({ signal });
+    const abort = () => controller.abort();
+    const timer = setTimeout(abort, 60000);
+    signal?.addEventListener('abort', abort, { once: true });
+    if (signal?.aborted) abort();
+    let onAbort: (() => void) | undefined;
+    const aborted = new Promise<never>((_resolve, reject) => {
+      onAbort = () => reject(new StorageError('CANCELLED'));
+      controller.signal.addEventListener('abort', onAbort, { once: true });
+    });
+    try {
+      cancelled(controller.signal);
+      return await Promise.race([
+        this.publishObjects(authenticated, { ...request, outputs }, controller.signal, inventories),
+        aborted,
+      ]);
+    } finally {
+      if (onAbort) controller.signal.removeEventListener('abort', onAbort);
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+    }
+  }
+
+  private async publishObjects(
+    authenticated: SessionContext,
+    request: MetadataPublication,
+    signal?: AbortSignal,
+    inventories?: readonly (readonly SnapshotObject[])[],
+  ) {
+    signal = transferSignal({ signal });
+    cancelled(signal);
+    const session = Object.freeze({ ...authenticated });
+    if (!session.sessionHash) {
+      throw new MoriaError('UNAUTHENTICATED', 'An authenticated session is required');
+    }
+    // Capture declarations before awaiting engine streams or authority. No caller callbacks
+    // or mutable request objects are passed to the publication transaction.
+    const exactKeys = (value: object, allowed: string[]) => {
+      if (Object.keys(value).some((key) => !allowed.includes(key))) {
+        throw new StorageError('INVALID_INPUT');
+      }
+    };
+    exactKeys(request, ['execution', 'worker', 'fence', 'lineage', 'checkpoint', 'outputs']);
+    for (const output of request.outputs) {
+      exactKeys(output, ['dataset', 'expectedRevision', 'snapshotId', 'size', 'stream']);
+    }
+    const declaration = structuredClone({
+      execution: request.execution,
+      worker: request.worker,
+      fence: request.fence,
+      lineage: request.lineage,
+      checkpoint: request.checkpoint,
+      outputs: request.outputs.map(({ stream: _stream, ...output }) => output),
+    });
+    const streams = request.outputs.map((output) => output.stream);
+    if (
+      !declaration.execution ||
+      !declaration.worker ||
+      !/^[1-9][0-9]*$/.test(declaration.fence) ||
+      declaration.outputs.length < 1 ||
+      declaration.outputs.length > 16 ||
+      new Set(declaration.outputs.map((output) => output.dataset)).size !==
+        declaration.outputs.length ||
+      declaration.outputs.some(
+        (output) =>
+          !/^[0-9]+$/.test(output.expectedRevision) ||
+          !/^[1-9][0-9]*$/.test(output.snapshotId) ||
+          !Number.isSafeInteger(output.size) ||
+          output.size < 1 ||
+          output.size > metadataLimit,
+      )
+    ) {
+      throw new StorageError('INVALID_INPUT');
+    }
+    const bindingFor = (dataset: string) => {
+      const binding = this.bindings.find(
+        (entry) => entry.environment === session.environment && entry.dataset === dataset,
+      );
+      if (!binding) {
+        throw new StorageError('AUTHORITY_DENIED');
+      }
+      return binding;
+    };
+    const bindings = declaration.outputs.map((output) => bindingFor(output.dataset));
+    if (bindings.some((binding) => !binding.icebergTableUuid)) {
+      throw new StorageError('BINDING_MISMATCH');
+    }
+    const state = await this.authority.current(
+      session.environment,
+      session.principal,
+      session.application,
+    );
+    for (const binding of bindings) {
+      authorize(state.identity, binding.dataset, 'write', binding.markings);
+    }
+    for (const dataset of Object.keys(declaration.lineage)) {
+      const input = bindingFor(dataset);
+      authorize(state.identity, dataset, 'read', input.markings);
+      if (
+        bindings.some((binding) =>
+          input.markings.some((marking) => !binding.markings.includes(marking)),
+        )
+      ) {
+        throw new StorageError('AUTHORITY_DENIED');
+      }
+    }
+    const catalog = this.authority.catalog;
+    const checkSession = async (client: import('pg').PoolClient) => {
+      cancelled(signal);
+      const outputLabels = await Promise.all(
+        bindings.map(async (binding) => [
+          ...binding.markings,
+          ...(await this.authority.resourceAccess(client, session, binding.dataset, 'write')),
+        ]),
+      );
+      for (const dataset of Object.keys(declaration.lineage)) {
+        const labels = [
+          ...bindingFor(dataset).markings,
+          ...(await this.authority.resourceAccess(client, session, dataset)),
+        ];
+        if (outputLabels.some((output) => labels.some((label) => !output.includes(label))))
+          throw new MoriaError('MARKING_DOWNGRADE', 'Output omits input filesystem markings');
+      }
+      await this.authority.assertCurrent(
+        client,
+        session.environment,
+        session.principal,
+        session.application,
+        state.epoch,
+        session.sessionHash,
+      );
+      cancelled(signal);
+    };
+    const check = async () => {
+      await catalog.transaction(checkSession, session.environment, 'repeatable-read', 'shared');
+    };
+    const current: TrustedStorageAuthority = {
+      checkCurrent: async () => {
+        await check();
+        return true;
+      },
+    };
+    await check();
+    const candidates: {
+      binding: CatalogStorageBinding;
+      bytes: Buffer;
+      logical: StorageLocation;
+      objects: { reference: ScopedObject; bytes: Buffer }[];
+      inventory?: Buffer;
+    }[] = [];
+    for (const [index, output] of declaration.outputs.entries()) {
+      const binding = bindings[index];
+      const bytes = await metadataBytes(streams[index], output.size, check, signal);
+      if (!inventories) {
+        await validateMetadata(bytes, binding.icebergTableUuid!, output.snapshotId, signal);
+      }
+      const snapshot = inventories
+        ? await prepareSnapshot(
+            bytes,
+            inventories[index],
+            binding,
+            output.snapshotId,
+            [session.environment, declaration.execution, output.dataset],
+            check,
+            signal!,
+          )
+        : undefined;
+      const logical = location({
+        version: 1,
+        warehouseId: binding.warehouseId,
+        tableId: binding.tableId,
+        objectId: metadataObjectId(
+          session.environment,
+          declaration.execution,
+          output.dataset,
+          snapshot?.identityBytes ?? bytes,
+        ),
+      });
+      candidates.push({
+        binding,
+        bytes,
+        logical,
+        objects: snapshot?.staged ?? [],
+        inventory: snapshot?.inventory,
+      });
+    }
+    const publication: Publication = {
+      environment: session.environment,
+      execution: declaration.execution,
+      worker: declaration.worker,
+      fence: declaration.fence,
+      securityEpoch: state.epoch,
+      lineage: declaration.lineage,
+      checkpoint: declaration.checkpoint,
+      outputs: declaration.outputs.map((output, index) => ({
+        dataset: output.dataset,
+        expectedRevision: output.expectedRevision,
+        snapshotId: output.snapshotId,
+        metadataLocation: encodeMetadataLocation(candidates[index].logical),
+      })),
+    };
+    // This is only an optimization for acknowledgment retry. Catalog.publish alone
+    // validates the request hash and returns the receipt under current authority.
+    const committed = async () => {
+      await check();
+      return (
+        (
+          await catalog.pool.query(
+            'SELECT 1 FROM moria.publications WHERE environment=$1 AND execution=$2',
+            [session.environment, declaration.execution],
+          )
+        ).rowCount === 1
+      );
+    };
+    const result = (receipt: Receipt) =>
+      Object.freeze({
+        receipt,
+        outputs: Object.freeze(
+          candidates.map(({ binding, objects }) =>
+            Object.freeze({
+              dataset: binding.dataset,
+              readObjects: Object.freeze(objects.map(({ reference }) => reference)),
+            }),
+          ),
+        ),
+      });
+    const writes = candidates.flatMap(({ binding, bytes, logical, objects, inventory }) => [
+      ...objects.map((object) => ({
+        binding,
+        bytes: object.bytes,
+        logical: object.reference.location,
+      })),
+      { binding, bytes, logical },
+      ...(inventory ? [{ binding, bytes: inventory, logical: inventoryLocation(logical) }] : []),
+    ]);
+    if (!(await committed())) {
+      for (const { binding, bytes, logical } of writes) {
+        await check();
+        const storage = await binding.storage(
+          Object.freeze({ location: logical, operations: Object.freeze(['create'] as const) }),
+          current,
+        );
+        try {
+          await storage.write(logical, metadataStream(bytes), { size: bytes.length, signal });
+        } catch (error) {
+          // An object collision is never evidence of matching bytes or durability.
+          // Only an already committed catalog receipt can resolve a concurrent retry.
+          if (
+            error instanceof StorageError &&
+            error.code === 'ALREADY_EXISTS' &&
+            (await committed())
+          ) {
+            return result(await catalog.publish(publication, checkSession));
+          }
+          throw error;
+        }
+      }
+    }
+    await check();
+    return result(await catalog.publish(publication, checkSession));
+  }
+
+  async readRows(
+    authenticated: SessionContext,
+    dataset: string,
+    options: { signal?: AbortSignal; timeoutMs?: number } = {},
+  ) {
+    options = Object.freeze({ ...options });
+    const signal = transferSignal(options);
+    const timeout = options.timeoutMs ?? 60000;
+    if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 60000) {
+      throw new StorageError('INVALID_INPUT');
+    }
+    cancelled(signal);
+    const controller = new AbortController();
+    let recovered: Awaited<ReturnType<CatalogStorage['recoverReferences']>> | undefined;
+    const stop = () => {
+      controller.abort();
+      recovered?.objects.clear();
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', stop);
+    };
+    const timer = setTimeout(stop, timeout);
+    signal?.addEventListener('abort', stop, { once: true });
+    try {
+      let onAbort: (() => void) | undefined;
+      const aborted = new Promise<never>((_resolve, reject) => {
+        onAbort = () => reject(new StorageError('CANCELLED'));
+        controller.signal.addEventListener('abort', onAbort, { once: true });
+      });
+      let pinned;
+      try {
+        // Observe the entire open even after cancellation: Catalog.transaction
+        // retains its client until rollback/unlock/release have safely completed.
+        pinned = await Promise.race([
+          this.openRead(authenticated, dataset, controller.signal),
+          aborted,
+        ]);
+        cancelled(controller.signal);
+        if (!pinned.binding.readObjects) {
+          recovered = await Promise.race([
+            this.recoverReferences(pinned, controller.signal),
+            aborted,
+          ]);
+          cancelled(controller.signal);
+        }
+      } finally {
+        if (onAbort) controller.signal.removeEventListener('abort', onAbort);
+      }
+      const { binding, current, logical, storage, ...provenance } = pinned;
+      if (!binding.icebergTableUuid || (!binding.readObjects && !recovered)) {
+        throw new StorageError('BINDING_MISMATCH');
+      }
+      const rows = scopedRows(
+        {
+          metadata: (signal) =>
+            recovered
+              ? Promise.resolve(metadataStream(recovered.metadata))
+              : storage.read(logical, { signal }),
+          snapshotId: pinned.snapshotId,
+          tableUuid: binding.icebergTableUuid,
+          objects: recovered?.references ?? binding.readObjects!,
+          check: async (signal) => {
+            await current.checkCurrent({ location: logical, operation: 'read' }, signal);
+          },
+          read: async (object, offset, length, signal) => {
+            if (recovered) {
+              cancelled(signal);
+              return metadataStream(
+                recovered.objects.get(object.name)!.subarray(offset, offset + length),
+              );
+            }
+            const storage = await binding.storage(
+              Object.freeze({
+                location: object.location,
+                operations: Object.freeze(['read'] as const),
+              }),
+              current,
+            );
+            return storage.read(object.location, { range: { offset, length }, signal });
+          },
+        },
+        { ...options, signal: controller.signal },
+      );
+      // Own cleanup even when return/throw happens before the generator starts.
+      const iterator = {
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+        async next() {
+          try {
+            const result = await rows.next();
+            if (result.done) stop();
+            return result;
+          } catch (error) {
+            stop();
+            throw error;
+          }
+        },
+        async return(value?: void) {
+          stop();
+          return rows.return(value);
+        },
+        async throw(error?: unknown) {
+          stop();
+          return rows.throw(error);
+        },
+      };
+      return Object.freeze({ ...provenance, rows: iterator });
+    } catch (error) {
+      stop();
+      throw error;
+    }
+  }
+
+  private async recoverReferences(
+    pinned: Awaited<ReturnType<CatalogStorage['openRead']>>,
+    signal: AbortSignal,
+  ) {
+    const { binding, current, logical } = pinned;
+    if (!binding.icebergTableUuid) throw new StorageError('BINDING_MISMATCH');
+    const check = async () => {
+      await current.checkCurrent({ location: logical, operation: 'read' }, signal);
+    };
+    const read = async (target: StorageLocation, limit: number) => {
+      cancelled(signal);
+      await check();
+      const storage = await binding.storage(
+        Object.freeze({ location: target, operations: Object.freeze(['read'] as const) }),
+        current,
+      );
+      cancelled(signal);
+      return boundedBytes(await storage.read(target, { signal }), limit, check, signal);
+    };
+    const inventory = await read(inventoryLocation(logical), inventoryLimit);
+    const references = parseInventory(inventory, logical);
+    const metadata = await read(logical, metadataLimit);
+    const scope = [pinned.environment, pinned.execution, pinned.dataset] as const;
+    if (metadataObjectId(...scope, snapshotIdentity(metadata, inventory)) !== logical.objectId) {
+      throw new StorageError('BINDING_MISMATCH');
+    }
+    const total = references.reduce((size, object) => size + object.size, metadata.length);
+    if (total > snapshotBytesLimit) throw new StorageError('LIMIT_EXCEEDED');
+    // Verify the entire promised closure before releasing any row. Retain exact verified
+    // bytes for this iterator so subsequent reads cannot replace content after verification.
+    const objects = new Map<string, Buffer>();
+    for (const reference of references) {
+      const bytes = await read(reference.location, reference.size);
+      if (
+        bytes.length !== reference.size ||
+        snapshotObjectId(scope, reference.name, bytes) !== reference.location.objectId
+      ) {
+        throw new StorageError('BINDING_MISMATCH');
+      }
+      objects.set(reference.name, bytes);
+    }
+    await validateSnapshot(
+      metadata,
+      references.map((reference) => ({ reference, bytes: objects.get(reference.name)! })),
+      binding.icebergTableUuid,
+      pinned.snapshotId,
+      `moria://${binding.warehouseId}/${binding.tableId}`,
+      signal,
+    );
+    await check();
+    cancelled(signal);
+    return { metadata, references, objects };
   }
 
   async read(
@@ -97,6 +597,17 @@ export class CatalogStorage {
     dataset: string,
     signal?: AbortSignal,
   ): Promise<PublishedMetadata> {
+    const {
+      binding: _binding,
+      current: _current,
+      logical,
+      storage,
+      ...published
+    } = await this.openRead(authenticated, dataset, signal);
+    return Object.freeze({ ...published, stream: await storage.read(logical, { signal }) });
+  }
+
+  private async openRead(authenticated: SessionContext, dataset: string, signal?: AbortSignal) {
     signal = transferSignal({ signal });
     cancelled(signal);
     // Snapshot trusted authentication before the first await; callers cannot retarget a stream.
@@ -115,6 +626,7 @@ export class CatalogStorage {
       session.principal,
       session.application,
     );
+    cancelled(signal);
     authorize(state.identity, dataset, 'read', binding.markings);
     const catalog = this.authority.catalog;
     let filesystemMarkings: string[] | undefined;
@@ -137,7 +649,9 @@ export class CatalogStorage {
     };
     const pinned = await catalog.transaction(
       async (client) => {
+        cancelled(signal);
         await checkSession(client);
+        cancelled(signal);
         // One MVCC statement resolves both pointers, including equality of snapshot and location.
         const result = await client.query<{
           revision: string;
@@ -167,9 +681,19 @@ export class CatalogStorage {
       throw new StorageError('BINDING_MISMATCH');
     }
     const current: TrustedStorageAuthority = {
-      checkCurrent: async () => {
+      checkCurrent: async (_request, signal) => {
+        cancelled(signal);
         // A new transaction per check observes current revocation, expiry and policy epoch.
-        await catalog.transaction(checkSession, session.environment, 'repeatable-read', 'shared');
+        await catalog.transaction(
+          async (client) => {
+            cancelled(signal);
+            await checkSession(client);
+          },
+          session.environment,
+          'repeatable-read',
+          'shared',
+        );
+        cancelled(signal);
         return true;
       },
     };
@@ -181,7 +705,7 @@ export class CatalogStorage {
       Object.freeze({ location: logical, operations: Object.freeze(['read'] as const) }),
       current,
     );
-    const stream = await storage.read(logical, { signal });
+    cancelled(signal);
     return Object.freeze({
       markings: Object.freeze([...new Set([...binding.markings, ...filesystemMarkings!])]),
       environment: session.environment,
@@ -189,7 +713,10 @@ export class CatalogStorage {
       revision: pinned.revision,
       snapshotId: pinned.snapshotId,
       execution: pinned.execution,
-      stream,
+      storage,
+      binding,
+      current,
+      logical,
     });
   }
 }

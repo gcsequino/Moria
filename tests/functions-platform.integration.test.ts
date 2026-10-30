@@ -272,7 +272,9 @@ test(
     await t.test(
       'reading marked objects cannot write into an unmarked filesystem destination',
       async () => {
-        p.records.binding.policies.markings = ['protected'];
+        p.configureRecords((binding) => {
+          binding.policies.markings = ['protected'];
+        });
         const result = await invoke('tainted-write');
         assert.equal(result.status, 'succeeded', JSON.stringify(result));
         assert.deepEqual(result.result, { value: 403 });
@@ -423,11 +425,15 @@ test(
         const failedRead = await invoke('read-error', 0, missing);
         assert.deepEqual(failedRead.result, { value: 1 });
         assert(failedRead.markings.some((label) => label.marking === 'protected'));
-        p.records.binding.policies.markings.push('new-classification');
+        p.configureRecords((binding) => {
+          binding.policies.markings.push('new-classification');
+        });
         await assert.rejects(p.functions.get(p.owner.context, failedRead.id), {
           code: 'FORBIDDEN',
         });
-        p.records.binding.policies.markings.pop();
+        p.configureRecords((binding) => {
+          binding.policies.markings.pop();
+        });
         const rejectedWrite = await invoke('tainted-error', 0, missing);
         assert.deepEqual(rejectedWrite.result, { value: 403 });
         await p.authority.setGrants(
@@ -698,7 +704,9 @@ test(
         (await p.pool.query('SELECT revision FROM moria.environments WHERE id=$1', [p.environment]))
           .rows[0].revision,
       );
-      p.records.binding.policies.markings = ['protected'];
+      p.configureRecords((binding) => {
+        binding.policies.markings = ['protected'];
+      });
       const result = await invoke('nested-read');
       assert.deepEqual(result.result, { value: 77 });
       assert(result.markings.some((label) => label.marking === 'protected'));

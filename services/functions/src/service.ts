@@ -1053,7 +1053,7 @@ export class Functions {
               'Edit proposals require point-read dependencies',
             );
           validateRow(input.input, binding.action.inputs);
-          const state = await binding.service.authority.current(
+          const state = await this.fs.security.authority.current(
             session.environment,
             session.principal,
             session.application,

@@ -1,7 +1,12 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { timingSafeEqual } from 'node:crypto';
 import { BrowserSessions, digest } from '../../security/src/browser-sessions.js';
-import { body } from '../../../apps/api/src/server.js';
+import {
+  body,
+  sendJson,
+  cliKeyMatches,
+  requireBrowserOrigin,
+  requireRecoveryAllowed,
+} from '../../http/src/server.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
 
 export class AppAuth {
@@ -31,29 +36,12 @@ export class AppAuth {
   async handle(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
     const url = new URL(req.url ?? '/', this.sessions.binding.origin);
     if (!url.pathname.startsWith('/api/auth/')) return false;
-    if (
-      !this.allowRecovery &&
-      ['/api/auth/recovery-ticket', '/api/auth/recover'].includes(url.pathname)
-    )
-      throw new MoriaError('FORBIDDEN', 'Recovery is available only through the local listener.');
+    requireRecoveryAllowed(url.pathname, this.allowRecovery);
     res.setHeader('cache-control', 'no-store');
     res.setHeader('referrer-policy', 'no-referrer');
-    const send = (status: number, value: unknown) => {
-      res.writeHead(status, {
-        'content-type': 'application/json',
-        'x-content-type-options': 'nosniff',
-      });
-      res.end(JSON.stringify(value));
-    };
+    const send = (status: number, value: unknown) => sendJson(res, status, value);
     const token = this.cookie(req);
-    // Cookies are ambient authority: every state-changing browser operation needs
-    // an exact Origin, including login, recovery exchange, and logout.
-    if (
-      req.method === 'POST' &&
-      url.pathname !== '/api/auth/recovery-ticket' &&
-      req.headers.origin !== this.sessions.binding.origin
-    )
-      throw new MoriaError('FORBIDDEN', 'An exact same-origin request is required.');
+    requireBrowserOrigin(req, this.sessions.binding.origin, false, this.allowRecovery);
     if (url.pathname === '/api/auth/session' && req.method === 'GET') {
       let user = null;
       if (token) {
@@ -95,11 +83,7 @@ export class AppAuth {
       this.setCookie(res, '');
       send(200, { signedOut: true });
     } else if (url.pathname === '/api/auth/recovery-ticket' && req.method === 'POST') {
-      const key = req.headers['x-moria-app-key'];
-      if (
-        typeof key !== 'string' ||
-        !timingSafeEqual(Buffer.from(digest(key)), Buffer.from(digest(this.recoveryKey)))
-      )
+      if (!cliKeyMatches(req, 'x-moria-app-key', this.recoveryKey))
         throw new MoriaError('UNAUTHENTICATED', 'Local CLI credentials are required.');
       const ticket = await this.sessions.recoveryTicket();
       send(200, {

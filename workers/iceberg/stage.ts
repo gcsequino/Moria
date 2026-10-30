@@ -1,9 +1,11 @@
-import { spawn } from 'node:child_process';
-import { resolve } from 'node:path';
 import { VALUE_VERSION, MoriaError } from '../../packages/contracts/types.js';
 import { canonicalJson } from '../../packages/contracts/values.js';
+import { openPython, ProcessFailure } from '../../services/process/src/python.js';
 
-export function iceberg(request: unknown): Promise<any> {
+export async function iceberg(
+  request: unknown,
+  options: { signal?: AbortSignal } = {},
+): Promise<any> {
   if (
     !request ||
     typeof request !== 'object' ||
@@ -21,39 +23,30 @@ export function iceberg(request: unknown): Promise<any> {
       new MoriaError('VALUE_INVALID', 'Worker request must contain JSON wire values'),
     );
   }
-  const python =
-    process.env.MORIA_PYTHON ??
-    resolve(process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
-  return new Promise((resolveResult, reject) => {
-    const child = spawn(python, ['workers/iceberg/worker.py'], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PYTHONUTF8: '1' },
-    });
-    let stdout = '',
-      stderr = '';
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error('Iceberg worker timeout'));
-    }, 60000);
-    child.stdout.on('data', (c) => (stdout += c));
-    child.stderr.on('data', (c) => (stderr += c));
-    child.on('error', (e) => {
-      clearTimeout(timer);
-      reject(e);
-    });
-    child.on('close', (code) => {
-      clearTimeout(timer);
-      if (code !== 0) return reject(new Error(`Iceberg worker failed: ${stderr}`));
+  const worker = openPython('stage', options);
+  try {
+    await worker.writeJson(JSON.parse(input));
+    worker.end();
+    let result: unknown,
+      received = false;
+    for await (const line of worker.lines()) {
+      if (received) worker.protocol();
       try {
-        const result = JSON.parse(stdout);
-        if (result.valueVersion !== VALUE_VERSION)
-          throw new MoriaError('UNSUPPORTED_VALUE_VERSION', 'Unsupported worker value version');
-        resolveResult(result);
-      } catch (e) {
-        reject(e);
+        result = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(line));
+      } catch {
+        worker.protocol();
       }
-    });
-    child.stdin.on('error', () => {});
-    child.stdin.end(input);
-  });
+      received = true;
+    }
+    await worker.finish();
+    if (!received) worker.protocol();
+    if ((result as any)?.valueVersion !== VALUE_VERSION)
+      throw new MoriaError('UNSUPPORTED_VALUE_VERSION', 'Unsupported worker value version');
+    return result;
+  } catch (error) {
+    await worker.close();
+    throw error instanceof ProcessFailure ? (worker.failure ?? error) : error;
+  } finally {
+    await worker.close();
+  }
 }

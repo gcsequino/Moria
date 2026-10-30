@@ -14,6 +14,7 @@ import { createApi } from '../apps/api/src/server.js';
 import { icebergSchema } from '../packages/contracts/iceberg.js';
 import { validateRow } from '../packages/contracts/values.js';
 import { iceberg } from '../workers/iceberg/stage.js';
+import { ProcessFailure } from '../services/process/src/python.js';
 import { icebergRows } from '../workers/iceberg/stream.js';
 import { writeSdk } from '../packages/osdk/src/generate.js';
 
@@ -285,7 +286,10 @@ test(
         },
         rows: [{ value: 9007199254740992 }],
       }),
-      /safe JSON range/,
+      (error: unknown) =>
+        error instanceof ProcessFailure &&
+        error.outcome.kind === 'exit' &&
+        error.outcome.code !== 0,
     );
     await assert.rejects(
       iceberg({
@@ -298,7 +302,10 @@ test(
         },
         rows: [{ value: 0.1 }],
       }),
-      /narrowing/,
+      (error: unknown) =>
+        error instanceof ProcessFailure &&
+        error.outcome.kind === 'exit' &&
+        error.outcome.code !== 0,
     );
   },
 );

@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { extname } from 'node:path';
+import { appHeaders } from '../../http/src/server.js';
 import { AppHost, safeFile } from './store.js';
 
 const types: Record<string, string> = {
@@ -33,12 +34,7 @@ export async function serveApp(
   const path = url.pathname;
   if (path.startsWith('/api/') || path.startsWith('/management/') || path.startsWith('/local/'))
     return false;
-  response.setHeader('x-content-type-options', 'nosniff');
-  response.setHeader('referrer-policy', 'no-referrer');
-  response.setHeader(
-    'content-security-policy',
-    "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; worker-src 'none'",
-  );
+  appHeaders(response);
   try {
     if (path === '/' && entryPath !== '/') {
       response.writeHead(302, {

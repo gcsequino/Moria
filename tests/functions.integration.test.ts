@@ -297,7 +297,9 @@ test(
         );
         recordUid = uid;
         await p.objectStore.publishStage(stage);
-        p.records.binding.policies.markings = ['protected'];
+        p.configureRecords((binding) => {
+          binding.policies.markings = ['protected'];
+        });
         const accepted = await functions.invoke(context, resourceId, randomUUID(), {
             mode: 'read',
             uid,

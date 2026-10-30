@@ -9,7 +9,8 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "types": ["node"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "allowJs": true
   },
   "include": [
     "apps/**/*.ts",
@@ -19,6 +20,7 @@
     "scripts/**/*.ts",
     "tests/**/*.ts",
     "benchmarks/**/*.ts",
-    "apps/**/*.tsx"
+    "apps/**/*.tsx",
+    "workers/**/*.mjs"
   ]
 }

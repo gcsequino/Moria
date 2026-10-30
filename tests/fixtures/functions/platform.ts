@@ -158,7 +158,7 @@ export async function functionPlatform(
     (await db.pool.query('SELECT revision FROM moria.environments WHERE id=$1', [environment]))
       .rows[0].revision,
   );
-  const records = new ObjectService(objectStore, authority, {
+  let records = new ObjectService(objectStore, authority, {
     objectTypeId: '00000000-0000-4000-8000-000000000004',
     schema,
     policies: {
@@ -188,11 +188,22 @@ export async function functionPlatform(
       },
     ],
   ]);
-  const functions = new Functions(runtime, new Map([['records', records]]), worker, {
+  const objects = new Map([['records', records]]);
+  const functions = new Functions(runtime, objects, worker, {
     actions,
     filesystem: functionFilesystem(runtime),
   });
   records.functions = functions;
+  function configureRecords(
+    change: (binding: import('../../../services/ontology/src/service.js').ObjectBinding) => void,
+  ) {
+    const binding = records.binding;
+    change(binding);
+    records = new ObjectService(objectStore, authority, binding);
+    records.functions = functions;
+    objects.set('records', records);
+    for (const action of actions.values()) action.service = records;
+  }
   functions.startWorker();
   const close = async () => {
     await functions.close();
@@ -215,7 +226,11 @@ export async function functionPlatform(
     root,
     declaration,
     publish,
-    records,
+    get records() {
+      return records;
+    },
+    objects,
+    configureRecords,
     objectStore,
     actions,
   };

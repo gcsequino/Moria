@@ -1,4 +1,4 @@
-import { Authority } from '../../security/src/authority.js';
+import { Authority, type SecuritySnapshot } from '../../security/src/authority.js';
 import { ObjectStore, type ObjectSchema, type Edit } from './store.js';
 import { objectReader, type ObjectPolicies } from '../../../packages/authorization/src/objects.js';
 import { authorize } from '../../../packages/authorization/src/access.js';
@@ -83,27 +83,94 @@ export class ObjectService {
       input: unknown,
     ): Promise<PreparedFunctionEdits>;
   };
-  constructor(
-    readonly store: ObjectStore,
-    readonly authority: Authority,
-    readonly binding: ObjectBinding,
-  ) {
+  readonly #binding: ObjectBinding;
+  readonly #store: ObjectStore;
+  readonly #authority: Authority;
+  constructor(store: ObjectStore, authority: Authority, binding: ObjectBinding) {
+    this.#binding = structuredClone(binding);
+    this.#store = store;
+    this.#authority = authority;
     if (binding.objectTypeId !== undefined)
       validateValue(binding.objectTypeId, { type: 'uid', nullable: false });
   }
+  get binding(): ObjectBinding {
+    return structuredClone(this.#binding);
+  }
+  requiring(operations: { resource: string; operation: string }[]): ObjectService {
+    const service = new ObjectService(this.#store, this.#authority, {
+      ...this.#binding,
+      requiredOperations: [...(this.#binding.requiredOperations ?? []), ...operations],
+    });
+    service.functions = this.functions;
+    return service;
+  }
+  private async current(
+    session: SessionContext,
+    transaction?: PoolClient,
+  ): Promise<SecuritySnapshot> {
+    const state = await this.#authority.current(
+      session.environment,
+      session.principal,
+      session.application,
+      transaction,
+    );
+    for (const required of this.#binding.requiredOperations ?? [])
+      authorize(state.identity, required.resource, required.operation);
+    return state;
+  }
+  private assertCurrent(c: PoolClient, session: SessionContext, epoch: string) {
+    return this.#authority.assertCurrent(
+      c,
+      session.environment,
+      session.principal,
+      session.application,
+      epoch,
+      session.sessionHash,
+    );
+  }
+  /** The owner releases results only after the final check; callers cannot omit it. */
+  private protectedRead<T>(
+    session: SessionContext,
+    state: SecuritySnapshot,
+    evaluate: (c: PoolClient, env: { revision: string; expires_at: Date }) => Promise<T>,
+    transaction?: PoolClient,
+  ): Promise<T> {
+    const execute = async (c: PoolClient) => {
+      if (!transaction) await c.query("SET LOCAL statement_timeout='30s'");
+      await this.#authority.resourceAccess(c, session, this.#binding.policies.resource);
+      const env = (
+        await c.query(
+          "SELECT revision,security_epoch,clock_timestamp()+interval '15 minutes' AS expires_at FROM moria.environments WHERE id=$1 FOR SHARE",
+          [session.environment],
+        )
+      ).rows[0];
+      if (!env || env.security_epoch !== state.epoch)
+        throw new MoriaError('AUTHORIZATION_CHANGED', 'Current authorization must be rechecked');
+      await this.assertCurrent(c, session, state.epoch);
+      await this.#store.assertSchema(
+        c,
+        session.environment,
+        this.#binding.policies.resource,
+        this.#binding.schema,
+        this.#binding.policies.markings,
+      );
+      const result = await evaluate(c, env);
+      await this.assertCurrent(c, session, state.epoch);
+      return result;
+    };
+    return transaction
+      ? execute(transaction)
+      : this.#store.catalog.transaction(execute, session.environment, 'repeatable-read', 'shared');
+  }
+
   async query(
     session: SessionContext,
     input: unknown,
   ): Promise<{ revision: string; objects: Record<string, Value>[]; nextCursor?: string }> {
+    session = { ...session };
     const query = parseQuery(input),
-      { policies, schema } = this.binding;
-    const state = await this.authority.current(
-      session.environment,
-      session.principal,
-      session.application,
-    );
-    for (const required of this.binding.requiredOperations ?? [])
-      authorize(state.identity, required.resource, required.operation);
+      { policies, schema } = this.#binding;
+    const state = await this.current(session);
     const project = objectReader(policies).prepare(
       state.identity,
       state.attributes,
@@ -113,13 +180,13 @@ export class ObjectService {
     // Validate even for empty populations, before touching object data.
     const predicate =
       query.filter && compileExpression(query.filter, { fields: policies.properties });
-    const cursors = new CursorStore(this.store.catalog);
+    const cursors = new CursorStore(this.#store.catalog);
     const binding: CursorBinding = {
       environment: session.environment,
       principal: session.principal,
       application: session.application,
       delegation: [],
-      contract: fingerprint(JSON.parse(JSON.stringify(this.binding))),
+      contract: fingerprint(JSON.parse(JSON.stringify(this.#binding))),
       securityEpoch: state.epoch,
       query: {
         resource: policies.resource,
@@ -129,148 +196,84 @@ export class ObjectService {
         order: 'uid-asc',
       },
     };
-    return this.store.catalog.transaction(
-      async (c) => {
-        await c.query("SET LOCAL statement_timeout='30s'");
-        await this.authority.resourceAccess(c, session, policies.resource);
-        const env = (
-          await c.query(
-            "SELECT revision,security_epoch,clock_timestamp()+interval '15 minutes' AS expires_at FROM moria.environments WHERE id=$1 FOR SHARE",
-            [session.environment],
-          )
-        ).rows[0];
-        if (!env || env.security_epoch !== state.epoch)
-          throw new MoriaError('AUTHORIZATION_CHANGED', 'Current authorization must be rechecked');
-        await this.authority.assertCurrent(
-          c,
-          session.environment,
-          session.principal,
-          session.application,
-          state.epoch,
-          session.sessionHash,
+    return this.protectedRead(session, state, async (c, env) => {
+      const pin = query.cursor
+        ? await cursors.resumeIn(c, query.cursor, binding)
+        : {
+            revision: env.revision,
+            currentRevision: env.revision,
+            after: null,
+            expiresAt: env.expires_at.toISOString(),
+          };
+      const after =
+        pin.after === null
+          ? null
+          : (validateValue(pin.after, { type: 'uid', nullable: false }) as string);
+      const rows = await queryRows(
+        c,
+        session.environment,
+        policies,
+        state.attributes,
+        pin.revision,
+        env.revision,
+        after,
+        query,
+      );
+      const verified = rows.rows.map((row) => {
+        const object = project(
+          { source: row.source, effective: row.effective },
+          { source: row.current_source, effective: row.current_effective },
         );
-        const pin = query.cursor
-          ? await cursors.resumeIn(c, query.cursor, binding)
-          : {
-              revision: env.revision,
-              currentRevision: env.revision,
-              after: null,
-              expiresAt: env.expires_at.toISOString(),
-            };
-        const after =
-          pin.after === null
-            ? null
-            : (validateValue(pin.after, { type: 'uid', nullable: false }) as string);
-        await this.store.assertSchema(
-          c,
-          session.environment,
-          policies.resource,
-          schema,
-          policies.markings,
-        );
-        const rows = await queryRows(
-          c,
-          session.environment,
-          policies,
-          state.attributes,
-          pin.revision,
-          env.revision,
-          after,
-          query,
-        );
-        const verified = rows.rows.map((row) => {
-          const object = project(
-            { source: row.source, effective: row.effective },
-            { source: row.current_source, effective: row.current_effective },
-          );
-          // Fail closed on an SQL/reference mismatch rather than silently leaking.
-          if (!object || (predicate && !predicate.allows({ fields: row.effective })))
-            throw new MoriaError('POLICY_MISMATCH', 'Query authorization verification failed');
-          return object;
-        });
-        await this.authority.assertCurrent(
-          c,
-          session.environment,
-          session.principal,
-          session.application,
-          state.epoch,
-          session.sessionHash,
-        );
-        const nextCursor =
-          rows.rows.length > query.pageSize
-            ? await cursors.saveIn(c, binding, pin, rows.rows[query.pageSize - 1].uid)
-            : undefined;
-        return {
-          revision: pin.revision,
-          objects: verified.slice(0, query.pageSize),
-          ...(nextCursor ? { nextCursor } : {}),
-        };
-      },
-      session.environment,
-      'repeatable-read',
-      'shared',
-    );
+        // Fail closed on an SQL/reference mismatch rather than silently leaking.
+        if (!object || (predicate && !predicate.allows({ fields: row.effective })))
+          throw new MoriaError('POLICY_MISMATCH', 'Query authorization verification failed');
+        return object;
+      });
+      const nextCursor =
+        rows.rows.length > query.pageSize
+          ? await cursors.saveIn(c, binding, pin, rows.rows[query.pageSize - 1].uid)
+          : undefined;
+      return {
+        revision: pin.revision,
+        objects: verified.slice(0, query.pageSize),
+        ...(nextCursor ? { nextCursor } : {}),
+      };
+    });
   }
+
   async read(
     session: SessionContext,
     uid: string,
     projection?: string[],
     transaction?: PoolClient,
   ): Promise<{ revision: string; object: Record<string, Value> }> {
+    session = { ...session };
     validateValue(uid, { type: 'uid', nullable: false });
-    const state = await this.authority.current(
-      session.environment,
-      session.principal,
-      session.application,
-      transaction,
-    );
-    for (const required of this.binding.requiredOperations ?? [])
-      authorize(state.identity, required.resource, required.operation);
-    const project = objectReader(this.binding.policies).prepare(
+    const state = await this.current(session, transaction);
+    const project = objectReader(this.#binding.policies).prepare(
       state.identity,
       state.attributes,
       projection,
     );
-    const execute = async (c: PoolClient) => {
-      await this.authority.resourceAccess(c, session, this.binding.policies.resource);
-      const env = (
-        await c.query(
-          'SELECT revision,security_epoch FROM moria.environments WHERE id=$1 FOR SHARE',
-          [session.environment],
-        )
-      ).rows[0];
-      if (!env || env.security_epoch !== state.epoch)
-        throw new MoriaError('AUTHORIZATION_CHANGED', 'Current authorization must be rechecked');
-      await this.authority.assertCurrent(
-        c,
-        session.environment,
-        session.principal,
-        session.application,
-        state.epoch,
-        session.sessionHash,
-      );
-      const row = await this.store.read(
-        c,
-        session.environment,
-        this.binding.policies.resource,
-        uid,
-        env.revision,
-      );
-      await this.store.assertSchema(
-        c,
-        session.environment,
-        this.binding.policies.resource,
-        this.binding.schema,
-        this.binding.policies.markings,
-      );
-      const object = project(row, row);
-      if (!object) throw new MoriaError('NOT_FOUND', 'Object not found');
-      return { revision: env.revision, object };
-    };
-    return transaction
-      ? execute(transaction)
-      : this.store.catalog.transaction(execute, session.environment, 'repeatable-read', 'shared');
+    return this.protectedRead(
+      session,
+      state,
+      async (c, env) => {
+        const row = await this.#store.read(
+          c,
+          session.environment,
+          this.#binding.policies.resource,
+          uid,
+          env.revision,
+        );
+        const object = project(row, row);
+        if (!object) throw new MoriaError('NOT_FOUND', 'Object not found');
+        return { revision: env.revision, object };
+      },
+      transaction,
+    );
   }
+
   async invoke(
     session: SessionContext,
     action: ActionBinding,
@@ -284,6 +287,8 @@ export class ObjectService {
       preparedChecked?: boolean;
     } = {},
   ): Promise<{ revision: string }> {
+    session = { ...session };
+    action = structuredClone(action);
     if (!key || key.length > 256)
       throw new MoriaError('IDEMPOTENCY_KEY_INVALID', 'A bounded idempotency key is required');
     if (action.function) {
@@ -293,16 +298,16 @@ export class ObjectService {
           'Function-backed actions cannot run user code inside another action transaction',
         );
       const parameters = validateRow(input, action.inputs);
-      const state = await this.authority.current(
+      const state = await this.#authority.current(
         session.environment,
         session.principal,
         session.application,
       );
       authorize(state.identity, action.resource, 'invoke', action.markings);
-      for (const required of this.binding.requiredOperations ?? [])
+      for (const required of this.#binding.requiredOperations ?? [])
         authorize(state.identity, required.resource, required.operation);
       const existing = (
-        await this.store.catalog.pool.query(
+        await this.#store.catalog.pool.query(
           'SELECT 1 FROM moria.action_keys WHERE environment=$1 AND application=$2 AND principal=$3 AND action=$4 AND key=$5',
           [session.environment, session.application, session.principal, action.resource, key],
         )
@@ -337,7 +342,7 @@ export class ObjectService {
       });
     }
     if ((session.execution || options.prepared) && !options.client)
-      return this.store.catalog.transaction(async (client) => {
+      return this.#store.catalog.transaction(async (client) => {
         const result = await this.invoke(session, action, key, input, { ...options, client });
         await executionGuard(client, session);
         return result;
@@ -347,15 +352,15 @@ export class ObjectService {
       type: 'uid',
       nullable: false,
     }) as string;
-    const state = await this.authority.current(
+    const state = await this.#authority.current(
       session.environment,
       session.principal,
       session.application,
     );
     authorize(state.identity, action.resource, 'invoke', action.markings);
-    for (const required of this.binding.requiredOperations ?? [])
+    for (const required of this.#binding.requiredOperations ?? [])
       authorize(state.identity, required.resource, required.operation);
-    const { policies, schema } = this.binding;
+    const { policies, schema } = this.#binding;
     const fields: string[] = [];
     const inspect = (expression: Expr): void => {
       if ('field' in expression) fields.push(expression.field);
@@ -369,8 +374,8 @@ export class ObjectService {
       fields,
     );
     const write =
-      this.binding.writePolicy &&
-      compileExpression(this.binding.writePolicy, {
+      this.#binding.writePolicy &&
+      compileExpression(this.#binding.writePolicy, {
         fields: schema.properties,
         attributes: policies.attributes,
       });
@@ -382,7 +387,7 @@ export class ObjectService {
     const edits: Edit[] = action.edits.map((edit) => {
       if (!Object.hasOwn(schema.properties, edit.property) || edit.property === schema.primaryKey)
         throw new MoriaError('EDIT_INVALID', 'Unknown or immutable property');
-      const expression = this.binding.propertyWrite?.[edit.property];
+      const expression = this.#binding.propertyWrite?.[edit.property];
       if (
         expression &&
         !compileExpression(expression, { attributes: policies.attributes }).allows({
@@ -399,7 +404,7 @@ export class ObjectService {
         value: validateValue(value, schema.properties[edit.property]),
       };
     });
-    const result = await this.store.edit(
+    const result = await this.#store.edit(
       {
         ...session,
         action: action.resource,
@@ -427,9 +432,9 @@ export class ObjectService {
       async (c) => {
         const labels = [
           ...policies.markings,
-          ...(await this.authority.resourceAccess(c, session, policies.resource, 'write')),
+          ...(await this.#authority.resourceAccess(c, session, policies.resource, 'write')),
         ];
-        await this.authority.resourceAccess(c, session, action.resource, 'write');
+        await this.#authority.resourceAccess(c, session, action.resource, 'write');
         await executionGuard(
           c,
           session,
@@ -447,7 +452,7 @@ export class ObjectService {
             'MARKING_DOWNGRADE',
             'Action destination omits function input markings',
           );
-        await this.authority.assertCurrent(
+        await this.#authority.assertCurrent(
           c,
           session.environment,
           session.principal,
@@ -455,7 +460,7 @@ export class ObjectService {
           state.epoch,
           session.sessionHash,
         );
-        await this.store.assertSchema(
+        await this.#store.assertSchema(
           c,
           session.environment,
           policies.resource,

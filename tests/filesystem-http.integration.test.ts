@@ -9,6 +9,7 @@ import test from 'node:test';
 import { database } from './fixtures/catalog-storage/database.js';
 import { createWorkspace } from '../apps/local/src/workspace.js';
 import { createLocalServer } from '../apps/local/src/server.js';
+import type { AppAuth } from '../services/app-host/src/auth.js';
 import { AppHost } from '../services/app-host/src/store.js';
 import { createLocalFilesystem } from '../services/filesystem/src/local.js';
 import { filesystemClient } from '../packages/platform/src/filesystem.js';
@@ -62,6 +63,50 @@ test(
     const home = await owner.home(),
       readerHome = await reader.home(),
       outsiderHome = await outsider.home();
+
+    await t.test(
+      'non-browser bearer writes authenticate on a browser-enabled management host',
+      async () => {
+        const browserAuth = {
+          allowRecovery: true,
+          sessions: { binding: { origin: 'http://127.0.0.1' } },
+          handle: async () => false,
+        } as unknown as AppAuth;
+        const protectedServer = createLocalServer(
+          workspace,
+          key,
+          new AppHost(join(db.root, 'apps')),
+          undefined,
+          browserAuth,
+          undefined,
+          undefined,
+          runtime,
+        );
+        await new Promise<void>((resolve) => protectedServer.listen(0, '127.0.0.1', resolve));
+        try {
+          const port = (protectedServer.address() as { port: number }).port;
+          const token = await workspace.token('operator');
+          const response = await fetch(`http://127.0.0.1:${port}/api/management/v1/fs/resolve`, {
+            method: 'POST',
+            headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+            body: JSON.stringify({ path: `/users/${home.home.name}` }),
+          });
+          assert.equal(response.status, 200, await response.clone().text());
+          assert.equal((await response.json()).id, home.home.id);
+          const denied = await fetch(`http://127.0.0.1:${port}/api/management/v1/fs/resolve`, {
+            method: 'POST',
+            headers: {
+              authorization: `Bearer ${'a'.repeat(43)}`,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({ path: `/users/${home.home.name}` }),
+          });
+          assert.equal(denied.status, 401);
+        } finally {
+          await new Promise<void>((resolve) => protectedServer.close(() => resolve()));
+        }
+      },
+    );
 
     await t.test(
       'verified local profiles and workload sessions cannot impersonate each other',

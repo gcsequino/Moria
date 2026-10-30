@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createHttpServer } from '../../../services/http/src/server.js';
 import type { FilesystemRuntime } from '../../../services/filesystem/src/local.js';
 import type { FunctionBindings } from '../../../services/functions/src/platform.js';
 import { MoriaError } from '../../../packages/contracts/types.js';
@@ -10,8 +10,8 @@ export function functionFilesystem(
 ): NonNullable<FunctionBindings['filesystem']> {
   const handle = filesystemHandler(runtime);
   return async (context, input, signal) => {
-    const server = createServer((request, response) => {
-      void handle(request, response, context)
+    const server = createHttpServer({ kind: 'workload' }, async (request, response) => {
+      await handle(request, response, context)
         .then((handled) => {
           if (!handled) {
             response.writeHead(404);

@@ -2,7 +2,6 @@ import pg from 'pg';
 import { Server } from 'node:net';
 import { runProcess, type ProcessRole } from '../../../apps/local/src/runtime.js';
 import { Jobs, type JobContext } from '../../../services/execution/src/jobs.js';
-import { createWeatherService } from '../../../services/weather/src/service.js';
 
 // Intercept only the dispatch boundary, leaving all real SQL and transactions intact.
 let resumeAdvance: (() => void) | undefined;
@@ -67,9 +66,9 @@ const handler = async (job: JobContext) => {
 const runtime = await runProcess(
   process.argv[2] as Exclude<ProcessRole, 'function-worker'>,
   async (catalog) => {
-    const jobs = new ObservedJobs(catalog, { snotel: handler, weather: handler });
+    const jobs = new ObservedJobs(catalog, { sample: handler, periodic: handler });
     await jobs.migrate();
-    return { jobs, weather: await createWeatherService(catalog) };
+    return { jobs };
   },
 );
 if (!runtime) {
@@ -78,7 +77,7 @@ if (!runtime) {
   process.on('message', async (message: { command: string }) => {
     if (message.command === 'release') release?.();
     if (message.command === 'configure') {
-      await runtime.jobs.schedule('weather', false, 120);
+      await runtime.jobs.schedule('periodic', false, 120);
       process.send?.({ event: 'configured' });
     }
   });

@@ -12,7 +12,7 @@ import {
 } from './runtime.js';
 export * from './runtime.js';
 export const contractFingerprint =
-  'sha256:4cf661ca03a280db9ac0a62aaed44ccde2c403246c0bc1049fb7867b2533703e';
+  'sha256:6506ce1800a2142c066dee88a3498fe7794cb7da9de996d7d1f6eb22932d269b';
 const valueDefinitions: { [name: string]: TypeSchema } = {
   HostedApp: {
     nullable: false,
@@ -61,8 +61,10 @@ const valueDefinitions: { [name: string]: TypeSchema } = {
   },
   Jobs: {
     nullable: false,
+    optional: ['registeredKinds'],
     properties: {
       jobs: { items: { ref: 'Job' }, type: 'list' },
+      registeredKinds: { items: { nullable: false, type: 'string' }, type: 'list' },
       schedules: { items: { ref: 'Schedule' }, type: 'list' },
     },
     type: 'object',
@@ -152,7 +154,7 @@ export type Job = {
   status: string;
   updated_at: string;
 };
-export type Jobs = { jobs: Job[]; schedules: Schedule[] };
+export type Jobs = { jobs: Job[]; registeredKinds?: string[]; schedules: Schedule[] };
 export type Lineage = {
   edges: { from: string; label: string; to: string }[];
   limitations: string[];
