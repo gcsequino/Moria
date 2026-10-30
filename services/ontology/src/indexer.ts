@@ -71,6 +71,16 @@ export class IcebergIndexer {
     authorize(state.identity, target.resource, 'index', target.markings);
     const check = async (c: Parameters<Authority['assertCurrent']>[0]) => {
       checkCancelled();
+      const sourceLabels = await this.authority.resourceAccess(c, session, source.resource);
+      const targetLabels = new Set([
+        ...target.markings,
+        ...(await this.authority.resourceAccess(c, session, target.resource, 'write')),
+      ]);
+      if (sourceLabels.some((label) => !targetLabels.has(label)))
+        throw new MoriaError(
+          'MARKING_DOWNGRADE',
+          'Index target must preserve current filesystem source markings',
+        );
       await this.authority.assertCurrent(
         c,
         session.environment,

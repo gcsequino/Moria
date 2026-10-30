@@ -1,5 +1,5 @@
 import { MoriaError, type Expr, type Value, type ValueType } from '../../contracts/types.js';
-import { validDate, timestampMicros, validateValue } from '../../contracts/values.js';
+import { timestampMicros, validateValue, normalizeType } from '../../contracts/values.js';
 
 export interface ExpressionTypes {
   fields?: Record<string, ValueType>;
@@ -16,6 +16,7 @@ interface Inferred {
   type: TypeName;
   items?: Inferred;
   scale?: number;
+  precision?: number;
 }
 const bool: Inferred = { type: 'boolean' };
 const fail = (message: string): never => {
@@ -41,35 +42,40 @@ function same(a: Inferred, b: Inferred): boolean {
 function literalCompatible(e: Expr, t: Inferred): boolean {
   if (!('literal' in e) || e.literal === null) return 'literal' in e;
   if (typeof e.literal !== 'string') return false;
-  switch (t.type) {
-    case 'int64':
-      return (
-        /^-?(0|[1-9][0-9]*)$/.test(e.literal) &&
-        BigInt(e.literal) >= -(2n ** 63n) &&
-        BigInt(e.literal) < 2n ** 63n
-      );
-    case 'decimal':
-      return (
-        /^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(e.literal) &&
-        (e.literal.split('.')[1]?.length ?? 0) <= (t.scale ?? 0)
-      );
-    case 'uid':
-      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(e.literal);
-    case 'date':
-      return validDate(e.literal);
-    case 'timestamp':
-      try {
-        timestampMicros(e.literal);
-        return true;
-      } catch {
-        return false;
-      }
-    default:
-      return false;
+  if (!['int64', 'decimal', 'uid', 'date', 'timestamp'].includes(t.type)) return false;
+  try {
+    validateValue(e.literal, declared(t));
+    return true;
+  } catch {
+    return false;
   }
 }
 
+function declared(type: Inferred, nullable = false): ValueType {
+  return {
+    type: type.type as ValueType['type'],
+    nullable,
+    ...(type.type === 'decimal' ? { precision: type.precision, scale: type.scale } : {}),
+    ...(type.type === 'array' ? { items: declared(type.items!) } : {}),
+  } as ValueType;
+}
+function comparison(a: Inferred, b: Inferred): Inferred {
+  if (a.type === 'decimal' && b.type === 'decimal')
+    return { ...a, scale: Math.max(a.scale!, b.scale!) };
+  if (a.type === 'array' && b.type === 'array')
+    return { ...a, items: comparison(a.items!, b.items!) };
+  return a;
+}
+
 export function compileExpression(expression: Expr, types: ExpressionTypes) {
+  for (const fields of Object.values(types))
+    for (const type of Object.values(fields ?? {})) {
+      try {
+        normalizeType(type, {}, 'column');
+      } catch {
+        fail('Invalid declared policy value type');
+      }
+    }
   const lookup = (group: Record<string, ValueType> | undefined, name: string) =>
     group && Object.hasOwn(group, name) ? group[name] : undefined;
   let nodes = 0;
@@ -78,6 +84,13 @@ export function compileExpression(expression: Expr, types: ExpressionTypes) {
     if (++nodes > 256 || depth > 16) fail('Expression exceeds complexity limits');
     let result: Inferred;
     if ('literal' in e) {
+      for (const value of Array.isArray(e.literal) ? e.literal : [e.literal])
+        if (typeof value === 'string')
+          try {
+            validateValue(value, { type: 'string', nullable: false });
+          } catch {
+            fail('Invalid string literal');
+          }
       if (Array.isArray(e.literal)) {
         if (e.literal.length > 100) fail('Literal list exceeds 100 values');
         const element = e.literal.find((x) => x !== null);
@@ -111,8 +124,35 @@ export function compileExpression(expression: Expr, types: ExpressionTypes) {
       } else if (e.op === 'isNull') {
         /* any typed value */
       } else if (e.op === 'in' || e.op === 'contains') {
-        const list = e.op === 'in' ? b : a,
+        let list = e.op === 'in' ? b : a,
           val = e.op === 'in' ? a : b;
+        const listExpr = e.args[e.op === 'in' ? 1 : 0],
+          valExpr = e.args[e.op === 'in' ? 0 : 1];
+        if (list.type !== 'array' || val.type === 'array')
+          fail('Membership needs a compatible scalar and array');
+        if (
+          list.type === 'array' &&
+          'literal' in listExpr &&
+          Array.isArray(listExpr.literal) &&
+          val.type !== 'null'
+        ) {
+          try {
+            for (const item of listExpr.literal) validateValue(item, declared(val, true));
+          } catch {
+            fail('Membership literal differs from the declared type');
+          }
+          list = { type: 'array', items: val };
+          inferred.set(listExpr, list);
+        }
+        if (list.type === 'array' && 'literal' in valExpr && list.items!.type !== 'null') {
+          try {
+            validateValue(valExpr.literal, declared(list.items!, true));
+          } catch {
+            fail('Membership literal differs from the declared type');
+          }
+          val = list.items!;
+          inferred.set(valExpr, val);
+        }
         if (list.type !== 'array' || !same(list.items!, val))
           fail('Membership needs a compatible scalar and array');
       } else if (['eq', 'ne', 'lt', 'lte', 'gt', 'gte'].includes(e.op)) {
@@ -173,7 +213,7 @@ export function compileExpression(expression: Expr, types: ExpressionTypes) {
   function comparisonType(e: Expr & { op: string; args: Expr[] }): Inferred {
     const a = inferred.get(e.args[0])!,
       b = inferred.get(e.args[1])!;
-    return 'literal' in e.args[0] && !same(a, b) ? b : a;
+    return 'literal' in e.args[0] && !same(a, b) ? b : comparison(a, b);
   }
   function evaluate(values: ExpressionValues): boolean | null {
     validateInputs(values);
@@ -202,7 +242,13 @@ export function compileExpression(expression: Expr, types: ExpressionTypes) {
         if (list === null) return null;
         if (!list.length) return false;
         if (val === null) return null;
-        if (list.some((x) => x !== null && compare(x, val, listType.items!) === 0)) return true;
+        const valueType = inferred.get(e.args[e.op === 'in' ? 0 : 1])!;
+        if (
+          list.some(
+            (x) => x !== null && compare(x, val, comparison(listType.items!, valueType)) === 0,
+          )
+        )
+          return true;
         return list.includes(null) ? null : false;
       }
       if (a === null || b === null) return null;

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ApiError, createClient, type AuthState, type Station } from './generated/index.js';
+import {
+  ApiError,
+  createClient,
+  type AuthState,
+  type StationProperties as Station,
+} from './generated/index.js';
 import './style.css';
 
 // The SDK sends same-origin cookies. No key, bearer token, app selector or CORS proxy.

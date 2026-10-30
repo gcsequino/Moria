@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Comparison } from './Comparison.js';
-import type { Station, Status } from './generated/index.js';
+import type { StationProperties as Station, Status } from './generated/index.js';
 type WeatherView = NonNullable<Status['weather']>;
 
 export function Weather({

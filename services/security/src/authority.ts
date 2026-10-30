@@ -3,6 +3,9 @@ import { Catalog } from '../../catalog/src/catalog.js';
 import type { Identity } from '../../../packages/authorization/src/access.js';
 import { MoriaError, type Value } from '../../../packages/contracts/types.js';
 import { fingerprint } from '../../../packages/compiler/src/index.js';
+import { FilesystemAuthority } from './filesystem.js';
+import type { SessionContext } from '../../ontology/src/service.js';
+import type { FilesystemOperation } from '../../../packages/contracts/filesystem.js';
 
 export interface PrincipalState {
   enabled: boolean;
@@ -21,6 +24,43 @@ export interface SecuritySnapshot {
  * from request JSON. IdP verification and group synchronization are pending. */
 export class Authority {
   constructor(readonly catalog: Catalog) {}
+  /** Trusted legacy bindings remain valid; filesystem-owned resources always add their current policy. */
+  async resourceAccess(
+    client: PoolClient,
+    session: SessionContext,
+    resource: string,
+    operation: FilesystemOperation = 'read',
+  ) {
+    const rows = (
+      await client.query(
+        `SELECT e.id,b.active,r.retired FROM moria.fs_entries e
+      LEFT JOIN moria.fs_resource_bindings b ON b.entry_id=e.id
+      LEFT JOIN moria.fs_roles r ON r.entry_id=b.root_id
+      WHERE e.environment_id=$1 AND e.kind='resource' AND NOT e.deleted
+        AND (e.resource_id::text=$2 OR b.reference=$2)`,
+        [session.environment, resource],
+      )
+    ).rows;
+    if (!rows.length) return [] as string[];
+    if (rows.length > 1)
+      throw new MoriaError(
+        'FORBIDDEN',
+        'Runtime bindings must identify ambiguous resources by UUID',
+      );
+    const security = new FilesystemAuthority(this),
+      state = await security.current(client, { session });
+    state.domainAccess = true;
+    const markings = new Set<string>();
+    for (const row of rows) {
+      if (row.active === false || row.retired)
+        throw new MoriaError('NOT_FOUND', 'Resource is inactive');
+      await security.check(client, state, row.id, operation);
+      for (const label of await security.effectiveMarkings(client, row.id))
+        markings.add(label.marking);
+    }
+    await security.finish(client, state);
+    return [...markings].sort();
+  }
   async migrate(): Promise<void> {
     await this.catalog.migrate();
   }
@@ -116,11 +156,22 @@ export class Authority {
     sessionHash?: string,
   ): Promise<void> {
     const result = await c.query(
-      `SELECT e.security_epoch,p.enabled,p.kind,p.synced_at>clock_timestamp()-interval '60 seconds' AS fresh,a.enabled AS app_enabled FROM moria.environments e JOIN moria.principals p ON p.environment=e.id AND p.principal=$2 JOIN moria.application_scopes a ON a.environment=e.id AND a.application=$3 WHERE e.id=$1`,
+      `SELECT e.security_epoch,p.enabled,p.kind,p.synced_at>clock_timestamp()-interval '60 seconds' AS fresh,a.enabled AS app_enabled,
+      (b.instance_id IS NULL OR (i.enabled AND i.kind=p.kind)) AS instance_enabled
+      FROM moria.environments e JOIN moria.principals p ON p.environment=e.id AND p.principal=$2
+      JOIN moria.application_scopes a ON a.environment=e.id AND a.application=$3
+      LEFT JOIN moria.instance_principal_bindings b ON b.environment=p.environment AND b.principal=p.principal
+      LEFT JOIN moria.instance_principals i ON i.id=b.instance_id WHERE e.id=$1`,
       [environment, principal, application],
     );
     const row = result.rows[0];
-    if (!row || row.security_epoch !== epoch || !row.enabled || !row.app_enabled)
+    if (
+      !row ||
+      row.security_epoch !== epoch ||
+      !row.enabled ||
+      !row.app_enabled ||
+      !row.instance_enabled
+    )
       throw new MoriaError('AUTHORIZATION_CHANGED', 'Current authorization must be rechecked');
     if (row.kind === 'human' && !row.fresh)
       throw new MoriaError('IDENTITY_STALE', 'Identity synchronization is stale');
@@ -140,14 +191,17 @@ export class Authority {
     environment: string,
     principal: string,
     application: string,
+    client?: PoolClient,
   ): Promise<SecuritySnapshot> {
-    const result = await this.catalog.pool.query(
+    const result = await (client ?? this.catalog.pool).query(
       `SELECT e.security_epoch,p.enabled,p.kind,p.attributes,p.markings,
       p.synced_at>clock_timestamp()-interval '60 seconds' AS fresh,a.enabled AS app_enabled,a.operations AS scopes,g.operations AS grants
       FROM moria.environments e JOIN moria.principals p ON p.environment=e.id AND p.principal=$2
       JOIN moria.application_scopes a ON a.environment=e.id AND a.application=$3
       LEFT JOIN moria.permissions g ON g.environment=e.id AND g.principal=p.principal AND g.application=a.application
-      WHERE e.id=$1`,
+      LEFT JOIN moria.instance_principal_bindings b ON b.environment=p.environment AND b.principal=p.principal
+      LEFT JOIN moria.instance_principals i ON i.id=b.instance_id
+      WHERE e.id=$1 AND (b.instance_id IS NULL OR (i.enabled AND i.kind=p.kind))`,
       [environment, principal, application],
     );
     const row = result.rows[0];

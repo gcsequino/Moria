@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process';
-import { resolve } from 'node:path';
+import { openPython, ProcessFailure } from '../../process/src/python.js';
+import { storageProcessError } from '../../../workers/iceberg/process-errors.js';
 import { StorageError } from '../../storage/src/locations.js';
 import { cancelled } from '../../storage/src/transfer.js';
 import { scopedObjects, type ScopedObject } from '../../../workers/iceberg/scoped-read.js';
@@ -109,39 +109,8 @@ export async function validateSnapshot(
   signal: AbortSignal,
 ) {
   cancelled(signal);
-  const child = spawn(
-    resolve('.venv/bin/python'),
-    ['-I', resolve('workers/iceberg/validate_snapshot.py')],
-    {
-      cwd: resolve('workers/iceberg'),
-      env: {
-        HOME: '/nonexistent',
-        LANG: 'C.UTF-8',
-        OPENBLAS_NUM_THREADS: '1',
-        OMP_NUM_THREADS: '1',
-        PYICEBERG_MAX_WORKERS: '1',
-      },
-      stdio: ['pipe', 'ignore', 'ignore'],
-    },
-  );
-  const abort = () => {
-    child.kill('SIGKILL');
-  };
-  signal.addEventListener('abort', abort, { once: true });
-  if (signal.aborted) abort();
-  child.stdin.on('error', () => {});
-  const exit = new Promise<number | null>((done) => {
-    child.once('error', () => done(null));
-    child.once('close', done);
-  });
-  const send = async (frame: unknown) => {
-    cancelled(signal);
-    const line = JSON.stringify(frame) + '\n';
-    if (Buffer.byteLength(line) > 2 * 1024 * 1024) throw new StorageError('LIMIT_EXCEEDED');
-    await new Promise<void>((done, reject) =>
-      child.stdin.write(line, (error) => (error ? reject(new StorageError('IO_ERROR')) : done())),
-    );
-  };
+  const worker = openPython('snapshot', { signal });
+  const send = (frame: unknown) => worker.writeJson(frame);
   try {
     await send({
       metadata: metadata.toString('base64'),
@@ -155,13 +124,14 @@ export async function validateSnapshot(
         await send({ data: bytes.subarray(offset, offset + 256 * 1024).toString('base64') });
       }
     }
-    child.stdin.end();
-    const code = await exit;
+    worker.end();
+    for await (const _line of worker.lines()) worker.protocol();
+    await worker.finish();
     cancelled(signal);
-    if (code !== 0) throw new StorageError('INVALID_INPUT');
+  } catch (error) {
+    await worker.close();
+    throw error instanceof ProcessFailure ? storageProcessError(worker.failure ?? error) : error;
   } finally {
-    abort();
-    await exit;
-    signal.removeEventListener('abort', abort);
+    await worker.close();
   }
 }

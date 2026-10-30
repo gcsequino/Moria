@@ -87,7 +87,7 @@ shared lock until release, including transactions and one-shot pool queries.
 Lease loss stops new checkout admission and initiates service shutdown; already
 active database work retains migration exclusion while draining. A checkout
 verifies the schema under its own lock before exposing the connection. Failed
-lock cleanup destroys the connection instead of returning it to the pool. Version 1 records a checksum of the preserved baseline DDL;
+lock cleanup destroys the connection instead of returning it to the pool. Version 3 records a checksum of the filesystem-enabled baseline DDL;
 missing, unknown or checksum-mismatched schema versions cannot serve. The
 migration command initializes a fresh database or verifies an already-versioned
 schema. It never bootstraps identities, grants or application data. An existing
@@ -129,9 +129,9 @@ then restart the scoped runtime and verify identities, grants, edits and auth
 before enabling routing/jobs. Older binaries do not honor the advisory lock and
 must remain stopped. No live migration or restore is performed by this issue.
 
-This release supports schema version 1 with its exact baseline checksum. Future
-releases must add reviewed versioned expand/migrate/contract steps and define
-which readers/writers may coexist. Unknown versions fail closed; there is no
+This development release supports schema version 3 with its exact baseline checksum.
+Version 1 and 2 databases must be recreated using a new disposable directory; no upgrade
+or data-preservation path is provided. Unknown versions fail closed; there is no
 automatic downgrade, security rollback, rolling-upgrade or zero-downtime promise.
 Changing migration ownership requires human invariant review before merge.
 

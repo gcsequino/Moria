@@ -9,6 +9,9 @@ import {
   type MetadataPublication,
 } from '../services/catalog/src/storage-publication.js';
 import { Authority } from '../services/security/src/authority.js';
+import { FilesystemAuthority } from '../services/security/src/filesystem.js';
+import { FilesystemStore } from '../services/filesystem/src/store.js';
+import { filesystemRoot } from '../packages/contracts/filesystem.js';
 import { WorkloadSessions } from '../services/security/src/sessions.js';
 import {
   createAuthorizedLocalStorage,
@@ -43,9 +46,8 @@ for (const provider of ['local', 's3'] as const) {
     const bytes = await readFile(staged.metadataLocation);
     const root = join(db.root, 'objects');
     await mkdir(root);
-    async function setup() {
+    async function setup(datasets = ['test/Dataset/a', 'test/Dataset/b']) {
       const environment = randomUUID();
-      const datasets = ['test/Dataset/a', 'test/Dataset/b'];
       await catalog.ensureEnvironment(environment);
       for (const dataset of datasets) {
         await catalog.ensureDataset(environment, dataset);
@@ -161,6 +163,93 @@ for (const provider of ['local', 's3'] as const) {
         },
       };
     }
+
+    await t.test(
+      'filesystem input classifications cannot be omitted from publication outputs',
+      async () => {
+        const f = await setup([randomUUID(), randomUUID()]);
+        const security = new FilesystemAuthority(authority);
+        const store = new FilesystemStore(catalog);
+        const instanceId = await security.createPrincipal('admin', 'workload');
+        await security.bindPrincipal('admin', f.environment, 'engine', instanceId);
+        const operations = [
+          ...f.datasets.flatMap((dataset) => [`${dataset}:read`, `${dataset}:write`]),
+          'filesystem:read',
+          'filesystem:write',
+        ];
+        await authority.setApplication(f.environment, 'admin', 'app', operations);
+        await authority.setGrants(f.environment, 'admin', 'engine', 'app', operations);
+        await authority.syncPrincipal(f.environment, 'admin', 'engine', {
+          enabled: true,
+          kind: 'workload',
+          attributes: {},
+          markings: ['protected', 'classified'],
+        });
+        await security.setPolicy('admin', filesystemRoot, '0', {
+          markings: [],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['read', 'write'],
+              inherit: true,
+              effect: 'allow',
+            },
+          ],
+        });
+        const actor = { environment: f.environment, principal: 'admin', application: 'app' };
+        const parent = (
+          await store.apply(actor, randomUUID(), [
+            {
+              op: 'create',
+              kind: 'directory',
+              parentId: filesystemRoot,
+              expectedParentRevision: (await store.get(filesystemRoot)).revision,
+              name: `publication-${randomUUID()}`,
+              scope: { projectId: randomUUID(), environmentId: f.environment },
+            },
+          ])
+        ).entries.find((entry) => entry.parentId === filesystemRoot)!;
+        for (const [index, dataset] of f.datasets.entries()) {
+          const entry = (
+            await store.apply(actor, randomUUID(), [
+              {
+                op: 'create',
+                kind: 'resource',
+                parentId: parent.id,
+                expectedParentRevision: (await store.get(parent.id)).revision,
+                name: `dataset-${index}`,
+                resourceId: dataset,
+              },
+            ])
+          ).entries.find((entry) => entry.resourceId === dataset)!;
+          await security.setPolicy('admin', entry.id, '0', {
+            markings: index === 0 ? [{ environment: f.environment, marking: 'classified' }] : [],
+            grants: [],
+          });
+        }
+        await f.service.publish(f.auth, f.request());
+        const writes = f.writes();
+        const execution = randomUUID();
+        const request = {
+          ...f.request(),
+          execution,
+          fence: await catalog.claim(f.environment, execution, 'worker'),
+          lineage: { [f.datasets[0]]: '1' },
+        };
+        for (const output of request.outputs) output.expectedRevision = '1';
+        request.checkpoint!.expectedVersion = '1';
+        await assert.rejects(f.service.publish(f.auth, request), { code: 'MARKING_DOWNGRADE' });
+        assert.equal(
+          f.writes(),
+          writes,
+          'classified input must be rejected before any object write',
+        );
+        assert.deepEqual(
+          (await catalog.heads(f.environment, f.datasets)).map((head) => head.revision),
+          ['1', '1'],
+        );
+      },
+    );
 
     await t.test(
       'Iceberg read-back, atomic two-output heads/history/checkpoint and acknowledgment retry',

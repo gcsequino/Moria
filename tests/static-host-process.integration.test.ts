@@ -166,7 +166,15 @@ test(
     const socket = connect(port, '127.0.0.1');
     await new Promise<void>((r) => socket.once('connect', r));
     socket.write('GET / HTTP/1.1\r\n');
+    // Forced shutdown may reset this deliberately incomplete request.
+    const disconnected = new Promise<void>((ready, reject) => {
+      socket.once('close', () => ready());
+      socket.once('error', (error: NodeJS.ErrnoException) => {
+        if (error.code !== 'ECONNRESET') reject(error);
+      });
+    });
     await stop(running.child, 'SIGINT');
+    await disconnected;
     socket.destroy();
     assert.equal(running.child.exitCode, 0);
     await available(port);

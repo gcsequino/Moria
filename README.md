@@ -12,6 +12,24 @@ Default startup hosts management only. The bundled Snow/weather POC is retired; 
 
 ## Development
 
+The [platform filesystem](docs/FILESYSTEM.md) organizes human and agent homes,
+group projects, ontologies and code repositories with inherited access, verified
+versioned files and checkout/push/publication. Open **Files** in the management
+console or run `pnpm moria fs home`. This requires a fresh schema version 3 database.
+
+[TypeScript functions](docs/FUNCTIONS.md) connect repository exports to private,
+versioned invocations through API/SDK/CLI and the Files console. An explicit
+function worker owns container execution; API processes do not control Docker.
+Docker is the current injected backend; Firecracker is the planned production backend.
+Implementation and local acceptance are complete, including real container tests
+and the full Linux quality gate. The Linux CI quality container receives the
+ephemeral runner's Docker socket for these tests; function sandboxes receive no socket.
+
+The [shared value model](docs/spec/core-contracts.md#c03--values-rows-and-schema-evolution)
+defines exact scalar encodings, stored scalar arrays, structured API/function
+envelopes, schema compatibility and versioned typed fingerprints. TypeScript and
+Python codecs share conformance cases; generated SDKs include runtime decoding.
+
 For a visual tour of the implemented components, read the [technical diagrams](docs/TECHNICAL-DIAGRAMS.md): architecture, protected queries, actions, Iceberg indexing, and object state.
 
 Linux is the supported development and target hosting OS. Use Node 24,
@@ -26,9 +44,13 @@ pnpm check
 pnpm moria validate examples/maintenance.json --attributes examples/principal-attributes.json --json
 ```
 
-Run the Linux test harness with `docker build -f deploy/test/Dockerfile -t moria-test:local .` followed by `docker run --rm --network none moria-test:local`. This is test packaging, not a production deployment.
+Use the commands in the [Linux quality workflow](.github/workflows/quality.yml)
+to build the test image, preload pinned function images and run the offline gate.
+The quality container needs the test daemon socket and its host group; bootstrap
+and function sandboxes receive no socket. Use a disposable test host. This is test
+packaging, not a production deployment.
 
-`pnpm check` runs formatting, SDK drift checks, TypeScript checks, runtime tests,
+`pnpm check` runs formatting, architecture ownership, SDK drift and TypeScript checks, runtime tests,
 Python formatting, specification/workload validation, both bundled application
 builds, and the Station Explorer type/build/hosting smoke checks. Python commands
 use `.venv` or the explicit `MORIA_PYTHON` executable. Specification validation

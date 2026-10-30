@@ -3,7 +3,7 @@ import { snowConfig, snowFixture } from './fixtures/snow.js';
 import { createSnowJobs } from '../services/execution/src/snow-jobs.js';
 import { baseline } from '../services/database/src/baseline.js';
 import { externalDatabase } from '../services/database/src/config.js';
-import { schema, holdSchema } from '../services/database/src/schema.js';
+import { schema, holdSchema, schemaVersion } from '../services/database/src/schema.js';
 import {
   createClient as snowSdk,
   ApiError as SnowApiError,
@@ -94,7 +94,7 @@ test('shared reader admission releases its session lock and rolls back on failur
           );
           assert.deepEqual(
             lock.rows.map((r) => r.mode),
-            ['ShareLock'],
+            ['ShareLock', 'ShareLock'],
           );
           await c.query("UPDATE moria.environments SET revision=99 WHERE id='reader-cleanup'");
           throw new Error('injected read callback failure');
@@ -416,7 +416,7 @@ test(
     assert.deepEqual(
       (await iceberg({ operation: 'read', metadataLocation: (await heads())[0].metadata_location }))
         .rows,
-      [{ uid: 'a', value: 1 }],
+      [{ uid: 'a', value: '1' }],
     );
     const a2 = await iceberg({
       operation: 'stage',
@@ -449,11 +449,11 @@ test(
     assert.deepEqual(
       (await iceberg({ operation: 'read', metadataLocation: (await heads())[0].metadata_location }))
         .rows,
-      [{ uid: 'a', value: 9 }],
+      [{ uid: 'a', value: '9' }],
     );
     assert.deepEqual(
       (await iceberg({ operation: 'read', metadataLocation: a.metadataLocation })).rows,
-      [{ uid: 'a', value: 1 }],
+      [{ uid: 'a', value: '1' }],
     );
   },
 );
@@ -2999,12 +2999,12 @@ test('migration ownership, versioned idempotence and compatibility use real Post
   }
   await schema(pool, 'apply');
   assert.deepEqual(await snapshot(), before);
-  for (const version of [0, 999]) {
+  for (const version of [0, 1, 2, 999]) {
     await pool.query('UPDATE moria.schema_version SET version=$1', [version]);
     await assert.rejects(schema(pool, 'apply'), /incompatible/);
     await assert.rejects(schema(pool, 'verify'), /incompatible/);
   }
-  await pool.query('UPDATE moria.schema_version SET version=1');
+  await pool.query('UPDATE moria.schema_version SET version=$1', [schemaVersion]);
   await schema(pool, 'verify');
   const savedChecksum = (await pool.query('SELECT checksum FROM moria.schema_version')).rows[0]
     .checksum;

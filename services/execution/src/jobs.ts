@@ -157,6 +157,12 @@ export class Jobs {
     return this.catalog.transaction(async (c) => {
       await check?.(c);
       await c.query("SELECT pg_advisory_xact_lock(hashtextextended('moria/jobs/enqueue',0))");
+      const job = (await c.query('SELECT kind FROM moria.jobs WHERE id=$1', [id])).rows[0];
+      if (job && !Object.hasOwn(this.handlers, job.kind))
+        throw new MoriaError(
+          'INPUT_INVALID',
+          'This workload has no registered handler; historical jobs cannot be retried.',
+        );
       const active = await c.query(
         "SELECT 1 FROM moria.jobs WHERE kind=(SELECT kind FROM moria.jobs WHERE id=$1) AND status IN ('queued','running','retrying')",
         [id],

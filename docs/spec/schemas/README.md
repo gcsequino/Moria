@@ -2,6 +2,7 @@
 
 - [resources.schema.json](resources.schema.json): 23 resource kinds, closed metadata/spec objects and a bounded expression grammar.
 - [manifest.schema.json](manifest.schema.json): project/deployment-unit identities, resources and pinned contract dependencies.
+- [values.schema.json](values.schema.json): shared version-1 scalar, column and structured envelope descriptors; semantic normalization is defined in C03.
 - [maintenance.json](../examples/maintenance.json): 36 declarations covering every resource kind.
 - [invalid-resources.json](../examples/invalid-resources.json): deliberately invalid structural cases.
 - [validate.py](validate.py): reproducible schema/static review checks; install [requirements.txt](requirements.txt) for the tested validator and format support.

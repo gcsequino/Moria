@@ -1,14 +1,32 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import type { Diagnostic, Manifest, Resource, ValueType, Expr } from '../../contracts/types.js';
+import type {
+  Diagnostic,
+  Manifest,
+  Resource,
+  ValueType,
+  Expr,
+  TypeSchema,
+} from '../../contracts/types.js';
 import { resourceRef, MoriaError } from '../../contracts/types.js';
 import { compileExpression, type ExpressionTypes } from '../../authorization/src/expressions.js';
+import {
+  normalizeType,
+  canonicalValue,
+  canonicalJson as canonical,
+} from '../../contracts/values.js';
+export { canonicalJson as canonical } from '../../contracts/values.js';
 
 const require = createRequire(import.meta.url);
 const Ajv = require('ajv/dist/2020').default;
 const ajv = new Ajv({ allErrors: true, strict: false, validateFormats: true });
 require('ajv-formats')(ajv);
+ajv.addSchema(
+  JSON.parse(
+    readFileSync(new URL('../../contracts/schemas/values.schema.json', import.meta.url), 'utf8'),
+  ),
+);
 const schema = JSON.parse(
   readFileSync(new URL('../../contracts/schemas/resources.schema.json', import.meta.url), 'utf8'),
 );
@@ -22,25 +40,16 @@ const validateAttributes = ajv.compile({
   additionalProperties: { $ref: `${schema.$id}#/$defs/ValueType` },
 });
 
-/** Deterministic JSON, excluding no fields: fingerprints include policy/scopes. */
-export function canonical(value: unknown): string {
-  if (typeof value === 'number' && !Number.isFinite(value))
-    throw new MoriaError('INVALID_JSON', 'Non-finite number');
-  if (value === null || typeof value !== 'object') {
-    const text = JSON.stringify(value);
-    if (text === undefined) throw new MoriaError('INVALID_JSON', 'Value is not JSON');
-    return text;
-  }
-  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)
-    throw new MoriaError('INVALID_JSON', 'Expected a plain JSON object');
-  return `{${Object.keys(value)
-    .sort()
-    .map((k) => `${JSON.stringify(k)}:${canonical((value as any)[k])}`)
-    .join(',')}}`;
-}
 export const fingerprint = (value: unknown): string =>
   `sha256:${createHash('sha256').update(canonical(value)).digest('hex')}`;
+export const valueFingerprint = (
+  value: unknown,
+  type: TypeSchema,
+  definitions: Record<string, TypeSchema> = {},
+): string =>
+  `sha256:${createHash('sha256')
+    .update(canonicalValue(value, type, definitions))
+    .digest('hex')}`;
 
 export interface CompilerContext {
   principalAttributes: Record<string, ValueType>;
@@ -53,6 +62,11 @@ export interface CompiledManifest {
   attributeTypesFingerprint?: string;
 }
 export function validateManifest(input: unknown, context?: CompilerContext): Diagnostic[] {
+  try {
+    canonical(input);
+  } catch {
+    return [{ code: 'SCHEMA_INVALID', path: '/', message: 'Expected bounded, acyclic JSON' }];
+  }
   if (!validateShape(input))
     return (validateShape.errors ?? []).slice(0, 30).map((e: any) => ({
       code: 'SCHEMA_INVALID',
@@ -101,14 +115,16 @@ export function validateManifest(input: unknown, context?: CompilerContext): Dia
     }
     return r;
   };
-  const checkTypes = (fields: Record<string, ValueType>, path: string) => {
+  const checkTypes = (
+    fields: Record<string, ValueType>,
+    path: string,
+    profile: 'value' | 'column' = 'column',
+  ) => {
     for (const [name, type] of Object.entries(fields)) {
-      if (type.type === 'decimal' && type.scale! > type.precision!)
-        emit('TYPE_INVALID', `${path}/${name}`, 'Decimal scale exceeds precision');
-      if (type.type === 'array') {
-        if (type.items?.nullable)
-          emit('TYPE_INVALID', `${path}/${name}`, 'Array elements must be non-null');
-        if (type.items) checkTypes({ item: type.items }, `${path}/${name}`);
+      try {
+        normalizeType(type, {}, profile);
+      } catch {
+        emit('TYPE_INVALID', `${path}/${name}`, 'Invalid or unsupported value type');
       }
     }
   };
@@ -121,7 +137,8 @@ export function validateManifest(input: unknown, context?: CompilerContext): Dia
     const ref = (value: string, kinds: string[]) => resolve(value, kinds, key);
     for (const mark of r.metadata.markings ?? []) ref(mark, ['Marking']);
     for (const name of ['columns', 'properties', 'inputs', 'outputs'])
-      if (s[name] && !Array.isArray(s[name])) checkTypes(s[name], `${key}/${name}`);
+      if (s[name] && !Array.isArray(s[name]))
+        checkTypes(s[name], `${key}/${name}`, r.kind === 'Function' ? 'value' : 'column');
     switch (r.kind) {
       case 'Dataset':
         for (const pk of s.primaryKey ?? [])
@@ -201,7 +218,7 @@ export function validateManifest(input: unknown, context?: CompilerContext): Dia
         break;
       }
       case 'Action': {
-        ref(s.targetType, ['ObjectType']);
+        const targetType = ref(s.targetType, ['ObjectType']);
         if (s.targetParameter && s.inputs[s.targetParameter]?.type !== 'uid')
           emit('ACTION_TARGET', key, 'Target parameter must be a declared UID input');
         if (!s.targetParameter && (s.function || s.edits?.some((e: any) => e.op !== 'create')))
@@ -210,6 +227,21 @@ export function validateManifest(input: unknown, context?: CompilerContext): Dia
           const fn = ref(s.function, ['Function']);
           if (fn && fn.spec.effect !== 'editProposal')
             emit('ACTION_FUNCTION', key, 'Action function must produce edit proposals');
+          if (fn && fingerprint(fn.spec.inputs) !== fingerprint(s.inputs))
+            emit('ACTION_FUNCTION', key, 'Action and proposal function inputs must match');
+          if (fn && targetType)
+            for (const [property, type] of Object.entries(fn.spec.outputs)) {
+              if (
+                property === targetType.spec.primaryKey ||
+                !Object.hasOwn(targetType.spec.properties, property) ||
+                fingerprint(type) !== fingerprint(targetType.spec.properties[property])
+              )
+                emit(
+                  'ACTION_FUNCTION',
+                  key,
+                  'Proposal outputs must match editable target properties',
+                );
+            }
         }
         for (const e of s.edits ?? []) {
           if (e.linkType) ref(e.linkType, ['LinkType']);

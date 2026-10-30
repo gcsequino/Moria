@@ -6,6 +6,9 @@ import { MoriaError } from '../../../packages/contracts/types.js';
 import { appCommand } from './apps.js';
 import { snowCommand } from './snotel.js';
 import { authCommand } from './auth.js';
+import { filesystemCommand } from './filesystem.js';
+import { functionsCommand } from './functions.js';
+import { ApiError } from '../../../packages/osdk/src/runtime.js';
 
 try {
   const { positionals, values } = parseArgs({
@@ -21,12 +24,38 @@ try {
       config: { type: 'string' },
       email: { type: 'string' },
       app: { type: 'string' },
+      url: { type: 'string' },
+      profile: { type: 'string' },
+      project: { type: 'string' },
+      cursor: { type: 'string' },
+      kind: { type: 'string' },
+      namespace: { type: 'string' },
+      runtime: { type: 'string' },
+      exports: { type: 'string' },
+      revision: { type: 'string' },
+      key: { type: 'string' },
+      async: { type: 'boolean' },
     },
   });
   if (values.help || !positionals.length) {
     console.log(
+      'Functions: moria functions invoke|get|events|cancel|wait <uuid>; moria functions worker. See docs/FUNCTIONS.md.',
+    );
+    console.log(
+      'Filesystem: moria fs home|ls|stat|history|mkdir|mv|cp|rm|get|put|project|group|init|register|checkout|bind|push|publish|plan|apply|resource|policy|retire|enable|disable|collect\nUse --url https://instance.example and MORIA_API_TOKEN for remote CI; see docs/FILESYSTEM.md for arguments.',
+    );
+    console.log(
       'Moria\n\n  moria sdk generate <app-contract.json> --out <directory> [--check]\n  moria auth setup|recover|disable [--app management]\n  moria auth grant-admin --email you@gmail.com\n  moria auth configure-google --config client.json --email you@gmail.com\n  moria validate|compile <manifest.json> [--attributes types.json] [--json]\n  moria apps bootstrap|recover [management] [--directory instance-dir]\n  moria apps list\n  moria apps publish <id> <built-directory>\n  moria apps promote <id> <version>\n  moria apps rollback|verify|unlock <id>\n  moria apps serve <id> --port 3211\n\nApp commands run locally without the management UI or database. All accept --directory and --json. Start the bundled console with pnpm start.',
     );
+  } else if (positionals[0] === 'fs') {
+    console.log(JSON.stringify(await filesystemCommand(positionals.slice(1), values), null, 2));
+  } else if (positionals[0] === 'functions') {
+    if (positionals[1] === 'worker' && positionals.length === 2) {
+      const { launch } = await import('../../local/src/runtime.js');
+      launch('function-worker');
+    } else {
+      console.log(JSON.stringify(await functionsCommand(positionals.slice(1), values), null, 2));
+    }
   } else if (positionals[0] === 'sdk') {
     if (positionals[1] !== 'generate' || !positionals[2] || positionals.length !== 3 || !values.out)
       throw new MoriaError(
@@ -72,7 +101,7 @@ try {
   }
 } catch (error) {
   const e =
-    error instanceof MoriaError
+    error instanceof MoriaError || error instanceof ApiError
       ? error
       : new MoriaError('INPUT_INVALID', error instanceof Error ? error.message : 'Invalid input');
   console.error(

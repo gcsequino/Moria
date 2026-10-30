@@ -1,12 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, utimes, access } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import {
+  S3Client,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  ListMultipartUploadsCommand,
+} from '@aws-sdk/client-s3';
+import { s3ClientDefaults } from '../services/storage/src/s3-client.js';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLocalStorage } from '../services/storage/src/local.js';
-import { createS3Storage } from '../services/storage/src/s3.js';
+import { createLocalStorage, collectLocalStaging } from '../services/storage/src/local.js';
+import { createS3Storage, collectS3Staging } from '../services/storage/src/s3.js';
 import {
   createAuthorizedLocalStorage,
   createAuthorizedS3Storage,
@@ -38,6 +46,98 @@ for (const provider of ['local', 's3'] as const) {
         ? createAuthorizedLocalStorage(binding, scope, authority)
         : createAuthorizedS3Storage(binding, scope, authority);
     try {
+      await t.test(
+        'maintenance collects abandoned staging without exposing a table-wide worker capability',
+        async () => {
+          if (provider === 'local') {
+            const path = join(root, binding.warehouseId, binding.tableId, 'staging', randomUUID());
+            await writeFile(path, 'abandoned');
+            assert.equal(await collectLocalStaging(binding), 0);
+            const old = new Date(Date.now() - 25 * 60 * 60 * 1000);
+            await utimes(path, old, old);
+            assert.equal(await collectLocalStaging(binding), 1);
+            await assert.rejects(access(path));
+          } else {
+            const client = new S3Client({
+              ...s3ClientDefaults,
+              endpoint: binding.endpoint,
+              region: binding.region,
+              credentials: binding.credentials,
+            });
+            const key = [
+              binding.prefix,
+              binding.warehouseId,
+              binding.tableId,
+              'objects',
+              randomUUID(),
+            ].join('/');
+            try {
+              const pending = await client.send(
+                new CreateMultipartUploadCommand({ Bucket: binding.bucket, Key: key }),
+              );
+              const foreignKey = 'another-instance/objects/unrelated',
+                foreign = await client.send(
+                  new CreateMultipartUploadCommand({ Bucket: binding.bucket, Key: foreignKey }),
+                );
+              await client.send(
+                new UploadPartCommand({
+                  Bucket: binding.bucket,
+                  Key: foreignKey,
+                  UploadId: foreign.UploadId,
+                  PartNumber: 1,
+                  Body: new Uint8Array([4]),
+                  ContentLength: 1,
+                }),
+              );
+              await client.send(
+                new UploadPartCommand({
+                  Bucket: binding.bucket,
+                  Key: key,
+                  UploadId: pending.UploadId,
+                  PartNumber: 1,
+                  Body: new Uint8Array([1, 2, 3]),
+                  ContentLength: 3,
+                }),
+              );
+              assert.equal(await collectS3Staging(binding), 0);
+              assert.equal(await collectS3Staging(binding, Date.now() + 60 * 60 * 1000), 1);
+              assert.equal(
+                (
+                  await client.send(
+                    new ListMultipartUploadsCommand({ Bucket: binding.bucket, Prefix: foreignKey }),
+                  )
+                ).Uploads?.length,
+                1,
+              );
+            } finally {
+              client.destroy();
+            }
+          }
+        },
+      );
+      await t.test(
+        'candidate deletion requires its own exact authority and is idempotent',
+        async () => {
+          const object = { ...logical, objectId: 'delete-candidate' };
+          await storage.write(object, source([[1, 2, 3]]), { size: 3 });
+          const reader = await authorized(
+            { location: object, operations: ['read'] },
+            { checkCurrent: async () => true },
+          );
+          await assert.rejects(reader.remove!(object), code('AUTHORITY_DENIED'));
+          const collector = await authorized(
+            { location: object, operations: ['delete'] },
+            { checkCurrent: async () => true },
+          );
+          await assert.rejects(
+            collector.remove!({ ...object, objectId: 'another' }),
+            code('AUTHORITY_DENIED'),
+          );
+          await collector.remove!(object);
+          await collector.remove!(object);
+          await assert.rejects(storage.read(object), code('NOT_FOUND'));
+        },
+      );
       await t.test('logical bindings, capability discovery and sanitized errors', async () => {
         for (const value of ['../escape', 'a/b', '%2f', 'https://other', 'a\\b']) {
           await assert.rejects(
@@ -54,7 +154,8 @@ for (const provider of ['local', 's3'] as const) {
           code('BINDING_MISMATCH'),
         );
         await assert.rejects(storage.read(logical), code('NOT_FOUND'));
-        for (const capability of ['overwrite', 'delete', 'multipart', 'publish']) {
+        storage.requireCapability('delete');
+        for (const capability of ['overwrite', 'multipart', 'publish']) {
           assert.throws(
             () => storage.requireCapability(capability),
             code('UNSUPPORTED_CAPABILITY'),

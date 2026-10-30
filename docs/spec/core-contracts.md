@@ -24,11 +24,65 @@ Canonical output contains exactly one row per UID. Duplicate UIDs fail indexing,
 
 ## C03 — values, rows and schema evolution
 
-Declared values: string (UTF-8, case-sensitive), boolean, int64, float64, decimal, date, timestamp, UID and one-dimensional arrays of non-null scalar elements. Decimal has precision 1–38 and scale 0–precision. Wire int64 and decimal values are strings to avoid JavaScript precision loss. Floats must be finite. Dates use `YYYY-MM-DD`; timestamps are UTC RFC3339 normalized to microsecond precision. UID text uses lowercase UUID canonical form. The compiler enforces ranges, precision, scale and timezone normalization.
+Value model **version 1** is shared by declarations, compiler, storage, policy expressions, API/SDK codecs and function/worker protocols. Its machine-readable descriptor is [values.schema.json](schemas/values.schema.json); semantic checks additionally enforce decimal scale, reference resolution and bounded complexity. TypeScript's implementation is `packages/contracts/values.ts`; Python's is `workers/value_codec.py`. Both execute the same conformance vectors in `packages/contracts/value-conformance.json`.
 
-Dataset rows contain every declared column; missing nullable input is normalized to explicit null during ingestion, missing required input fails. Unknown columns fail unless a new schema revision is deployed. Object responses distinguish omitted unauthorized properties from explicit null. Required properties must exist after source mapping and overlays. Arrays retain order and duplicates; equality is element-wise. Array ordering/aggregation is unsupported initially; contains-element is supported. Enum/union/nested structures are future extensions.
+| Type | JSON wire and TypeScript binding | Python native binding |
+|---|---|---|
+| string | Well-formed Unicode string, case-sensitive; NUL rejected | `str` |
+| boolean | JSON boolean | `bool` |
+| int64 | Base-10 string, signed 64-bit range; no exponent, plus sign or leading zeros | `int` |
+| float64 | Finite IEEE 754 binary64 JSON number; negative zero becomes zero | `float` |
+| decimal | Exact decimal string; precision 1–38, scale 0–precision | `decimal.Decimal` |
+| date | Gregorian `YYYY-MM-DD`, years 0001–9999 | `datetime.date` |
+| timestamp | UTC `YYYY-MM-DDTHH:mm:ss.ffffffZ`, years 0001–9999 | Aware `datetime.datetime` in UTC |
+| uid | Lowercase UUID string | `uuid.UUID` |
 
-New nullable columns may be added with null defaults. Type changes, primary-key changes and dropping referenced columns require a migration plan. No silent numeric narrowing or case normalization. Retained overlays incompatible with a new property type block activation until transformed or explicitly cleared with audit. All schema fingerprints are computed from canonical JSON, not YAML formatting.
+Every scalar descriptor explicitly declares `nullable`. Int64 `-0` becomes `0`. Decimal inputs may have fewer fractional digits than the declared scale; normalization pads zeros and removes a negative zero sign. Extra fractional digits fail without rounding. Timestamp input requires `Z` and at most six fractional digits, then normalizes to exactly six; naive timestamps, offsets, leap seconds and sub-microsecond values fail. Python native aware timestamps convert to UTC before wire encoding. No numeric narrowing or string coercion is implicit. Native values unsupported by a language binding must be encoded through its codec before JSON serialization.
+
+The **column profile** supports these scalars and one-dimensional `array` values containing non-null scalars. Dataset columns, object properties, action parameters and policy values use that profile. Arrays preserve order and duplicates; equality is element-wise. Array ordering/aggregation is unsupported initially; contains-element is supported. Stored nested records/arrays, enums and unions remain extensions.
+
+The **envelope profile** additionally supports nested `object` records and `list`/`array` values, nullable containers/elements and optional record fields. `list` normalizes to `array`; object/list `nullable` defaults to false. Records reject unknown and missing required fields. `optional` names fields that may be omitted, independently of whether their values may be null. Field names are bounded ASCII identifiers; prototype-sensitive names are rejected. Named `{ "ref": "Name" }` descriptors resolve within the supplied type registry; cycles and unresolved references fail. App contracts supply their own registry. Function declarations use inline envelope descriptors. There is no global named-type resource or recursive-value type in this release.
+
+Dataset rows contain every declared column; missing nullable input is normalized to explicit null during ingestion, missing required input fails. The same top-level field-map rule applies to action/function parameters and function results; nested record omission follows `optional`. Object responses distinguish omitted unauthorized properties from explicit null. Generated clients request an explicit authorized projection and decode exactly that shape. Required properties must exist after source mapping and overlays. Descriptor depth is at most 20 with 10,000 visited nodes; a decoded value is bounded to 100,000 nodes. Transport and execution byte limits still apply independently.
+
+Compatibility is directional: every source wire value must decode under the target descriptor. Widening nullability, widening decimal precision at unchanged scale, or adding optional envelope fields is compatible; removing fields, adding required fields, changing kinds/scale or narrowing nullability is not. Columns use the stricter storage rule: only nullable additions with null defaults are automatic. Type changes, primary-key changes and column removal fail with `MIGRATION_REQUIRED` until an explicit migration is implemented and reviewed. Retained incompatible overlays cannot be silently discarded. Iceberg initial field IDs are deterministic; future physical evolution must preserve persisted field IDs.
+
+Schema/resource fingerprints use canonical JSON rather than source formatting. Typed value fingerprints additionally include version 1 and the normalized resolved descriptor; float64 values use their big-endian binary64 hexadecimal bits in the canonical fingerprint payload. This makes TypeScript and Python produce identical bytes and SHA-256 digests without depending on their decimal/exponent printing. Fingerprint payloads are internal canonical forms, not the public JSON value encoding. Function invocations persist `valueVersion: 1`; worker frames carry the same version and reject unsupported versions. Other API scalar encodings retain their existing `/api/v1` contract.
+
+### Ontology objects in value envelopes
+
+`{"type":"ontologyObject","objectType":"<immutable ObjectType UUID>","nullable":false}`
+declares an ontology object value. It is available in function/API envelopes,
+including nested records, lists, optional fields and nullable positions. It is
+distinct from a structural `object` record and is not a stored column type.
+Changing the declared ObjectType UUID is incompatible even when properties match.
+
+The wire value contains exactly `objectType` and `uid`, both canonical UUIDs.
+Properties, credentials, policies and environment selectors never travel with
+the reference. The verified invocation supplies the environment. Trusted service
+bindings associate each type UUID with one actual object service; unknown or
+ambiguous bindings fail closed. Custom bindings use registered ObjectType resource
+UUIDs. The built-in asset/station/observation ontology reserves the three identities
+in `packages/contracts/bundled-objects.ts` and shares them with its server bindings.
+
+Generated OSDK types use ordinary ontology names such as `Customer` and `Order`.
+These are identity handles with `uid`, `objectType` and an asynchronous `get`
+operation for explicitly projected current properties. `CustomerProperties`
+names the fetched data shape; it is not an interchangeable ontology identity.
+`client.objects.customers.object(uid)` constructs a handle without fetching data.
+Transport encoding emits only its identity. OSDK reads address immutable type IDs;
+existing named routes remain available to older callers. A UUID never falls back
+to a similarly named service. The Python codec represents native identities with
+its frozen `OntologyObject` value; this does not add a Python execution engine.
+
+Function acceptance verifies input object existence and current row access
+without requesting properties, retains classifications/read grants and fences
+that evidence with acceptance. Before result publication, output identities get
+the same checks. Lists preserve order and duplicates; permission checks deduplicate
+identities within each envelope. Property reads through a handle add their own
+read evidence and enforce property policy. Revocation, deletion, type rebinding
+or changed consumed data can withhold retained results and logs. An identity-only
+parameter does not pin property values that were never fetched.
 
 ## C04 — dataset commits and source completeness
 
@@ -75,7 +129,7 @@ Confirmed source deletion hides a source-backed object but retains overlays/hist
 
 Initial actions declare typed inputs, a condition expression and an ordered edit list. In one serializable transaction, resolve targets, check current identity/scopes/markings, authorize reads/writes, validate conditions and optional expected versions, apply the edit list, check post-state policies and link constraints, and commit edits/audit/outbox/idempotency outcome together. All referenced reads participate in the transaction. Cross-environment edits are rejected. Hard defaults: 100 objects/action, 5-second database transaction timeout, three internal serialization retries. Exhaustion returns retryable `CONCURRENT_MODIFICATION`; validation/permission denials are nonretryable.
 
-Functions execute outside this transaction and may return a typed edit proposal plus the object versions read. Commit rechecks versions and declarative conditions. Initial function proposals cannot depend on unconstrained aggregate/predicate reads; such dependencies require a declarative condition re-evaluated in the transaction. No provider call, arbitrary user code or external write occurs inside the action transaction.
+Functions execute outside this transaction and may return a typed edit proposal plus the object versions read. In the current single-target runtime, `Action.function` inputs match the action inputs and outputs form a typed map of editable target properties, excluding the primary UID. Functions can also stage existing ontology actions as one atomic proposal batch. Commit rechecks point-read evidence, current authority, destination markings and declarative conditions. Initial function proposals cannot depend on unconstrained aggregate/predicate reads; such dependencies require a declarative condition re-evaluated in the transaction. No provider call, arbitrary user code or external write occurs inside the action transaction. Explicit `readWrite` function API calls commit individually and are not part of this proposal transaction.
 
 Clients supply idempotency keys for every action. Scope: environment + application + principal/delegation + stable action ID + key. First accepted request pins action revision, input hash and request ID. Same key/different payload or explicitly different revision returns `IDEMPOTENCY_CONFLICT`. Same key with omitted revision returns the original outcome even after deployment, subject to current read authorization. Concurrency on the same key returns `IN_PROGRESS` or the completed result. Unauthorized requests cannot reserve keys. Store completed result bodies 30 days, then retain key/hash/status/commit-reference tombstones indefinitely. A later retry returns `RESULT_EXPIRED` and never executes again. Result retention is configurable but cannot enable silent key reuse.
 

@@ -63,11 +63,14 @@ const handler = async (job: JobContext) => {
     throw error;
   }
 };
-const runtime = await runProcess(process.argv[2] as ProcessRole, async (catalog) => {
-  const jobs = new ObservedJobs(catalog, { sample: handler, periodic: handler });
-  await jobs.migrate();
-  return { jobs };
-});
+const runtime = await runProcess(
+  process.argv[2] as Exclude<ProcessRole, 'function-worker'>,
+  async (catalog) => {
+    const jobs = new ObservedJobs(catalog, { sample: handler, periodic: handler });
+    await jobs.migrate();
+    return { jobs };
+  },
+);
 if (!runtime) {
   process.exit(1);
 } else {

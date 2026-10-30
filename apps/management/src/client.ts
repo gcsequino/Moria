@@ -1,10 +1,19 @@
 import { createClient } from './generated/index.js';
-import type { Asset, SourceRow } from './generated/index.js';
-export type { Asset, SourceRow, HostedApp } from './generated/index.js';
+import { createTransport } from '../../../packages/platform/src/transport.js';
+import { filesystemClient } from '../../../packages/platform/src/filesystem.js';
+import { functionsClient } from '../../../packages/platform/src/functions.js';
+import type { AssetProperties as Asset, SourceRow } from './generated/index.js';
+export type { AssetProperties as Asset, SourceRow, HostedApp } from './generated/index.js';
 export type Page = import('./generated/index.js').Page<Asset>;
-export const sdk = createClient({
+const options = {
   onUnauthenticated: () => window.dispatchEvent(new Event('moria:unauthenticated')),
-});
+};
+export const sdk = createClient(options);
+const transport = createTransport(options);
+export const platform = {
+  filesystem: filesystemClient(transport),
+  functions: functionsClient(transport),
+};
 export const sample: SourceRow[] = [
   {
     id: 'PUMP-001',

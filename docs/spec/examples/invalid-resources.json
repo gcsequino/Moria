@@ -1,5 +1,23 @@
 [
   {
+    "name": "stored array elements cannot be nullable",
+    "resource": {
+      "apiVersion": "moria/v1alpha2",
+      "kind": "Dataset",
+      "metadata": { "namespace": "maintenance", "name": "nullable_items" },
+      "spec": {
+        "columns": {
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": { "type": "string", "nullable": true }
+          }
+        },
+        "writeModes": ["replace"]
+      }
+    }
+  },
+  {
     "name": "unknown spec field",
     "resource": {
       "apiVersion": "moria/v1alpha2",

@@ -151,9 +151,12 @@ test(
       child.stdout!.on('data', (data) => {
         if (String(data).includes('Moria API:')) ready = true;
       });
-      child.stderr!.resume();
+      let errors = '';
+      child.stderr!.on('data', (data) => {
+        errors += String(data);
+      });
       await until(() => {
-        assert.equal(child.exitCode, null, 'API exited before readiness');
+        assert.equal(child.exitCode, null, `API exited before readiness: ${errors}`);
         return ready;
       });
       return child;

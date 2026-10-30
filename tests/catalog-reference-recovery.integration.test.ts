@@ -291,6 +291,7 @@ for (const provider of ['local', 's3'] as const) {
         );
         const { rows: _rows, ...provenance } = result;
         assert.deepEqual(provenance, {
+          markings: ['protected'],
           environment: f.environment,
           dataset: f.dataset,
           revision: '1',

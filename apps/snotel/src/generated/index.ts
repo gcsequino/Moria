@@ -3,12 +3,101 @@ import {
   createTransport,
   objectClient,
   actionClient,
+  typedRequest,
+  bindObject,
+  type OntologyObject,
   type ClientOptions,
   type RequestOptions,
+  type TypeSchema,
 } from './runtime.js';
 export * from './runtime.js';
 export const contractFingerprint =
-  'sha256:08656b533123150443561e77da3682b451a3b727e9341d461c1416cfa51b3aac';
+  'sha256:81ced2c31350233f157bbfe1913de908ebd8e114e9bf33cb1cec9554c0d007e7';
+const valueDefinitions: { [name: string]: TypeSchema } = {
+  Status: {
+    nullable: false,
+    optional: ['weather'],
+    properties: {
+      completed: {
+        nullable: true,
+        properties: {
+          completed_at: { nullable: false, type: 'string' },
+          config: {
+            nullable: false,
+            optional: ['source'],
+            properties: {
+              beginDate: { nullable: false, type: 'string' },
+              endDate: { nullable: false, type: 'string' },
+              source: { nullable: false, type: 'string' },
+              stations: { items: { nullable: false, type: 'string' }, type: 'list' },
+            },
+            type: 'object',
+          },
+          id: { nullable: false, type: 'string' },
+          observation_count: { nullable: false, type: 'float64' },
+          station_count: { nullable: false, type: 'float64' },
+        },
+        type: 'object',
+      },
+      latest: {
+        nullable: true,
+        properties: {
+          completed_at: { nullable: true, type: 'string' },
+          error: { nullable: true, type: 'string' },
+          id: { nullable: false, type: 'string' },
+          started_at: { nullable: false, type: 'string' },
+          status: { nullable: false, type: 'string' },
+        },
+        type: 'object',
+      },
+      weather: {
+        nullable: false,
+        properties: {
+          areas: {
+            items: {
+              nullable: false,
+              properties: {
+                forecastUrl: { nullable: false, type: 'string' },
+                id: { nullable: false, type: 'string' },
+                latitude: { nullable: false, type: 'float64' },
+                longitude: { nullable: false, type: 'float64' },
+                name: { nullable: false, type: 'string' },
+                periods: {
+                  items: {
+                    nullable: false,
+                    properties: {
+                      detailedForecast: { nullable: false, type: 'string' },
+                      endTime: { nullable: false, type: 'string' },
+                      isDaytime: { nullable: false, type: 'boolean' },
+                      name: { nullable: false, type: 'string' },
+                      precipitationProbability: { nullable: true, type: 'float64' },
+                      shortForecast: { nullable: false, type: 'string' },
+                      startTime: { nullable: false, type: 'string' },
+                      temperature: { nullable: false, type: 'float64' },
+                      temperatureUnit: { nullable: false, type: 'string' },
+                      windDirection: { nullable: false, type: 'string' },
+                      windSpeed: { nullable: false, type: 'string' },
+                    },
+                    type: 'object',
+                  },
+                  type: 'list',
+                },
+                retrievedAt: { nullable: false, type: 'string' },
+                sourceUpdatedAt: { nullable: false, type: 'string' },
+              },
+              type: 'object',
+            },
+            type: 'list',
+          },
+          jobId: { nullable: true, type: 'string' },
+          publishedAt: { nullable: true, type: 'string' },
+        },
+        type: 'object',
+      },
+    },
+    type: 'object',
+  },
+};
 export type Status = {
   completed: {
     completed_at: string;
@@ -17,7 +106,13 @@ export type Status = {
     observation_count: number;
     station_count: number;
   } | null;
-  latest: { error: string | null; started_at: string; status: string } | null;
+  latest: {
+    completed_at: string | null;
+    error: string | null;
+    id: string;
+    started_at: string;
+    status: string;
+  } | null;
   weather?: {
     areas: {
       forecastUrl: string;
@@ -45,7 +140,7 @@ export type Status = {
     publishedAt: string | null;
   };
 };
-export type Observation = {
+export type ObservationProperties = {
   date: string;
   depthQa: string;
   depthQc: string;
@@ -59,7 +154,11 @@ export type Observation = {
   uid: string;
   unit: string;
 };
-export type Station = {
+export type Observation = OntologyObject<
+  '00000000-0000-4000-8000-000000000003',
+  ObservationProperties
+>;
+export type StationProperties = {
   county: string;
   elevationFt: number;
   latitude: number;
@@ -71,42 +170,67 @@ export type Station = {
   triplet: string;
   uid: string;
 };
+export type Station = OntologyObject<'00000000-0000-4000-8000-000000000002', StationProperties>;
 export function createClient(options: ClientOptions = {}) {
   const transport = createTransport(options);
+  const objects = {
+    'snow-observations': objectClient<
+      ObservationProperties,
+      '00000000-0000-4000-8000-000000000003'
+    >(
+      transport,
+      'snow-observations',
+      {
+        date: { nullable: false, type: 'date' },
+        depthQa: { nullable: false, type: 'string' },
+        depthQc: { nullable: false, type: 'string' },
+        periodRef: { nullable: false, type: 'string' },
+        retrievedAt: { nullable: false, type: 'string' },
+        snowDepth: { nullable: true, type: 'float64' },
+        swe: { nullable: true, type: 'float64' },
+        sweQa: { nullable: false, type: 'string' },
+        sweQc: { nullable: false, type: 'string' },
+        triplet: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+        unit: { nullable: false, type: 'string' },
+      },
+      '00000000-0000-4000-8000-000000000003',
+    ),
+    'snow-stations': objectClient<StationProperties, '00000000-0000-4000-8000-000000000002'>(
+      transport,
+      'snow-stations',
+      {
+        county: { nullable: false, type: 'string' },
+        elevationFt: { nullable: false, type: 'float64' },
+        latitude: { nullable: false, type: 'float64' },
+        longitude: { nullable: false, type: 'float64' },
+        name: { nullable: false, type: 'string' },
+        retrievedAt: { nullable: false, type: 'string' },
+        state: { nullable: false, type: 'string' },
+        timeZoneOffset: { nullable: true, type: 'float64' },
+        triplet: { nullable: false, type: 'string' },
+        uid: { nullable: false, type: 'uid' },
+      },
+      '00000000-0000-4000-8000-000000000002',
+    ),
+  };
   return {
     auth: transport.auth,
-    objects: {
-      'snow-observations': objectClient<Observation>(transport, 'snow-observations', [
-        'date',
-        'depthQa',
-        'depthQc',
-        'periodRef',
-        'retrievedAt',
-        'snowDepth',
-        'swe',
-        'sweQa',
-        'sweQc',
-        'triplet',
-        'uid',
-        'unit',
-      ]),
-      'snow-stations': objectClient<Station>(transport, 'snow-stations', [
-        'county',
-        'elevationFt',
-        'latitude',
-        'longitude',
-        'name',
-        'retrievedAt',
-        'state',
-        'timeZoneOffset',
-        'triplet',
-        'uid',
-      ]),
-    },
+    objects,
     actions: {},
     endpoints: {
       status: (settings?: RequestOptions) =>
-        transport.request<Status>('/api/v1/status', 'GET', undefined, settings),
+        typedRequest<Status>(
+          transport,
+          '/api/v1/status',
+          'GET',
+          undefined,
+          undefined,
+          { ref: 'Status' },
+          valueDefinitions,
+          settings,
+          (identity) => bindObject({ objects }, identity),
+        ),
     },
   };
 }

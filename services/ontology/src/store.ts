@@ -2,7 +2,8 @@ import type { PoolClient, QueryResult } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { Catalog, type ActionRequest } from '../../catalog/src/catalog.js';
 import { MoriaError, type Value, type ValueType } from '../../../packages/contracts/types.js';
-import { validateRow, validateValue } from '../../../packages/contracts/values.js';
+import { validateRow, validateValue, normalizeType } from '../../../packages/contracts/values.js';
+import { compareColumns } from '../../../packages/contracts/compatibility.js';
 import { CursorStore } from './cursors.js';
 import { fingerprint } from '../../../packages/compiler/src/index.js';
 
@@ -66,6 +67,9 @@ export class ObjectStore {
     requiredMarkings?: string[],
   ): Promise<string> {
     schema = structuredClone(schema);
+    const properties = normalizeType({ type: 'object', properties: schema.properties }).properties!;
+    for (const type of Object.values(schema.properties)) normalizeType(type, {}, 'column');
+    schema.properties = properties as Record<string, ValueType>;
     if (requiredMarkings !== undefined) {
       if (
         !Array.isArray(requiredMarkings) ||
@@ -110,10 +114,19 @@ export class ObjectStore {
     const stage = randomUUID();
     const base = (
       await this.catalog.pool.query(
-        'SELECT revision FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=$3 ORDER BY revision DESC LIMIT 1',
+        'SELECT revision,object_schema FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=$3 ORDER BY revision DESC LIMIT 1',
         [environment, objectType, expectedRevision],
       )
     ).rows[0];
+    if (
+      base?.object_schema &&
+      (base.object_schema.primaryKey !== schema.primaryKey ||
+        !compareColumns(base.object_schema.properties, schema.properties).compatible)
+    )
+      throw new MoriaError(
+        'MIGRATION_REQUIRED',
+        'Destructive or type-changing schema evolution requires an explicit migration',
+      );
     await this.catalog.pool.query(
       "INSERT INTO moria.source_stages(id,environment,object_type,expected_revision,security_epoch,status,object_schema,base_source_revision,lease_binding,required_markings) VALUES($1,$2,$3,$4,$5,'loading',$6,$7,$8,$9)",
       [
@@ -399,6 +412,7 @@ export class ObjectStore {
     edits: Edit[],
     guard: (before: StoredObject | null, after: StoredObject | null) => void,
     checkCurrent?: (client: PoolClient) => Promise<void>,
+    transaction?: PoolClient,
   ): Promise<{ revision: string }> {
     return this.catalog.action(
       request,
@@ -446,6 +460,7 @@ export class ObjectStore {
         return { revision: next };
       },
       checkCurrent,
+      transaction,
     );
   }
 }

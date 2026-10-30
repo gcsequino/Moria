@@ -1,0 +1,999 @@
+{
+  "version": 1,
+  "valid": [
+    {
+      "name": "ontology object identity",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": false
+      },
+      "value": {
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "uid": "00000000-0000-4000-8000-000000000006"
+      },
+      "normalized": {
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "uid": "00000000-0000-4000-8000-000000000006"
+      }
+    },
+    {
+      "name": "list of ontology objects",
+      "schema": {
+        "type": "list",
+        "items": {
+          "type": "ontologyObject",
+          "objectType": "00000000-0000-4000-8000-000000000004",
+          "nullable": false
+        }
+      },
+      "value": [
+        {
+          "objectType": "00000000-0000-4000-8000-000000000004",
+          "uid": "00000000-0000-4000-8000-000000000006"
+        }
+      ],
+      "normalized": [
+        {
+          "objectType": "00000000-0000-4000-8000-000000000004",
+          "uid": "00000000-0000-4000-8000-000000000006"
+        }
+      ]
+    },
+    {
+      "name": "nullable ontology object",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": true
+      },
+      "value": null,
+      "normalized": null
+    },
+    {
+      "name": "string-0",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": "",
+      "normalized": ""
+    },
+    {
+      "name": "string-1",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": "hello",
+      "normalized": "hello"
+    },
+    {
+      "name": "string-2",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": "é雪😀",
+      "normalized": "é雪😀"
+    },
+    {
+      "name": "string-3",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": "line\n\"quote\"\\slash",
+      "normalized": "line\n\"quote\"\\slash"
+    },
+    {
+      "name": "boolean-true",
+      "schema": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "value": true,
+      "normalized": true
+    },
+    {
+      "name": "boolean-false",
+      "schema": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "value": false,
+      "normalized": false
+    },
+    {
+      "name": "float-6",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 0,
+      "normalized": 0
+    },
+    {
+      "name": "float-7",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 1,
+      "normalized": 1
+    },
+    {
+      "name": "float-8",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": -1,
+      "normalized": -1
+    },
+    {
+      "name": "float-9",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 1e-7,
+      "normalized": 1e-7
+    },
+    {
+      "name": "float-10",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 1e21,
+      "normalized": 1e21
+    },
+    {
+      "name": "float-11",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 1.7976931348623157e308,
+      "normalized": 1.7976931348623157e308
+    },
+    {
+      "name": "float-12",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 5e-324,
+      "normalized": 5e-324
+    },
+    {
+      "name": "float-13",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 1152921504606847000,
+      "normalized": 1152921504606847000
+    },
+    {
+      "name": "negative-float-zero",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": 0,
+      "normalized": 0
+    },
+    {
+      "name": "int64-0",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "0",
+      "normalized": "0"
+    },
+    {
+      "name": "int64--1",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "-1",
+      "normalized": "-1"
+    },
+    {
+      "name": "int64-9223372036854775807",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "9223372036854775807",
+      "normalized": "9223372036854775807"
+    },
+    {
+      "name": "int64--9223372036854775808",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "-9223372036854775808",
+      "normalized": "-9223372036854775808"
+    },
+    {
+      "name": "negative-int-zero",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "-0",
+      "normalized": "0"
+    },
+    {
+      "name": "decimal-normalized",
+      "schema": {
+        "type": "decimal",
+        "precision": 8,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "12.3",
+      "normalized": "12.30"
+    },
+    {
+      "name": "decimal-negative-zero",
+      "schema": {
+        "type": "decimal",
+        "precision": 2,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "-0.0",
+      "normalized": "0.00"
+    },
+    {
+      "name": "decimal-max",
+      "schema": {
+        "type": "decimal",
+        "precision": 38,
+        "scale": 0,
+        "nullable": false
+      },
+      "value": "99999999999999999999999999999999999999",
+      "normalized": "99999999999999999999999999999999999999"
+    },
+    {
+      "name": "decimal-fraction",
+      "schema": {
+        "type": "decimal",
+        "precision": 38,
+        "scale": 38,
+        "nullable": false
+      },
+      "value": "0.11111111111111111111111111111111111111",
+      "normalized": "0.11111111111111111111111111111111111111"
+    },
+    {
+      "name": "decimal-zero",
+      "schema": {
+        "type": "decimal",
+        "precision": 2,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "0",
+      "normalized": "0.00"
+    },
+    {
+      "name": "decimal-negative",
+      "schema": {
+        "type": "decimal",
+        "precision": 5,
+        "scale": 3,
+        "nullable": false
+      },
+      "value": "-12.34",
+      "normalized": "-12.340"
+    },
+    {
+      "name": "date-0001-01-01",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "0001-01-01",
+      "normalized": "0001-01-01"
+    },
+    {
+      "name": "date-2000-02-29",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "2000-02-29",
+      "normalized": "2000-02-29"
+    },
+    {
+      "name": "date-9999-12-31",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "9999-12-31",
+      "normalized": "9999-12-31"
+    },
+    {
+      "name": "timestamp-plain",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "2026-10-29T01:02:03Z",
+      "normalized": "2026-10-29T01:02:03.000000Z"
+    },
+    {
+      "name": "timestamp-micros",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "0001-01-01T00:00:00.000001Z",
+      "normalized": "0001-01-01T00:00:00.000001Z"
+    },
+    {
+      "name": "timestamp-max",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "9999-12-31T23:59:59.999999Z",
+      "normalized": "9999-12-31T23:59:59.999999Z"
+    },
+    {
+      "name": "uid",
+      "schema": {
+        "type": "uid",
+        "nullable": false
+      },
+      "value": "00000000-0000-0000-0000-000000000000",
+      "normalized": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "name": "nullable",
+      "schema": {
+        "type": "string",
+        "nullable": true
+      },
+      "value": null,
+      "normalized": null
+    },
+    {
+      "name": "array-empty",
+      "schema": {
+        "type": "array",
+        "nullable": false,
+        "items": {
+          "type": "int64",
+          "nullable": false
+        }
+      },
+      "value": [],
+      "normalized": []
+    },
+    {
+      "name": "array-order",
+      "schema": {
+        "type": "array",
+        "nullable": false,
+        "items": {
+          "type": "string",
+          "nullable": false
+        }
+      },
+      "value": ["b", "a", "b"],
+      "normalized": ["b", "a", "b"]
+    },
+    {
+      "name": "nullable-array",
+      "schema": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "date",
+          "nullable": false
+        }
+      },
+      "value": null,
+      "normalized": null
+    },
+    {
+      "name": "list-null-items",
+      "schema": {
+        "type": "list",
+        "items": {
+          "type": "boolean",
+          "nullable": true
+        }
+      },
+      "value": [true, null, false],
+      "normalized": [true, null, false]
+    },
+    {
+      "name": "nested-record",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "decimal",
+            "precision": 8,
+            "scale": 2,
+            "nullable": false
+          },
+          "items": {
+            "type": "list",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "nullable": false
+                },
+                "note": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "optional": ["note"]
+            }
+          }
+        }
+      },
+      "value": {
+        "amount": "1.2",
+        "items": [
+          {
+            "name": "a"
+          },
+          {
+            "name": "b",
+            "note": null
+          }
+        ]
+      },
+      "normalized": {
+        "amount": "1.20",
+        "items": [
+          {
+            "name": "a"
+          },
+          {
+            "name": "b",
+            "note": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "alias",
+      "schema": {
+        "ref": "Amount"
+      },
+      "value": "2.5",
+      "normalized": "2.50",
+      "definitions": {
+        "Amount": {
+          "type": "decimal",
+          "precision": 8,
+          "scale": 2,
+          "nullable": false
+        }
+      }
+    },
+    {
+      "name": "empty-record",
+      "schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "value": {},
+      "normalized": {}
+    }
+  ],
+  "invalid": [
+    {
+      "name": "wrong ontology object type",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": false
+      },
+      "value": {
+        "objectType": "00000000-0000-4000-8000-000000000005",
+        "uid": "00000000-0000-4000-8000-000000000006"
+      }
+    },
+    {
+      "name": "ontology properties cannot be supplied as identity",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": false
+      },
+      "value": {
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "uid": "00000000-0000-4000-8000-000000000006",
+        "name": "untrusted"
+      }
+    },
+    {
+      "name": "ontology identity cannot select environment",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": false
+      },
+      "value": {
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "uid": "00000000-0000-4000-8000-000000000006",
+        "environment": "other"
+      }
+    },
+    {
+      "name": "bad-int-0",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": 1.2
+    },
+    {
+      "name": "bad-int-1",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "01"
+    },
+    {
+      "name": "bad-int-2",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "+1"
+    },
+    {
+      "name": "bad-int-3",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": " 1"
+    },
+    {
+      "name": "bad-int-4",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "1e2"
+    },
+    {
+      "name": "bad-int-5",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "9223372036854775808"
+    },
+    {
+      "name": "bad-int-6",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": "-9223372036854775809"
+    },
+    {
+      "name": "bad-int-7",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": ""
+    },
+    {
+      "name": "bad-int-8",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "value": true
+    },
+    {
+      "name": "bad-float-9",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": "NaN"
+    },
+    {
+      "name": "bad-float-10",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": true
+    },
+    {
+      "name": "bad-float-11",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "value": null
+    },
+    {
+      "name": "bad-string-12",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": "\ud800"
+    },
+    {
+      "name": "bad-string-13",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": "nul\u0000byte"
+    },
+    {
+      "name": "bad-string-14",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "value": 5
+    },
+    {
+      "name": "bad-date-15",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "1900-02-29"
+    },
+    {
+      "name": "bad-date-16",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "2024-02-30"
+    },
+    {
+      "name": "bad-date-17",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "0000-01-01"
+    },
+    {
+      "name": "bad-date-18",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "value": "2026-1-01"
+    },
+    {
+      "name": "bad-time-19",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "2026-01-01T00:00:00+00:00"
+    },
+    {
+      "name": "bad-time-20",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "2026-01-01T00:00:00.1234567Z"
+    },
+    {
+      "name": "bad-time-21",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "2026-01-01T24:00:00Z"
+    },
+    {
+      "name": "bad-time-22",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "value": "2026-01-01T00:00:60Z"
+    },
+    {
+      "name": "bad-decimal-23",
+      "schema": {
+        "type": "decimal",
+        "precision": 4,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "100.00"
+    },
+    {
+      "name": "bad-decimal-24",
+      "schema": {
+        "type": "decimal",
+        "precision": 4,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "1.234"
+    },
+    {
+      "name": "bad-decimal-25",
+      "schema": {
+        "type": "decimal",
+        "precision": 4,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "1e-2"
+    },
+    {
+      "name": "bad-decimal-26",
+      "schema": {
+        "type": "decimal",
+        "precision": 4,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "+1.00"
+    },
+    {
+      "name": "bad-decimal-27",
+      "schema": {
+        "type": "decimal",
+        "precision": 4,
+        "scale": 2,
+        "nullable": false
+      },
+      "value": "01.00"
+    },
+    {
+      "name": "upper-uid",
+      "schema": {
+        "type": "uid",
+        "nullable": false
+      },
+      "value": "AAAAAAAA-0000-0000-0000-000000000000"
+    },
+    {
+      "name": "short-uid",
+      "schema": {
+        "type": "uid",
+        "nullable": false
+      },
+      "value": "a"
+    },
+    {
+      "name": "bool-number",
+      "schema": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "value": 1
+    },
+    {
+      "name": "null-item",
+      "schema": {
+        "type": "array",
+        "nullable": false,
+        "items": {
+          "type": "string",
+          "nullable": false
+        }
+      },
+      "value": [null]
+    },
+    {
+      "name": "unknown-field",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": false
+          }
+        }
+      },
+      "value": {
+        "name": "a",
+        "other": 1
+      }
+    },
+    {
+      "name": "missing-nullable",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "value": {}
+    },
+    {
+      "name": "wrong-list",
+      "schema": {
+        "type": "list",
+        "items": {
+          "type": "string",
+          "nullable": false
+        }
+      },
+      "value": {}
+    }
+  ],
+  "invalidTypes": [
+    {
+      "name": "ontology type must have immutable identity",
+      "schema": { "type": "ontologyObject", "objectType": "Customer", "nullable": false }
+    },
+    {
+      "name": "ontology type needs nullability",
+      "schema": { "type": "ontologyObject", "objectType": "00000000-0000-4000-8000-000000000004" }
+    },
+    {
+      "name": "invalid-type-0",
+      "schema": null
+    },
+    {
+      "name": "invalid-type-1",
+      "schema": {}
+    },
+    {
+      "name": "invalid-type-2",
+      "schema": {
+        "type": "unknown",
+        "nullable": false
+      }
+    },
+    {
+      "name": "invalid-type-3",
+      "schema": {
+        "type": "string"
+      }
+    },
+    {
+      "name": "invalid-type-4",
+      "schema": {
+        "type": "boolean",
+        "nullable": 1
+      }
+    },
+    {
+      "name": "invalid-type-5",
+      "schema": {
+        "type": "string",
+        "nullable": false,
+        "scale": 2
+      }
+    },
+    {
+      "name": "invalid-type-6",
+      "schema": {
+        "type": "decimal",
+        "precision": 0,
+        "scale": 0,
+        "nullable": false
+      }
+    },
+    {
+      "name": "invalid-type-7",
+      "schema": {
+        "type": "decimal",
+        "precision": 39,
+        "scale": 0,
+        "nullable": false
+      }
+    },
+    {
+      "name": "invalid-type-8",
+      "schema": {
+        "type": "decimal",
+        "precision": 2,
+        "scale": 3,
+        "nullable": false
+      }
+    },
+    {
+      "name": "invalid-type-9",
+      "schema": {
+        "type": "array",
+        "nullable": false
+      }
+    },
+    {
+      "name": "invalid-type-10",
+      "schema": {
+        "type": "object",
+        "properties": [],
+        "optional": []
+      }
+    },
+    {
+      "name": "invalid-type-11",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "optional": ["a", "a"]
+      }
+    },
+    {
+      "name": "invalid-type-12",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "optional": ["missing"]
+      }
+    },
+    {
+      "name": "invalid-type-13",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "constructor": {
+            "type": "string",
+            "nullable": false
+          }
+        }
+      }
+    },
+    {
+      "name": "invalid-type-14",
+      "schema": {
+        "ref": "Missing"
+      }
+    },
+    {
+      "name": "cyclic-alias",
+      "schema": {
+        "ref": "A"
+      },
+      "definitions": {
+        "A": {
+          "ref": "B"
+        },
+        "B": {
+          "ref": "A"
+        }
+      }
+    }
+  ]
+}

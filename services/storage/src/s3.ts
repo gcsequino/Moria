@@ -10,6 +10,8 @@ import {
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
+  DeleteObjectCommand,
+  ListMultipartUploadsCommand,
 } from '@aws-sdk/client-s3';
 import {
   identity,
@@ -39,9 +41,79 @@ export interface S3StorageBinding {
   readonly chunkBytes: number;
 }
 
+/** Trusted maintenance of one configured table prefix, separate from scoped worker handles. */
+export async function collectS3Staging(
+  configured: S3StorageBinding,
+  before = Date.now() - 24 * 60 * 60 * 1000,
+) {
+  const binding = { ...configured, credentials: { ...configured.credentials } };
+  await createS3Storage(binding);
+  const client = new S3Client({
+    ...s3ClientDefaults,
+    endpoint: binding.endpoint,
+    region: binding.region,
+    credentials: binding.credentials,
+    requestHandler: {
+      httpAgent: new HttpAgent({ keepAlive: false }),
+      httpsAgent: new HttpsAgent({ keepAlive: false }),
+      connectionTimeout: 10000,
+      requestTimeout: 30000,
+      throwOnRequestTimeout: true,
+    },
+  });
+  const prefix =
+    [binding.prefix, binding.warehouseId, binding.tableId, 'objects'].filter(Boolean).join('/') +
+    '/';
+  let removed = 0,
+    keyMarker: string | undefined,
+    uploadMarker: string | undefined;
+  try {
+    for (let page = 0; page < 20; page++) {
+      const result = await client.send(
+        new ListMultipartUploadsCommand({
+          Bucket: binding.bucket,
+          MaxUploads: 50,
+          KeyMarker: keyMarker,
+          UploadIdMarker: uploadMarker,
+        }),
+        { abortSignal: AbortSignal.timeout(10000) },
+      );
+      for (const upload of result.Uploads ?? []) {
+        if (
+          !upload.Key ||
+          !upload.UploadId ||
+          !upload.Initiated ||
+          !Number.isFinite(upload.Initiated.getTime())
+        )
+          throw new StorageError('IO_ERROR');
+        // Some compatible stores only implement exact-key multipart prefix queries.
+        if (!upload.Key.startsWith(prefix)) continue;
+        if (upload.Initiated.getTime() < before) {
+          await client.send(
+            new AbortMultipartUploadCommand({
+              Bucket: binding.bucket,
+              Key: upload.Key,
+              UploadId: upload.UploadId,
+            }),
+            { abortSignal: AbortSignal.timeout(10000) },
+          );
+          if (++removed === 50) return removed;
+        }
+      }
+      if (!result.IsTruncated) break;
+      if (!result.NextKeyMarker || !result.NextUploadIdMarker) throw new StorageError('IO_ERROR');
+      keyMarker = result.NextKeyMarker;
+      uploadMarker = result.NextUploadIdMarker;
+    }
+    return removed;
+  } finally {
+    client.destroy();
+  }
+}
+
 type Verify = (
   location: StorageLocation,
-  operation: 'read' | 'create',
+  operation: 'read' | 'create' | 'delete',
   signal?: AbortSignal,
 ) => Promise<void>;
 
@@ -143,7 +215,7 @@ export async function createS3Storage(
   }
   async function check(
     logical: StorageLocation,
-    operation: 'read' | 'create',
+    operation: 'read' | 'create' | 'delete',
     signal?: AbortSignal,
   ) {
     cancelled(signal);
@@ -153,8 +225,19 @@ export async function createS3Storage(
   return Object.freeze({
     version: 1 as const,
     requireCapability(capability: string) {
-      if (!['read', 'range', 'create'].includes(capability)) {
+      if (!['read', 'range', 'create', 'delete'].includes(capability)) {
         throw new StorageError('UNSUPPORTED_CAPABILITY');
+      }
+    },
+    async remove(input, options = {}) {
+      const logical = location(input),
+        object = target(logical),
+        signal = transferSignal(options);
+      await check(logical, 'delete', signal);
+      try {
+        await client.send(new DeleteObjectCommand(object), { abortSignal: signal });
+      } catch (error) {
+        throw failure(error, signal);
       }
     },
     async read(input, options = {}) {

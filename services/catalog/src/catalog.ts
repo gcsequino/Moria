@@ -20,28 +20,37 @@ export class Catalog {
     environment?: string,
     isolation: 'serializable' | 'repeatable-read' = 'serializable',
     lockMode: 'exclusive' | 'shared' = 'exclusive',
+    filesystemLock: 'exclusive' | 'shared' = 'shared',
   ): Promise<T> {
+    const lockKeys = [
+      ...(environment === undefined
+        ? []
+        : [{ key: `moria/environment/${environment}`, mode: lockMode }]),
+      { key: 'moria/filesystem', mode: filesystemLock },
+    ];
     for (let attempt = 0; attempt < 3; attempt++) {
       const client = await this.pool.connect();
-      let locked = false,
-        began = false,
+      const locked: { key: string; mode: 'shared' | 'exclusive' }[] = [];
+      let began = false,
         timeout: string | undefined;
       try {
         // Queue cooperating environment writers BEFORE taking the serializable
         // snapshot. Row-lock waiting inside SERIALIZABLE otherwise repeatedly
         // wakes with an obsolete snapshot under concurrent load.
-        if (environment !== undefined) {
+        if (lockKeys.length) {
           timeout = (await client.query('SHOW lock_timeout')).rows[0].lock_timeout;
           await client.query("SET lock_timeout='30s'");
           // Shared readers also queue before taking a snapshot. Otherwise an
           // intervening writer can invalidate their later FOR SHARE row lock.
-          await client.query(
-            lockMode === 'shared'
-              ? "SELECT pg_advisory_lock_shared(hashtextextended('moria/environment/' || $1,0))"
-              : "SELECT pg_advisory_lock(hashtextextended('moria/environment/' || $1,0))",
-            [environment],
-          );
-          locked = true;
+          for (const lockKey of lockKeys) {
+            await client.query(
+              lockKey.mode === 'shared'
+                ? 'SELECT pg_advisory_lock_shared(hashtextextended($1,0))'
+                : 'SELECT pg_advisory_lock(hashtextextended($1,0))',
+              [lockKey.key],
+            );
+            locked.push(lockKey);
+          }
           await client.query("SELECT set_config('lock_timeout',$1,false)", [timeout]);
           timeout = undefined;
         }
@@ -66,12 +75,12 @@ export class Catalog {
       } finally {
         let cleanupError: Error | undefined;
         try {
-          if (locked)
+          for (const lockKey of locked.reverse())
             await client.query(
-              lockMode === 'shared'
-                ? "SELECT pg_advisory_unlock_shared(hashtextextended('moria/environment/' || $1,0))"
-                : "SELECT pg_advisory_unlock(hashtextextended('moria/environment/' || $1,0))",
-              [environment],
+              lockKey.mode === 'shared'
+                ? 'SELECT pg_advisory_unlock_shared(hashtextextended($1,0))'
+                : 'SELECT pg_advisory_unlock(hashtextextended($1,0))',
+              [lockKey.key],
             );
           if (timeout !== undefined)
             await client.query("SELECT set_config('lock_timeout',$1,false)", [timeout]);
@@ -288,8 +297,9 @@ export class Catalog {
     request: ActionRequest,
     apply: (client: PoolClient) => Promise<T>,
     checkCurrent?: (client: PoolClient) => Promise<void>,
+    transaction?: PoolClient,
   ): Promise<T> {
-    return this.transaction(async (c) => {
+    const execute = async (c: PoolClient) => {
       const env = await c.query(
         'SELECT security_epoch FROM moria.environments WHERE id=$1 FOR UPDATE',
         [request.environment],
@@ -331,7 +341,8 @@ export class Catalog {
         [...scope, hash, request.actionRevision, JSON.stringify(result)],
       );
       return result;
-    }, request.environment);
+    };
+    return transaction ? execute(transaction) : this.transaction(execute, request.environment);
   }
 }
 export interface Publication {

@@ -147,6 +147,7 @@ test(
     try {
       runtime = await runProcess('combined');
       assert.ok(runtime);
+      assert.ok(runtime.jobs);
       assert.deepEqual(Object.keys(runtime.jobs.handlers), []);
       assert.deepEqual(await runtime.jobs.inspect(), { jobs: [], schedules: [] });
       const names = await readdir(directory);

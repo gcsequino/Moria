@@ -19,37 +19,42 @@ export async function startDevelopmentDatabase(directory: string, port: number, 
     onError: () => {},
   });
   try {
-    await access(resolve(directory, 'postgres', 'PG_VERSION'));
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    await db.initialise();
-  }
-  await db.start();
-  const pool = new pg.Pool({
-    host: '127.0.0.1',
-    port,
-    user: 'moria_local',
-    password,
-    database: 'postgres',
-    max: 10,
-  });
-  const disconnects = new Set<Promise<void>>();
-  pool.on('connect', (client) => {
-    const disconnected = new Promise<void>((resolveEnd) => {
-      client.once('end', () => {
-        disconnects.delete(disconnected);
-        resolveEnd();
-      });
+    try {
+      await access(resolve(directory, 'postgres', 'PG_VERSION'));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      await db.initialise();
+    }
+    await db.start();
+    const pool = new pg.Pool({
+      host: '127.0.0.1',
+      port,
+      user: 'moria_local',
+      password,
+      database: 'postgres',
+      max: 10,
     });
-    disconnects.add(disconnected);
-  });
-  return {
-    pool,
-    stop: async () => {
-      // The caller ends the pool first, but pg-pool can resolve end() before
-      // removed clients disconnect. Keep the cluster alive until they finish.
-      await Promise.all(disconnects);
-      await db.stop();
-    },
-  };
+    const disconnects = new Set<Promise<void>>();
+    pool.on('connect', (client) => {
+      const disconnected = new Promise<void>((resolveEnd) => {
+        client.once('end', () => {
+          disconnects.delete(disconnected);
+          resolveEnd();
+        });
+      });
+      disconnects.add(disconnected);
+    });
+    return {
+      pool,
+      stop: async () => {
+        // The caller ends the pool first, but pg-pool can resolve end() before
+        // removed clients disconnect. Keep the cluster alive until they finish.
+        await Promise.all(disconnects);
+        await db.stop();
+      },
+    };
+  } catch (error) {
+    await db.stop();
+    throw error;
+  }
 }

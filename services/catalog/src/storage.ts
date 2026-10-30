@@ -91,6 +91,7 @@ export interface CatalogStorageBinding {
 }
 
 export interface PublishedMetadata {
+  readonly markings: readonly string[];
   readonly environment: string;
   readonly dataset: string;
   readonly revision: string;
@@ -271,6 +272,20 @@ export class CatalogStorage {
     const catalog = this.authority.catalog;
     const checkSession = async (client: import('pg').PoolClient) => {
       cancelled(signal);
+      const outputLabels = await Promise.all(
+        bindings.map(async (binding) => [
+          ...binding.markings,
+          ...(await this.authority.resourceAccess(client, session, binding.dataset, 'write')),
+        ]),
+      );
+      for (const dataset of Object.keys(declaration.lineage)) {
+        const labels = [
+          ...bindingFor(dataset).markings,
+          ...(await this.authority.resourceAccess(client, session, dataset)),
+        ];
+        if (outputLabels.some((output) => labels.some((label) => !output.includes(label))))
+          throw new MoriaError('MARKING_DOWNGRADE', 'Output omits input filesystem markings');
+      }
       await this.authority.assertCurrent(
         client,
         session.environment,
@@ -614,7 +629,15 @@ export class CatalogStorage {
     cancelled(signal);
     authorize(state.identity, dataset, 'read', binding.markings);
     const catalog = this.authority.catalog;
+    let filesystemMarkings: string[] | undefined;
     const checkSession = async (client: import('pg').PoolClient) => {
+      const labels = await this.authority.resourceAccess(client, session, dataset);
+      if (filesystemMarkings && JSON.stringify(labels) !== JSON.stringify(filesystemMarkings))
+        throw new MoriaError(
+          'AUTHORIZATION_CHANGED',
+          'Dataset filesystem markings changed during transfer',
+        );
+      filesystemMarkings = labels;
       await this.authority.assertCurrent(
         client,
         session.environment,
@@ -684,6 +707,7 @@ export class CatalogStorage {
     );
     cancelled(signal);
     return Object.freeze({
+      markings: Object.freeze([...new Set([...binding.markings, ...filesystemMarkings!])]),
       environment: session.environment,
       dataset,
       revision: pinned.revision,

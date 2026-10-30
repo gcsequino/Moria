@@ -1,10 +1,5 @@
-/** Logical identities contain no provider paths, secrets, or implied grants. */
-export interface StorageLocation {
-  readonly version: 1;
-  readonly warehouseId: string;
-  readonly tableId: string;
-  readonly objectId: string;
-}
+import type { StorageLocation } from '../../../packages/contracts/storage.js';
+export type { StorageLocation } from '../../../packages/contracts/storage.js';
 
 export type StorageErrorCode =
   | 'AUTHORITY_DENIED'
@@ -72,6 +67,7 @@ export interface WriteOptions extends TransferOptions {
 
 export interface StreamingStorage {
   readonly version: 1;
+  remove?(location: StorageLocation, options?: TransferOptions): Promise<void>;
   read(location: StorageLocation, options?: ReadOptions): Promise<ReadableStream<Uint8Array>>;
   write(
     location: StorageLocation,

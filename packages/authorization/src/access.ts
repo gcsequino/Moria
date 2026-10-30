@@ -1,4 +1,5 @@
 import { MoriaError } from '../../contracts/types.js';
+import { recordAccess } from './flow.js';
 
 export interface Identity {
   principal: string;
@@ -16,6 +17,7 @@ export function authorize(
   operation: string,
   markings: Iterable<string> = [],
 ): void {
+  const labels = [...markings];
   const permission = `${resource}:${operation}`;
   if (
     identity.disabled ||
@@ -23,14 +25,15 @@ export function authorize(
     !identity.applicationScopes.has(permission)
   )
     throw new MoriaError('FORBIDDEN', 'Operation is not authorized');
-  for (const marking of markings)
+  for (const marking of labels)
     if (!identity.markings.has(marking))
       throw new MoriaError('FORBIDDEN', 'Operation is not authorized');
   if (identity.delegated) {
     if (identity.environment !== identity.delegated.environment)
       throw new MoriaError('FORBIDDEN', 'Delegation environment differs');
-    authorize(identity.delegated, resource, operation, markings);
+    authorize(identity.delegated, resource, operation, labels);
   }
+  recordAccess(identity.environment, resource, operation, labels);
 }
 export function authorizeDestination(
   identity: Identity,

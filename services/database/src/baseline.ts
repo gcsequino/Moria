@@ -1,9 +1,53 @@
-/** Fresh schema version 1. Preserve this DDL and its checksum. */
+import { filesystemRoot } from '../../../packages/contracts/filesystem.js';
+
+/** Fresh schema version 3. Development instances must be recreated, not upgraded. */
 export const baseline = `
       CREATE SCHEMA IF NOT EXISTS moria;
       CREATE TABLE IF NOT EXISTS moria.environments (
         id text PRIMARY KEY, revision bigint NOT NULL DEFAULT 0, security_epoch bigint NOT NULL DEFAULT 0
       );
+      CREATE TABLE moria.fs_entries (
+        id uuid PRIMARY KEY,
+        parent_id uuid REFERENCES moria.fs_entries(id),
+        name text COLLATE "C" NOT NULL,
+        kind text NOT NULL CHECK(kind IN ('directory','file','resource')),
+        revision bigint NOT NULL DEFAULT 1 CHECK(revision > 0),
+        project_id text,
+        environment_id text REFERENCES moria.environments(id),
+        resource_id uuid,
+        content jsonb,
+        deleted boolean NOT NULL DEFAULT false,
+        CHECK(parent_id IS NULL OR parent_id <> id),
+        CHECK((id='${filesystemRoot}' AND parent_id IS NULL AND name='' AND kind='directory'
+          AND project_id IS NULL AND environment_id IS NULL AND NOT deleted)
+          OR (id<>'${filesystemRoot}' AND parent_id IS NOT NULL AND name<>'')),
+        CHECK(environment_id IS NULL OR project_id IS NOT NULL),
+        CHECK((kind='directory' AND content IS NULL AND resource_id IS NULL)
+          OR (kind='file' AND content IS NOT NULL AND resource_id IS NULL)
+          OR (kind='resource' AND content IS NULL AND resource_id IS NOT NULL
+            AND project_id IS NOT NULL AND environment_id IS NOT NULL))
+      );
+      CREATE UNIQUE INDEX fs_live_names ON moria.fs_entries(parent_id,name) WHERE NOT deleted;
+      CREATE UNIQUE INDEX fs_resource_placement ON moria.fs_entries(environment_id,resource_id)
+        WHERE kind='resource' AND NOT deleted;
+      CREATE TABLE moria.fs_mutations (
+        id uuid PRIMARY KEY, scope_hash text NOT NULL, request_key text NOT NULL,
+        request_hash text NOT NULL, actor jsonb NOT NULL, receipt jsonb NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        UNIQUE(scope_hash,request_key)
+      );
+      CREATE TABLE moria.fs_entry_versions (
+        entry_id uuid NOT NULL REFERENCES moria.fs_entries(id), revision bigint NOT NULL,
+        snapshot jsonb NOT NULL, mutation_id uuid REFERENCES moria.fs_mutations(id)
+          DEFERRABLE INITIALLY DEFERRED,
+        PRIMARY KEY(entry_id,revision)
+      );
+      CREATE INDEX fs_version_content_locations ON moria.fs_entry_versions((snapshot->'content'->'location'));
+      INSERT INTO moria.fs_entries(id,name,kind) VALUES('${filesystemRoot}','','directory');
+      INSERT INTO moria.fs_entry_versions(entry_id,revision,snapshot)
+        SELECT id,revision,jsonb_build_object('id',id,'parentId',NULL,'name',name,'kind',kind,
+          'revision',revision::text,'projectId',NULL,'environmentId',NULL,'resourceId',NULL,
+          'content',NULL,'deleted',false) FROM moria.fs_entries;
       CREATE TABLE IF NOT EXISTS moria.identities (
         domain text NOT NULL, canonical_key text NOT NULL, uid uuid NOT NULL UNIQUE,
         created_at timestamptz NOT NULL DEFAULT clock_timestamp(), PRIMARY KEY(domain,canonical_key)
@@ -47,6 +91,129 @@ export const baseline = `
       CREATE TABLE IF NOT EXISTS moria.permissions(environment text NOT NULL,principal text NOT NULL,application text NOT NULL,operations text[] NOT NULL,PRIMARY KEY(environment,principal,application),FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
       CREATE TABLE IF NOT EXISTS moria.security_audit(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,environment text NOT NULL,actor text NOT NULL,operation text NOT NULL,target text NOT NULL,epoch bigint NOT NULL,created_at timestamptz NOT NULL DEFAULT clock_timestamp());
       CREATE TABLE IF NOT EXISTS moria.workload_sessions(token_hash text PRIMARY KEY,environment text NOT NULL,principal text NOT NULL,application text NOT NULL,expires_at timestamptz NOT NULL,disabled boolean NOT NULL DEFAULT false,FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
+      CREATE TABLE moria.instance_state (
+        singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton), security_epoch bigint NOT NULL DEFAULT 0
+      );
+      INSERT INTO moria.instance_state DEFAULT VALUES;
+      CREATE TABLE moria.instance_principals (
+        id uuid PRIMARY KEY, kind text NOT NULL CHECK(kind IN ('human','workload')),
+        enabled boolean NOT NULL DEFAULT true, home_entry_id uuid UNIQUE REFERENCES moria.fs_entries(id)
+      );
+      CREATE TABLE moria.instance_principal_bindings (
+        environment text NOT NULL, principal text NOT NULL,
+        instance_id uuid NOT NULL REFERENCES moria.instance_principals(id),
+        PRIMARY KEY(environment,principal),
+        FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal)
+      );
+      CREATE TABLE moria.fs_policies (
+        entry_id uuid PRIMARY KEY REFERENCES moria.fs_entries(id), revision bigint NOT NULL DEFAULT 0,
+        markings jsonb NOT NULL DEFAULT '[]', grants jsonb NOT NULL DEFAULT '[]',
+        retained_markings jsonb NOT NULL DEFAULT '[]'
+      );
+      CREATE TABLE moria.instance_audit (
+        id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, actor text NOT NULL,
+        operation text NOT NULL, target text NOT NULL, epoch bigint NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+      );
+      CREATE TABLE moria.fs_roles (
+        entry_id uuid PRIMARY KEY REFERENCES moria.fs_entries(id),
+        kind text NOT NULL CHECK(kind IN ('system','group','user','agent','project','ontology','repository')),
+        project_id uuid, deployment_unit_id uuid UNIQUE, namespace text,
+        configuration jsonb NOT NULL, revision bigint NOT NULL DEFAULT 1, latest_release text,
+        retired boolean NOT NULL DEFAULT false
+      );
+      CREATE UNIQUE INDEX fs_source_namespace ON moria.fs_roles(project_id,namespace)
+        WHERE kind IN ('ontology','repository');
+      CREATE TABLE moria.fs_groups (
+        id uuid PRIMARY KEY, environment text NOT NULL REFERENCES moria.environments(id),
+        group_key text NOT NULL, home_entry_id uuid NOT NULL UNIQUE REFERENCES moria.fs_entries(id),
+        UNIQUE(environment,group_key)
+      );
+      CREATE TABLE moria.fs_source_releases (
+        digest text PRIMARY KEY, root_id uuid NOT NULL REFERENCES moria.fs_roles(entry_id),
+        snapshot jsonb NOT NULL, compiled jsonb NOT NULL, owned jsonb NOT NULL,
+        markings jsonb NOT NULL, created_by uuid NOT NULL REFERENCES moria.instance_principals(id),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+      );
+      CREATE TABLE moria.fs_resource_identities (
+        root_id uuid NOT NULL REFERENCES moria.fs_roles(entry_id), reference text NOT NULL,
+        resource_id uuid NOT NULL UNIQUE, PRIMARY KEY(root_id,reference)
+      );
+      CREATE TABLE moria.fs_active_releases (
+        root_id uuid NOT NULL REFERENCES moria.fs_roles(entry_id), environment text NOT NULL REFERENCES moria.environments(id),
+        revision bigint NOT NULL DEFAULT 0, digest text NOT NULL REFERENCES moria.fs_source_releases(digest),
+        resources jsonb NOT NULL, PRIMARY KEY(root_id,environment)
+      );
+      CREATE TABLE moria.fs_release_plans (
+        id uuid PRIMARY KEY, root_id uuid NOT NULL REFERENCES moria.fs_roles(entry_id),
+        digest text NOT NULL REFERENCES moria.fs_source_releases(digest),
+        environment text NOT NULL REFERENCES moria.environments(id), actor_hash text NOT NULL,
+        expected_revision bigint NOT NULL, environment_epoch bigint NOT NULL, instance_epoch bigint NOT NULL,
+        deletions jsonb NOT NULL, receipt jsonb,
+        expires_at timestamptz NOT NULL DEFAULT clock_timestamp()+interval '15 minutes'
+      );
+      CREATE TABLE moria.fs_provenance (
+        entry_id uuid NOT NULL REFERENCES moria.fs_entries(id),
+        source_id uuid NOT NULL REFERENCES moria.fs_entries(id),
+        PRIMARY KEY(entry_id,source_id), CHECK(entry_id<>source_id)
+      );
+      CREATE TABLE moria.fs_resource_bindings (
+        environment text NOT NULL REFERENCES moria.environments(id), reference text NOT NULL,
+        project_id uuid NOT NULL,
+        entry_id uuid NOT NULL UNIQUE REFERENCES moria.fs_entries(id),
+        root_id uuid NOT NULL REFERENCES moria.fs_roles(entry_id),
+        digest text NOT NULL REFERENCES moria.fs_source_releases(digest),
+        active boolean NOT NULL DEFAULT true, PRIMARY KEY(environment,project_id,reference)
+      );
+      CREATE TABLE moria.fs_resource_dependencies (
+        environment text NOT NULL REFERENCES moria.environments(id),
+        project_id uuid NOT NULL,
+        source_project_id uuid NOT NULL,
+        reference text NOT NULL,source_reference text NOT NULL,
+        PRIMARY KEY(environment,project_id,reference,source_project_id,source_reference),
+        CHECK(project_id<>source_project_id OR reference<>source_reference)
+      );
+      CREATE TABLE moria.fs_resource_release_history (
+        entry_id uuid NOT NULL REFERENCES moria.fs_entries(id),
+        digest text NOT NULL REFERENCES moria.fs_source_releases(digest),
+        PRIMARY KEY(entry_id,digest)
+      );
+      CREATE TABLE moria.fs_content_candidates (
+        object_id text PRIMARY KEY, location jsonb NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+      );
+      CREATE TABLE moria.function_invocations (
+          value_version integer NOT NULL DEFAULT 1 CHECK(value_version>0),
+        id uuid PRIMARY KEY, environment text NOT NULL REFERENCES moria.environments(id),
+        resource_id uuid NOT NULL, entry_id uuid NOT NULL REFERENCES moria.fs_entries(id),
+        release text NOT NULL REFERENCES moria.fs_source_releases(digest), definition jsonb NOT NULL,
+        actor_hash text NOT NULL, context jsonb NOT NULL, request_key text NOT NULL, input_hash text NOT NULL,
+        input jsonb NOT NULL, attempt_id uuid NOT NULL, fence uuid NOT NULL, correlation_id uuid NOT NULL,
+        status text NOT NULL CHECK(status IN ('accepted','running','succeeded','failed','cancelled')),
+        lease_until timestamptz NOT NULL, deadline timestamptz NOT NULL,
+          markings jsonb NOT NULL DEFAULT '[]', reads jsonb NOT NULL DEFAULT '[]', read_grants jsonb NOT NULL DEFAULT '[]',
+        result jsonb, error jsonb, event_sequence bigint NOT NULL DEFAULT 0, worker_cleaned boolean NOT NULL DEFAULT false,
+          parent_id uuid REFERENCES moria.function_invocations(id),
+          prepare_only boolean NOT NULL DEFAULT false, point_reads_only boolean NOT NULL DEFAULT false, proposal_commit jsonb,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(), finished_at timestamptz,
+        UNIQUE(environment,resource_id,actor_hash,request_key)
+      );
+        CREATE TABLE moria.function_calls (
+          invocation_id uuid NOT NULL REFERENCES moria.function_invocations(id),
+          key text NOT NULL, path text NOT NULL, request_hash text NOT NULL, request jsonb NOT NULL,
+          status text NOT NULL CHECK(status IN ('started','succeeded','failed','proposed','committed')),
+          response jsonb, binding_hash text, created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+          PRIMARY KEY(invocation_id,key)
+        );
+        CREATE TABLE moria.function_events (
+        invocation_id uuid NOT NULL REFERENCES moria.function_invocations(id), sequence bigint NOT NULL,
+        type text NOT NULL CHECK(type IN ('state','log')), message text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(), PRIMARY KEY(invocation_id,sequence)
+      );
+      CREATE TABLE moria.fs_storage_bindings (
+        warehouse_id text NOT NULL,table_id text NOT NULL,binding_hash text NOT NULL,
+        PRIMARY KEY(warehouse_id,table_id)
+      );
       CREATE TABLE IF NOT EXISTS moria.auth_providers(environment text NOT NULL,application text NOT NULL,provider text NOT NULL,revision text NOT NULL,enabled boolean NOT NULL,PRIMARY KEY(environment,application,provider),FOREIGN KEY(environment,application) REFERENCES moria.application_scopes(environment,application));
       CREATE TABLE IF NOT EXISTS moria.external_identities(environment text NOT NULL,issuer text NOT NULL,subject text NOT NULL,principal text NOT NULL,PRIMARY KEY(environment,issuer,subject),FOREIGN KEY(environment,principal) REFERENCES moria.principals(environment,principal));
       CREATE TABLE IF NOT EXISTS moria.auth_invitations(environment text NOT NULL,application text NOT NULL,issuer text NOT NULL,email text NOT NULL,subject text NOT NULL,PRIMARY KEY(environment,application,issuer,email));

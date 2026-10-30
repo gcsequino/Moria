@@ -10,7 +10,13 @@ import { externalDatabase, integer } from '../../../services/database/src/config
 import { DatabaseError, holdSchema, schema } from '../../../services/database/src/schema.js';
 import pg from 'pg';
 import { Catalog } from '../../../services/catalog/src/catalog.js';
-import { createWorkspace, managementOperations } from './workspace.js';
+import {
+  createWorkspace,
+  managementOperations,
+  editAction,
+  resetAction,
+  fieldActions,
+} from './workspace.js';
 import { createLocalServer } from './server.js';
 import { localAppHost, bootstrapManagement } from '../../../services/app-host/src/bootstrap.js';
 import { AppAuth } from '../../../services/app-host/src/auth.js';
@@ -19,8 +25,22 @@ import { loadAuthConfig } from '../../../services/security/src/auth-config.js';
 
 import { publicHosting } from '../../../services/app-host/src/public-hosting.js';
 
-export type ProcessRole = 'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker';
+import { configuredFilesystem } from '../../../services/filesystem/src/local.js';
+import { Functions } from '../../../services/functions/src/service.js';
+import { DockerFunctionWorker } from '../../../services/functions/src/docker.js';
+import { functionFilesystem } from '../../api/src/function-platform.js';
 
+export type ProcessRole =
+  'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker' | 'function-worker';
+
+export function runProcess(
+  role: Exclude<ProcessRole, 'function-worker'>,
+  executionFactory?: ExecutionFactory,
+): Promise<{ close: () => Promise<void>; jobs: Jobs } | undefined>;
+export function runProcess(
+  role: ProcessRole,
+  executionFactory?: ExecutionFactory,
+): Promise<{ close: () => Promise<void>; jobs?: Jobs; functions?: Functions } | undefined>;
 export async function runProcess(
   role: ProcessRole,
   executionFactory: ExecutionFactory = createPlatformJobs,
@@ -48,6 +68,7 @@ export async function runProcess(
   let pool: pg.Pool | undefined;
   let server: ReturnType<typeof createLocalServer> | undefined;
   let jobs: Jobs | undefined;
+  let functions: Functions | undefined;
   let stopDatabase: (() => Promise<void>) | undefined;
   let releaseSchema: (() => void) | undefined;
   let closing: Promise<void> | undefined;
@@ -85,6 +106,7 @@ export async function runProcess(
     for (const publicServer of publicServers)
       if (publicServer.listening) await new Promise<void>((r) => publicServer.close(() => r()));
     await jobs?.stop();
+    await functions?.close();
     releaseSchema?.();
     await pool?.end();
     await stopDatabase?.();
@@ -111,6 +133,32 @@ export async function runProcess(
       await schema(pool, 'apply');
     }
     const catalog = new Catalog(pool, 'verify');
+    if (role === 'function-worker') {
+      const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
+      const filesystem = await configuredFilesystem(
+        catalog,
+        resolve(directory, 'filesystem-warehouse'),
+      );
+      functions = new Functions(
+        filesystem,
+        new Map([['assets', workspace.service]]),
+        new DockerFunctionWorker(),
+        {
+          filesystem: functionFilesystem(filesystem),
+          actions: new Map(
+            [editAction, resetAction, ...fieldActions].map((action) => [
+              action.resource,
+              { service: workspace.service, action },
+            ]),
+          ),
+        },
+      );
+      workspace.service.functions = functions;
+      checkStartup();
+      functions.startWorker();
+      console.log('Moria function worker ready.');
+      return { close, functions };
+    }
     const execution = await executionFactory(catalog);
     jobs = execution.jobs;
     checkStartup();
@@ -123,6 +171,12 @@ export async function runProcess(
     const appHost = localAppHost(directory);
     if (role === 'combined') await bootstrapManagement(appHost);
     const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
+    const filesystem = await configuredFilesystem(
+      catalog,
+      resolve(directory, 'filesystem-warehouse'),
+    );
+    functions = new Functions(filesystem, new Map([['assets', workspace.service]]));
+    workspace.service.functions = functions;
 
     const authConfig = await loadAuthConfig(directory, 'management');
     const managementSessions = new BrowserSessions(
@@ -148,6 +202,8 @@ export async function runProcess(
       new AppAuth(managementSessions, credentials.accessKey),
       undefined,
       jobs,
+      filesystem,
+      functions,
       { serveManagement: role === 'combined' },
     );
     await listen(server, port);
@@ -168,6 +224,8 @@ export async function runProcess(
         publicAuth,
         entry.origin,
         jobs,
+        filesystem,
+        functions,
         { serveManagement: role === 'combined' },
       );
       publicServers.push(publicServer);

@@ -18,6 +18,7 @@ from pyiceberg.catalog.noop import NoopCatalog
 from pyiceberg.io import FileIO, InputFile
 from pyiceberg.manifest import DataFileContent, FileFormat, ManifestContent
 from pyiceberg.table import StaticTable
+from pyiceberg.exceptions import ValidationError
 from pyiceberg.table.metadata import TableMetadataUtil
 from pyiceberg.types import (
     BooleanType,
@@ -32,7 +33,8 @@ from pyiceberg.types import (
     UUIDType,
     ListType,
 )
-from worker import wire
+from worker import value_schema, encode_native
+from pyiceberg.io.pyarrow import pyarrow_to_schema
 
 FRAME = 2 * 1024**2
 
@@ -250,11 +252,11 @@ def main():
                         ):
                             raise ValueError("Parquet count mismatch")
                         # Include deleted historical entries: every supplied data page must parse.
+                        logical = value_schema(
+                            pyarrow_to_schema(parquet.schema_arrow).model_dump(by_alias=True)
+                        )
                         for batch in parquet.iter_batches(batch_size=100):
-                            rows = [
-                                {key: wire(value) for key, value in row.items()}
-                                for row in batch.to_pylist()
-                            ]
+                            rows = [encode_native(row, logical) for row in batch.to_pylist()]
                             for row in rows:
                                 for value in row.values():
                                     if isinstance(value, list) and any(
@@ -301,11 +303,12 @@ def main():
                 or any(task.delete_files for task in tasks)
             ):
                 raise ValueError("Unsupported scan")
+            logical = value_schema(projection.model_dump(by_alias=True))
             with scan.to_arrow_batch_reader() as reader:
                 for batch in reader:
                     for offset in range(0, batch.num_rows, 100):
                         rows = [
-                            {key: wire(value) for key, value in row.items()}
+                            encode_native(row, logical)
                             for row in batch.slice(offset, 100).to_pylist()
                         ]
                         encoded = json.dumps(
@@ -327,4 +330,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (ValueError, ValidationError):
+        sys.exit(65)

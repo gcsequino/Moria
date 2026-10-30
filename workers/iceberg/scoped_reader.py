@@ -32,7 +32,7 @@ from pyiceberg.types import (
     ListType,
 )
 from scoped_io import ScopedIO, exchange, receive
-from worker import wire
+from worker import value_schema, encode_native
 
 
 def main():
@@ -86,14 +86,12 @@ def main():
         }
     ) != {"next": True}:
         raise ValueError("Invalid acknowledgment")
+    logical = value_schema(table.schema().model_dump(by_alias=True))
     count = 0
     with scan.to_arrow_batch_reader() as reader:
         for batch in reader:
             for offset in range(0, batch.num_rows, 100):
-                rows = [
-                    {key: wire(value) for key, value in row.items()}
-                    for row in batch.slice(offset, 100).to_pylist()
-                ]
+                rows = [encode_native(row, logical) for row in batch.slice(offset, 100).to_pylist()]
                 count += len(rows)
                 if count > 100000:
                     raise ValueError("Row limit")

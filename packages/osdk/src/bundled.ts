@@ -3,6 +3,7 @@ import {
   assetActionInputs,
   stationSchema,
   observationSchema,
+  builtinObjectTypes,
 } from '../../contracts/bundled-objects.js';
 import type { ApiType, AppContract } from './contract.js';
 const str: ApiType = { type: 'string', nullable: false };
@@ -12,7 +13,7 @@ const obj = (
   properties: Record<string, ApiType>,
   optional?: string[],
   nullable = false,
-): ApiType => ({ type: 'object', properties, optional, nullable });
+): ApiType => ({ type: 'object', properties, ...(optional ? { optional } : {}), nullable });
 const list = (items: ApiType): ApiType => ({ type: 'list', items });
 const nullableString: ApiType = { type: 'string', nullable: true };
 const jobType = obj({
@@ -64,7 +65,14 @@ export const managementContract: AppContract = {
   types: {
     Job: jobType,
     Schedule: scheduleType,
-    Jobs: obj({ jobs: list({ ref: 'Job' }), schedules: list({ ref: 'Schedule' }) }),
+    Jobs: obj(
+      {
+        jobs: list({ ref: 'Job' }),
+        schedules: list({ ref: 'Schedule' }),
+        registeredKinds: list(str),
+      },
+      ['registeredKinds'],
+    ),
     Lineage: obj({
       nodes: list(obj({ id: str, label: str, kind: str, status: nullableString, detail: str })),
       edges: list(obj({ from: str, to: str, label: str })),
@@ -89,9 +97,11 @@ export const managementContract: AppContract = {
       importing: bool,
       principal: str,
     }),
-    ImportResult: obj({ rows: num, revision: str }),
+    ImportResult: obj({ rows: num, revision: str, stage: str }),
   },
-  objects: { assets: { type: 'Asset', properties: assetSchema.properties } },
+  objects: {
+    assets: { id: builtinObjectTypes.assets, type: 'Asset', properties: assetSchema.properties },
+  },
   actions: Object.fromEntries(
     Object.entries(assetActionInputs).map(([n, inputs]) => [n, { inputs }]),
   ),
@@ -163,7 +173,13 @@ export const snowContract: AppContract = {
           true,
         ),
         latest: obj(
-          { status: str, error: { type: 'string', nullable: true }, started_at: str },
+          {
+            id: str,
+            status: str,
+            error: nullableString,
+            started_at: str,
+            completed_at: nullableString,
+          },
           undefined,
           true,
         ),
@@ -172,8 +188,16 @@ export const snowContract: AppContract = {
     ),
   },
   objects: {
-    'snow-stations': { type: 'Station', properties: stationSchema.properties },
-    'snow-observations': { type: 'Observation', properties: observationSchema.properties },
+    'snow-stations': {
+      id: builtinObjectTypes.stations,
+      type: 'Station',
+      properties: stationSchema.properties,
+    },
+    'snow-observations': {
+      id: builtinObjectTypes.observations,
+      type: 'Observation',
+      properties: observationSchema.properties,
+    },
   },
   actions: {},
   endpoints: { status: { path: '/api/v1/status', method: 'GET', output: { ref: 'Status' } } },

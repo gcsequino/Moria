@@ -5,77 +5,13 @@
   "$ref": "#/$defs/Resource",
   "$defs": {
     "ScalarType": {
-      "oneOf": [
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "enum": ["string", "boolean", "int64", "float64", "date", "timestamp", "uid"]
-            },
-            "nullable": {
-              "type": "boolean"
-            }
-          },
-          "required": ["type", "nullable"],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "decimal"
-            },
-            "nullable": {
-              "type": "boolean"
-            },
-            "precision": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 38
-            },
-            "scale": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 38
-            }
-          },
-          "required": ["type", "nullable", "precision", "scale"],
-          "additionalProperties": false
-        }
-      ]
+      "$ref": "https://spec.example.invalid/moria/types/v1/schema.json#/$defs/Scalar"
     },
     "ValueType": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/ScalarType"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "const": "array"
-            },
-            "nullable": {
-              "type": "boolean"
-            },
-            "items": {
-              "$ref": "#/$defs/ScalarType"
-            }
-          },
-          "required": ["type", "nullable", "items"],
-          "additionalProperties": false
-        }
-      ]
+      "$ref": "https://spec.example.invalid/moria/types/v1/schema.json#/$defs/Column"
     },
     "Fields": {
-      "type": "object",
-      "propertyNames": {
-        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
-      },
-      "additionalProperties": {
-        "$ref": "#/$defs/ValueType"
-      },
-      "minProperties": 1
+      "$ref": "https://spec.example.invalid/moria/types/v1/schema.json#/$defs/Fields"
     },
     "Expr": {
       "oneOf": [
@@ -819,13 +755,13 @@
               "const": "typescript-v1"
             },
             "inputs": {
-              "$ref": "#/$defs/Fields"
+              "$ref": "https://spec.example.invalid/moria/types/v1/schema.json#/$defs/FunctionFields"
             },
             "outputs": {
-              "$ref": "#/$defs/Fields"
+              "$ref": "https://spec.example.invalid/moria/types/v1/schema.json#/$defs/FunctionFields"
             },
             "effect": {
-              "enum": ["readOnly", "editProposal"]
+              "enum": ["readOnly", "editProposal", "readWrite"]
             },
             "limits": {
               "$ref": "#/$defs/Limits"

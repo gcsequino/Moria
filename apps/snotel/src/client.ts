@@ -1,6 +1,10 @@
 import { createClient } from './generated/index.js';
-import type { Observation } from './generated/index.js';
-export type { Station, Observation, Status } from './generated/index.js';
+import type { ObservationProperties as Observation } from './generated/index.js';
+export type {
+  StationProperties as Station,
+  ObservationProperties as Observation,
+  Status,
+} from './generated/index.js';
 export const sdk = createClient({
   onUnauthenticated: () => window.dispatchEvent(new Event('moria:unauthenticated')),
 });

@@ -1,5 +1,7 @@
 # Test harness only, not a production deployment image.
+FROM docker:cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS docker-cli
 FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 RUN apt-get update && apt-get install -y --no-install-recommends python3-venv libicu72 libxml2 libreadline8 libxslt1.1 && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm@11.25.0 && mkdir /app && chown node:node /app
 # Isolated S3 conformance server only: MinIO RELEASE.2025-09-07T16-13-09Z, AGPLv3.
