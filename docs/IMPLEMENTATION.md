@@ -1,5 +1,14 @@
 # Implementation checkpoint
 
+## November 4 development feedback fixes
+
+Workload v0.2 approval validation now accepts approved implementation targets
+only with consistent status, implementation scope and a real calendar date.
+Historical proposed v0.2 remains readable; v0.1 remains historical. Capability
+results propagate target approval without enabling certification or production
+claims. Black, all 17 workload/value Python cases and the six-mutation CLI
+self-test pass in the offline test environment.
+
 ## November 4 remote checkpoint
 
 This checkpoint preserves the latest recoverable shared implementation and its

@@ -133,11 +133,15 @@ mix of approximately 53.846%/46.154%. The input mix is unchanged. Output uses co
 order regardless of selection order; floating percentages can have normal rounding error.
 
 `fullProfileOperationCoverage` only describes the caller's declared coverage. Even with all
-classes selected, `fullProfileCertified`, `numericTargetsApproved`, and
-`productionClaimsAllowed` remain false. Capability-scoped output keeps that scope even if
+classes selected, `fullProfileCertified` and `productionClaimsAllowed` remain false.
+`numericTargetsApproved` reflects the profile's explicit approval of implementation
+requirements; it does not represent measured capacity. Approved targets require the
+implementation-target status, scope and a valid approval date. The earlier proposed v0.2
+form remains readable with approval false and no approval metadata. Capability-scoped
+output keeps that scope even if
 all classes are selected. No implementation support or successful outcomes are inferred.
 Background/data experiments remain separate obligations: this API does not select or execute
 them. The calibration is not a complete benchmark run manifest; required run-input names
 and unresolved decisions are declarations, not resolved values. Passing these checks supplies
-neither runtime/capacity evidence nor approval of provisional targets, and does not certify
+no runtime/capacity evidence or new target approval, and does not certify
 any card or deployment.
