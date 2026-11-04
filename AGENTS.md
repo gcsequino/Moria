@@ -27,6 +27,24 @@ existing semantic contracts. The production workload v0.2 numbers are approved
 implementation targets; achieved capacity and production certification still require
 the specified evidence.
 
+## Development checkpoints
+
+Keep the authoritative checkout on persistent Linux storage, such as
+`/home/<user>/src/Moria`, rather than `/tmp` or a disposable container layer.
+Keep working branches and unfinished source in that checkout; use temporary
+paths only for reproducible test fixtures. Commit each bounded implementation
+slice after its focused checks pass, record remaining failures, and push the
+branch after each checkpoint. Do not accumulate multiple components in one
+uncommitted change. Never commit credentials or test-instance state.
+
+Run `pnpm check:static` before expensive test-image builds. Use
+`pnpm test:local` for files without the integration suffix and
+`pnpm test:integration tests/<component>.integration.test.ts` for the affected
+integration file before broadening. Local-named tests may still use embedded
+PostgreSQL. `pnpm check:indexing` validates native artifact provenance and runs
+all native units. These gates shorten feedback; `pnpm check` still includes
+every test and remains the final independent CI requirement.
+
 ## Bounded delivery
 
 Work on a branch against explicit acceptance criteria. Record scope, dependencies,

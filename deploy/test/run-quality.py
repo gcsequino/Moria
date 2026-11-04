@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the complete offline gate with fresh, independently fenced engine scratch."""
+"""Run an offline test command with fresh, independently fenced engine scratch."""
 
 import json
 import os
@@ -72,8 +72,10 @@ def cleanup_registries(proof):
 
 
 def main():
-    if os.geteuid() != 0 or len(sys.argv) != 2:
-        raise SystemExit("Run as root on the disposable Docker host: run-quality.py IMAGE")
+    if os.geteuid() != 0 or len(sys.argv) < 2:
+        raise SystemExit(
+            "Run as root on the disposable Docker host: run-quality.py IMAGE [COMMAND ...]"
+        )
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_./:@-]{0,1023}", sys.argv[1]):
         raise SystemExit("An exact Docker image reference is required")
     provisioner = Path(__file__).with_name("provision-engine-scratch.py")
@@ -132,7 +134,7 @@ def main():
             command += ["--mount", f"type=bind,src={pool['root']},dst={pool['root']}"]
             for slot in pool["slots"]:
                 command += ["--device", slot["device"] + ":" + slot["device"] + ":r"]
-        command += [sys.argv[1], "bash", ".openhands/hooks/quality-gate.sh"]
+        command += [sys.argv[1], *(sys.argv[2:] or ["bash", ".openhands/hooks/quality-gate.sh"])]
         return subprocess.run(command).returncode
     finally:
         subprocess.run(["docker", "stop", "--time", "15", name], capture_output=True, timeout=30)

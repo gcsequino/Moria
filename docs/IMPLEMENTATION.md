@@ -2,6 +2,18 @@
 
 ## November 4 development feedback fixes
 
+The authoritative checkout is now persistent Linux storage. Development uses
+`check:static`, `test:local` and explicit-file `test:integration` gates before the
+complete `check`; final checks still include every case with original deadlines.
+The same fresh-pool Docker runner accepts focused commands and retains its
+ownership/cleanup checks. The starter is now included in normal SDK generation
+and SDK drift checking, and its generated output is current.
+
+Full static validation, all 77 native units and two test-selection regression
+cases pass in the exact offline image. The first selector check caught and
+corrected an implicit TypeScript parameter type; both runs are retained under
+`production/evidence/2026-11-04/development-gates`. Full integration remains open.
+
 Workload v0.2 approval validation now accepts approved implementation targets
 only with consistent status, implementation scope and a real calendar date.
 Historical proposed v0.2 remains readable; v0.1 remains historical. Capability

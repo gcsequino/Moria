@@ -1,0 +1,47 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from moria-workflow-iteration.Dockerfile
+#1 transferring dockerfile: 218B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/moria-test:gate-v27
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 129B done
+#3 DONE 0.0s
+
+#4 [1/4] FROM docker.io/library/moria-test:gate-v27@sha256:aa5426fb38bab92ecbbc15cc0dcb81557cacc3b37b9f2ff2bc87ca9feb36955f
+#4 resolve docker.io/library/moria-test:gate-v27@sha256:aa5426fb38bab92ecbbc15cc0dcb81557cacc3b37b9f2ff2bc87ca9feb36955f 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 331.47kB 0.1s done
+#5 DONE 0.1s
+
+#6 [2/4] RUN rm -rf /app/services/indexing
+#6 CACHED
+
+#7 [3/4] COPY --chown=node:node . /app
+#7 DONE 0.7s
+
+#8 [4/4] RUN pnpm install --offline --frozen-lockfile
+#8 0.458 ✓ Lockfile passes supply-chain policies (verified 4d ago)
+#8 0.460 Lockfile is up to date, resolution step is skipped
+#8 0.484 Already up to date
+#8 0.595 
+#8 0.614 Done in 534ms using pnpm v11.25.0
+#8 DONE 0.6s
+
+#9 exporting to image
+#9 exporting layers
+#9 exporting layers 1.3s done
+#9 exporting manifest sha256:bcbb7522730a36bfedc6c35b75a6a7700fa3fb017b259ab5fd209250fcfd36da done
+#9 exporting config sha256:0029ea51a0f4d0a55f1174883f32eb8f657036235e865bf065a7eb84b8b7c0b4 done
+#9 exporting attestation manifest sha256:b57a205560103ffb867edf6e4722d8bdf4e5b8f9e1329e230bf333b37718f8a8 0.0s done
+#9 exporting manifest list sha256:4a135dd57738d6f322b129ef08a20713357ee9b9129cf989837a0ba18e6ac09a done
+#9 naming to docker.io/library/moria-test:workflow-20261104 done
+#9 unpacking to docker.io/library/moria-test:workflow-20261104
+#9 unpacking to docker.io/library/moria-test:workflow-20261104 0.8s done
+#9 DONE 2.2s
+WARNING: current commit information was not captured by the build: failed to read current commit information with git rev-parse --is-inside-work-tree

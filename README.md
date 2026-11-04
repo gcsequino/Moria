@@ -51,6 +51,36 @@ pnpm check
 pnpm moria validate examples/maintenance.json --attributes examples/principal-attributes.json --json
 ```
 
+Keep the authoritative checkout in a persistent Linux directory, for example
+`~/src/Moria`; `/tmp` is for disposable test state. Commit one bounded change
+with its focused validation, then push the working branch before starting the
+next component. Keep credentials and running-instance state outside Git.
+
+Use smaller gates while working:
+
+```sh
+pnpm check:static
+pnpm check:indexing
+pnpm test:local
+pnpm test:integration tests/native-functions.integration.test.ts
+pnpm check
+```
+
+`check:static` catches formatting, contract/SDK drift, TypeScript, Python,
+workload validation, application builds and the starter smoke test before
+expensive integration runs. `test:local` selects files without the integration
+suffix, including some embedded PostgreSQL tests. `test:integration` accepts
+explicit existing integration files; omit the arguments to run them all.
+The final `check` still runs every test with the same two-file concurrency and
+original test deadlines. Smaller gates do not replace the full gate. A focused
+Docker integration run uses the same fresh scratch, controller ownership and
+cleanup as the full run:
+
+```sh
+sudo python3 deploy/test/run-quality.py moria-test:ci pnpm test:integration tests/native-functions.integration.test.ts
+```
+
+
 Use the commands in the [Linux quality workflow](.github/workflows/quality.yml)
 to build the test image, preload pinned function images and run the offline gate.
 On the disposable Docker host, run `sudo python3 deploy/test/run-quality.py moria-test:ci`

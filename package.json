@@ -12,7 +12,7 @@
     "moria": "tsx apps/cli/src/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test --test-concurrency=2 --test-reporter=./scripts/test-reporter.ts tests/*.test.ts",
-    "check": "pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:indexing && pnpm test && pnpm check:python && pnpm build && pnpm check:starter",
+    "check": "pnpm check:static && pnpm check:indexing && pnpm test",
     "check:indexing": "tsx scripts/check-indexing.ts",
     "check:python": "node scripts/check-python.mjs",
     "build": "pnpm build:management && pnpm build:snotel",
@@ -24,7 +24,10 @@
     "build:management": "vite build --config apps/management/vite.config.ts",
     "sdk:generate": "tsx scripts/generate-sdk.ts",
     "sdk:check": "tsx scripts/generate-sdk.ts --check",
-    "check:architecture": "tsx scripts/check-architecture.ts"
+    "check:architecture": "tsx scripts/check-architecture.ts",
+    "check:static": "pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter",
+    "test:local": "node scripts/test-files.mjs local",
+    "test:integration": "node scripts/test-files.mjs integration"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1156.0",
