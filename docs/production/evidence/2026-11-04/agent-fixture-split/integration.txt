@@ -1,0 +1,63 @@
+$ node scripts/test-files.mjs integration tests/native-agents.integration.test.ts
+Running 1 integration test files.
+▶ native Agent admission and model
+  ✔ authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers (5350.248567ms)
+  ✔ SDK and CLI use the persistent native API and the agent worker replaces its Node launcher (6558.782335ms)
+  ✔ a durable model intent commits before gateway admission while public callback data stays withheld (8600.132035ms)
+  ✔ actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects (20058.774409ms)
+  ✔ Agent admission captures approved material before code and a missed approval pulse cannot revive it (10343.98384ms)
+  ✔ exact Agent invocation scope admits required dependencies without filesystem browsing (7777.001063ms)
+✔ native Agent admission and model (84891.538284ms)
+▶ native Agent child isolation and worker lifecycle
+  ✔ a pending child observation blocks parent logs, actions and model dispatch (51618.762161ms)
+  ✔ private child progress crosses a held dependency insertion and resumes after terminal proof (10620.089555ms)
+  ✔ Agent observes actual Function child failure labels before returning a caught outcome (11334.252305ms)
+  ✔ Agent cancellation fences a running Function child without a second attempt (8481.428193ms)
+  ✔ healthy long-running agent work renews the same single-attempt database lease (14427.252663ms)
+  ✔ bound model dispatch stops after real worker-scope revocation and cannot publish a result (5666.217765ms)
+  ✔ cancellation and supervisor SIGKILL fence the graph without re-executing user code (5079.401362ms)
+  ✔ real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death (6383.542256ms)
+  ✔ registered worker class admission is independent of unrelated class ordering (5360.087212ms)
+✔ native Agent child isolation and worker lifecycle (141363.885663ms)
+▶ native Agent service and current authority
+  ✖ Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement (45215.214704ms)
+  ✔ accepted private job authority survives ordinary session expiry while public and stale lease credentials fail (16110.534539ms)
+  ✔ newly granted tool permissions cannot widen an already accepted job capability (11798.388499ms)
+  ✔ postclaim filesystem rejection records no code start after an expired original session (6628.908579ms)
+  ✔ deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active (18989.114901ms)
+  ✔ accepted agent code remains pinned across redeployment and current authority gates retained results (14760.428717ms)
+✖ native Agent service and current authority (136796.785943ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 22
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 363664.982641
+
+✖ failing tests:
+
+test at tests/native-agents.integration.test.ts:1:43388
+✖ Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement (45215.214704ms)
+  AssertionError [ERR_ASSERTION]: Native agent did not reach its real lifecycle barrier
+      at until (/app/tests/native-agents.integration.test.ts:29:10)
+      at async TestContext.<anonymous> (/app/tests/native-agents.integration.test.ts:1798:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-agents.integration.test.ts:1617:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.
+Traceback (most recent call last):
+  File "/home/gcseq/moria-current-publish-20261104/deploy/test/run-quality.py", line 169, in <module>
+    
+  File "/home/gcseq/moria-current-publish-20261104/deploy/test/run-quality.py", line 143, in main
+    timeout=10,
+RuntimeError: Quality controller absence is unconfirmed; preserve scratch for inspection

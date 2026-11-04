@@ -2,6 +2,14 @@
 
 ## November 4 development feedback fixes
 
+The Agent integration file now has three fresh fixture roots instead of one
+aggregate 300-second root. All 21 original subcases retain their waits and
+assertions. Its first complete run is 22/24 including roots, zero skips or
+cancellations: the Automation service's Function-child admission barrier and its
+parent root fail, while admission/model, child isolation/lifecycle and the other
+five current-authority/service subcases pass. This is an exposed product failure,
+not a reason to extend deadlines. See `production/evidence/2026-11-04/agent-fixture-split`.
+
 The canonical Dockerfile now has a `static-check` target with no native compile
 dependency. Its actual cold build and offline `check:static` pass. Independent CI
 runs that job before building Rust and the full quality environment. The focused

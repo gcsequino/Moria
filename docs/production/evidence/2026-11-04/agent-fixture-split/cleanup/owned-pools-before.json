@@ -1,0 +1,69 @@
+{
+  "commandStarted": "2026-11-04T20:03:57.251448+00:00",
+  "pools": [
+    {
+      "root": "/tmp/moria-engine-scratch-849fbf0f-7e5c-4341-97b8-ea6b963be961",
+      "hostId": "92bd6979-99f2-4a0a-aa5d-885499e52a03",
+      "slots": [
+        {
+          "registration": {
+            "id": "7d4583a9-835c-43fe-a0b3-5516891e8e46",
+            "hostId": "92bd6979-99f2-4a0a-aa5d-885499e52a03",
+            "mountRoot": "/tmp/moria-engine-scratch-849fbf0f-7e5c-4341-97b8-ea6b963be961/slot-0",
+            "filesystemUuid": "44ee7a4f-cf21-4f48-ad86-28c087a1b7df",
+            "capacityBytes": 134217728,
+            "resourceClass": "engine-spill"
+          },
+          "device": "/dev/loop2",
+          "actualFilesystemBytes": 108974080
+        },
+        {
+          "registration": {
+            "id": "3e83217b-7272-48fa-b773-efedd9635dc8",
+            "hostId": "92bd6979-99f2-4a0a-aa5d-885499e52a03",
+            "mountRoot": "/tmp/moria-engine-scratch-849fbf0f-7e5c-4341-97b8-ea6b963be961/slot-1",
+            "filesystemUuid": "b4bff3ee-0a4e-4a95-b082-c91ee97671ca",
+            "capacityBytes": 134217728,
+            "resourceClass": "engine-spill"
+          },
+          "device": "/dev/loop3",
+          "actualFilesystemBytes": 108974080
+        }
+      ],
+      "complete": true
+    },
+    {
+      "root": "/tmp/moria-engine-scratch-95b1b08c-361d-4cf8-b3d4-a1871f1fcd73",
+      "hostId": "8cfdf9c5-0b81-4577-adf1-56836f3e0eb2",
+      "slots": [
+        {
+          "registration": {
+            "id": "100ac795-3b89-41ae-9902-d07310d03a3e",
+            "hostId": "8cfdf9c5-0b81-4577-adf1-56836f3e0eb2",
+            "mountRoot": "/tmp/moria-engine-scratch-95b1b08c-361d-4cf8-b3d4-a1871f1fcd73/slot-0",
+            "filesystemUuid": "16076a61-af2a-45df-be56-39461ac8d98c",
+            "capacityBytes": 134217728,
+            "resourceClass": "engine-spill"
+          },
+          "device": "/dev/loop0",
+          "actualFilesystemBytes": 108974080
+        },
+        {
+          "registration": {
+            "id": "6efb8f67-91b0-445d-934b-31920e1ce4a1",
+            "hostId": "8cfdf9c5-0b81-4577-adf1-56836f3e0eb2",
+            "mountRoot": "/tmp/moria-engine-scratch-95b1b08c-361d-4cf8-b3d4-a1871f1fcd73/slot-1",
+            "filesystemUuid": "9aa2b721-2fa8-476f-bf24-8ebfb7ccecb9",
+            "capacityBytes": 134217728,
+            "resourceClass": "engine-spill"
+          },
+          "device": "/dev/loop1",
+          "actualFilesystemBytes": 108974080
+        }
+      ],
+      "complete": true
+    }
+  ],
+  "temporary": "/tmp/moria-quality-glk266v0",
+  "containerReferences": 0
+}
