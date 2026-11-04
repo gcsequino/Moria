@@ -1,0 +1,98 @@
+{"controller": "moria-quality-bf3c0e9a-548c-4299-8927-46375fac9856", "image": "sha256:1c874a4cea1dcad9fb84740c9a4e56e8c24c0458f191286d1767653f417c326c", "scratchPools": ["/tmp/moria-engine-scratch-ce679c74-381a-4868-a215-94e5df459ef0", "/tmp/moria-engine-scratch-bd45a347-dfaa-4b20-9f6c-3370c6cf57cd"], "temporary": "/tmp/moria-quality-s9kyjh1g"}
+TAP version 13
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 159.568389
+      type: 'test'
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.217682
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    not ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 1343.900282
+      type: 'test'
+      location: '/app/tests/native-job-authority.integration.test.ts:230:13'
+      failureType: 'testCodeFailure'
+      error: 'canceling statement due to lock timeout'
+      code: '55P03'
+      name: 'error'
+      stack: |-
+        /app/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async issue (/app/tests/native-job-authority.integration.test.ts:135:9)
+        async <anonymous> (/app/tests/native-job-authority.integration.test.ts:303:26)
+        async underSharedAncestors (/app/tests/native-job-authority.integration.test.ts:271:13)
+        async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:302:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:230:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.896574
+      type: 'test'
+      ...
+    # Subtest: missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+    ok 5 - missed registry disable pulses cannot be repaired by acknowledging current authorization epochs # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.07172
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    ok 6 - current target, application, grants, clearance, worker scope and actor disable revoke private authority # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.067262
+      type: 'test'
+      ...
+    # Subtest: missed principal, application and instance disable pulses require explicit fresh service reapproval
+    ok 7 - missed principal, application and instance disable pulses require explicit fresh service reapproval # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.109005
+      type: 'test'
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    ok 8 - an unobserved worker disable and restore cannot revive a live lease or private credential # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.075731
+      type: 'test'
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    ok 9 - a genuinely expired worker registration remains fenced after its expiry is extended # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.144721
+      type: 'test'
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    ok 10 - lease takeover invalidates the old private credential and replacement capabilities remain bounded # SKIP Existing-session reuse red regression only
+      ---
+      duration_ms: 0.177028
+      type: 'test'
+      ...
+    1..10
+not ok 1 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 4163.391738
+  type: 'test'
+  location: '/app/tests/native-job-authority.integration.test.ts:10:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 11
+# suites 0
+# pass 1
+# fail 2
+# cancelled 0
+# skipped 8
+# todo 0
+# duration_ms 4489.297427

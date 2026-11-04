@@ -1,0 +1,13 @@
+[
+  "python3",
+  "/home/gcseq/moria-proofs/evaluation-lock-trial004-20261104/run-quality.py",
+  "sha256:940c6d0c818ba978ea86533f27a048f1d2dd8b7bb6b9d7148876861182ccf346",
+  "env",
+  "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+  "MORIA_NATIVE_SANDBOX_TEST_BINARY=/usr/local/bin/moria-native-sandbox-test",
+  "/app/node_modules/.bin/tsx",
+  "--test",
+  "--test-reporter=tap",
+  "--test-concurrency=1",
+  "tests/native-evaluations.integration.test.ts"
+]

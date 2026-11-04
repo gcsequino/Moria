@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import test from 'node:test';
+import type { PoolClient } from 'pg';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -125,20 +126,21 @@ test(
       `INSERT INTO moria.runtime_workers(owner,host_id,incarnation,resource_classes,domains,expires_at) SELECT $1,$2,incarnation,ARRAY['standard'],ARRAY['transform'],clock_timestamp()+interval '1 hour' FROM moria.indexing_instance`,
       [owner, host],
     );
-    const issue = async (lease: any, workerHost = host) =>
+    const issue = async (
+      lease: any,
+      workerHost = host,
+      client: typeof db.pool | PoolClient = db.pool,
+    ) =>
       (
-        await db.pool.query(
-          'SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7) AS hash',
-          [
-            createHash('sha256').update(randomUUID()).digest('hex'),
-            lease.execution,
-            lease.task,
-            lease.owner,
-            lease.fence,
-            workerHost,
-            lease.incarnation,
-          ],
-        )
+        await client.query('SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7) AS hash', [
+          createHash('sha256').update(randomUUID()).digest('hex'),
+          lease.execution,
+          lease.task,
+          lease.owner,
+          lease.fence,
+          workerHost,
+          lease.incarnation,
+        ])
       ).rows[0].hash as string;
     const state = async (hash: string) =>
       (await db.pool.query('SELECT moria.native_serving_session($1) AS state', [hash])).rows[0]
@@ -251,6 +253,56 @@ test(
         assert.equal(accepted.origin_kind, 'service');
         assert.equal(accepted.parent_execution, job.id);
         assert.equal(accepted.origin_binding, registered);
+        let childLease = (
+          await native('worker-claim', { domains: ['transform'], target: child.id })
+        ).lease;
+        const underSharedAncestors = async (check: (client: PoolClient) => Promise<void>) => {
+          const blocker = await db.pool.connect(),
+            verifier = await db.pool.connect();
+          try {
+            await blocker.query('BEGIN');
+            await blocker.query(
+              'SELECT id FROM moria.runtime_executions WHERE id=ANY($1::uuid[]) ORDER BY id FOR SHARE',
+              [[job.id, child.id]],
+            );
+            await verifier.query('BEGIN');
+            await verifier.query("SET LOCAL lock_timeout='500ms'");
+            await check(verifier);
+          } finally {
+            await verifier.query('ROLLBACK');
+            await blocker.query('ROLLBACK');
+            verifier.release();
+            blocker.release();
+          }
+        };
+        for (const phase of ['task', 'publication']) {
+          if (phase === 'publication') {
+            await native('seal', {
+              lease: childLease,
+              result: { staged: true },
+              digest: 'b'.repeat(64),
+            });
+            childLease = (
+              await native('worker-claim', {
+                domains: ['transform'],
+                publication: true,
+                target: child.id,
+              })
+            ).lease;
+            assert.equal(childLease.task, null);
+          }
+          await underSharedAncestors(async (client) => {
+            await assert.rejects(
+              issue(childLease, host, client),
+              (error: any) => error.code === '55P03',
+            );
+          });
+          const credential = await issue(childLease);
+          await underSharedAncestors(async (client) => {
+            assert.equal(await issue(childLease, host, client), credential);
+          });
+          assert.equal((await state(credential)).principal, principal);
+        }
         await native('cancel', { id: child.id });
       },
     );
@@ -625,12 +677,14 @@ test(
           "UPDATE moria.runtime_execution_tasks SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
           [first.task],
         );
+        await assert.rejects(issue(first), /JOB_LEASE_LOST/);
         const replacement = (
           await native('worker-claim', { domains: ['transform'], target: next.id })
         ).lease;
         assert.equal(replacement.task, first.task);
         assert.ok(BigInt(replacement.fence) > BigInt(first.fence));
         await assert.rejects(state(oldHash), /JOB_LEASE_LOST/);
+        await assert.rejects(issue(first), /JOB_LEASE_LOST/);
         const currentHash = await issue(replacement);
         assert.notEqual(currentHash, oldHash);
         assert.equal((await state(currentHash)).principal, principal);

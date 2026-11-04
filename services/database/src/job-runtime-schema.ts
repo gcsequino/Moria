@@ -378,11 +378,18 @@ CREATE FUNCTION moria.runtime_job_session_issue(private_hash text,execution_id u
   worker_fence bigint,host uuid,worker_incarnation uuid) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE e moria.runtime_executions; existing_hash text; accepted_generation bigint;
 BEGIN
+  IF EXISTS(SELECT 1 FROM moria.workload_sessions WHERE token_hash=private_hash
+    UNION ALL SELECT 1 FROM moria.browser_sessions WHERE token_hash=private_hash) THEN RAISE EXCEPTION 'JOB_CREDENTIAL_COLLISION'; END IF;
+  SELECT token_hash INTO existing_hash FROM moria.runtime_job_sessions WHERE execution=execution_id
+    AND task IS NOT DISTINCT FROM task_id AND owner=worker AND fence=worker_fence AND host_id=host AND incarnation=worker_incarnation;
+  IF FOUND THEN
+    -- Exact credential reuse keeps all current guards without upgrading descendant readers.
+    PERFORM moria.runtime_job_session_origin(existing_hash);
+    RETURN existing_hash;
+  END IF;
   SELECT * INTO e FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
   IF NOT FOUND OR e.deadline<=clock_timestamp() OR worker_incarnation<>(SELECT incarnation FROM moria.indexing_instance)
     THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
-  IF EXISTS(SELECT 1 FROM moria.workload_sessions WHERE token_hash=private_hash
-    UNION ALL SELECT 1 FROM moria.browser_sessions WHERE token_hash=private_hash) THEN RAISE EXCEPTION 'JOB_CREDENTIAL_COLLISION'; END IF;
   PERFORM moria.runtime_worker_check(worker,host,e.resource_class,e.spec->>'domain');
   SELECT w.generation INTO accepted_generation FROM moria.runtime_workers w WHERE w.owner=worker FOR SHARE;
   PERFORM moria.runtime_job_delegation_guard(e.id);

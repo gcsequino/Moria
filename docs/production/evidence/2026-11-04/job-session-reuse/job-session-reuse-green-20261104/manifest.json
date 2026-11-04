@@ -1,0 +1,12 @@
+{
+  "scope": "full unfiltered native-job-authority file; no overlays or skipped tests",
+  "nativeDescriptor": {
+    "root": "/home/gcseq/moria-proofs/session-reuse-native-20261104T201922Z",
+    "source": "/home/gcseq/moria-proofs/session-reuse-native-20261104T201922Z/source",
+    "artifacts": "/home/gcseq/moria-proofs/session-reuse-native-20261104T201922Z/artifacts",
+    "image": "sha256:9fdde67bf9c4581b9eb97c8c051979b104733ec341336a5f679a54053e0de900"
+  },
+  "sourceDigest": "55058e8769a7f89a7fe5cbae9391c9bbac54a7436608acb471aaec848833494d",
+  "hostRunnerSha256": "775685a33a8b2cbe1e9ed980213fc5c19822eb7e786326904c0d293cab89c548",
+  "testSha256": "90649bbb58c9a8f0e244111632f5de38a93ed81bfdd050d336dbf8983c2a3370"
+}

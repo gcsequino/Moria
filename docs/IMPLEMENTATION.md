@@ -1,5 +1,18 @@
 # Implementation checkpoint
 
+## November 4 current private-session lock correction
+
+A measured Evaluation failure came from repeated private credential issuance
+requesting an exclusive execution lock behind valid child readers, then blocking
+its own lease renewal/failure path. Exact immutable credential reuse now invokes
+the full current origin/worker/lease/delegation checks without that exclusive
+upgrade. First issuance remains fenced. The old-schema real shared-lock regression
+fails; the new full job-authority suite passes 11/11 with zero skips, including
+task and publication phases, expired leases, old fences and worker disablement.
+Rust formatting, complete static checks, nine-artifact provenance and 77 native
+units pass on the frozen rebuilt source. Broader composed proofs are in progress.
+Evidence is `production/evidence/2026-11-04/job-session-reuse`.
+
 ## November 4 development feedback fixes
 
 The Agent integration file now has three fresh fixture roots instead of one
