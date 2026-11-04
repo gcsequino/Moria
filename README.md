@@ -98,7 +98,9 @@ builds, and the Station Explorer type/build/hosting smoke checks. Python command
 use `.venv` or the explicit `MORIA_PYTHON` executable. Specification validation
 uses `--check` to avoid rewriting the historical report.
 
-The Quality workflow runs on pull requests and main with the Linux quality job.
+The Quality workflow first runs the Static quality job from the `static-check`
+Docker stage, which does not compile Rust. Linux quality starts only after that
+passes, then builds the native artifacts and runs the complete offline gate.
 Inspect that job and its logs on the latest revision before merging. Required
 checks and review protection must be configured separately when the repository's
 GitHub plan supports them; until then, the owner enforces this review procedure.

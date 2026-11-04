@@ -1,0 +1,726 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 7.12kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/docker:cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/python:3.11-slim-bookworm@sha256:061c190f3d5815b341a18dfe8a45771f8ba68c15a607ea56997fde3009ac4eec
+#4 DONE 0.5s
+
+#5 [internal] load metadata for docker.io/pgvector/pgvector@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11
+#5 DONE 0.5s
+
+#6 [internal] load .dockerignore
+#6 transferring context: 129B done
+#6 DONE 0.0s
+
+#7 [agent-dependencies 1/4] FROM docker.io/library/node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+#7 resolve docker.io/library/node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5 0.0s done
+#7 DONE 0.0s
+
+#8 [docker-cli 1/1] FROM docker.io/library/docker:cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb
+#8 resolve docker.io/library/docker:cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb 0.0s done
+#8 DONE 0.0s
+
+#9 [vector-extension 1/1] FROM docker.io/pgvector/pgvector@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11
+#9 resolve docker.io/pgvector/pgvector@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11 0.0s done
+#9 DONE 0.0s
+
+#10 [engine-dependencies 1/3] FROM docker.io/library/python:3.11-slim-bookworm@sha256:061c190f3d5815b341a18dfe8a45771f8ba68c15a607ea56997fde3009ac4eec
+#10 resolve docker.io/library/python:3.11-slim-bookworm@sha256:061c190f3d5815b341a18dfe8a45771f8ba68c15a607ea56997fde3009ac4eec 0.0s done
+#10 DONE 0.1s
+
+#7 [agent-dependencies 1/4] FROM docker.io/library/node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+#7 CACHED
+
+#11 [static-check  2/27] COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
+#11 CACHED
+
+#12 [agent-dependencies 2/4] WORKDIR /agent
+#12 DONE 0.0s
+
+#13 [internal] load build context
+#13 transferring context: 579.72kB 0.1s done
+#13 DONE 0.1s
+
+#14 [mcp-client 2/3] COPY deploy/test/mcp-client/requirements.lock /tmp/requirements.lock
+#14 DONE 0.1s
+
+#15 [agent-dependencies 3/4] COPY workers/agents/package.json workers/agents/package-lock.json ./
+#15 DONE 0.1s
+
+#16 [engine-dependencies 2/3] COPY workers/data-engine/requirements.lock /tmp/requirements.lock
+#16 DONE 0.1s
+
+#9 [vector-extension 1/1] FROM docker.io/pgvector/pgvector@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11
+#9 DONE 0.3s
+
+#17 [agent-dependencies 4/4] RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+#17 6.771 
+#17 6.771 added 22 packages, and audited 23 packages in 6s
+#17 6.771 
+#17 6.771 7 packages are looking for funding
+#17 6.772   run `npm fund` for details
+#17 6.772 
+#17 6.772 found 0 vulnerabilities
+#17 6.773 npm notice
+#17 6.773 npm notice New major version of npm available! 11.19.1 -> 12.2.1
+#17 6.773 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+#17 6.773 npm notice To update run: npm install -g npm@12.2.1
+#17 6.773 npm notice
+#17 6.867 npm warn using --force Recommended protections disabled.
+#17 DONE 7.0s
+
+#18 [mcp-client 3/3] RUN pip install --no-cache-dir --only-binary=:all: --require-hashes -r /tmp/requirements.lock
+#18 1.522 Collecting annotated-types==0.8.0 (from -r /tmp/requirements.lock (line 1))
+#18 1.682   Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#18 1.721 Collecting anyio==4.15.1 (from -r /tmp/requirements.lock (line 2))
+#18 1.742   Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+#18 1.780      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 132.1/132.1 kB 3.9 MB/s eta 0:00:00
+#18 1.812 Collecting attrs==26.1.0 (from -r /tmp/requirements.lock (line 3))
+#18 1.838   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+#18 1.844      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.5/67.5 kB 10.5 MB/s eta 0:00:00
+#18 2.020 Collecting cffi==2.1.1 (from -r /tmp/requirements.lock (line 4))
+#18 2.052   Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+#18 2.099      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 217.8/217.8 kB 4.6 MB/s eta 0:00:00
+#18 4.725 Collecting click==8.5.0 (from -r /tmp/requirements.lock (line 5))
+#18 4.769   Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#18 4.802      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 125.3/125.3 kB 3.7 MB/s eta 0:00:00
+#18 5.218 Collecting cryptography==50.0.2 (from -r /tmp/requirements.lock (line 6))
+#18 5.264   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+#18 6.762      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 3.2 MB/s eta 0:00:00
+#18 6.897 Collecting h11==0.16.0 (from -r /tmp/requirements.lock (line 7))
+#18 6.952   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#18 7.054 Collecting httpcore2==2.16.0 (from -r /tmp/requirements.lock (line 8))
+#18 7.112   Downloading httpcore2-2.16.0-py3-none-any.whl (85 kB)
+#18 7.129      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 85.1/85.1 kB 5.1 MB/s eta 0:00:00
+#18 7.217 Collecting httpx2==2.16.0 (from -r /tmp/requirements.lock (line 9))
+#18 7.283   Downloading httpx2-2.16.0-py3-none-any.whl (97 kB)
+#18 7.296      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 97.9/97.9 kB 10.2 MB/s eta 0:00:00
+#18 7.396 Collecting idna==3.20 (from -r /tmp/requirements.lock (line 10))
+#18 7.472   Downloading idna-3.20-py3-none-any.whl (69 kB)
+#18 7.482      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.6/69.6 kB 8.3 MB/s eta 0:00:00
+#18 7.536 Collecting jsonschema-specifications==2025.9.1 (from -r /tmp/requirements.lock (line 11))
+#18 7.558   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+#18 7.601 Collecting jsonschema==4.26.0 (from -r /tmp/requirements.lock (line 12))
+#18 7.622   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+#18 7.629      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 kB 17.0 MB/s eta 0:00:00
+#18 7.657 Collecting mcp-types==2.3.0 (from -r /tmp/requirements.lock (line 13))
+#18 7.729   Downloading mcp_types-2.3.0-py3-none-any.whl (69 kB)
+#18 7.733      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.1/69.1 kB 23.1 MB/s eta 0:00:00
+#18 7.865 Collecting mcp==2.3.0 (from -r /tmp/requirements.lock (line 14))
+#18 8.057   Downloading mcp-2.3.0-py3-none-any.whl (368 kB)
+#18 8.114      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 368.7/368.7 kB 6.9 MB/s eta 0:00:00
+#18 8.275 Collecting opentelemetry-api==1.45.2 (from -r /tmp/requirements.lock (line 15))
+#18 8.389   Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+#18 8.401      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.3/60.3 kB 5.8 MB/s eta 0:00:00
+#18 8.551 Collecting pycparser==3.12 (from -r /tmp/requirements.lock (line 16))
+#18 8.676   Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+#18 8.703      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.6/62.6 kB 2.5 MB/s eta 0:00:00
+#18 9.272 Collecting pydantic==2.14.2 (from -r /tmp/requirements.lock (line 17))
+#18 9.433   Downloading pydantic-2.14.2-py3-none-any.whl (490 kB)
+#18 9.638      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 490.4/490.4 kB 2.4 MB/s eta 0:00:00
+#18 11.91 Collecting pydantic_core==2.50.2 (from -r /tmp/requirements.lock (line 18))
+#18 11.93   Downloading pydantic_core-2.50.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.2 MB)
+#18 12.09      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 15.1 MB/s eta 0:00:00
+#18 12.13 Collecting PyJWT==2.15.1 (from -r /tmp/requirements.lock (line 19))
+#18 12.15   Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+#18 12.18 Collecting python-multipart==0.0.32 (from -r /tmp/requirements.lock (line 20))
+#18 12.20   Downloading python_multipart-0.0.32-py3-none-any.whl (30 kB)
+#18 12.23 Collecting referencing==0.37.0 (from -r /tmp/requirements.lock (line 21))
+#18 12.25   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+#18 12.49 Collecting rpds-py==2026.9.1 (from -r /tmp/requirements.lock (line 22))
+#18 12.51   Downloading rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (375 kB)
+#18 12.52      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 375.4/375.4 kB 36.4 MB/s eta 0:00:00
+#18 12.57 Collecting sse-starlette==3.6.0 (from -r /tmp/requirements.lock (line 23))
+#18 12.59   Downloading sse_starlette-3.6.0-py3-none-any.whl (17 kB)
+#18 12.62 Collecting starlette==1.10.0 (from -r /tmp/requirements.lock (line 24))
+#18 ...
+
+#19 [engine-dependencies 3/3] RUN pip install --no-cache-dir --only-binary=:all: --require-hashes -r /tmp/requirements.lock
+#19 1.754 Collecting duckdb==2.0.0 (from -r /tmp/requirements.lock (line 2))
+#19 1.873   Downloading duckdb-2.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (24.4 MB)
+#19 7.467      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 24.4/24.4 MB 13.1 MB/s eta 0:00:00
+#19 7.615 Collecting pyarrow==26.0.0 (from -r /tmp/requirements.lock (line 3))
+#19 7.636   Downloading pyarrow-26.0.0-cp311-cp311-manylinux_2_28_x86_64.whl (53.9 MB)
+#19 11.23      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 53.9/53.9 MB 16.1 MB/s eta 0:00:00
+#19 11.29 Installing collected packages: pyarrow, duckdb
+#19 12.52 Successfully installed duckdb-2.0.0 pyarrow-26.0.0
+#19 12.52 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#19 12.65 
+#19 12.65 [notice] A new release of pip is available: 24.0 -> 26.3
+#19 12.65 [notice] To update, run: pip install --upgrade pip
+#19 DONE 12.7s
+
+#18 [mcp-client 3/3] RUN pip install --no-cache-dir --only-binary=:all: --require-hashes -r /tmp/requirements.lock
+#18 12.64   Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+#18 12.64      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 80.6/80.6 kB 19.6 MB/s eta 0:00:00
+#18 12.67 Collecting truststore==0.10.5 (from -r /tmp/requirements.lock (line 25))
+#18 12.69   Downloading truststore-0.10.5-py3-none-any.whl (19 kB)
+#18 12.72 Collecting typing-inspection==0.4.4 (from -r /tmp/requirements.lock (line 26))
+#18 12.74   Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+#18 12.76 Collecting typing_extensions==4.16.0 (from -r /tmp/requirements.lock (line 27))
+#18 12.78   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#18 12.78      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 26.0 MB/s eta 0:00:00
+#18 12.82 Collecting uvicorn==0.54.0 (from -r /tmp/requirements.lock (line 28))
+#18 12.84   Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+#18 12.84      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 87.4/87.4 kB 53.7 MB/s eta 0:00:00
+#18 13.01 Installing collected packages: typing_extensions, truststore, rpds-py, python-multipart, PyJWT, pycparser, idna, h11, click, attrs, annotated-types, uvicorn, typing-inspection, referencing, pydantic_core, opentelemetry-api, httpcore2, cffi, anyio, starlette, pydantic, jsonschema-specifications, httpx2, cryptography, sse-starlette, mcp-types, jsonschema, mcp
+#18 13.99 Successfully installed PyJWT-2.15.1 annotated-types-0.8.0 anyio-4.15.1 attrs-26.1.0 cffi-2.1.1 click-8.5.0 cryptography-50.0.2 h11-0.16.0 httpcore2-2.16.0 httpx2-2.16.0 idna-3.20 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mcp-2.3.0 mcp-types-2.3.0 opentelemetry-api-1.45.2 pycparser-3.12 pydantic-2.14.2 pydantic_core-2.50.2 python-multipart-0.0.32 referencing-0.37.0 rpds-py-2026.9.1 sse-starlette-3.6.0 starlette-1.10.0 truststore-0.10.5 typing-inspection-0.4.4 typing_extensions-4.16.0 uvicorn-0.54.0
+#18 13.99 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#18 14.11 
+#18 14.11 [notice] A new release of pip is available: 24.0 -> 26.3
+#18 14.11 [notice] To update, run: pip install --upgrade pip
+#18 DONE 14.3s
+
+#20 [static-check  3/27] COPY --from=mcp-client /usr/local/lib/python3.11/site-packages /opt/moria-mcp-client
+#20 DONE 0.5s
+
+#21 [static-check  4/27] COPY --from=agent-dependencies /agent/ /opt/moria-agent/
+#21 DONE 0.6s
+
+#22 [static-check  5/27] COPY --from=engine-dependencies /usr/local/lib/python3.11/site-packages /opt/moria-engine/site-packages
+#22 DONE 0.6s
+
+#23 [static-check  6/27] COPY workers/data-engine/requirements.lock /opt/moria-engine/requirements.lock
+#23 DONE 0.0s
+
+#24 [static-check  7/27] COPY --from=vector-extension /usr/share/doc/postgresql-client-18/copyright /opt/moria-postgresql/client-COPYRIGHT
+#24 DONE 0.0s
+
+#25 [static-check  8/27] COPY --from=vector-extension /usr/share/doc/libpq5/copyright /opt/moria-postgresql/libpq-COPYRIGHT
+#25 DONE 0.0s
+
+#26 [static-check  9/27] COPY --from=vector-extension /usr/lib/postgresql/18/bin/pg_dump /usr/local/bin/pg_dump
+#26 DONE 0.0s
+
+#27 [static-check 10/27] COPY --from=vector-extension /usr/lib/postgresql/18/bin/pg_restore /usr/local/bin/pg_restore
+#27 DONE 0.0s
+
+#28 [static-check 11/27] COPY --from=vector-extension /usr/lib/x86_64-linux-gnu/libpq.so.5* /usr/lib/x86_64-linux-gnu/
+#28 DONE 0.0s
+
+#29 [static-check 12/27] COPY --from=vector-extension /usr/lib/postgresql/18/lib/vector.so /opt/moria-pgvector/vector.so
+#29 DONE 0.0s
+
+#30 [static-check 13/27] COPY --from=vector-extension /usr/share/postgresql/18/extension/vector* /opt/moria-pgvector/extension/
+#30 DONE 0.0s
+
+#31 [static-check 14/27] COPY deploy/test/licenses/pgvector-LICENSE /opt/moria-pgvector/LICENSE
+#31 DONE 0.0s
+
+#32 [static-check 15/27] RUN apt-get update && apt-get install -y --no-install-recommends libldap-2.5-0 libgssapi-krb5-2 liblz4-1 libzstd1 python3-venv libicu72 libxml2 libreadline8 libxslt1.1 openssl && rm -rf /var/lib/apt/lists/*
+#32 0.275 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#32 0.330 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#32 0.350 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#32 0.372 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#32 1.136 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#32 1.136 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [361 kB]
+#32 1.342 Fetched 9399 kB in 1s (8367 kB/s)
+#32 1.342 Reading package lists...
+#32 1.573 Reading package lists...
+#32 1.805 Building dependency tree...
+#32 1.844 Reading state information...
+#32 1.896 liblz4-1 is already the newest version (1.9.4-1).
+#32 1.896 liblz4-1 set to manually installed.
+#32 1.896 libzstd1 is already the newest version (1.5.4+dfsg2-5).
+#32 1.896 libzstd1 set to manually installed.
+#32 1.896 The following additional packages will be installed:
+#32 1.896   ca-certificates libexpat1 libk5crypto3 libkeyutils1 libkrb5-3
+#32 1.896   libkrb5support0 libncursesw6 libnsl2 libpython3-stdlib libpython3.11-minimal
+#32 1.896   libpython3.11-stdlib libsasl2-2 libsasl2-modules-db libsqlite3-0 libssl3
+#32 1.896   libtirpc-common libtirpc3 media-types python3 python3-distutils
+#32 1.896   python3-lib2to3 python3-minimal python3-pip-whl python3-setuptools-whl
+#32 1.896   python3.11 python3.11-minimal python3.11-venv readline-common
+#32 1.896 Suggested packages:
+#32 1.896   krb5-doc krb5-user python3-doc python3-tk python3.11-doc binutils
+#32 1.896   binfmt-support readline-doc
+#32 1.896 Recommended packages:
+#32 1.896   krb5-locales libldap-common libgpm2 libsasl2-modules
+#32 2.003 The following NEW packages will be installed:
+#32 2.003   ca-certificates libexpat1 libgssapi-krb5-2 libicu72 libk5crypto3
+#32 2.003   libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libncursesw6 libnsl2
+#32 2.003   libpython3-stdlib libpython3.11-minimal libpython3.11-stdlib libreadline8
+#32 2.003   libsasl2-2 libsasl2-modules-db libsqlite3-0 libssl3 libtirpc-common
+#32 2.003   libtirpc3 libxml2 libxslt1.1 media-types openssl python3 python3-distutils
+#32 2.003   python3-lib2to3 python3-minimal python3-pip-whl python3-setuptools-whl
+#32 2.003   python3-venv python3.11 python3.11-minimal python3.11-venv readline-common
+#32 2.069 0 upgraded, 36 newly installed, 0 to remove and 4 not upgraded.
+#32 2.069 Need to get 24.6 MB of archives.
+#32 2.069 After this operation, 80.7 MB of additional disk space will be used.
+#32 2.069 Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 libssl3 amd64 3.0.22-1~deb12u2 [2040 kB]
+#32 2.243 Get:2 http://deb.debian.org/debian-security bookworm-security/main amd64 libpython3.11-minimal amd64 3.11.2-6+deb12u9 [821 kB]
+#32 2.312 Get:3 http://deb.debian.org/debian-security bookworm-security/main amd64 libexpat1 amd64 2.5.0-1+deb12u5 [108 kB]
+#32 2.336 Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11-minimal amd64 3.11.2-6+deb12u9 [2055 kB]
+#32 2.478 Get:5 http://deb.debian.org/debian bookworm/main amd64 python3-minimal amd64 3.11.2-1+b1 [26.3 kB]
+#32 2.478 Get:6 http://deb.debian.org/debian bookworm/main amd64 media-types all 10.0.0 [26.1 kB]
+#32 2.506 Get:7 http://deb.debian.org/debian bookworm/main amd64 libncursesw6 amd64 6.4-4 [134 kB]
+#32 2.509 Get:8 http://deb.debian.org/debian bookworm/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
+#32 2.510 Get:9 http://deb.debian.org/debian bookworm/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
+#32 2.512 Get:10 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
+#32 2.512 Get:11 http://deb.debian.org/debian bookworm/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
+#32 2.558 Get:12 http://deb.debian.org/debian bookworm/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
+#32 2.563 Get:13 http://deb.debian.org/debian bookworm/main amd64 libtirpc-common all 1.3.3+ds-1 [14.0 kB]
+#32 2.564 Get:14 http://deb.debian.org/debian bookworm/main amd64 libtirpc3 amd64 1.3.3+ds-1 [85.2 kB]
+#32 2.566 Get:15 http://deb.debian.org/debian bookworm/main amd64 libnsl2 amd64 1.3.0-2 [39.5 kB]
+#32 2.567 Get:16 http://deb.debian.org/debian bookworm/main amd64 readline-common all 8.2-1.3 [69.0 kB]
+#32 2.590 Get:17 http://deb.debian.org/debian bookworm/main amd64 libreadline8 amd64 8.2-1.3 [166 kB]
+#32 2.597 Get:18 http://deb.debian.org/debian bookworm/main amd64 libsqlite3-0 amd64 3.40.1-2+deb12u2 [839 kB]
+#32 2.652 Get:19 http://deb.debian.org/debian-security bookworm-security/main amd64 libpython3.11-stdlib amd64 3.11.2-6+deb12u9 [1798 kB]
+#32 2.763 Get:20 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11 amd64 3.11.2-6+deb12u9 [575 kB]
+#32 2.785 Get:21 http://deb.debian.org/debian bookworm/main amd64 libpython3-stdlib amd64 3.11.2-1+b1 [9312 B]
+#32 2.785 Get:22 http://deb.debian.org/debian bookworm/main amd64 python3 amd64 3.11.2-1+b1 [26.3 kB]
+#32 2.786 Get:23 http://deb.debian.org/debian-security bookworm-security/main amd64 openssl amd64 3.0.22-1~deb12u2 [1442 kB]
+#32 2.912 Get:24 http://deb.debian.org/debian-security bookworm-security/main amd64 ca-certificates all 20250419~deb12u2 [161 kB]
+#32 2.938 Get:25 http://deb.debian.org/debian bookworm/main amd64 libicu72 amd64 72.1-3+deb12u1 [9376 kB]
+#32 3.436 Get:26 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10+deb12u1 [20.5 kB]
+#32 3.436 Get:27 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10+deb12u1 [59.9 kB]
+#32 3.477 Get:28 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+#32 3.506 Get:29 http://deb.debian.org/debian bookworm/main amd64 libxml2 amd64 2.9.14+dfsg-1.3~deb12u6 [689 kB]
+#32 3.583 Get:30 http://deb.debian.org/debian bookworm/main amd64 libxslt1.1 amd64 1.1.35-1+deb12u4 [232 kB]
+#32 3.591 Get:31 http://deb.debian.org/debian bookworm/main amd64 python3-lib2to3 all 3.11.2-3 [76.3 kB]
+#32 3.599 Get:32 http://deb.debian.org/debian bookworm/main amd64 python3-distutils all 3.11.2-3 [131 kB]
+#32 3.625 Get:33 http://deb.debian.org/debian bookworm/main amd64 python3-pip-whl all 23.0.1+dfsg-1 [1717 kB]
+#32 3.751 Get:34 http://deb.debian.org/debian bookworm/main amd64 python3-setuptools-whl all 66.1.1-1+deb12u2 [1112 kB]
+#32 3.800 Get:35 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11-venv amd64 3.11.2-6+deb12u9 [5896 B]
+#32 3.800 Get:36 http://deb.debian.org/debian bookworm/main amd64 python3-venv amd64 3.11.2-1+b1 [1200 B]
+#32 3.861 debconf: delaying package configuration, since apt-utils is not installed
+#32 3.875 Fetched 24.6 MB in 2s (13.7 MB/s)
+#32 3.892 Selecting previously unselected package libssl3:amd64.
+#32 3.892 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6096 files and directories currently installed.)
+#32 3.896 Preparing to unpack .../libssl3_3.0.22-1~deb12u2_amd64.deb ...
+#32 3.901 Unpacking libssl3:amd64 (3.0.22-1~deb12u2) ...
+#32 3.992 Selecting previously unselected package libpython3.11-minimal:amd64.
+#32 3.993 Preparing to unpack .../libpython3.11-minimal_3.11.2-6+deb12u9_amd64.deb ...
+#32 3.995 Unpacking libpython3.11-minimal:amd64 (3.11.2-6+deb12u9) ...
+#32 4.065 Selecting previously unselected package libexpat1:amd64.
+#32 4.066 Preparing to unpack .../libexpat1_2.5.0-1+deb12u5_amd64.deb ...
+#32 4.068 Unpacking libexpat1:amd64 (2.5.0-1+deb12u5) ...
+#32 4.094 Selecting previously unselected package python3.11-minimal.
+#32 4.094 Preparing to unpack .../python3.11-minimal_3.11.2-6+deb12u9_amd64.deb ...
+#32 4.100 Unpacking python3.11-minimal (3.11.2-6+deb12u9) ...
+#32 4.203 Setting up libssl3:amd64 (3.0.22-1~deb12u2) ...
+#32 4.210 Setting up libpython3.11-minimal:amd64 (3.11.2-6+deb12u9) ...
+#32 4.220 Setting up libexpat1:amd64 (2.5.0-1+deb12u5) ...
+#32 4.227 Setting up python3.11-minimal (3.11.2-6+deb12u9) ...
+#32 4.543 Selecting previously unselected package python3-minimal.
+#32 4.543 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6424 files and directories currently installed.)
+#32 4.547 Preparing to unpack .../00-python3-minimal_3.11.2-1+b1_amd64.deb ...
+#32 4.549 Unpacking python3-minimal (3.11.2-1+b1) ...
+#32 4.571 Selecting previously unselected package media-types.
+#32 4.572 Preparing to unpack .../01-media-types_10.0.0_all.deb ...
+#32 4.574 Unpacking media-types (10.0.0) ...
+#32 4.597 Selecting previously unselected package libncursesw6:amd64.
+#32 4.597 Preparing to unpack .../02-libncursesw6_6.4-4_amd64.deb ...
+#32 4.600 Unpacking libncursesw6:amd64 (6.4-4) ...
+#32 4.626 Selecting previously unselected package libkrb5support0:amd64.
+#32 4.626 Preparing to unpack .../03-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+#32 4.629 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#32 4.652 Selecting previously unselected package libk5crypto3:amd64.
+#32 4.652 Preparing to unpack .../04-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+#32 4.654 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#32 4.678 Selecting previously unselected package libkeyutils1:amd64.
+#32 4.679 Preparing to unpack .../05-libkeyutils1_1.6.3-2_amd64.deb ...
+#32 4.681 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+#32 4.703 Selecting previously unselected package libkrb5-3:amd64.
+#32 4.703 Preparing to unpack .../06-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+#32 4.706 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#32 4.742 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#32 4.743 Preparing to unpack .../07-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+#32 4.745 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#32 4.770 Selecting previously unselected package libtirpc-common.
+#32 4.770 Preparing to unpack .../08-libtirpc-common_1.3.3+ds-1_all.deb ...
+#32 4.772 Unpacking libtirpc-common (1.3.3+ds-1) ...
+#32 4.794 Selecting previously unselected package libtirpc3:amd64.
+#32 4.795 Preparing to unpack .../09-libtirpc3_1.3.3+ds-1_amd64.deb ...
+#32 4.797 Unpacking libtirpc3:amd64 (1.3.3+ds-1) ...
+#32 4.822 Selecting previously unselected package libnsl2:amd64.
+#32 4.822 Preparing to unpack .../10-libnsl2_1.3.0-2_amd64.deb ...
+#32 4.825 Unpacking libnsl2:amd64 (1.3.0-2) ...
+#32 4.846 Selecting previously unselected package readline-common.
+#32 4.847 Preparing to unpack .../11-readline-common_8.2-1.3_all.deb ...
+#32 4.849 Unpacking readline-common (8.2-1.3) ...
+#32 4.873 Selecting previously unselected package libreadline8:amd64.
+#32 4.874 Preparing to unpack .../12-libreadline8_8.2-1.3_amd64.deb ...
+#32 4.876 Unpacking libreadline8:amd64 (8.2-1.3) ...
+#32 4.904 Selecting previously unselected package libsqlite3-0:amd64.
+#32 4.904 Preparing to unpack .../13-libsqlite3-0_3.40.1-2+deb12u2_amd64.deb ...
+#32 4.907 Unpacking libsqlite3-0:amd64 (3.40.1-2+deb12u2) ...
+#32 4.949 Selecting previously unselected package libpython3.11-stdlib:amd64.
+#32 4.949 Preparing to unpack .../14-libpython3.11-stdlib_3.11.2-6+deb12u9_amd64.deb ...
+#32 4.951 Unpacking libpython3.11-stdlib:amd64 (3.11.2-6+deb12u9) ...
+#32 5.053 Selecting previously unselected package python3.11.
+#32 5.053 Preparing to unpack .../15-python3.11_3.11.2-6+deb12u9_amd64.deb ...
+#32 5.055 Unpacking python3.11 (3.11.2-6+deb12u9) ...
+#32 5.080 Selecting previously unselected package libpython3-stdlib:amd64.
+#32 5.080 Preparing to unpack .../16-libpython3-stdlib_3.11.2-1+b1_amd64.deb ...
+#32 5.082 Unpacking libpython3-stdlib:amd64 (3.11.2-1+b1) ...
+#32 5.103 Setting up python3-minimal (3.11.2-1+b1) ...
+#32 5.188 Selecting previously unselected package python3.
+#32 5.188 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6932 files and directories currently installed.)
+#32 5.192 Preparing to unpack .../00-python3_3.11.2-1+b1_amd64.deb ...
+#32 5.196 Unpacking python3 (3.11.2-1+b1) ...
+#32 5.219 Selecting previously unselected package openssl.
+#32 5.219 Preparing to unpack .../01-openssl_3.0.22-1~deb12u2_amd64.deb ...
+#32 5.222 Unpacking openssl (3.0.22-1~deb12u2) ...
+#32 5.293 Selecting previously unselected package ca-certificates.
+#32 5.294 Preparing to unpack .../02-ca-certificates_20250419~deb12u2_all.deb ...
+#32 5.297 Unpacking ca-certificates (20250419~deb12u2) ...
+#32 5.357 Selecting previously unselected package libicu72:amd64.
+#32 5.357 Preparing to unpack .../03-libicu72_72.1-3+deb12u1_amd64.deb ...
+#32 5.357 Unpacking libicu72:amd64 (72.1-3+deb12u1) ...
+#32 5.658 Selecting previously unselected package libsasl2-modules-db:amd64.
+#32 5.658 Preparing to unpack .../04-libsasl2-modules-db_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+#32 5.658 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#32 5.683 Selecting previously unselected package libsasl2-2:amd64.
+#32 5.683 Preparing to unpack .../05-libsasl2-2_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+#32 5.683 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#32 5.703 Selecting previously unselected package libldap-2.5-0:amd64.
+#32 5.703 Preparing to unpack .../06-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+#32 5.705 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#32 5.739 Selecting previously unselected package libxml2:amd64.
+#32 5.739 Preparing to unpack .../07-libxml2_2.9.14+dfsg-1.3~deb12u6_amd64.deb ...
+#32 5.739 Unpacking libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#32 5.789 Selecting previously unselected package libxslt1.1:amd64.
+#32 5.789 Preparing to unpack .../08-libxslt1.1_1.1.35-1+deb12u4_amd64.deb ...
+#32 5.792 Unpacking libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
+#32 5.820 Selecting previously unselected package python3-lib2to3.
+#32 5.821 Preparing to unpack .../09-python3-lib2to3_3.11.2-3_all.deb ...
+#32 5.824 Unpacking python3-lib2to3 (3.11.2-3) ...
+#32 5.863 Selecting previously unselected package python3-distutils.
+#32 5.864 Preparing to unpack .../10-python3-distutils_3.11.2-3_all.deb ...
+#32 5.874 Unpacking python3-distutils (3.11.2-3) ...
+#32 5.910 Selecting previously unselected package python3-pip-whl.
+#32 5.911 Preparing to unpack .../11-python3-pip-whl_23.0.1+dfsg-1_all.deb ...
+#32 5.913 Unpacking python3-pip-whl (23.0.1+dfsg-1) ...
+#32 5.978 Selecting previously unselected package python3-setuptools-whl.
+#32 5.979 Preparing to unpack .../12-python3-setuptools-whl_66.1.1-1+deb12u2_all.deb ...
+#32 5.981 Unpacking python3-setuptools-whl (66.1.1-1+deb12u2) ...
+#32 6.029 Selecting previously unselected package python3.11-venv.
+#32 6.030 Preparing to unpack .../13-python3.11-venv_3.11.2-6+deb12u9_amd64.deb ...
+#32 6.032 Unpacking python3.11-venv (3.11.2-6+deb12u9) ...
+#32 6.049 Selecting previously unselected package python3-venv.
+#32 6.049 Preparing to unpack .../14-python3-venv_3.11.2-1+b1_amd64.deb ...
+#32 6.052 Unpacking python3-venv (3.11.2-1+b1) ...
+#32 6.072 Setting up media-types (10.0.0) ...
+#32 6.082 Setting up python3-setuptools-whl (66.1.1-1+deb12u2) ...
+#32 6.089 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+#32 6.095 Setting up libicu72:amd64 (72.1-3+deb12u1) ...
+#32 6.102 Setting up libtirpc-common (1.3.3+ds-1) ...
+#32 6.111 Setting up libsqlite3-0:amd64 (3.40.1-2+deb12u2) ...
+#32 6.118 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#32 6.124 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#32 6.131 Setting up libncursesw6:amd64 (6.4-4) ...
+#32 6.138 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#32 6.144 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#32 6.151 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#32 6.158 Setting up openssl (3.0.22-1~deb12u2) ...
+#32 6.169 Setting up readline-common (8.2-1.3) ...
+#32 6.178 Setting up libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#32 6.185 Setting up libreadline8:amd64 (8.2-1.3) ...
+#32 6.192 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#32 6.200 Setting up ca-certificates (20250419~deb12u2) ...
+#32 6.240 debconf: unable to initialize frontend: Dialog
+#32 6.240 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#32 6.240 debconf: falling back to frontend: Readline
+#32 6.240 debconf: unable to initialize frontend: Readline
+#32 6.240 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#32 6.240 debconf: falling back to frontend: Teletype
+#32 6.584 Updating certificates in /etc/ssl/certs...
+#32 7.115 148 added, 0 removed; done.
+#32 7.140 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#32 7.152 Setting up libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
+#32 7.165 Setting up libtirpc3:amd64 (1.3.3+ds-1) ...
+#32 7.174 Setting up python3-pip-whl (23.0.1+dfsg-1) ...
+#32 7.186 Setting up libnsl2:amd64 (1.3.0-2) ...
+#32 7.196 Setting up libpython3.11-stdlib:amd64 (3.11.2-6+deb12u9) ...
+#32 7.208 Setting up libpython3-stdlib:amd64 (3.11.2-1+b1) ...
+#32 7.218 Setting up python3.11 (3.11.2-6+deb12u9) ...
+#32 7.540 Setting up python3 (3.11.2-1+b1) ...
+#32 7.549 running python rtupdate hooks for python3.11...
+#32 7.549 running python post-rtupdate hooks for python3.11...
+#32 7.589 Setting up python3-lib2to3 (3.11.2-3) ...
+#32 7.641 Setting up python3-distutils (3.11.2-3) ...
+#32 7.700 Setting up python3.11-venv (3.11.2-6+deb12u9) ...
+#32 7.729 Setting up python3-venv (3.11.2-1+b1) ...
+#32 7.737 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#32 7.744 ldconfig: /lib/x86_64-linux-gnu/libpq.so.5 is not a symbolic link
+#32 7.744 
+#32 7.751 Processing triggers for ca-certificates (20250419~deb12u2) ...
+#32 7.757 Updating certificates in /etc/ssl/certs...
+#32 8.140 0 added, 0 removed; done.
+#32 8.140 Running hooks in /etc/ca-certificates/update.d...
+#32 8.141 done.
+#32 DONE 8.4s
+
+#33 [static-check 16/27] RUN npm install -g pnpm@11.25.0 && mkdir /app && chown node:node /app
+#33 1.312 
+#33 1.312 added 1 package in 1s
+#33 1.312 
+#33 1.312 1 package is looking for funding
+#33 1.312   run `npm fund` for details
+#33 1.313 npm notice
+#33 1.313 npm notice New major version of npm available! 11.19.1 -> 12.2.1
+#33 1.313 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+#33 1.313 npm notice To update run: npm install -g npm@12.2.1
+#33 1.313 npm notice
+#33 DONE 1.4s
+
+#34 [static-check 17/27] RUN node --input-type=module -e "    import {writeFileSync} from 'node:fs';     import {createHash} from 'node:crypto';     if (process.arch !== 'x64') {         throw new Error('Pinned S3 test server requires linux-amd64');     }     const response = await fetch('https://github.com/minio/minio/releases/download/RELEASE.2025-09-07T16-13-09Z/minio_20250907161309.0.0_amd64.deb');     if (!response.ok) {         throw new Error('S3 prerequisite download failed');     }     const bytes = Buffer.from(await response.arrayBuffer());     if (createHash('sha256').update(bytes).digest('hex') !== 'eeda08f699f6592d1b868ac8bda864ae2cacdb5ee1b888663366e8c8ff566249') {         throw new Error('S3 prerequisite checksum mismatch');     }     writeFileSync('/tmp/minio.deb', bytes);"     && dpkg-deb -x /tmp/minio.deb /tmp/minio-dist     && install -m 0755 /tmp/minio-dist/usr/local/bin/minio /usr/local/bin/minio     && rm -rf /tmp/minio.deb /tmp/minio-dist
+#34 DONE 3.4s
+
+#35 [static-check 18/27] WORKDIR /app
+#35 DONE 0.0s
+
+#36 [static-check 19/27] COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+#36 DONE 0.1s
+
+#37 [static-check 20/27] RUN pnpm install --frozen-lockfile
+#37 0.551 ? Verifying lockfile against supply-chain policies (158 entries)...
+#37 0.558 Lockfile is up to date, resolution step is skipped
+#37 0.602 Progress: resolved 1, reused 0, downloaded 0, added 0
+#37 0.621 Packages: +82
+#37 0.621 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#37 0.987 Packages are hard linked from the content-addressable store to the virtual store.
+#37 0.987   Content-addressable store is at: /home/node/.local/share/pnpm/store/v11
+#37 0.987   Virtual store is at:             node_modules/.pnpm
+#37 1.041 
+#37 1.041    ╭──────────────────────────────────────────────────────────────────────╮
+#37 1.041    │                                                                      │
+#37 1.041    │                 Update available! 11.25.0 → 12.16.1.                 │
+#37 1.041    │                 Changelog: https://pnpm.io/v/12.16.1                 │
+#37 1.041    │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+#37 1.041    │                                                                      │
+#37 1.041    ╰──────────────────────────────────────────────────────────────────────╯
+#37 1.041 
+#37 1.603 Progress: resolved 82, reused 0, downloaded 57, added 57
+#37 2.603 Progress: resolved 82, reused 0, downloaded 75, added 75
+#37 3.603 Progress: resolved 82, reused 0, downloaded 77, added 77
+#37 6.636 Progress: resolved 82, reused 0, downloaded 78, added 77
+#37 10.09 Progress: resolved 82, reused 0, downloaded 79, added 79
+#37 10.60 [WARN] Request took 10023ms: https://registry.npmjs.org/@embedded-postgres%2Fwindows-x64
+#37 10.60 [WARN] Request took 10027ms: https://registry.npmjs.org/@embedded-postgres%2Flinux-x64
+#37 10.73 [WARN] Request took 10150ms: https://registry.npmjs.org/@esbuild%2Faix-ppc64
+#37 10.74 [WARN] Request took 10164ms: https://registry.npmjs.org/@esbuild%2Fandroid-arm64
+#37 10.84 [WARN] Request took 10267ms: https://registry.npmjs.org/@esbuild%2Fandroid-arm
+#37 10.91 [WARN] Request took 10331ms: https://registry.npmjs.org/@esbuild%2Fandroid-x64
+#37 10.92 [WARN] Request took 10346ms: https://registry.npmjs.org/@esbuild%2Fdarwin-x64
+#37 10.94 [WARN] Request took 10361ms: https://registry.npmjs.org/@esbuild%2Fdarwin-arm64
+#37 11.09 Progress: resolved 82, reused 0, downloaded 80, added 80
+#37 11.13 [WARN] Request took 10558ms: https://registry.npmjs.org/@esbuild%2Ffreebsd-x64
+#37 11.17 [WARN] Request took 10593ms: https://registry.npmjs.org/@esbuild%2Flinux-arm64
+#37 11.17 [WARN] Request took 10594ms: https://registry.npmjs.org/@esbuild%2Flinux-arm
+#37 11.19 [WARN] Request took 10616ms: https://registry.npmjs.org/@esbuild%2Ffreebsd-arm64
+#37 11.24 [WARN] Request took 10660ms: https://registry.npmjs.org/@esbuild%2Flinux-ia32
+#37 11.26 [WARN] Request took 10677ms: https://registry.npmjs.org/@esbuild%2Flinux-loong64
+#37 11.36 [WARN] Request took 10777ms: https://registry.npmjs.org/@esbuild%2Flinux-mips64el
+#37 11.36 [WARN] Request took 10784ms: https://registry.npmjs.org/@esbuild%2Flinux-ppc64
+#37 11.46 [WARN] Request took 10876ms: https://registry.npmjs.org/@esbuild%2Flinux-riscv64
+#37 11.49 [WARN] Request took 10907ms: https://registry.npmjs.org/@esbuild%2Fnetbsd-arm64
+#37 11.50 [WARN] Request took 10916ms: https://registry.npmjs.org/@esbuild%2Flinux-x64
+#37 11.50 [WARN] Request took 10922ms: https://registry.npmjs.org/@esbuild%2Flinux-s390x
+#37 11.52 [WARN] Request took 10935ms: https://registry.npmjs.org/@esbuild%2Fnetbsd-x64
+#37 11.52 [WARN] Request took 10941ms: https://registry.npmjs.org/@esbuild%2Fopenbsd-arm64
+#37 11.54 [WARN] Request took 10960ms: https://registry.npmjs.org/@esbuild%2Fopenbsd-x64
+#37 11.56 [WARN] Request took 10977ms: https://registry.npmjs.org/@esbuild%2Fopenharmony-arm64
+#37 11.57 [WARN] Request took 10984ms: https://registry.npmjs.org/@esbuild%2Fsunos-x64
+#37 11.57 ✓ Lockfile passes supply-chain policies (158 entries in 11s)
+#37 11.96 Progress: resolved 82, reused 0, downloaded 82, added 82, done
+#37 12.00 .../@embedded-postgres/linux-x64 postinstall$ node scripts/hydrate-symlinks.js
+#37 12.03 .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+#37 12.06 .../@embedded-postgres/linux-x64 postinstall: Done
+#37 12.08 .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+#37 12.38 
+#37 12.38 dependencies:
+#37 12.38 + @aws-sdk/client-s3 3.1156.0
+#37 12.38 + ajv 8.20.0
+#37 12.38 + ajv-formats 3.0.1
+#37 12.38 + openid-client 6.8.8
+#37 12.38 + pg 8.23.1
+#37 12.38 + react 19.3.1
+#37 12.38 + react-dom 19.3.1
+#37 12.38 
+#37 12.38 devDependencies:
+#37 12.38 + @types/node 26.6.5
+#37 12.38 + @types/pg 8.23.1
+#37 12.38 + @types/react 19.3.0
+#37 12.38 + @types/react-dom 19.3.0
+#37 12.38 + async-exit-hook 2.0.1
+#37 12.38 + embedded-postgres 18.4.0-beta.17
+#37 12.38 + jose 6.2.12
+#37 12.38 + prettier 3.9.10
+#37 12.38 + tsx 4.23.15
+#37 12.38 + typescript 7.0.2
+#37 12.38 + vite 8.3.4
+#37 12.38 
+#37 12.42 Done in 12.2s using pnpm v11.25.0
+#37 DONE 12.5s
+
+#38 [static-check 21/27] COPY --chown=node:node scripts/install-test-extensions.mjs scripts/
+#38 DONE 0.2s
+
+#39 [static-check 22/27] RUN node scripts/install-test-extensions.mjs
+#39 DONE 0.2s
+
+#40 [static-check 23/27] COPY --chown=node:node workers/iceberg/requirements.txt workers/iceberg/constraints.txt workers/iceberg/
+#40 DONE 0.1s
+
+#41 [static-check 24/27] COPY --chown=node:node requirements-dev.txt ./
+#41 DONE 0.1s
+
+#42 [static-check 25/27] COPY --chown=node:node docs/spec/schemas/requirements.txt docs/spec/schemas/
+#42 DONE 0.1s
+
+#43 [static-check 26/27] RUN python3 -m venv .venv && .venv/bin/python -m pip install --no-cache-dir -r workers/iceberg/requirements.txt -r requirements-dev.txt -r docs/spec/schemas/requirements.txt
+#43 2.171 Collecting pyiceberg[pyarrow,sql-sqlite]==0.12.0
+#43 2.320   Downloading pyiceberg-0.12.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (771 kB)
+#43 2.579      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 772.0/772.0 kB 3.0 MB/s eta 0:00:00
+#43 2.691 Collecting pyarrow==26.0.0
+#43 2.711   Downloading pyarrow-26.0.0-cp311-cp311-manylinux_2_28_x86_64.whl (53.9 MB)
+#43 5.644      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 53.9/53.9 MB 17.8 MB/s eta 0:00:00
+#43 5.807 Collecting black==26.10.1
+#43 5.826   Downloading black-26.10.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (2.0 MB)
+#43 5.886      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 35.7 MB/s eta 0:00:00
+#43 5.982 Collecting jsonschema[format]==4.26.0
+#43 6.003   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+#43 6.007      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 kB 21.6 MB/s eta 0:00:00
+#43 6.094 Collecting mmh3>=4.0.0
+#43 6.117   Downloading mmh3-5.3.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (102 kB)
+#43 6.119      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 102.9/102.9 kB 122.7 MB/s eta 0:00:00
+#43 6.150 Collecting requests>=2.20.0
+#43 6.168   Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#43 6.172      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.1/73.1 kB 30.3 MB/s eta 0:00:00
+#43 6.209 Collecting click>=7.1.1
+#43 6.230   Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#43 6.234      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 125.3/125.3 kB 37.3 MB/s eta 0:00:00
+#43 6.282 Collecting rich>=10.11.0
+#43 6.302   Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+#43 6.308      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 310.7/310.7 kB 58.0 MB/s eta 0:00:00
+#43 6.338 Collecting strictyaml>=1.7.0
+#43 6.357   Downloading strictyaml-1.7.3-py3-none-any.whl (123 kB)
+#43 6.361      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 123.9/123.9 kB 49.4 MB/s eta 0:00:00
+#43 6.494 Collecting pydantic!=2.12.0,!=2.12.1,!=2.4.0,!=2.4.1,<3.0,>=2.0
+#43 6.514   Downloading pydantic-2.14.1-py3-none-any.whl (488 kB)
+#43 6.533      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 488.1/488.1 kB 27.9 MB/s eta 0:00:00
+#43 6.572 Collecting fsspec>=2023.1.0
+#43 6.591   Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+#43 6.596      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 221.7/221.7 kB 58.8 MB/s eta 0:00:00
+#43 6.635 Collecting pyparsing>=3.1.0
+#43 6.655   Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+#43 6.658      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 126.4/126.4 kB 75.4 MB/s eta 0:00:00
+#43 6.689 Collecting tenacity>=8.2.3
+#43 6.707   Downloading tenacity-9.2.1-py3-none-any.whl (32 kB)
+#43 6.783 Collecting pyroaring>=1.0.0
+#43 6.810   Downloading pyroaring-1.2.0-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (2.5 MB)
+#43 6.872      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 40.0 MB/s eta 0:00:00
+#43 6.980 Collecting cachetools>=5.5
+#43 7.000   Downloading cachetools-7.2.1-py3-none-any.whl (17 kB)
+#43 7.083 Collecting zstandard>=0.13.0
+#43 7.105   Downloading zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.6 MB)
+#43 7.314      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.6/5.6 MB 26.7 MB/s eta 0:00:00
+#43 7.854 Collecting sqlalchemy<3,>=2.0.18
+#43 7.874   Downloading sqlalchemy-2.1.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.7 MB)
+#43 8.121      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 19.0 MB/s eta 0:00:00
+#43 8.159 Collecting mypy-extensions>=0.4.3
+#43 8.186   Downloading mypy_extensions-1.2.0-py3-none-any.whl (5.1 kB)
+#43 8.223 Collecting packaging>=22.0
+#43 8.242   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#43 8.245      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 60.7 MB/s eta 0:00:00
+#43 8.273 Collecting pathspec>=1.0.0
+#43 8.292   Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+#43 8.294      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 57.3/57.3 kB 75.4 MB/s eta 0:00:00
+#43 8.328 Collecting platformdirs>=2
+#43 8.348   Downloading platformdirs-4.14.5-py3-none-any.whl (35 kB)
+#43 8.380 Collecting pytokens~=0.4.0
+#43 8.401   Downloading pytokens-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (260 kB)
+#43 8.408      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 260.8/260.8 kB 47.4 MB/s eta 0:00:00
+#43 8.443 Collecting attrs>=22.2.0
+#43 8.461   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+#43 8.463      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.5/67.5 kB 53.0 MB/s eta 0:00:00
+#43 8.489 Collecting jsonschema-specifications>=2023.03.6
+#43 8.507   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+#43 8.543 Collecting referencing>=0.28.4
+#43 8.565   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+#43 8.868 Collecting rpds-py>=0.25.0
+#43 8.889   Downloading rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (375 kB)
+#43 8.898      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 375.4/375.4 kB 48.3 MB/s eta 0:00:00
+#43 8.934 Collecting fqdn
+#43 8.953   Downloading fqdn-1.6.0-py3-none-any.whl (12 kB)
+#43 8.985 Collecting idna
+#43 9.005   Downloading idna-3.20-py3-none-any.whl (69 kB)
+#43 9.007      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.6/69.6 kB 42.6 MB/s eta 0:00:00
+#43 9.030 Collecting isoduration
+#43 9.048   Downloading isoduration-20.11.0-py3-none-any.whl (11 kB)
+#43 9.074 Collecting jsonpointer>1.13
+#43 9.093   Downloading jsonpointer-3.8-py3-none-any.whl (10 kB)
+#43 9.115 Collecting rfc3339-validator
+#43 9.134   Downloading rfc3339_validator-0.1.4-py2.py3-none-any.whl (3.5 kB)
+#43 9.158 Collecting rfc3987
+#43 9.177   Downloading rfc3987-1.3.8-py2.py3-none-any.whl (13 kB)
+#43 9.200 Collecting uri-template
+#43 9.220   Downloading uri_template-1.3.0-py3-none-any.whl (11 kB)
+#43 9.245 Collecting webcolors>=1.11
+#43 9.268   Downloading webcolors-25.10.0-py3-none-any.whl (14 kB)
+#43 9.331 Collecting annotated-types>=0.6.0
+#43 9.350   Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#43 10.17 Collecting pydantic-core==2.50.1
+#43 10.19   Downloading pydantic_core-2.50.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+#43 10.25      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 35.8 MB/s eta 0:00:00
+#43 10.36 Collecting typing-extensions>=4.16.0
+#43 10.38   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#43 10.38      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 22.2 MB/s eta 0:00:00
+#43 10.41 Collecting typing-inspection>=0.4.4
+#43 10.42   Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+#43 10.58 Collecting charset_normalizer<4,>=2
+#43 10.60   Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (269 kB)
+#43 10.61      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 270.0/270.0 kB 30.3 MB/s eta 0:00:00
+#43 10.65 Collecting urllib3<3,>=1.26
+#43 10.67   Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#43 10.67      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 135.7/135.7 kB 54.8 MB/s eta 0:00:00
+#43 10.70 Collecting certifi>=2023.5.7
+#43 10.72   Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+#43 10.73      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 137.0/137.0 kB 48.4 MB/s eta 0:00:00
+#43 10.76 Collecting markdown-it-py>=2.2.0
+#43 10.78   Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+#43 10.78      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 91.7/91.7 kB 84.1 MB/s eta 0:00:00
+#43 10.81 Collecting pygments<3.0.0,>=2.13.0
+#43 10.83   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+#43 10.86      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 42.1 MB/s eta 0:00:00
+#43 10.94 Collecting python-dateutil>=2.6.0
+#43 10.96   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#43 10.97      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 229.9/229.9 kB 22.7 MB/s eta 0:00:00
+#43 11.02 Collecting arrow>=0.15.0
+#43 11.03   Downloading arrow-1.4.0-py3-none-any.whl (68 kB)
+#43 11.04      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 68.8/68.8 kB 14.2 MB/s eta 0:00:00
+#43 11.09 Collecting six
+#43 11.11   Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#43 11.15 Collecting tzdata
+#43 11.17   Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+#43 11.18      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 348.2/348.2 kB 52.0 MB/s eta 0:00:00
+#43 11.22 Collecting mdurl~=0.1
+#43 11.24   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+#43 11.39 Installing collected packages: rfc3987, pyroaring, zstandard, webcolors, urllib3, uri-template, tzdata, typing-extensions, tenacity, six, rpds-py, pytokens, pyparsing, pygments, pyarrow, platformdirs, pathspec, packaging, mypy-extensions, mmh3, mdurl, jsonpointer, idna, fsspec, fqdn, click, charset_normalizer, certifi, cachetools, attrs, annotated-types, typing-inspection, sqlalchemy, rfc3339-validator, requests, referencing, python-dateutil, pydantic-core, markdown-it-py, black, strictyaml, rich, pydantic, jsonschema-specifications, arrow, pyiceberg, jsonschema, isoduration
+#43 15.50 Successfully installed annotated-types-0.8.0 arrow-1.4.0 attrs-26.1.0 black-26.10.1 cachetools-7.2.1 certifi-2026.7.22 charset_normalizer-3.5.2 click-8.5.0 fqdn-1.6.0 fsspec-2026.9.0 idna-3.20 isoduration-20.11.0 jsonpointer-3.8 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.2.0 mdurl-0.1.2 mmh3-5.3.1 mypy-extensions-1.2.0 packaging-26.3 pathspec-1.1.1 platformdirs-4.14.5 pyarrow-26.0.0 pydantic-2.14.1 pydantic-core-2.50.1 pygments-2.21.0 pyiceberg-0.12.0 pyparsing-3.3.3 pyroaring-1.2.0 python-dateutil-2.9.0.post0 pytokens-0.4.1 referencing-0.37.0 requests-2.34.2 rfc3339-validator-0.1.4 rfc3987-1.3.8 rich-15.0.0 rpds-py-2026.9.1 six-1.17.0 sqlalchemy-2.1.4 strictyaml-1.7.3 tenacity-9.2.1 typing-extensions-4.16.0 typing-inspection-0.4.4 tzdata-2026.6 uri-template-1.3.0 urllib3-2.8.0 webcolors-25.10.0 zstandard-0.25.0
+#43 DONE 15.9s
+
+#44 [static-check 27/27] COPY --chown=node:node . .
+#44 DONE 0.9s
+
+#45 exporting to image
+#45 exporting layers
+#45 exporting layers 7.5s done
+#45 exporting manifest sha256:072fba26111ae56df9a6b4de5443bead6d54c5ecbabdfbe589ecdb5f85cd64bc 0.0s done
+#45 exporting config sha256:260a2a69f976d18b8c393e061aba183d40e2f998704b1e16c24b992c17c36113 done
+#45 exporting attestation manifest sha256:7d36d5d60e2df1b36d0a70cfb25b8161b4d4d26d7978a279022a6d96f706cd20 0.0s done
+#45 exporting manifest list sha256:990bde266f7726cb2634333ea8c90d8701f36b2c3d59103e720ffa3cd4cf1d51 done
+#45 naming to docker.io/library/moria-test:static-20261104 done
+#45 unpacking to docker.io/library/moria-test:static-20261104
+#45 unpacking to docker.io/library/moria-test:static-20261104 14.7s done
+#45 DONE 22.3s
+WARNING: current commit information was not captured by the build: failed to read current commit information with git rev-parse --is-inside-work-tree

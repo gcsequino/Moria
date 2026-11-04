@@ -1,0 +1,12 @@
+[
+  "docker",
+  "build",
+  "--target",
+  "static-check",
+  "--progress=plain",
+  "-f",
+  "/home/gcseq/moria-current-publish-20261104/deploy/test/Dockerfile",
+  "-t",
+  "moria-test:static-20261104",
+  "/home/gcseq/moria-current-publish-20261104"
+]

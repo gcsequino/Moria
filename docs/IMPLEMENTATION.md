@@ -2,6 +2,17 @@
 
 ## November 4 development feedback fixes
 
+The canonical Dockerfile now has a `static-check` target with no native compile
+dependency. Its actual cold build and offline `check:static` pass. Independent CI
+runs that job before building Rust and the full quality environment. The focused
+local gate passes 478/478 cases with zero skips in 22.46 seconds.
+
+Real focused execution exposed a Docker error-message case mismatch in cleanup.
+Cleanup now requires a successful exact-name container listing to prove absence;
+Docker failures still preserve owned scratch. Each run prints its controller and
+scratch identifiers before launch. Real exit-zero and exit-seven lifecycle
+smokes preserve the exact exit code and leave no owned pools or temporary paths.
+
 The authoritative checkout is now persistent Linux storage. Development uses
 `check:static`, `test:local` and explicit-file `test:integration` gates before the
 complete `check`; final checks still include every case with original deadlines.

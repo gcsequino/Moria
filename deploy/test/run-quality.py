@@ -135,11 +135,25 @@ def main():
             for slot in pool["slots"]:
                 command += ["--device", slot["device"] + ":" + slot["device"] + ":r"]
         command += [sys.argv[1], *(sys.argv[2:] or ["bash", ".openhands/hooks/quality-gate.sh"])]
+        print(
+            json.dumps(
+                {
+                    "controller": name,
+                    "image": sys.argv[1],
+                    "scratchPools": [pool["root"] for pool in pools],
+                    "temporary": str(temporary),
+                }
+            ),
+            flush=True,
+        )
         return subprocess.run(command).returncode
     finally:
         subprocess.run(["docker", "stop", "--time", "15", name], capture_output=True, timeout=30)
-        inspected = subprocess.run(["docker", "inspect", name], capture_output=True, timeout=10)
-        if inspected.returncode == 0 or b"No such object" not in inspected.stderr:
+        controllers = subprocess.check_output(
+            ["docker", "ps", "--all", "--quiet", "--filter", "name=^/" + name + "$"],
+            timeout=10,
+        )
+        if controllers.strip():
             raise RuntimeError(
                 "Quality controller absence is unconfirmed; preserve scratch for inspection"
             )

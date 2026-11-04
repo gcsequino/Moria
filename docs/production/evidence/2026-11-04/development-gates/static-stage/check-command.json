@@ -1,0 +1,9 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network=none",
+  "sha256:990bde266f7726cb2634333ea8c90d8701f36b2c3d59103e720ffa3cd4cf1d51",
+  "pnpm",
+  "check:static"
+]
