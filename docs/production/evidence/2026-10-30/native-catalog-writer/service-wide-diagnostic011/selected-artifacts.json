@@ -1,0 +1,22 @@
+{
+  "moria-runtime": {
+    "cargoExecutable": "/work/services/runtime/target/debug/moria-runtime",
+    "copied": "/work/.proof-artifacts/moria-runtime",
+    "sha256": "65c89b05dc9c97eec4a84d0b1d588b3288e74483d73a9c567b4b91c411e2937c"
+  },
+  "moria-indexing": {
+    "cargoExecutable": "/work/services/runtime/target/debug/moria-indexing",
+    "copied": "/work/.proof-artifacts/moria-indexing",
+    "sha256": "3a5f446cf50ac704194b8f5d4f9321f40dae9f379607e86440fbb1663acbe40f"
+  },
+  "native_storage": {
+    "cargoExecutable": "/work/services/runtime/target/debug/deps/native_storage-18ace889955c532f",
+    "copied": "/work/.proof-artifacts/native_storage",
+    "sha256": "7433c7462607b398d8785ac37e55ea4c964fd7cf39e7f7bc1b9cfdef0a4e3598"
+  },
+  "native_catalog": {
+    "cargoExecutable": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+    "copied": "/work/.proof-artifacts/native_catalog",
+    "sha256": "a5c05c1a9d03626a262633f26f9672be520129fb8b9648607c774b469e6652d9"
+  }
+}

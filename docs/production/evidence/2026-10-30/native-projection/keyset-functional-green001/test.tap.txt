@@ -1,0 +1,24 @@
+▶ native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ✔ off-lock paged build replays an actual concurrent native action before atomic activation (3045.073336ms)
+  ✔ strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64 (285.359038ms)
+  ✔ current actions maintain typed history atomically and exact overflow remains present (108.473646ms)
+  ✔ layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins (1056.076907ms)
+  ✔ expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation (3177.100173ms)
+  ✔ a publication tail beyond the barrier budget releases the environment lock and resumes off-lock (1536.403727ms)
+  ✔ a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding (2165.271401ms)
+  ✔ protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback (386.326719ms)
+  ✔ protected typed projection aggregation includes overflow and current overlays with exact authorized groups (153.603964ms)
+  ✔ a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays (1729.434676ms)
+✔ native effective projections build off-lock, replay concurrent edits and activate with source generations (24982.869228ms)
+ℹ 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.01,"Actual Total Time":0.013,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_299b7c141f7d4a098e1ce6ad1b4e9148_1_c","Relation Name":"runtime_projection_299b7c141f7d4a098e1ce6ad1b4e9148","Alias":"runtime_projection_299b7c141f7d4a098e1ce6ad1b4e9148","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.01,"Actual Total Time":0.012,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.077,"Triggers":[],"Execution Time":0.019}]
+▶ native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ✔ action creation allocates once and enforces source attachment and required overrides (49335.295136ms)
+✔ native source composition requires explicit current Dataset/index authority and installs all bindings atomically (57619.610137ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83344.346912

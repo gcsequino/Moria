@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { platform } from './client.js';
+import { platform } from './native-client.js';
+import { ApiError } from '../../../packages/platform/src/transport.js';
 import type { FunctionInvocation, FunctionEvent } from '../../../packages/contracts/functions.js';
 
 export function FunctionInvocations({ resourceId }: { resourceId: string }) {
@@ -11,6 +12,10 @@ export function FunctionInvocations({ resourceId }: { resourceId: string }) {
   const request = useRef<{ input: string; key: string } | undefined>(undefined),
     activeId = useRef<string | undefined>(undefined);
   useEffect(() => {
+    setInvocation(undefined);
+    setEvents([]);
+    setMessage('');
+    request.current = undefined;
     let stopped = false,
       running = false;
     const refresh = async () => {
@@ -33,7 +38,17 @@ export function FunctionInvocations({ resourceId }: { resourceId: string }) {
         if (!stopped) {
           setInvocation(undefined);
           setEvents([]);
-          setMessage(error instanceof Error ? error.message : 'Inspection failed');
+          const pending =
+            error instanceof ApiError &&
+            error.status === 409 &&
+            error.code === 'FUNCTION_OBSERVATION_INCOMPLETE';
+          setMessage(
+            pending
+              ? 'Invocation accepted. Details are currently unavailable.'
+              : error instanceof Error
+                ? error.message
+                : 'Inspection failed',
+          );
         }
       } finally {
         running = false;
@@ -76,6 +91,9 @@ export function FunctionInvocations({ resourceId }: { resourceId: string }) {
               setEvents([]);
               setMessage('');
             } catch (error) {
+              activeId.current = undefined;
+              setInvocation(undefined);
+              setEvents([]);
               setMessage(error instanceof Error ? error.message : 'Invocation failed');
             } finally {
               setBusy(false);
@@ -94,26 +112,30 @@ export function FunctionInvocations({ resourceId }: { resourceId: string }) {
       >
         New request
       </button>
+      {activeId.current && (
+        <button
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            void platform.functions
+              .cancel(activeId.current!)
+              .then(() => setMessage('Cancellation requested.'))
+              .catch((error) => {
+                setInvocation(undefined);
+                setEvents([]);
+                setMessage(error.message);
+              })
+              .finally(() => setBusy(false));
+          }}
+        >
+          Cancel invocation
+        </button>
+      )}
       {invocation && (
         <>
           <p>
             Invocation {invocation.id}: {invocation.status}
           </p>
-          {['accepted', 'running'].includes(invocation.status) && (
-            <button
-              disabled={busy}
-              onClick={() => {
-                setBusy(true);
-                void platform.functions
-                  .cancel(invocation.id)
-                  .then(setInvocation)
-                  .catch((error) => setMessage(error.message))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              Cancel invocation
-            </button>
-          )}
           <pre>{JSON.stringify(invocation, null, 2)}</pre>
           <pre aria-label="Invocation events">
             {events.map((event) => `${event.sequence} ${event.type}: ${event.message}`).join('\n')}

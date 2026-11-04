@@ -1,0 +1,117 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261030T211807972061Z-mcp",
+    "files": 1069,
+    "manifestSha256": "e5a1179f9f8edd0fdb85d6ad244befcf5721a70137e4f191543ba10196516492",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T211807972061Z-mcp,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:mcp",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "units",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T211807972061Z-mcp,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "mcp::tests",
+        "--",
+        "--test-threads=1"
+      ]
+    },
+    {
+      "phase": "build",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T211807972061Z-mcp,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins"
+      ]
+    },
+    {
+      "phase": "test",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T211807972061Z-mcp,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T211807972061Z-mcp/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "moria-test:mcp",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "tests/native-mcp.integration.test.ts"
+      ]
+    }
+  ],
+  "outcome": "passed",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "bee0cca0b68f88ef5dd609663234893c6921d208c347577190b591cf9116ada7",
+      "version": 5
+    },
+    "sourceDigest": "65ee723d184d56390aaf7d76e202f8e00ee371ccd8a187005f4d4cd2eb9cf2d1"
+  },
+  "binarySha256": "94cc32a1a8849ba89d7fdfb11deea174d58948a3969d2d96e51aeff5eb285850"
+}

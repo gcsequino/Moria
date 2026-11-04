@@ -1,0 +1,65 @@
+TAP version 13
+# Subtest: management active browser graph contains native clients and no retired workspace facade or server dependencies
+ok 1 - management active browser graph contains native clients and no retired workspace facade or server dependencies
+  ---
+  duration_ms: 154.159954
+  type: 'test'
+  ...
+# Subtest: resource views route only the resolved domain and preserve exact-value guidance
+ok 2 - resource views route only the resolved domain and preserve exact-value guidance
+  ---
+  duration_ms: 4.683579
+  type: 'test'
+  ...
+# Subtest: browser origin ownership is canonical, immutable and checked before native exposure across replicas and restart
+ok 3 - browser origin ownership is canonical, immutable and checked before native exposure across replicas and restart
+  ---
+  duration_ms: 3272.555856
+  type: 'test'
+  ...
+# Subtest: OIDC restart and missed disable pulses cannot revive ordinary credentials, accepted origins or pending flows
+ok 4 - OIDC restart and missed disable pulses cannot revive ordinary credentials, accepted origins or pending flows
+  ---
+  duration_ms: 2693.014805
+  type: 'test'
+  ...
+# Subtest: default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+ok 5 - default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+  ---
+  duration_ms: 4363.160802
+  type: 'test'
+  ...
+# Subtest: bounded OIDC refresh preserves existing session/provider/CSRF semantics
+ok 6 - bounded OIDC refresh preserves existing session/provider/CSRF semantics
+  ---
+  duration_ms: 3045.956136
+  type: 'test'
+  ...
+# Subtest: split OIDC callback and accepted-human refresh use actual IdP evidence without renewing ordinary expiry
+ok 7 - split OIDC callback and accepted-human refresh use actual IdP evidence without renewing ordinary expiry
+  ---
+  duration_ms: 22122.707458
+  type: 'test'
+  ...
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 28627.325063
+      type: 'test'
+      ...
+    1..1
+ok 8 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 38808.414417
+  type: 'test'
+  ...
+1..8
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76751.446615

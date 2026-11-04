@@ -1,0 +1,1033 @@
+{
+  "basis": "independent recomputation of unchanged raw all-arrival samples; no outcome reclassification",
+  "windows": [
+    {
+      "rate": 20,
+      "successful": 600,
+      "failed": 0,
+      "late200": 0,
+      "failuresByOperation": {},
+      "failuresByArrivalFiveSecondBucket": {},
+      "successfulLatency": {
+        "count": 600,
+        "p50Ms": 20.578299999935552,
+        "p95Ms": 56.80648500006646,
+        "p99Ms": 85.52259700000286,
+        "maxMs": 192.69777900003828
+      },
+      "allArrivalLatency": {
+        "p50Ms": 20.578299999935552,
+        "p95Ms": 56.80648500006646,
+        "p99Ms": 85.52259700000286,
+        "maxMs": 192.69777900003828
+      },
+      "dispatchDelay": {
+        "count": 600,
+        "p50Ms": -0.3192900000140071,
+        "p95Ms": 0.24141900008544326,
+        "p99Ms": 0.2927009998820722,
+        "maxMs": 11.376354000065476
+      }
+    },
+    {
+      "rate": 50,
+      "successful": 1500,
+      "failed": 0,
+      "late200": 0,
+      "failuresByOperation": {},
+      "failuresByArrivalFiveSecondBucket": {},
+      "successfulLatency": {
+        "count": 1500,
+        "p50Ms": 21.03648000000976,
+        "p95Ms": 63.52399599994533,
+        "p99Ms": 87.16223399993032,
+        "maxMs": 140.7088269998785
+      },
+      "allArrivalLatency": {
+        "p50Ms": 21.03648000000976,
+        "p95Ms": 63.52399599994533,
+        "p99Ms": 87.16223399993032,
+        "maxMs": 140.7088269998785
+      },
+      "dispatchDelay": {
+        "count": 1500,
+        "p50Ms": -0.474225000012666,
+        "p95Ms": 0.3506209999322891,
+        "p99Ms": 0.7972679999656975,
+        "maxMs": 1.325340999988839
+      }
+    },
+    {
+      "rate": 100,
+      "successful": 2962,
+      "failed": 38,
+      "late200": 0,
+      "failuresByOperation": {
+        "page": 12,
+        "action": 5,
+        "detail": 11,
+        "aggregate": 1,
+        "filterSort": 7,
+        "multiAction": 2
+      },
+      "failuresByArrivalFiveSecondBucket": {
+        "25": 38
+      },
+      "successfulLatency": {
+        "count": 2962,
+        "p50Ms": 166.33661799994297,
+        "p95Ms": 464.0744249999989,
+        "p99Ms": 955.7047520000488,
+        "maxMs": 1215.1610339998733
+      },
+      "allArrivalLatency": {
+        "p50Ms": 162.51990399998613,
+        "p95Ms": 462.63547699991614,
+        "p99Ms": 954.5803119998891,
+        "maxMs": 1215.1610339998733
+      },
+      "dispatchDelay": {
+        "count": 3000,
+        "p50Ms": -0.33152200002223253,
+        "p95Ms": 0.3597240000963211,
+        "p99Ms": 0.4722009999677539,
+        "maxMs": 10.50034200004302
+      }
+    }
+  ],
+  "failures": [
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2936,
+        "kind": "page",
+        "offsetMs": 29360,
+        "uids": [
+          "533810c9-5626-4886-b5d8-34fd2e5be2d1"
+        ]
+      },
+      "outcome": {
+        "sequence": 2936,
+        "kind": "page",
+        "scheduledMs": 29360,
+        "dispatchMs": 29360.00321700005,
+        "completedMs": 29380.462314999895,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 20.46231499989517,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2937,
+        "kind": "action",
+        "offsetMs": 29370,
+        "uids": [
+          "a0871929-fa68-4836-b582-27a01cf4b0b7"
+        ]
+      },
+      "outcome": {
+        "sequence": 2937,
+        "kind": "action",
+        "scheduledMs": 29370,
+        "dispatchMs": 29380.500342000043,
+        "completedMs": 29381.38434899994,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 11.384348999941722,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2941,
+        "kind": "detail",
+        "offsetMs": 29410,
+        "uids": [
+          "95783228-aad2-4f62-8ef5-ff5097c12e84"
+        ]
+      },
+      "outcome": {
+        "sequence": 2941,
+        "kind": "detail",
+        "scheduledMs": 29410,
+        "dispatchMs": 29410.165823000018,
+        "completedMs": 29410.680858999956,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.6808589999563992,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2942,
+        "kind": "aggregate",
+        "offsetMs": 29420,
+        "uids": [
+          "53ef965f-0fba-44cd-a17d-27e1462ced39"
+        ]
+      },
+      "outcome": {
+        "sequence": 2942,
+        "kind": "aggregate",
+        "scheduledMs": 29420,
+        "dispatchMs": 29418.785953999963,
+        "completedMs": 29419.303739999887,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.6962600001133978,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2943,
+        "kind": "detail",
+        "offsetMs": 29430,
+        "uids": [
+          "32099658-bb0b-49b4-a248-c44e7cf7a145"
+        ]
+      },
+      "outcome": {
+        "sequence": 2943,
+        "kind": "detail",
+        "scheduledMs": 29430,
+        "dispatchMs": 29430.399878999917,
+        "completedMs": 29430.822168000042,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.8221680000424385,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2944,
+        "kind": "filterSort",
+        "offsetMs": 29440,
+        "uids": [
+          "b7de66fa-c584-4dd8-bfaa-4aa772b5e260"
+        ]
+      },
+      "outcome": {
+        "sequence": 2944,
+        "kind": "filterSort",
+        "scheduledMs": 29440,
+        "dispatchMs": 29439.976454999996,
+        "completedMs": 29440.5111779999,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.5111779998987913,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2945,
+        "kind": "action",
+        "offsetMs": 29450,
+        "uids": [
+          "9caf6a66-6d00-40aa-87f1-3237d62e60c7"
+        ]
+      },
+      "outcome": {
+        "sequence": 2945,
+        "kind": "action",
+        "scheduledMs": 29450,
+        "dispatchMs": 29448.75242100004,
+        "completedMs": 29449.144867999945,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.8551320000551641,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2946,
+        "kind": "detail",
+        "offsetMs": 29460,
+        "uids": [
+          "0dd8a82b-6f01-4b85-b16e-83b91bcf696e"
+        ]
+      },
+      "outcome": {
+        "sequence": 2946,
+        "kind": "detail",
+        "scheduledMs": 29460,
+        "dispatchMs": 29460.232140999986,
+        "completedMs": 29460.56958199991,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.5695819999091327,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2947,
+        "kind": "page",
+        "offsetMs": 29470,
+        "uids": [
+          "f312f72f-5337-47f2-8d03-c2f1cccc0f1c"
+        ]
+      },
+      "outcome": {
+        "sequence": 2947,
+        "kind": "page",
+        "scheduledMs": 29470,
+        "dispatchMs": 29468.63975699991,
+        "completedMs": 29469.06324300007,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.9367569999303669,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2948,
+        "kind": "page",
+        "offsetMs": 29480,
+        "uids": [
+          "b26fd6a7-f57b-4761-889c-5be9a539dc9b"
+        ]
+      },
+      "outcome": {
+        "sequence": 2948,
+        "kind": "page",
+        "scheduledMs": 29480,
+        "dispatchMs": 29480.139204999898,
+        "completedMs": 29480.544440000085,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.5444400000851601,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2949,
+        "kind": "page",
+        "offsetMs": 29490,
+        "uids": [
+          "888c847e-29bb-46ba-8176-05185f2761a9"
+        ]
+      },
+      "outcome": {
+        "sequence": 2949,
+        "kind": "page",
+        "scheduledMs": 29490,
+        "dispatchMs": 29488.653519999934,
+        "completedMs": 29489.12129599997,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.8787040000315756,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2954,
+        "kind": "page",
+        "offsetMs": 29540,
+        "uids": [
+          "9cde35b1-bf08-4259-89dd-afa90a8dc8d0"
+        ]
+      },
+      "outcome": {
+        "sequence": 2954,
+        "kind": "page",
+        "scheduledMs": 29540,
+        "dispatchMs": 29539.824110999936,
+        "completedMs": 29540.27425300004,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.2742530000396073,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2955,
+        "kind": "page",
+        "offsetMs": 29550,
+        "uids": [
+          "2ef59033-120c-4308-8102-02af11e2f530"
+        ]
+      },
+      "outcome": {
+        "sequence": 2955,
+        "kind": "page",
+        "scheduledMs": 29550,
+        "dispatchMs": 29550.37456399994,
+        "completedMs": 29550.774261999875,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.7742619998753071,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2957,
+        "kind": "filterSort",
+        "offsetMs": 29570,
+        "uids": [
+          "128605e3-0bd1-4394-bcf8-77f372e98f32"
+        ]
+      },
+      "outcome": {
+        "sequence": 2957,
+        "kind": "filterSort",
+        "scheduledMs": 29570,
+        "dispatchMs": 29568.583792000078,
+        "completedMs": 29569.00056200009,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.9994379999116063,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2963,
+        "kind": "detail",
+        "offsetMs": 29630,
+        "uids": [
+          "307940b1-7c52-4f5e-91d7-814a34c54cde"
+        ]
+      },
+      "outcome": {
+        "sequence": 2963,
+        "kind": "detail",
+        "scheduledMs": 29630,
+        "dispatchMs": 29630.009510000004,
+        "completedMs": 29630.38798599993,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.38798599992878735,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2965,
+        "kind": "page",
+        "offsetMs": 29650,
+        "uids": [
+          "eb393e0f-74da-4602-80c8-2a1e0596f613"
+        ]
+      },
+      "outcome": {
+        "sequence": 2965,
+        "kind": "page",
+        "scheduledMs": 29650,
+        "dispatchMs": 29649.262972000055,
+        "completedMs": 29649.802492999937,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.19750700006261468,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2966,
+        "kind": "page",
+        "offsetMs": 29660,
+        "uids": [
+          "646ccf55-cd1b-4365-ad06-49b7da4e6e66"
+        ]
+      },
+      "outcome": {
+        "sequence": 2966,
+        "kind": "page",
+        "scheduledMs": 29660,
+        "dispatchMs": 29658.881465999875,
+        "completedMs": 29659.39669799991,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.6033020000904799,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2967,
+        "kind": "filterSort",
+        "offsetMs": 29670,
+        "uids": [
+          "68790eb6-bed8-499b-b2cb-0c5fd6f710d3"
+        ]
+      },
+      "outcome": {
+        "sequence": 2967,
+        "kind": "filterSort",
+        "scheduledMs": 29670,
+        "dispatchMs": 29669.517083999934,
+        "completedMs": 29669.911598999985,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.0884010000154376,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2968,
+        "kind": "filterSort",
+        "offsetMs": 29680,
+        "uids": [
+          "6f64ade4-ceef-4665-879e-e1684a634255"
+        ]
+      },
+      "outcome": {
+        "sequence": 2968,
+        "kind": "filterSort",
+        "scheduledMs": 29680,
+        "dispatchMs": 29679.99832200003,
+        "completedMs": 29680.40456299996,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.4045629999600351,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2969,
+        "kind": "action",
+        "offsetMs": 29690,
+        "uids": [
+          "c1106b08-a4ff-46a7-9b26-40c0b205eca5"
+        ]
+      },
+      "outcome": {
+        "sequence": 2969,
+        "kind": "action",
+        "scheduledMs": 29690,
+        "dispatchMs": 29688.492290999973,
+        "completedMs": 29688.89313900005,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -1.1068609999492764,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2970,
+        "kind": "action",
+        "offsetMs": 29700,
+        "uids": [
+          "5fa95d0a-6d9e-45bb-844f-8ac91496319f"
+        ]
+      },
+      "outcome": {
+        "sequence": 2970,
+        "kind": "action",
+        "scheduledMs": 29700,
+        "dispatchMs": 29699.962346999906,
+        "completedMs": 29700.340547000058,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.3405470000579953,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2971,
+        "kind": "page",
+        "offsetMs": 29710,
+        "uids": [
+          "358d8ecd-5a48-4092-92ad-8a72a0981029"
+        ]
+      },
+      "outcome": {
+        "sequence": 2971,
+        "kind": "page",
+        "scheduledMs": 29710,
+        "dispatchMs": 29709.47730399994,
+        "completedMs": 29710.018330999883,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.018330999882891774,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2972,
+        "kind": "detail",
+        "offsetMs": 29720,
+        "uids": [
+          "3093949b-612d-4e92-9c10-6ea93e28c4d8"
+        ]
+      },
+      "outcome": {
+        "sequence": 2972,
+        "kind": "detail",
+        "scheduledMs": 29720,
+        "dispatchMs": 29720.08105099993,
+        "completedMs": 29720.419474999886,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.4194749998860061,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2973,
+        "kind": "multiAction",
+        "offsetMs": 29730,
+        "uids": [
+          "61886bf4-3da0-4799-8ec1-82c5348d79f3",
+          "1578ab4a-f18a-4f00-8a9e-37b39c7b2c4b",
+          "967a243d-1459-4f72-8538-138c8b6e3922",
+          "880fcd70-01a6-4607-b112-7c325577f56f",
+          "96c059a1-c063-4525-98dd-9da2ba13da7b"
+        ]
+      },
+      "outcome": {
+        "sequence": 2973,
+        "kind": "multiAction",
+        "scheduledMs": 29730,
+        "dispatchMs": 29728.525832999963,
+        "completedMs": 29728.89572599996,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -1.1042740000411868,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2974,
+        "kind": "filterSort",
+        "offsetMs": 29740,
+        "uids": [
+          "327fcc9b-9bd5-4f41-8052-67bed00cce3f"
+        ]
+      },
+      "outcome": {
+        "sequence": 2974,
+        "kind": "filterSort",
+        "scheduledMs": 29740,
+        "dispatchMs": 29739.966149999993,
+        "completedMs": 29740.36809200002,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.36809200001880527,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2975,
+        "kind": "action",
+        "offsetMs": 29750,
+        "uids": [
+          "8d960223-267b-43d3-9878-154b3e34528d"
+        ]
+      },
+      "outcome": {
+        "sequence": 2975,
+        "kind": "action",
+        "scheduledMs": 29750,
+        "dispatchMs": 29749.482894999906,
+        "completedMs": 29750.062977999914,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.06297799991443753,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2976,
+        "kind": "page",
+        "offsetMs": 29760,
+        "uids": [
+          "29152afb-abf7-42e7-af83-a911d592b56e"
+        ]
+      },
+      "outcome": {
+        "sequence": 2976,
+        "kind": "page",
+        "scheduledMs": 29760,
+        "dispatchMs": 29760.129738999996,
+        "completedMs": 29760.49530999991,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.4953099999111146,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2977,
+        "kind": "multiAction",
+        "offsetMs": 29770,
+        "uids": [
+          "affb009b-22b7-4574-b340-534175c2d70a",
+          "505c1d9b-e680-4d29-bbda-625bdf1adeb9",
+          "274afd03-e5b4-410f-bd3c-439d90ce355e",
+          "a67b6f98-79dc-4cc6-b90c-bffc24832a81",
+          "303a18dd-d1f8-4b18-b1e6-4be70d97b77f"
+        ]
+      },
+      "outcome": {
+        "sequence": 2977,
+        "kind": "multiAction",
+        "scheduledMs": 29770,
+        "dispatchMs": 29768.597244000062,
+        "completedMs": 29768.98764299997,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -1.0123570000287145,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2978,
+        "kind": "detail",
+        "offsetMs": 29780,
+        "uids": [
+          "d32924f8-525f-467d-888b-06aabfd8fb23"
+        ]
+      },
+      "outcome": {
+        "sequence": 2978,
+        "kind": "detail",
+        "scheduledMs": 29780,
+        "dispatchMs": 29780.063492000103,
+        "completedMs": 29780.413309999974,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.4133099999744445,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2979,
+        "kind": "detail",
+        "offsetMs": 29790,
+        "uids": [
+          "e87b6c5c-bbf3-4aab-8121-8718019f98d3"
+        ]
+      },
+      "outcome": {
+        "sequence": 2979,
+        "kind": "detail",
+        "scheduledMs": 29790,
+        "dispatchMs": 29788.512447000016,
+        "completedMs": 29788.83488400001,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -1.1651159999892116,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2980,
+        "kind": "detail",
+        "offsetMs": 29800,
+        "uids": [
+          "19429465-8eb5-4860-8e6b-0b7f7a05ab0b"
+        ]
+      },
+      "outcome": {
+        "sequence": 2980,
+        "kind": "detail",
+        "scheduledMs": 29800,
+        "dispatchMs": 29799.515221999958,
+        "completedMs": 29799.914338999894,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.0856610001064837,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2981,
+        "kind": "detail",
+        "offsetMs": 29810,
+        "uids": [
+          "3fb0b86f-1c43-4f54-b46d-2d6b4c624702"
+        ]
+      },
+      "outcome": {
+        "sequence": 2981,
+        "kind": "detail",
+        "scheduledMs": 29810,
+        "dispatchMs": 29809.450816999888,
+        "completedMs": 29809.85218799999,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.1478120000101626,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2982,
+        "kind": "page",
+        "offsetMs": 29820,
+        "uids": [
+          "65bd35e1-8220-4986-8916-c60d867fa1d1"
+        ]
+      },
+      "outcome": {
+        "sequence": 2982,
+        "kind": "page",
+        "scheduledMs": 29820,
+        "dispatchMs": 29820.068848999916,
+        "completedMs": 29820.490735,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.49073499999940395,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2983,
+        "kind": "filterSort",
+        "offsetMs": 29830,
+        "uids": [
+          "3ba5857e-1f35-43c4-8b88-5b0443c5ce01"
+        ]
+      },
+      "outcome": {
+        "sequence": 2983,
+        "kind": "filterSort",
+        "scheduledMs": 29830,
+        "dispatchMs": 29828.858911999967,
+        "completedMs": 29829.27665399993,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.723346000071615,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2984,
+        "kind": "detail",
+        "offsetMs": 29840,
+        "uids": [
+          "b3fa5a5b-da0b-4c3a-8f96-f0f9a46c38ce"
+        ]
+      },
+      "outcome": {
+        "sequence": 2984,
+        "kind": "detail",
+        "scheduledMs": 29840,
+        "dispatchMs": 29840.32962199999,
+        "completedMs": 29840.669496000046,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.6694960000459105,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2985,
+        "kind": "filterSort",
+        "offsetMs": 29850,
+        "uids": [
+          "de4daee2-cf79-4bbc-9c86-2eb9b87c4ea2"
+        ]
+      },
+      "outcome": {
+        "sequence": 2985,
+        "kind": "filterSort",
+        "scheduledMs": 29850,
+        "dispatchMs": 29848.768867000006,
+        "completedMs": 29849.145130000077,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.854869999922812,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2986,
+        "kind": "detail",
+        "offsetMs": 29860,
+        "uids": [
+          "96c40d3c-bf99-4b33-ac2b-e79d4169495d"
+        ]
+      },
+      "outcome": {
+        "sequence": 2986,
+        "kind": "detail",
+        "scheduledMs": 29860,
+        "dispatchMs": 29860.239875999978,
+        "completedMs": 29860.615859000012,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": 0.6158590000122786,
+      "clientOutstandingBeforeDispatch": 64
+    },
+    {
+      "rate": 100,
+      "arrival": {
+        "sequence": 2987,
+        "kind": "page",
+        "offsetMs": 29870,
+        "uids": [
+          "3bb5f9c0-c7cf-4f67-9b90-bf04210c7947"
+        ]
+      },
+      "outcome": {
+        "sequence": 2987,
+        "kind": "page",
+        "scheduledMs": 29870,
+        "dispatchMs": 29868.71914900001,
+        "completedMs": 29869.698863999918,
+        "successful": false,
+        "status": 429,
+        "bytes": 201,
+        "error": "RESOURCE_LIMIT\n\n429 !== 200\n"
+      },
+      "arrivalLatencyMs": -0.3011360000818968,
+      "clientOutstandingBeforeDispatch": 64
+    }
+  ],
+  "admissionEvidence": {
+    "serverLog": "only serving startup; no per-request admission-site telemetry in measured source",
+    "frozenRequestAdmission": 64,
+    "frozenTcpConnectionAdmission": 256,
+    "failureArrivalRangeMs": [
+      29360,
+      29870
+    ],
+    "failureOutstandingClientCounts": {
+      "64": 38
+    },
+    "interpretation": "client concurrency and frozen source can support an inference; raw generic RESOURCE_LIMIT does not establish exact server rejection site"
+  }
+}

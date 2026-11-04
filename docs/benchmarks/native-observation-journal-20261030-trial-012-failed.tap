@@ -1,0 +1,147 @@
+TAP version 13
+# Subtest: native execution authority schedules, fences and composes completion with real publication
+    # Subtest: typed logical requests deduplicate and their pinned inputs cannot mutate
+    ok 1 - typed logical requests deduplicate and their pinned inputs cannot mutate
+      ---
+      duration_ms: 423.388385
+      type: 'test'
+      ...
+    # Subtest: independent native claims obey class admission and stale owners cannot renew or seal
+    ok 2 - independent native claims obey class admission and stale owners cannot renew or seal
+      ---
+      duration_ms: 1368.803785
+      type: 'test'
+      ...
+    # Subtest: task sealing is private; publication and business completion commit or roll back together
+    ok 3 - task sealing is private; publication and business completion commit or roll back together
+      ---
+      duration_ms: 480.763705
+      type: 'test'
+      ...
+    # Subtest: accepted work survives killing Rust before the real commit response arrives
+    ok 4 - accepted work survives killing Rust before the real commit response arrives
+      ---
+      duration_ms: 252.647937
+      type: 'test'
+      ...
+    # Subtest: single-attempt function work is never re-executed after lease loss
+    ok 5 - single-attempt function work is never re-executed after lease loss
+      ---
+      duration_ms: 621.356828
+      type: 'test'
+      ...
+    # Subtest: database deadlines and event bounds remain authoritative
+    ok 6 - database deadlines and event bounds remain authoritative
+      ---
+      duration_ms: 3701.788323
+      type: 'test'
+      ...
+    # Subtest: disabled sessions fail dispatch before any attempt is recorded
+    ok 7 - disabled sessions fail dispatch before any attempt is recorded
+      ---
+      duration_ms: 301.832132
+      type: 'test'
+      ...
+    # Subtest: persistent native scheduler starts before inherited stdin closes
+    not ok 8 - persistent native scheduler starts before inherited stdin closes
+      ---
+      duration_ms: 170.946677
+      type: 'test'
+      location: '/work/tests/native-execution.integration.test.ts:457:13'
+      failureType: 'testCodeFailure'
+      error: 'Unexpected end of JSON input'
+      code: 'ERR_TEST_FAILURE'
+      name: 'SyntaxError'
+      stack: |-
+        JSON.parse (<anonymous>)
+        ChildProcess.<anonymous> (/work/tests/native-execution.integration.test.ts:79:28)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+    ok 9 - parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+      ---
+      duration_ms: 767.241188
+      type: 'test'
+      ...
+    1..9
+not ok 1 - native execution authority schedules, fences and composes completion with real publication
+  ---
+  duration_ms: 10665.187025
+  type: 'test'
+  location: '/work/tests/native-execution.integration.test.ts:11:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 154.294853
+      type: 'test'
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+      ---
+      duration_ms: 189.873102
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 299.889366
+      type: 'test'
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential
+      ---
+      duration_ms: 300.142457
+      type: 'test'
+      ...
+    # Subtest: missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+    ok 5 - missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+      ---
+      duration_ms: 473.533896
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    ok 6 - current target, application, grants, clearance, worker scope and actor disable revoke private authority
+      ---
+      duration_ms: 1551.684958
+      type: 'test'
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    ok 7 - an unobserved worker disable and restore cannot revive a live lease or private credential
+      ---
+      duration_ms: 418.768915
+      type: 'test'
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    ok 8 - a genuinely expired worker registration remains fenced after its expiry is extended
+      ---
+      duration_ms: 2535.315846
+      type: 'test'
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    ok 9 - lease takeover invalidates the old private credential and replacement capabilities remain bounded
+      ---
+      duration_ms: 447.605724
+      type: 'test'
+      ...
+    1..9
+ok 2 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 9050.795348
+  type: 'test'
+  ...
+1..2
+# tests 20
+# suites 0
+# pass 18
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20254.421734

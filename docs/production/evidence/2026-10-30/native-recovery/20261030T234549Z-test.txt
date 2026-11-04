@@ -1,0 +1,153 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 347.368361
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 411.977169
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 700.591123
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 633.073496
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 6126.120567
+  type: 'test'
+  ...
+# Subtest: native HTTP admission bounds pending bodies across shared and component routes
+    # Subtest: local CLI profiles use real revocable workload sessions
+    ok 1 - local CLI profiles use real revocable workload sessions
+      ---
+      duration_ms: 77.880475
+      type: 'test'
+      ...
+    # Subtest: a missed CLI approval disable pulse permanently fences its issued session
+    ok 2 - a missed CLI approval disable pulse permanently fences its issued session
+      ---
+      duration_ms: 10.10179
+      type: 'test'
+      ...
+    # Subtest: app-bound browser cookies enforce exact origin and current session
+    ok 3 - app-bound browser cookies enforce exact origin and current session
+      ---
+      duration_ms: 72.577884
+      type: 'test'
+      ...
+    # Subtest: managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+    ok 4 - managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+      ---
+      duration_ms: 5954.941621
+      type: 'test'
+      ...
+    # Subtest: four compiler requests hold their slots through an incomplete body
+    ok 5 - four compiler requests hold their slots through an incomplete body
+      ---
+      duration_ms: 131.426502
+      type: 'test'
+      ...
+    # Subtest: model admission retains its separate32 request budget
+    ok 6 - model admission retains its separate32 request budget
+      ---
+      duration_ms: 443.747581
+      type: 'test'
+      ...
+    # Subtest: the shared64 request budget rejects additional work before buffering
+    ok 7 - the shared64 request budget rejects additional work before buffering
+      ---
+      duration_ms: 879.003688
+      type: 'test'
+      ...
+    1..7
+ok 2 - native HTTP admission bounds pending bodies across shared and component routes
+  ---
+  duration_ms: 10425.13744
+  type: 'test'
+  ...
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 483.845113
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 1169.704403
+      type: 'test'
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 159.105707
+      type: 'test'
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 139.996704
+      type: 'test'
+      ...
+    1..4
+ok 3 - native disabled restore fences real work and external uncertainty without losing permanent state
+  ---
+  duration_ms: 6221.494814
+  type: 'test'
+  ...
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+not ok 4 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+  ---
+  duration_ms: 9626.416821
+  type: 'test'
+  location: '/work/tests/native-recovery.integration.test.ts:375:3'
+  failureType: 'testCodeFailure'
+  error: 'SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:695:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+not ok 5 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+  ---
+  duration_ms: 9281.248038
+  type: 'test'
+  location: '/work/tests/native-recovery.integration.test.ts:375:3'
+  failureType: 'testCodeFailure'
+  error: 'SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:695:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..5
+# tests 20
+# suites 0
+# pass 18
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25726.913767

@@ -1,0 +1,35 @@
+{
+  "classification": "isolated synthetic schema and admission-negative proof; not delta publication qualification",
+  "baseSource": "/tmp/moria-proof-snapshots/20261031T124421293005Z-native-protected-plan",
+  "driver": "/tmp/moria-proof-drivers/20261031T141151Z-source-window-syntax-v3",
+  "inputs": {
+    "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+    "dataset-delta-schema.ts": "5498fc17711fbae6f919ce618178e6eeead85378cd7f7a6a4ec569a3e165241d",
+    "check.ts": "1cae4046f746168589239f873fa72ec54c556a4768e29a5cc5623b681c973866",
+    "source-rows-schema.ts": "354f30c3a96de1cd10ed6f151b7185e1468208b36cea5a3c48debd1ca0c97d6a"
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T124421293005Z-native-protected-plan,dst=/work,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-drivers/20261031T141151Z-source-window-syntax-v3,dst=/proof-driver,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/node_modules,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "/proof-driver/check.ts"
+  ],
+  "exitCode": 0
+}

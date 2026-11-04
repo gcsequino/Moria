@@ -1,0 +1,98 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 338.532133
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 393.822413
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 672.886136
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 636.7583
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 5439.247582
+  type: 'test'
+  ...
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+not ok 2 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 4260.080417
+  type: 'test'
+  location: '/work/tests/native-history-collector.integration.test.ts:7:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'changes',
+        'complete',
+        'links',
+        'overlays',
+    +   'pins',
+        'projections',
+        'sources'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'changes'
+    1: 'complete'
+    2: 'links'
+    3: 'overlays'
+    4: 'projections'
+    5: 'sources'
+  actual:
+    0: 'changes'
+    1: 'complete'
+    2: 'links'
+    3: 'overlays'
+    4: 'pins'
+    5: 'projections'
+    6: 'sources'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/work/tests/native-history-collector.integration.test.ts:167:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+ok 3 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 20884.261033
+  type: 'test'
+  ...
+# Subtest: operational history normalizes bounded read pins against actual execution and cursor authority
+ok 4 - operational history normalizes bounded read pins against actual execution and cursor authority
+  ---
+  duration_ms: 2814.4446
+  type: 'test'
+  ...
+1..4
+# tests 8
+# suites 0
+# pass 7
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34469.88104

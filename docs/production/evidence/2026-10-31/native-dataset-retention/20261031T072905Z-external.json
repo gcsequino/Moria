@@ -1,0 +1,79 @@
+{
+  "sourceSnapshot": "/tmp/moria-proof-snapshots/20261031T072520815760Z-operator-model-retention-v15",
+  "sourceManifestSha256": "4de43a7173a1be6ca4b2456f3e58801bbf01108da2cf87021cd8e02e604e7674",
+  "artifacts": {
+    "moria-runtime": {
+      "path": "/tmp/moria-proof-snapshots/20261031T072520815760Z-operator-model-retention-v15/native-proof-artifact/moria-runtime",
+      "sha256": "40d987e96ce2cdaaa1ea92cdf1bd28f1511c9c463bf482a2251b9e0cbc4b9055"
+    },
+    "moria-catalog-tests": {
+      "path": "/tmp/moria-proof-snapshots/20261031T072520815760Z-operator-model-retention-v15/native-proof-artifact/moria-native-catalog-test",
+      "sha256": "7c6a26ac797afe9ac1237a5910aff6ce660bbd55d1e9e09789845aeda10be7fc"
+    }
+  },
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "5c4079d7e708dba5121e9cfbeef683cb7caaede64f17bccd547dc86c1d624219",
+      "version": 5
+    },
+    "sourceDigest": "656d522b0b3f36e3c7d648c6d5e1c80a7e2cf259a00ee430f981019e3a585ae6"
+  },
+  "externalTests": {
+    "tests/native-dataset-retention.integration.test.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-native-dataset-retention.integration.test.ts",
+      "sha256": "fe011aadb7b47403860d4347c05cd62c7571a8173ff5c44faad07e3045af3e8f"
+    },
+    "tests/fixtures/native-retention/dataset.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-dataset.ts",
+      "sha256": "d348d29680a92fced8222c3d9331db1d8b90188505a0d3b02a025b5d1c473e4a"
+    },
+    "tests/fixtures/native-retention/history.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-history.ts",
+      "sha256": "3e1722d70517a85cbc91f857a63da3565a3cf5c97e3f848ac1baf93616fc4b70"
+    },
+    "tests/fixtures/native-retention/recovery.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-recovery.ts",
+      "sha256": "53265a67b3641839e121dccd9449b1387a2a139f7a9c8ebc01202eb4f858cae9"
+    }
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T072520815760Z-operator-model-retention-v15,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T072520815760Z-operator-model-retention-v15/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T072520815760Z-operator-model-retention-v15/native-proof-artifact/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-native-dataset-retention.integration.test.ts,dst=/work/tests/native-dataset-retention.integration.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-dataset.ts,dst=/work/tests/fixtures/native-retention/dataset.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-history.ts,dst=/work/tests/fixtures/native-retention/history.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T072905Z-recovery.ts,dst=/work/tests/fixtures/native-retention/recovery.ts,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-dataset-retention.integration.test.ts"
+  ],
+  "exit": 1
+}

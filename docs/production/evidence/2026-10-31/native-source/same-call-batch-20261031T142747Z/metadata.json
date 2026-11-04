@@ -1,0 +1,19 @@
+{
+  "classification": "actual isolated PostgreSQL18 Source publisher/kernel regression; metadata counters only; native integration uses subsequent v24 snapshot",
+  "tests": {
+    "pass": 18,
+    "fail": 0,
+    "skipped": 0
+  },
+  "sourceHashesAfterRun": {
+    "services/database/src/source-declaration-schema.ts": "a292677e131d4fd9838b3f5c43be93a53ff1cea7411fd021f5cb60dea97afa5f",
+    "services/database/src/serving-runtime-schema.ts": "6053a2807051d65de74b49ca3a6e776168c2f5ab3b856df12b54d946176f0dfd",
+    "tests/filesystem-source.integration.test.ts": "897d1e01c58bbbba518008acf9d4229550aac206993fb49cddfe84ac4d483fec",
+    "services/runtime/src/filesystem_source.rs": "90199b09745de2aad022446a9dc0bfafb00c0b8af89664393fd8741ce2e12061"
+  },
+  "sourceCommands": [
+    "tsx --test --test-reporter=tap tests/filesystem-source.integration.test.ts",
+    "tsc --noEmit",
+    "cargo check --locked --lib -j2"
+  ]
+}

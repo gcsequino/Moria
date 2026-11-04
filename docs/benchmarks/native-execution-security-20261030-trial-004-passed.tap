@@ -1,0 +1,193 @@
+TAP version 13
+# Subtest: native delivery preserves action commits while recovering external outcomes explicitly
+    # Subtest: action effects, receipt and outbox intent roll back together and cannot dispatch early
+    ok 1 - action effects, receipt and outbox intent roll back together and cannot dispatch early
+      ---
+      duration_ms: 675.443475
+      type: 'test'
+      ...
+    # Subtest: execution and delivery claims share one global/environment resource budget
+    ok 2 - execution and delivery claims share one global/environment resource budget
+      ---
+      duration_ms: 790.076741
+      type: 'test'
+      ...
+    # Subtest: response loss reuses identical bytes and one stable key at an idempotent destination
+    ok 3 - response loss reuses identical bytes and one stable key at an idempotent destination
+      ---
+      duration_ms: 592.948885
+      type: 'test'
+      ...
+    # Subtest: a real killed dispatcher is reclaimed without a duplicate idempotent effect
+    ok 4 - a real killed dispatcher is reclaimed without a duplicate idempotent effect
+      ---
+      duration_ms: 605.058606
+      type: 'test'
+      ...
+    # Subtest: non-idempotent uncertainty cannot retry until explicit provider evidence is reconciled
+    ok 5 - non-idempotent uncertainty cannot retry until explicit provider evidence is reconciled
+      ---
+      duration_ms: 994.992177
+      type: 'test'
+      ...
+    # Subtest: a killed non-idempotent dispatcher remains uncertain without another send
+    ok 6 - a killed non-idempotent dispatcher remains uncertain without another send
+      ---
+      duration_ms: 716.866314
+      type: 'test'
+      ...
+    # Subtest: cancellation after dispatch reports uncertainty and cannot undo an external effect
+    ok 7 - cancellation after dispatch reports uncertainty and cannot undo an external effect
+      ---
+      duration_ms: 680.491969
+      type: 'test'
+      ...
+    # Subtest: bounded dead letters retain attempts and permit explicit same-payload retry
+    ok 8 - bounded dead letters retain attempts and permit explicit same-payload retry
+      ---
+      duration_ms: 812.756738
+      type: 'test'
+      ...
+    # Subtest: a proven terminal non-delivery can resume, while an abandoned unsent claim is safely fenced
+    ok 9 - a proven terminal non-delivery can resume, while an abandoned unsent claim is safely fenced
+      ---
+      duration_ms: 1169.785377
+      type: 'test'
+      ...
+    # Subtest: destination marking limits fail the action transaction and revocation prevents dispatch
+    ok 10 - destination marking limits fail the action transaction and revocation prevents dispatch
+      ---
+      duration_ms: 218.860858
+      type: 'test'
+      ...
+    # Subtest: an unobserved destination disable and restore never revives queued delivery
+    ok 11 - an unobserved destination disable and restore never revives queued delivery
+      ---
+      duration_ms: 216.878759
+      type: 'test'
+      ...
+    1..11
+ok 1 - native delivery preserves action commits while recovering external outcomes explicitly
+  ---
+  duration_ms: 9704.050432
+  type: 'test'
+  ...
+# Subtest: native execution authority schedules, fences and composes completion with real publication
+    # Subtest: typed logical requests deduplicate and their pinned inputs cannot mutate
+    ok 1 - typed logical requests deduplicate and their pinned inputs cannot mutate
+      ---
+      duration_ms: 554.23957
+      type: 'test'
+      ...
+    # Subtest: independent native claims obey class admission and stale owners cannot renew or seal
+    ok 2 - independent native claims obey class admission and stale owners cannot renew or seal
+      ---
+      duration_ms: 1701.626797
+      type: 'test'
+      ...
+    # Subtest: task sealing is private; publication and business completion commit or roll back together
+    ok 3 - task sealing is private; publication and business completion commit or roll back together
+      ---
+      duration_ms: 602.416299
+      type: 'test'
+      ...
+    # Subtest: accepted work survives killing Rust before the real commit response arrives
+    ok 4 - accepted work survives killing Rust before the real commit response arrives
+      ---
+      duration_ms: 304.905052
+      type: 'test'
+      ...
+    # Subtest: single-attempt function work is never re-executed after lease loss
+    ok 5 - single-attempt function work is never re-executed after lease loss
+      ---
+      duration_ms: 779.945021
+      type: 'test'
+      ...
+    # Subtest: database deadlines and event bounds remain authoritative
+    ok 6 - database deadlines and event bounds remain authoritative
+      ---
+      duration_ms: 3846.131448
+      type: 'test'
+      ...
+    # Subtest: disabled sessions fail dispatch before any attempt is recorded
+    ok 7 - disabled sessions fail dispatch before any attempt is recorded
+      ---
+      duration_ms: 369.13471
+      type: 'test'
+      ...
+    # Subtest: parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+    ok 8 - parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+      ---
+      duration_ms: 890.464528
+      type: 'test'
+      ...
+    1..8
+ok 2 - native execution authority schedules, fences and composes completion with real publication
+  ---
+  duration_ms: 11288.411502
+  type: 'test'
+  ...
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 198.930208
+      type: 'test'
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+      ---
+      duration_ms: 252.373648
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 390.354915
+      type: 'test'
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential
+      ---
+      duration_ms: 355.45691
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    ok 5 - current target, application, grants, clearance, worker scope and actor disable revoke private authority
+      ---
+      duration_ms: 1945.707747
+      type: 'test'
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    ok 6 - an unobserved worker disable and restore cannot revive a live lease or private credential
+      ---
+      duration_ms: 513.360413
+      type: 'test'
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    ok 7 - a genuinely expired worker registration remains fenced after its expiry is extended
+      ---
+      duration_ms: 2611.864693
+      type: 'test'
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    ok 8 - lease takeover invalidates the old private credential and replacement capabilities remain bounded
+      ---
+      duration_ms: 516.193045
+      type: 'test'
+      ...
+    1..8
+ok 3 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 9374.221533
+  type: 'test'
+  ...
+1..3
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12000.743913

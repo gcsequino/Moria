@@ -1,0 +1,146 @@
+[
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "6167659f-79ba-4b53-87f7-a793f4408b00"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "f4c786ff-cb0e-4537-a379-48f8ab2e33bf"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "8a9c5dbb-5e8f-4bad-adba-f7497df08100"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "030c8253-f245-4345-8d42-f632809c786c"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "d111a60c-0f8f-4fa7-a754-cb7e161cb595"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "e7936833-bd90-4c3d-99f9-e537737f90f3"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "eb9908a8-cccc-48e4-870a-5f9653a85d6d"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "be1ccbdd-6dab-40cf-abdc-fa05e9d9fc9e"
+  },
+  {
+    "batches": "62",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "ce22af64-57d7-4d03-a284-acd4ad5c8fb9"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "1eb708bc-6c76-4cac-afa6-5dec4ac2addb"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "dcf986d7-6ee6-4cc2-876f-9cac137a41c6"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "ccbaa617-0efd-4318-838c-146ab8f4edae"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "1f8a5417-75c3-4fc0-88b4-fa9a640030fb"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "d9c76ace-2401-4248-8b49-1460d4cad5d2"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "8d68b416-bcc0-4e79-b3ee-e375a7806e85"
+  },
+  {
+    "batches": "63",
+    "build": "4f21cd2f-9a87-4a2c-997b-66bed5469e00",
+    "event": "reducer_batches",
+    "maxWireBytes": "4111000",
+    "normalBatchLimitBytes": "8388608",
+    "singleRowLimitBytes": "16777216",
+    "task": "094052b1-7cb8-43ff-b76c-40c9a1b8ad75"
+  }
+]

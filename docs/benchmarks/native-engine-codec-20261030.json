@@ -1,0 +1,44 @@
+{
+  "scope": "Codec and allocation unit probes only; these do not prove leased authority, sandbox admission or publication. Full component trials are recorded independently.",
+  "nativeCompaction": {
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0,
+    "retainedBudgetBytes": 524288,
+    "rowLimit": 1000,
+    "logicalMessageLimitBytes": 16777216,
+    "testsCovered": [
+      "unused 2MiB page detached from small slice",
+      "four-column 2KiB row charges one IPC backing and permits at least100 retained rows",
+      "accepted nested item-field schema shared"
+    ]
+  },
+  "guest": {
+    "isolation": {
+      "network": "none",
+      "readOnlyRoot": true,
+      "uid": 65532,
+      "capabilities": "none",
+      "memoryBytes": 536870912,
+      "pids": 64,
+      "cpuCores": 1
+    },
+    "normalRows": "1000",
+    "normalRecordBatches": "5",
+    "normalFrames": "2",
+    "wideRowBytes": "4194204",
+    "wideFrames": "5",
+    "frameLimitBytes": "1048576",
+    "typedBridge": "Canonical UUID text restored to16-byte UUID storage; exact int64 scalar arrays and item metadata retained. Invalid UID text rejected.",
+    "transport": "serialization probe uses local transport doubles; no authority assertion"
+  },
+  "sourceFileSha256": {
+    "services/runtime/src/engine_ipc.rs": "167554330031f1aa7d7d21482123bed31267aba64e3054180f793025db8d3784",
+    "services/runtime/src/engine_io.rs": "f699ba37f8926d4134915c62605ce737e66aeeb52eb15ff90b1273d5e124cb4e",
+    "workers/data-engine/protocol.py": "b4cbf0f769e7a9f079693b3926b479ffaf0c15e4e65c5f3fb9359aebb957a50a",
+    "tests/fixtures/data-engine/stream-smoke.py": "f7d3c261323652567c18b9e73d1a643fa2cc1bb014e4222fca2d10de7d35f7dd",
+    "tests/fixtures/data-engine/typed-smoke.py": "375920f803febbb3336f9b01af596d46ffabb5ece756c36cf815a15b8a91ef91"
+  },
+  "baseDependencyImageId": "sha256:7911f821252f5a0277325f18bc4a6a63fc1ca6ab01122ac99bbdf2955239368c"
+}

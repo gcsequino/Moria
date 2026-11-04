@@ -1,0 +1,54 @@
+TAP version 13
+# Subtest: actual accepted verifier scopes bound encoded multi-column row-group header IO
+not ok 1 - actual accepted verifier scopes bound encoded multi-column row-group header IO
+  ---
+  duration_ms: 3061.897284
+  type: 'test'
+  location: '/work/tests/native-header-window.integration.test.ts:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    identity: 
+    thread 'catalog_publication' (86) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+    called `Result::unwrap()` on an `Err` value: db error
+    
+    Caused by:
+        ERROR: INCOMPATIBLE_SCHEMA
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+    
+    running 1 test
+    test catalog_publication ... FAILED
+    
+    failures:
+    
+    failures:
+        catalog_publication
+    
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+    
+    
+    
+    101 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 101
+  operator: 'strictEqual'
+  stack: |-
+    run (/work/benchmarks/native-projection.ts:231:14)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:256:5)
+    async TestContext.<anonymous> (/work/tests/native-header-window.integration.test.ts:17:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3402.747115

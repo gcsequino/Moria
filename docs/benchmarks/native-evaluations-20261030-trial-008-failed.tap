@@ -1,0 +1,79 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+    # Subtest: admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+    not ok 1 - admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+      ---
+      duration_ms: 30196.808487
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:645:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"diagnostics":{"states":[{"id":"7d8707dd-b300-473d-8a32-aae193a4c1a8","domain":"evaluation","status":"succeeded","error":null},{"id":"dc15aab7-9960-4ba7-84bd-f9b3ea3ea139","domain":"evaluation","status":"succeeded","error":null},{"id":"8950ed10-5b18-4013-8253-e1d8ca59f0a5","domain":"evaluation","status":"succeeded","error":null},{"id":"c6ab8267-3ee3-43d9-aae2-ea1b0eec7dfd","domain":"evaluation","status":"succeeded","error":null},{"id":"d609b447-f317-4c97-8a3d-c2e4f4748483","domain":"evaluation","status":"succeeded","error":null},{"id":"316103be-2a56-4e43-9aee-59da9e411a07","domain":"evaluation","status":"succeeded","error":null},{"id":"3115b637-d9b3-4270-b4a5-fb65f7947aeb","domain":"evaluation","status":"succeeded","error":null},{"id":"fdd0beff-0470-403b-9c9f-fef8e4f0c7e6","domain":"evaluation","status":"succeeded","error":null},{"id":"78cbcba0-9918-4c21-92d7-db9fa88e092b","domain":"evaluation","status":"succeeded","error":null},{"id":"b19e48ee-a7c7-4754-a5f8-986e3bfcfb2e","domain":"evaluation","status":"succeeded","error":null},{"id":"a6847037-fb2e-4346-9576-2bf0548fc07d","domain":"evaluation","status":"succeeded","error":null},{"id":"ae60427a-fb88-4a20-bebf-5e9e62e7a27f","domain":"agent","status":"failed","error":"AGENT_PUBLICATION_FAILED"},{"id":"2ba7bbd8-30ed-470d-a4fc-46abd2133372","domain":"agent","status":"succeeded","error":null},{"id":"9cba6c04-0bc1-4dc8-bc47-7495070afb67","domain":"evaluator","status":"succeeded","error":null},{"id":"e2620658-c935-4be4-ba25-b36126d047e2","domain":"agent","status":"failed","error":"AGENT_PUBLICATION_FAILED"},{"id":"916daae1-3455-42d4-a61b-79dec7ae08dc","domain":"agent","status":"succeeded","error":null},{"id":"cf07c1dd-9b96-4b65-b0e9-22d2b8f0f011","domain":"evaluator","status":"succeeded","error":null},{"id":"c303ad17-1fd5-4e02-b160-03404a7abecc","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"c23705dc-53b4-46ae-9a39-0f5acfd53379","domain":"agent","status":"succeeded","error":null},{"id":"295ac525-929a-43c8-8123-cdd31151df5f","domain":"evaluator","status":"succeeded","error":null},{"id":"01e40bef-ad18-450d-a074-e116c93b91bd","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"612e82f1-5c96-4fb6-9688-340eb00be04b","domain":"agent","status":"succeeded","error":null},{"id":"b2b225dd-007a-48f2-b6f9-75dd41bbc149","domain":"evaluator","status":"succeeded","error":null},{"id":"b4e5b882-b4b2-414e-a4e1-6edac400e66d","domain":"agent","status":"succeeded","error":null},{"id":"f42436e4-aa4b-4666-9ed8-0de9ef03cf51","domain":"agent","status":"failed","error":"AGENT_PUBLICATION_FAILED"},{"id":"ae445962-da6a-4a49-9d13-b62f4c130ec2","domain":"evaluator","status":"failed","error":"FUNCTION_FAILED"}],"failures":[{"id":"ae445962-da6a-4a49-9d13-b62f4c130ec2","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"c303ad17-1fd5-4e02-b160-03404a7abecc","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"01e40bef-ad18-450d-a074-e116c93b91bd","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"f42436e4-aa4b-4666-9ed8-0de9ef03cf51","domain":"agent","kind":"failed","payload":{"cause":"CONCURRENT_MODIFICATION","error":"AGENT_PUBLICATION_FAILED","sqlstate":"40001"}},{"id":"e2620658-c935-4be4-ba25-b36126d047e2","domain":"agent","kind":"failed","payload":{"cause":"CONCURRENT_MODIFICATION","error":"AGENT_PUBLICATION_FAILED","sqlstate":"40001"}},{"id":"ae60427a-fb88-4a20-bebf-5e9e62e7a27f","domain":"agent","kind":"failed","payload":{"cause":"CONCURRENT_MODIFICATION","error":"AGENT_PUBLICATION_FAILED","sqlstate":"40001"}}],"agentModelCalls":[{"logical_id":"decision","status":200,"error":null},{"logical_id":"decision","status":200,"error":null}],"gatewayCalls":[{"state":"succeeded","error":null},{"state":"succeeded","error":null},{"state":"succeeded","error":null}]},"cases":[{"case_id":"denied-evaluator","repeat":0,"outcome":"error","error":"EVALUATOR_FAILED","agent_execution":"b4e5b882-b4b2-414e-a4e1-6edac400e66d","evaluator_execution":"ae445962-da6a-4a49-9d13-b62f4c130ec2"},{"case_id":"denied-evaluator","repeat":1,"outcome":"error","error":"AGENT_FAILED","agent_execution":"f42436e4-aa4b-4666-9ed8-0de9ef03cf51","evaluator_execution":null},{"case_id":"error","repeat":0,"outcome":"error","error":"AGENT_FAILED","agent_execution":"01e40bef-ad18-450d-a074-e116c93b91bd","evaluator_execution":null},{"case_id":"error","repeat":1,"outcome":"error","error":"AGENT_FAILED","agent_execution":"c303ad17-1fd5-4e02-b160-03404a7abecc","evaluator_execution":null},{"case_id":"fail","repeat":0,"outcome":"error","error":"AGENT_FAILED","agent_execution":"e2620658-c935-4be4-ba25-b36126d047e2","evaluator_execution":null},{"case_id":"fail","repeat":1,"outcome":"fail","error":null,"agent_execution":"916daae1-3455-42d4-a61b-79dec7ae08dc","evaluator_execution":"cf07c1dd-9b96-4b65-b0e9-22d2b8f0f011"},{"case_id":"model","repeat":0,"outcome":"pass","error":null,"agent_execution":"612e82f1-5c96-4fb6-9688-340eb00be04b","evaluator_execution":"295ac525-929a-43c8-8123-cdd31151df5f"},{"case_id":"model","repeat":1,"outcome":"pass","error":null,"agent_execution":"c23705dc-53b4-46ae-9a39-0f5acfd53379","evaluator_execution":"b2b225dd-007a-48f2-b6f9-75dd41bbc149"},{"case_id":"pass","repeat":0,"outcome":"error","error":"AGENT_FAILED","agent_execution":"ae60427a-fb88-4a20-bebf-5e9e62e7a27f","evaluator_execution":null},{"case_id":"pass","repeat":1,"outcome":"pass","error":null,"agent_execution":"2ba7bbd8-30ed-470d-a4fc-46abd2133372","evaluator_execution":"9cba6c04-0bc1-4dc8-bc47-7495070afb67"}]}
+        + actual - expected
+        
+          {
+        +   errors: '6',
+        +   failed: '1',
+        +   meanScore: 0.75,
+        +   passed: '3',
+        -   errors: '4',
+        -   failed: '2',
+        -   meanScore: 0.6666666666666666,
+        -   passed: '4',
+            total: '10'
+          }
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        total: '10'
+        passed: '4'
+        failed: '2'
+        errors: '4'
+        meanScore: 0.6666666666666666
+      actual:
+        errors: '6'
+        failed: '1'
+        meanScore: 0.75
+        passed: '3'
+        total: '10'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:707:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:645:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: repeats stay separate and comparison rejects a different evaluator version
+    ok 2 - repeats stay separate and comparison rejects a different evaluator version
+      ---
+      duration_ms: 62623.074506
+      type: 'test'
+      ...
+    # Subtest: current clearance and registration protect retained case scores, summaries and events
+    ok 3 - current clearance and registration protect retained case scores, summaries and events
+      ---
+      duration_ms: 334.704639
+      type: 'test'
+      ...
+    1..3
+not ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 123143.951695
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:28:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 4
+# suites 0
+# pass 2
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 123641.295105

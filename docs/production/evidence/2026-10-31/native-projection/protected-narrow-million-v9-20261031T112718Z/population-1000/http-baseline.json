@@ -1,0 +1,112 @@
+{
+  "classification": "exploratory-short-open-loop-baseline",
+  "seed": 1836020329,
+  "rows": 1000,
+  "rowBytes": 4096,
+  "rates": [
+    20
+  ],
+  "windowMs": 2000,
+  "maxOutstanding": 256,
+  "timeoutMs": 10000,
+  "replicas": 1,
+  "authorization": "one actual workload session with two markings; full-visibility row policy",
+  "mix": {
+    "detail": 35,
+    "page": 30,
+    "filterSort": 15,
+    "action": 10,
+    "multiAction": 5,
+    "aggregate": 5
+  },
+  "queryContract": "Whole-population indexed queries without optional scope/budget; page uses uid>=sampled UID; filter/sort uses rank>=0 over the complete population. Client validates actual responses <=256KiB and uses a10s arrival deadline.",
+  "pageProjection": [
+    "uid",
+    "id",
+    "name",
+    "region",
+    "enabled",
+    "rank",
+    "amount"
+  ],
+  "distribution": "80% uniform full population / 20% hot 1%; multiAction five selected objects; aggregate exact one-UID scope",
+  "limitations": [
+    "Single source generation; no preloaded overlay history",
+    "No human browser or restricted-visibility mix",
+    "No relation fanout or contention sub-run",
+    "Short windows without production warm-up, recovery, repetitions or soak",
+    "Shared host resources; no production capacity/SLO certification"
+  ],
+  "windows": [
+    {
+      "rate": 20,
+      "windowMs": 2000,
+      "startedAt": "2026-10-31T11:36:21.640Z",
+      "total": {
+        "scheduled": 40,
+        "successful": 40,
+        "p50Ms": 23.894077000000834,
+        "p95Ms": 61.59593800000039,
+        "p99Ms": 98.28636300000107,
+        "maxMs": 98.28636300000107,
+        "errors": {}
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 13,
+          "successful": 13,
+          "p50Ms": 19.860554000000775,
+          "p95Ms": 62.53050799999983,
+          "p99Ms": 62.53050799999983,
+          "maxMs": 62.53050799999983,
+          "errors": {}
+        },
+        "page": {
+          "scheduled": 10,
+          "successful": 10,
+          "p50Ms": 22.90691599999991,
+          "p95Ms": 25.46495800000048,
+          "p99Ms": 25.46495800000048,
+          "maxMs": 25.46495800000048,
+          "errors": {}
+        },
+        "filterSort": {
+          "scheduled": 3,
+          "successful": 3,
+          "p50Ms": 24.81148200000098,
+          "p95Ms": 26.66417300000103,
+          "p99Ms": 26.66417300000103,
+          "maxMs": 26.66417300000103,
+          "errors": {}
+        },
+        "action": {
+          "scheduled": 6,
+          "successful": 6,
+          "p50Ms": 40.08235799999966,
+          "p95Ms": 44.65167199999996,
+          "p99Ms": 44.65167199999996,
+          "maxMs": 44.65167199999996,
+          "errors": {}
+        },
+        "multiAction": {
+          "scheduled": 5,
+          "successful": 5,
+          "p50Ms": 51.15324800000053,
+          "p95Ms": 98.28636300000107,
+          "p99Ms": 98.28636300000107,
+          "maxMs": 98.28636300000107,
+          "errors": {}
+        },
+        "aggregate": {
+          "scheduled": 3,
+          "successful": 3,
+          "p50Ms": 24.186611000000994,
+          "p95Ms": 26.2439030000005,
+          "p99Ms": 26.2439030000005,
+          "maxMs": 26.2439030000005,
+          "errors": {}
+        }
+      }
+    }
+  ]
+}

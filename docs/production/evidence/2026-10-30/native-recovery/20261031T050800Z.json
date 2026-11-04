@@ -1,0 +1,85 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261031T050652356616Z-recovery-lifecycle-managed-v9",
+  "sourceManifestSha256": "c6be9a9509c42734e0cceff4c3f46569847033823543190085cb2d81961adad6",
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T050652356616Z-recovery-lifecycle-managed-v9,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "typescript",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T050652356616Z-recovery-lifecycle-managed-v9,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "phase": "library-units",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T050652356616Z-recovery-lifecycle-managed-v9,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "-j",
+        "2",
+        "--",
+        "--test-threads=1"
+      ]
+    }
+  ],
+  "outcome": "library-units failed",
+  "compiled": null,
+  "binarySha256": null,
+  "catalogSha256": null
+}

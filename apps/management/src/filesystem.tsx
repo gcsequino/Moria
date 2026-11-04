@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { platform } from './client.js';
-import type { FilesystemEntry, SourcePlan } from '../../../packages/contracts/filesystem.js';
-import { FunctionInvocations } from './functions.js';
+import { platform } from './native-client.js';
+import type {
+  FilesystemEntry,
+  SourcePlan,
+  SourceRuntimeStatus,
+} from '../../../packages/contracts/filesystem.js';
+import { ResourceInspector, isResource } from './resources.js';
+import type { Resource } from '../../../packages/contracts/types.js';
 
 const fs = platform.filesystem;
 type Role = Awaited<ReturnType<typeof fs.role>>;
@@ -16,10 +21,11 @@ export function Filesystem() {
   const [path, setPath] = useState('/');
   const [history, setHistory] = useState<FilesystemEntry[]>([]);
   const [plan, setPlan] = useState<SourcePlan>();
+  const [runtime, setRuntime] = useState<SourceRuntimeStatus>();
   const [notice, setNotice] = useState('Loading your files…');
   const [busy, setBusy] = useState(false);
   const [policy, setPolicy] = useState<{ revision: string; text: string }>();
-  const [functionId, setFunctionId] = useState<string>();
+  const [resolved, setResolved] = useState<{ resourceId: string; resource: Resource }>();
   const gate = useRef(false),
     alive = useRef(true);
   async function run(work: () => Promise<void>) {
@@ -29,7 +35,19 @@ export function Filesystem() {
     try {
       await work();
     } catch (error) {
-      if (alive.current) setNotice(error instanceof Error ? error.message : 'Operation failed');
+      if (alive.current) {
+        setEntries([]);
+        setDirectory(undefined);
+        setCursor(undefined);
+        setSelected(undefined);
+        setText('');
+        setHistory([]);
+        setResolved(undefined);
+        setPlan(undefined);
+        setRuntime(undefined);
+        setPolicy(undefined);
+        setNotice(error instanceof Error ? error.message : 'Operation failed');
+      }
     } finally {
       gate.current = false;
       if (alive.current) setBusy(false);
@@ -44,9 +62,10 @@ export function Filesystem() {
     setCursor(page.nextCursor);
     setRole(currentRole);
     setSelected(undefined);
-    setFunctionId(undefined);
+    setResolved(undefined);
     setHistory([]);
     setPlan(undefined);
+    setRuntime(undefined);
     setPolicy(undefined);
     setNotice('Files are filtered by your current access.');
   }
@@ -318,8 +337,9 @@ export function Filesystem() {
                 disabled={busy}
                 onClick={() =>
                   void run(async () => {
-                    const checkout = await fs.checkout(directory.id);
-                    const release = await fs.publish(directory.id, checkout.digest);
+                    const { publishBrowserSource } =
+                      await import('../../../packages/platform/src/source.js');
+                    const release = await publishBrowserSource(fs, directory.id, setNotice);
                     const proposed = await fs.plan(directory.id, release.digest);
                     setPlan(proposed);
                     setNotice('Release published. Review the activation plan below.');
@@ -329,6 +349,17 @@ export function Filesystem() {
                 Publish and plan
               </button>
               <p>Repository CI can publish its exported resource definitions with the CLI.</p>
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    setRuntime(await fs.runtimeStatus(directory.id));
+                    setNotice('Checked current native readiness for your access.');
+                  })
+                }
+              >
+                Check runtime readiness
+              </button>
             </div>
           )}
           {plan && (
@@ -340,9 +371,10 @@ export function Filesystem() {
                 onClick={() =>
                   void run(async () => {
                     const result = await fs.apply(plan.id);
+                    setRuntime(result.runtime);
                     setPlan(undefined);
                     setNotice(
-                      `Activated definitions at revision ${result.revision}. Runtime readiness is reported separately.`,
+                      `Activated definitions at revision ${result.revision}. ${result.runtimeConfigured ? 'Native configuration is complete.' : 'Native configuration is pending.'}`,
                     );
                   })
                 }
@@ -350,6 +382,24 @@ export function Filesystem() {
                 Apply this plan
               </button>
             </div>
+          )}
+          {runtime && (
+            <section aria-label="Runtime readiness">
+              <h3>Runtime readiness</h3>
+              <p>
+                {runtime.withheld ? (
+                  'Operational readiness is withheld. Instance management permission is required.'
+                ) : (
+                  <>
+                    {runtime.configured
+                      ? 'Native configuration is complete.'
+                      : 'Native configuration is pending.'}{' '}
+                    {runtime.ready ? 'Ready for your access.' : 'Not ready for your access.'}
+                  </>
+                )}
+              </p>
+              <pre>{JSON.stringify(runtime, null, 2)}</pre>
+            </section>
           )}
         </>
       )}
@@ -386,19 +436,17 @@ export function Filesystem() {
                 void run(async () => {
                   const resource = await fs.resource(selected.resourceId!);
                   setNotice(JSON.stringify(resource, null, 2));
-                  setFunctionId(
-                    (resource.resource as { kind: string }).kind === 'Function'
-                      ? resource.resourceId
-                      : undefined,
-                  );
+                  if (!isResource(resource.resource))
+                    throw new Error('Unsupported resource definition');
+                  setResolved({ resourceId: resource.resourceId, resource: resource.resource });
                 })
               }
             >
               Resolve resource
             </button>
           )}
-          {selected.resourceId === functionId && functionId && (
-            <FunctionInvocations key={functionId} resourceId={functionId} />
+          {resolved && selected.resourceId === resolved.resourceId && (
+            <ResourceInspector key={resolved.resourceId} {...resolved} />
           )}
           {selected.kind === 'file' && (
             <button

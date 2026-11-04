@@ -124,7 +124,7 @@ test('retired commands and configuration fail before instance access', async () 
 });
 
 test(
-  'default startup composes management only; neutral hosted apps isolate tokens and origins',
+  'explicit compatibility startup composes management only; neutral hosted apps isolate tokens and origins',
   { timeout: 120000 },
   async () => {
     const directory = await mkdtemp(resolve(tmpdir(), 'platform-composition-'));
@@ -134,6 +134,7 @@ test(
     process.env.MORIA_PORT = String(port);
     process.env.MORIA_DB_PORT = String(await freePort());
     process.env.MORIA_DATABASE_MODE = 'development';
+    process.env.MORIA_LOCAL_RUNTIME = 'legacy';
     for (const key of [
       'MORIA_SNOTEL_PORT',
       'MORIA_SNOW_PUBLIC_ORIGIN',
@@ -226,15 +227,13 @@ test(
         const binding = {
           environment: 'local-workspace',
           application,
-          origin: '',
+          origin: 'http://127.0.0.1:0',
           entryPath: '/',
           initialOperations: [],
           recoveryPrincipal: 'operator',
         };
         const sessions = new BrowserSessions(authority, binding, [], Buffer.alloc(32, 7));
-        await sessions.initialize();
         const auth = new AppAuth(sessions, 'synthetic-key');
-        const token = await sessions.recover(await sessions.recoveryTicket());
         const server = createScopedAppServer({
           app: application,
           host,
@@ -250,6 +249,8 @@ test(
         servers.push(server);
         await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
         binding.origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+        await sessions.initialize();
+        const token = await sessions.recover(await sessions.recoveryTicket());
         apps.push({ sessions, auth, token, origin: binding.origin, application });
       }
       for (const [own, other] of [

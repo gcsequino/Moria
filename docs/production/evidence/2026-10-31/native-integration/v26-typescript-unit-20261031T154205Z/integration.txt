@@ -1,0 +1,2904 @@
+TAP version 13
+# Subtest: access flow stays isolated across concurrent calls and retains authorized error inputs
+ok 1 - access flow stays isolated across concurrent calls and retains authorized error inputs
+  ---
+  duration_ms: 1.368849
+  type: 'test'
+  ...
+# Subtest: app artifacts publish immutably, promote atomically, retain old assets and recover damaged releases
+ok 2 - app artifacts publish immutably, promote atomically, retain old assets and recover damaged releases
+  ---
+  duration_ms: 92.352886
+  type: 'test'
+  ...
+# Subtest: CLI bootstraps, verifies and recovers the bundled app without a database or running UI
+not ok 3 - CLI bootstraps, verifies and recovers the bundled app without a database or running UI
+  ---
+  duration_ms: 789.385972
+  type: 'test'
+  location: '/work/tests/app-host.test.ts:94:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: /usr/local/bin/node --import tsx apps/cli/src/main.ts apps bootstrap --directory /work/.local/cli-host-aa7deaa3-9426-4433-896a-57c6dd4436bb --json
+    {"error":{"code":"INPUT_INVALID","message":"EROFS: read-only file system, open '/work/node_modules/.vite-temp/vite.config.ts.timestamp-1793461327012-c4be4f0e82e148.mjs'"}}
+    
+  code: 2
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+# Subtest: React import parser preserves CSV Unicode, quoting and multiline notes
+ok 4 - React import parser preserves CSV Unicode, quoting and multiline notes
+  ---
+  duration_ms: 1.242814
+  type: 'test'
+  ...
+# Subtest: production protected-operation ownership is complete
+ok 5 - production protected-operation ownership is complete
+  ---
+  duration_ms: 6692.61063
+  type: 'test'
+  ...
+# Subtest: architecture checks reject direct, indirect and unregistered capability access
+    # Subtest: builtin module loader
+    ok 1 - builtin module loader
+      ---
+      duration_ms: 40.67348
+      type: 'test'
+      ...
+    # Subtest: aliased builtin module loader
+    ok 2 - aliased builtin module loader
+      ---
+      duration_ms: 40.588968
+      type: 'test'
+      ...
+    # Subtest: raw spawn alias
+    ok 3 - raw spawn alias
+      ---
+      duration_ms: 39.538349
+      type: 'test'
+      ...
+    # Subtest: process re-export
+    ok 4 - process re-export
+      ---
+      duration_ms: 38.631854
+      type: 'test'
+      ...
+    # Subtest: dynamic process import
+    ok 5 - dynamic process import
+      ---
+      duration_ms: 40.996862
+      type: 'test'
+      ...
+    # Subtest: required process import
+    ok 6 - required process import
+      ---
+      duration_ms: 39.80733
+      type: 'test'
+      ...
+    # Subtest: unregistered lifecycle caller
+    ok 7 - unregistered lifecycle caller
+      ---
+      duration_ms: 39.759389
+      type: 'test'
+      ...
+    # Subtest: indirect lifecycle loader
+    ok 8 - indirect lifecycle loader
+      ---
+      duration_ms: 39.076491
+      type: 'test'
+      ...
+    # Subtest: raw process termination
+    ok 9 - raw process termination
+      ---
+      duration_ms: 42.643768
+      type: 'test'
+      ...
+    # Subtest: raw child termination
+    ok 10 - raw child termination
+      ---
+      duration_ms: 40.704687
+      type: 'test'
+      ...
+    # Subtest: raw HTTP listener alias
+    ok 11 - raw HTTP listener alias
+      ---
+      duration_ms: 39.407887
+      type: 'test'
+      ...
+    # Subtest: raw HTTP re-export
+    ok 12 - raw HTTP re-export
+      ---
+      duration_ms: 38.731626
+      type: 'test'
+      ...
+    # Subtest: dynamic HTTPS listener
+    ok 13 - dynamic HTTPS listener
+      ---
+      duration_ms: 39.130601
+      type: 'test'
+      ...
+    # Subtest: unregistered boundary listener
+    ok 14 - unregistered boundary listener
+      ---
+      duration_ms: 38.816255
+      type: 'test'
+      ...
+    # Subtest: unregistered profile
+    ok 15 - unregistered profile
+      ---
+      duration_ms: 39.731438
+      type: 'test'
+      ...
+    # Subtest: request event bypass
+    ok 16 - request event bypass
+      ---
+      duration_ms: 42.310092
+      type: 'test'
+      ...
+    # Subtest: request emit bypass
+    ok 17 - request emit bypass
+      ---
+      duration_ms: 40.771424
+      type: 'test'
+      ...
+    # Subtest: request listener removal
+    ok 18 - request listener removal
+      ---
+      duration_ms: 39.833452
+      type: 'test'
+      ...
+    # Subtest: request listener retrieval
+    ok 19 - request listener retrieval
+      ---
+      duration_ms: 39.412168
+      type: 'test'
+      ...
+    # Subtest: timeout override
+    ok 20 - timeout override
+      ---
+      duration_ms: 41.59896
+      type: 'test'
+      ...
+    # Subtest: outbound client exception cannot construct servers
+    ok 21 - outbound client exception cannot construct servers
+      ---
+      duration_ms: 39.3112
+      type: 'test'
+      ...
+    # Subtest: direct aliased store import
+    ok 22 - direct aliased store import
+      ---
+      duration_ms: 39.542154
+      type: 'test'
+      ...
+    # Subtest: hidden store through service
+    ok 23 - hidden store through service
+      ---
+      duration_ms: 40.59803
+      type: 'test'
+      ...
+    # Subtest: literal require cannot erase capability types
+    ok 24 - literal require cannot erase capability types
+      ---
+      duration_ms: 40.261761
+      type: 'test'
+      ...
+    # Subtest: absolute require cannot bypass the owner
+    ok 25 - absolute require cannot bypass the owner
+      ---
+      duration_ms: 38.98747
+      type: 'test'
+      ...
+    # Subtest: source file URL cannot bypass the owner
+    ok 26 - source file URL cannot bypass the owner
+      ---
+      duration_ms: 39.236692
+      type: 'test'
+      ...
+    # Subtest: literal dynamic import cannot bypass the owner
+    ok 27 - literal dynamic import cannot bypass the owner
+      ---
+      duration_ms: 39.425903
+      type: 'test'
+      ...
+    # Subtest: new unregistered service caller
+    ok 28 - new unregistered service caller
+      ---
+      duration_ms: 40.250321
+      type: 'test'
+      ...
+    # Subtest: runtime database import
+    ok 29 - runtime database import
+      ---
+      duration_ms: 38.569792
+      type: 'test'
+      ...
+    # Subtest: computed import
+    ok 30 - computed import
+      ---
+      duration_ms: 39.743087
+      type: 'test'
+      ...
+    # Subtest: new unregistered public operation
+    ok 31 - new unregistered public operation
+      ---
+      duration_ms: 39.948091
+      type: 'test'
+      ...
+    # Subtest: re-export cannot launder a raw store
+    ok 32 - re-export cannot launder a raw store
+      ---
+      duration_ms: 40.525044
+      type: 'test'
+      ...
+    # Subtest: type-only contracts do not grant persistence access
+    ok 33 - type-only contracts do not grant persistence access
+      ---
+      duration_ms: 40.830648
+      type: 'test'
+      ...
+    # Subtest: unsupported production source cannot hide outside tsconfig
+    ok 34 - unsupported production source cannot hide outside tsconfig
+      ---
+      duration_ms: 36.336497
+      type: 'test'
+      ...
+    # Subtest: missing registered contract test fails
+    ok 35 - missing registered contract test fails
+      ---
+      duration_ms: 38.715283
+      type: 'test'
+      ...
+    1..35
+ok 6 - architecture checks reject direct, indirect and unregistered capability access
+  ---
+  duration_ms: 1455.11178
+  type: 'test'
+  ...
+# Subtest: Google CLI setup validates redirects, references private credentials and supports offline recovery
+ok 7 - Google CLI setup validates redirects, references private credentials and supports offline recovery
+  ---
+  duration_ms: 21.563335
+  type: 'test'
+  ...
+# Subtest: management validates all enabled declarations but reads only required provider credentials
+ok 8 - management validates all enabled declarations but reads only required provider credentials
+  ---
+  duration_ms: 13.222155
+  type: 'test'
+  ...
+# Subtest: row policy denies absent attributes even underneath NOT
+ok 9 - row policy denies absent attributes even underneath NOT
+  ---
+  duration_ms: 1.128235
+  type: 'test'
+  ...
+# Subtest: SQL binds malicious strings rather than interpolating them
+ok 10 - SQL binds malicious strings rather than interpolating them
+  ---
+  duration_ms: 0.821133
+  type: 'test'
+  ...
+# Subtest: SQL three-valued boolean operations agree with the reference truth tables
+ok 11 - SQL three-valued boolean operations agree with the reference truth tables
+  ---
+  duration_ms: 0.569621
+  type: 'test'
+  ...
+# Subtest: int64 comparisons do not lose precision or sort lexically
+ok 12 - int64 comparisons do not lose precision or sort lexically
+  ---
+  duration_ms: 0.412569
+  type: 'test'
+  ...
+# Subtest: Unicode ordering uses code points rather than UTF16 order
+ok 13 - Unicode ordering uses code points rather than UTF16 order
+  ---
+  duration_ms: 0.115994
+  type: 'test'
+  ...
+# Subtest: invalid expression types, operators and complexity fail closed
+ok 14 - invalid expression types, operators and complexity fail closed
+  ---
+  duration_ms: 0.185901
+  type: 'test'
+  ...
+# Subtest: grants, scopes and all markings are independently required
+ok 15 - grants, scopes and all markings are independently required
+  ---
+  duration_ms: 0.148762
+  type: 'test'
+  ...
+# Subtest: delegated identity cannot exceed initiating user permissions
+ok 16 - delegated identity cannot exceed initiating user permissions
+  ---
+  duration_ms: 0.057263
+  type: 'test'
+  ...
+# Subtest: model destination cannot drop one of the execution markings
+ok 17 - model destination cannot drop one of the execution markings
+  ---
+  duration_ms: 0.296302
+  type: 'test'
+  ...
+# Subtest: exact synthetic 24-hour CU evidence matches the accepted cost model
+ok 18 - exact synthetic 24-hour CU evidence matches the accepted cost model
+  ---
+  duration_ms: 3.288216
+  type: 'test'
+  ...
+# Subtest: charge, purpose, allocation and ratio order do not change the summary
+ok 19 - charge, purpose, allocation and ratio order do not change the summary
+  ---
+  duration_ms: 1.205249
+  type: 'test'
+  ...
+# Subtest: backup and DR are overlapping views, counted once in platform and category totals
+ok 20 - backup and DR are overlapping views, counted once in platform and category totals
+  ---
+  duration_ms: 0.906747
+  type: 'test'
+  ...
+# Subtest: rejects duplicate charge without mutation
+ok 21 - rejects duplicate charge without mutation
+  ---
+  duration_ms: 0.697412
+  type: 'test'
+  ...
+# Subtest: rejects duplicate allocation without mutation
+ok 22 - rejects duplicate allocation without mutation
+  ---
+  duration_ms: 0.285943
+  type: 'test'
+  ...
+# Subtest: rejects under allocation without mutation
+ok 23 - rejects under allocation without mutation
+  ---
+  duration_ms: 0.383321
+  type: 'test'
+  ...
+# Subtest: rejects over allocation without mutation
+ok 24 - rejects over allocation without mutation
+  ---
+  duration_ms: 0.255178
+  type: 'test'
+  ...
+# Subtest: rejects rounded storage usage without mutation
+ok 25 - rejects rounded storage usage without mutation
+  ---
+  duration_ms: 0.302374
+  type: 'test'
+  ...
+# Subtest: rejects rounded storage amount without mutation
+ok 26 - rejects rounded storage amount without mutation
+  ---
+  duration_ms: 0.356376
+  type: 'test'
+  ...
+# Subtest: rejects wrong arithmetic without mutation
+ok 27 - rejects wrong arithmetic without mutation
+  ---
+  duration_ms: 0.498836
+  type: 'test'
+  ...
+# Subtest: rejects unsupported unit without mutation
+ok 28 - rejects unsupported unit without mutation
+  ---
+  duration_ms: 0.235034
+  type: 'test'
+  ...
+# Subtest: rejects incompatible rate unit without mutation
+ok 29 - rejects incompatible rate unit without mutation
+  ---
+  duration_ms: 0.204606
+  type: 'test'
+  ...
+# Subtest: rejects currency mismatch without mutation
+ok 30 - rejects currency mismatch without mutation
+  ---
+  duration_ms: 0.161217
+  type: 'test'
+  ...
+# Subtest: rejects missing currency without mutation
+ok 31 - rejects missing currency without mutation
+  ---
+  duration_ms: 0.19469
+  type: 'test'
+  ...
+# Subtest: rejects unknown version without mutation
+ok 32 - rejects unknown version without mutation
+  ---
+  duration_ms: 0.311661
+  type: 'test'
+  ...
+# Subtest: rejects missing rate field without mutation
+ok 33 - rejects missing rate field without mutation
+  ---
+  duration_ms: 0.261701
+  type: 'test'
+  ...
+# Subtest: rejects missing amount field without mutation
+ok 34 - rejects missing amount field without mutation
+  ---
+  duration_ms: 0.262012
+  type: 'test'
+  ...
+# Subtest: rejects missing provenance without mutation
+ok 35 - rejects missing provenance without mutation
+  ---
+  duration_ms: 0.230024
+  type: 'test'
+  ...
+# Subtest: rejects invalid pricing date without mutation
+ok 36 - rejects invalid pricing date without mutation
+  ---
+  duration_ms: 0.819018
+  type: 'test'
+  ...
+# Subtest: rejects invalid rate date without mutation
+ok 37 - rejects invalid rate date without mutation
+  ---
+  duration_ms: 0.132143
+  type: 'test'
+  ...
+# Subtest: rejects invalid status without mutation
+ok 38 - rejects invalid status without mutation
+  ---
+  duration_ms: 0.09225
+  type: 'test'
+  ...
+# Subtest: rejects empty purpose without mutation
+ok 39 - rejects empty purpose without mutation
+  ---
+  duration_ms: 0.077379
+  type: 'test'
+  ...
+# Subtest: rejects duplicate purpose without mutation
+ok 40 - rejects duplicate purpose without mutation
+  ---
+  duration_ms: 0.215877
+  type: 'test'
+  ...
+# Subtest: rejects missing notes without mutation
+ok 41 - rejects missing notes without mutation
+  ---
+  duration_ms: 0.190478
+  type: 'test'
+  ...
+# Subtest: rejects missing context without mutation
+ok 42 - rejects missing context without mutation
+  ---
+  duration_ms: 0.164968
+  type: 'test'
+  ...
+# Subtest: rejects reversed window without mutation
+ok 43 - rejects reversed window without mutation
+  ---
+  duration_ms: 0.086431
+  type: 'test'
+  ...
+# Subtest: rejects empty window without mutation
+ok 44 - rejects empty window without mutation
+  ---
+  duration_ms: 0.11136
+  type: 'test'
+  ...
+# Subtest: rejects invalid calendar day without mutation
+ok 45 - rejects invalid calendar day without mutation
+  ---
+  duration_ms: 0.160962
+  type: 'test'
+  ...
+# Subtest: rejects invalid timestamp without mutation
+ok 46 - rejects invalid timestamp without mutation
+  ---
+  duration_ms: 0.141336
+  type: 'test'
+  ...
+# Subtest: rejects empty charges without mutation
+ok 47 - rejects empty charges without mutation
+  ---
+  duration_ms: 0.11762
+  type: 'test'
+  ...
+# Subtest: rejects wrong ratio numerator without mutation
+ok 48 - rejects wrong ratio numerator without mutation
+  ---
+  duration_ms: 0.136777
+  type: 'test'
+  ...
+# Subtest: rejects wrong ratio denominator unit without mutation
+ok 49 - rejects wrong ratio denominator unit without mutation
+  ---
+  duration_ms: 0.151065
+  type: 'test'
+  ...
+# Subtest: rejects missing transformation counters without mutation
+ok 50 - rejects missing transformation counters without mutation
+  ---
+  duration_ms: 0.307723
+  type: 'test'
+  ...
+# Subtest: rejects fractional pass count without mutation
+ok 51 - rejects fractional pass count without mutation
+  ---
+  duration_ms: 0.174095
+  type: 'test'
+  ...
+# Subtest: rejects duplicate ratio without mutation
+ok 52 - rejects duplicate ratio without mutation
+  ---
+  duration_ms: 0.294892
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage -1 (number)
+ok 53 - rejects malformed usage -1 (number)
+  ---
+  duration_ms: 0.171152
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage 0 (number)
+ok 54 - rejects malformed usage 0 (number)
+  ---
+  duration_ms: 0.199192
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage NaN (number)
+ok 55 - rejects malformed usage NaN (number)
+  ---
+  duration_ms: 0.273047
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage Infinity (number)
+ok 56 - rejects malformed usage Infinity (number)
+  ---
+  duration_ms: 0.202247
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage -1 (string)
+ok 57 - rejects malformed usage -1 (string)
+  ---
+  duration_ms: 0.114264
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage NaN (string)
+ok 58 - rejects malformed usage NaN (string)
+  ---
+  duration_ms: 0.087917
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage Infinity (string)
+ok 59 - rejects malformed usage Infinity (string)
+  ---
+  duration_ms: 0.135592
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage 1e2 (string)
+ok 60 - rejects malformed usage 1e2 (string)
+  ---
+  duration_ms: 0.217127
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage  1 (string)
+ok 61 - rejects malformed usage  1 (string)
+  ---
+  duration_ms: 0.196523
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage  (string)
+ok 62 - rejects malformed usage  (string)
+  ---
+  duration_ms: 0.243503
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage 1/0 (string)
+ok 63 - rejects malformed usage 1/0 (string)
+  ---
+  duration_ms: 0.199878
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage 01 (string)
+ok 64 - rejects malformed usage 01 (string)
+  ---
+  duration_ms: 0.162411
+  type: 'test'
+  ...
+# Subtest: rejects malformed usage 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 (string)
+ok 65 - rejects malformed usage 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 (string)
+  ---
+  duration_ms: 0.165672
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate -1 (number)
+ok 66 - rejects malformed rate -1 (number)
+  ---
+  duration_ms: 0.206148
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate 0 (number)
+ok 67 - rejects malformed rate 0 (number)
+  ---
+  duration_ms: 0.236246
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate NaN (number)
+ok 68 - rejects malformed rate NaN (number)
+  ---
+  duration_ms: 0.176539
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate Infinity (number)
+ok 69 - rejects malformed rate Infinity (number)
+  ---
+  duration_ms: 0.205612
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate -1 (string)
+ok 70 - rejects malformed rate -1 (string)
+  ---
+  duration_ms: 0.209541
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate NaN (string)
+ok 71 - rejects malformed rate NaN (string)
+  ---
+  duration_ms: 0.241059
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate Infinity (string)
+ok 72 - rejects malformed rate Infinity (string)
+  ---
+  duration_ms: 0.201344
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate 1e2 (string)
+ok 73 - rejects malformed rate 1e2 (string)
+  ---
+  duration_ms: 0.174245
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate  1 (string)
+ok 74 - rejects malformed rate  1 (string)
+  ---
+  duration_ms: 0.178353
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate  (string)
+ok 75 - rejects malformed rate  (string)
+  ---
+  duration_ms: 0.224713
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate 1/0 (string)
+ok 76 - rejects malformed rate 1/0 (string)
+  ---
+  duration_ms: 0.205095
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate 01 (string)
+ok 77 - rejects malformed rate 01 (string)
+  ---
+  duration_ms: 0.245177
+  type: 'test'
+  ...
+# Subtest: rejects malformed rate 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 (string)
+ok 78 - rejects malformed rate 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 (string)
+  ---
+  duration_ms: 0.150708
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount -1 (number)
+ok 79 - rejects malformed amount -1 (number)
+  ---
+  duration_ms: 0.093331
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount 0 (number)
+ok 80 - rejects malformed amount 0 (number)
+  ---
+  duration_ms: 0.204372
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount NaN (number)
+ok 81 - rejects malformed amount NaN (number)
+  ---
+  duration_ms: 0.235692
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount Infinity (number)
+ok 82 - rejects malformed amount Infinity (number)
+  ---
+  duration_ms: 0.253824
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount -1 (string)
+ok 83 - rejects malformed amount -1 (string)
+  ---
+  duration_ms: 0.113042
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount NaN (string)
+ok 84 - rejects malformed amount NaN (string)
+  ---
+  duration_ms: 0.083894
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount Infinity (string)
+ok 85 - rejects malformed amount Infinity (string)
+  ---
+  duration_ms: 0.077567
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount 1e2 (string)
+ok 86 - rejects malformed amount 1e2 (string)
+  ---
+  duration_ms: 0.165738
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount  1 (string)
+ok 87 - rejects malformed amount  1 (string)
+  ---
+  duration_ms: 0.175946
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount  (string)
+ok 88 - rejects malformed amount  (string)
+  ---
+  duration_ms: 0.57199
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount 1/0 (string)
+ok 89 - rejects malformed amount 1/0 (string)
+  ---
+  duration_ms: 0.177845
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount 01 (string)
+ok 90 - rejects malformed amount 01 (string)
+  ---
+  duration_ms: 0.148104
+  type: 'test'
+  ...
+# Subtest: rejects malformed amount 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 (string)
+ok 91 - rejects malformed amount 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 (string)
+  ---
+  duration_ms: 0.188674
+  type: 'test'
+  ...
+# Subtest: missing rates and amounts remain explicit and cannot yield complete totals or ratios
+ok 92 - missing rates and amounts remain explicit and cannot yield complete totals or ratios
+  ---
+  duration_ms: 0.735848
+  type: 'test'
+  ...
+# Subtest: unknown amounts propagate through fractional allocations and purpose views
+ok 93 - unknown amounts propagate through fractional allocations and purpose views
+  ---
+  duration_ms: 0.252818
+  type: 'test'
+  ...
+# Subtest: zero, missing denominators and absent numerator attribution are unavailable
+ok 94 - zero, missing denominators and absent numerator attribution are unavailable
+  ---
+  duration_ms: 1.0511
+  type: 'test'
+  ...
+# Subtest: successful read/action and accepted ingestion denominators stay separate from retry overhead
+ok 95 - successful read/action and accepted ingestion denominators stay separate from retry overhead
+  ---
+  duration_ms: 0.451493
+  type: 'test'
+  ...
+# Subtest: display rounding is separate from exact arithmetic
+ok 96 - display rounding is separate from exact arithmetic
+  ---
+  duration_ms: 0.28819
+  type: 'test'
+  ...
+# Subtest: display formatting enforces the exact input length boundary by default
+ok 97 - display formatting enforces the exact input length boundary by default
+  ---
+  duration_ms: 0.095042
+  type: 'test'
+  ...
+# Subtest: an explicit formatting limit supports aggregate and ratio growth
+ok 98 - an explicit formatting limit supports aggregate and ratio growth
+  ---
+  duration_ms: 0.258928
+  type: 'test'
+  ...
+# Subtest: display formatting still rejects malformed exact values
+ok 99 - display formatting still rejects malformed exact values
+  ---
+  duration_ms: 0.199963
+  type: 'test'
+  ...
+# Subtest: display formatting validates the configurable input length limit
+ok 100 - display formatting validates the configurable input length limit
+  ---
+  duration_ms: 0.113184
+  type: 'test'
+  ...
+# Subtest: valid multi-page snapshot is deterministic and leaves frozen input intact
+ok 101 - valid multi-page snapshot is deterministic and leaves frozen input intact
+  ---
+  duration_ms: 2.859193
+  type: 'test'
+  ...
+# Subtest: empty results require an explicit successful terminal response
+ok 102 - empty results require an explicit successful terminal response
+  ---
+  duration_ms: 0.308399
+  type: 'test'
+  ...
+# Subtest: empty nonterminal pages are allowed only with progressing continuation
+ok 103 - empty nonterminal pages are allowed only with progressing continuation
+  ---
+  duration_ms: 0.382452
+  type: 'test'
+  ...
+# Subtest: detects missing final item
+ok 104 - detects missing final item
+  ---
+  duration_ms: 0.230127
+  type: 'test'
+  ...
+# Subtest: detects skipped middle item
+ok 105 - detects skipped middle item
+  ---
+  duration_ms: 0.373259
+  type: 'test'
+  ...
+# Subtest: detects duplicate across pages
+ok 106 - detects duplicate across pages
+  ---
+  duration_ms: 0.185253
+  type: 'test'
+  ...
+# Subtest: detects duplicate within page
+ok 107 - detects duplicate within page
+  ---
+  duration_ms: 0.227082
+  type: 'test'
+  ...
+# Subtest: detects reordered within page
+ok 108 - detects reordered within page
+  ---
+  duration_ms: 0.200395
+  type: 'test'
+  ...
+# Subtest: detects reordered across pages
+ok 109 - detects reordered across pages
+  ---
+  duration_ms: 0.302412
+  type: 'test'
+  ...
+# Subtest: detects unauthorized sentinel
+ok 110 - detects unauthorized sentinel
+  ---
+  duration_ms: 0.296217
+  type: 'test'
+  ...
+# Subtest: detects first continuation
+ok 111 - detects first continuation
+  ---
+  duration_ms: 0.171312
+  type: 'test'
+  ...
+# Subtest: detects wrong next token
+ok 112 - detects wrong next token
+  ---
+  duration_ms: 0.130441
+  type: 'test'
+  ...
+# Subtest: detects silent restart
+ok 113 - detects silent restart
+  ---
+  duration_ms: 0.217851
+  type: 'test'
+  ...
+# Subtest: detects token loop
+ok 114 - detects token loop
+  ---
+  duration_ms: 0.295277
+  type: 'test'
+  ...
+# Subtest: detects page after terminal
+ok 115 - detects page after terminal
+  ---
+  duration_ms: 0.226264
+  type: 'test'
+  ...
+# Subtest: detects oversized declared page
+ok 116 - detects oversized declared page
+  ---
+  duration_ms: 0.205077
+  type: 'test'
+  ...
+# Subtest: detects changed request query
+ok 117 - detects changed request query
+  ---
+  duration_ms: 0.156122
+  type: 'test'
+  ...
+# Subtest: detects changed response query
+ok 118 - detects changed response query
+  ---
+  duration_ms: 0.096687
+  type: 'test'
+  ...
+# Subtest: detects changed request principal
+ok 119 - detects changed request principal
+  ---
+  duration_ms: 0.099967
+  type: 'test'
+  ...
+# Subtest: detects changed response principal
+ok 120 - detects changed response principal
+  ---
+  duration_ms: 0.088265
+  type: 'test'
+  ...
+# Subtest: detects changed request application
+ok 121 - detects changed request application
+  ---
+  duration_ms: 0.153462
+  type: 'test'
+  ...
+# Subtest: detects changed response application
+ok 122 - detects changed response application
+  ---
+  duration_ms: 0.193345
+  type: 'test'
+  ...
+# Subtest: detects changed request delegation
+ok 123 - detects changed request delegation
+  ---
+  duration_ms: 0.162758
+  type: 'test'
+  ...
+# Subtest: detects changed response delegation
+ok 124 - detects changed response delegation
+  ---
+  duration_ms: 0.101085
+  type: 'test'
+  ...
+# Subtest: detects changed request environment
+ok 125 - detects changed request environment
+  ---
+  duration_ms: 0.173248
+  type: 'test'
+  ...
+# Subtest: detects changed response environment
+ok 126 - detects changed response environment
+  ---
+  duration_ms: 0.242553
+  type: 'test'
+  ...
+# Subtest: detects changed request contract
+ok 127 - detects changed request contract
+  ---
+  duration_ms: 0.208309
+  type: 'test'
+  ...
+# Subtest: detects changed response contract
+ok 128 - detects changed response contract
+  ---
+  duration_ms: 0.219345
+  type: 'test'
+  ...
+# Subtest: detects changed request securityEpoch
+ok 129 - detects changed request securityEpoch
+  ---
+  duration_ms: 0.195028
+  type: 'test'
+  ...
+# Subtest: detects changed response securityEpoch
+ok 130 - detects changed response securityEpoch
+  ---
+  duration_ms: 0.27457
+  type: 'test'
+  ...
+# Subtest: detects changed request snapshot
+ok 131 - detects changed request snapshot
+  ---
+  duration_ms: 0.191512
+  type: 'test'
+  ...
+# Subtest: detects changed response snapshot
+ok 132 - detects changed response snapshot
+  ---
+  duration_ms: 0.152626
+  type: 'test'
+  ...
+# Subtest: detects a longer token cycle
+ok 133 - detects a longer token cycle
+  ---
+  duration_ms: 0.140011
+  type: 'test'
+  ...
+# Subtest: truncation, failed requests and missing responses cannot pass
+ok 134 - truncation, failed requests and missing responses cannot pass
+  ---
+  duration_ms: 0.746536
+  type: 'test'
+  ...
+# Subtest: matching IDs do not override unknown current authorization
+ok 135 - matching IDs do not override unknown current authorization
+  ---
+  duration_ms: 0.183767
+  type: 'test'
+  ...
+# Subtest: matching IDs do not override changed current authorization
+ok 136 - matching IDs do not override changed current authorization
+  ---
+  duration_ms: 0.246398
+  type: 'test'
+  ...
+# Subtest: IDs and tokens remain opaque, case-sensitive and unnormalized
+ok 137 - IDs and tokens remain opaque, case-sensitive and unnormalized
+  ---
+  duration_ms: 0.294018
+  type: 'test'
+  ...
+# Subtest: rejects malformed version
+ok 138 - rejects malformed version
+  ---
+  duration_ms: 0.131372
+  type: 'test'
+  ...
+# Subtest: rejects malformed mode
+ok 139 - rejects malformed mode
+  ---
+  duration_ms: 0.116821
+  type: 'test'
+  ...
+# Subtest: rejects malformed unknown field
+ok 140 - rejects malformed unknown field
+  ---
+  duration_ms: 0.076806
+  type: 'test'
+  ...
+# Subtest: rejects malformed missing capture
+ok 141 - rejects malformed missing capture
+  ---
+  duration_ms: 0.035776
+  type: 'test'
+  ...
+# Subtest: rejects malformed duplicate expected IDs
+ok 142 - rejects malformed duplicate expected IDs
+  ---
+  duration_ms: 0.04306
+  type: 'test'
+  ...
+# Subtest: rejects malformed numeric ID
+ok 143 - rejects malformed numeric ID
+  ---
+  duration_ms: 0.054096
+  type: 'test'
+  ...
+# Subtest: rejects malformed numeric expected ID
+ok 144 - rejects malformed numeric expected ID
+  ---
+  duration_ms: 0.037224
+  type: 'test'
+  ...
+# Subtest: rejects malformed numeric token
+ok 145 - rejects malformed numeric token
+  ---
+  duration_ms: 0.04793
+  type: 'test'
+  ...
+# Subtest: rejects malformed oversized ID
+ok 146 - rejects malformed oversized ID
+  ---
+  duration_ms: 0.040711
+  type: 'test'
+  ...
+# Subtest: rejects malformed oversized token
+ok 147 - rejects malformed oversized token
+  ---
+  duration_ms: 0.053522
+  type: 'test'
+  ...
+# Subtest: rejects malformed empty token
+ok 148 - rejects malformed empty token
+  ---
+  duration_ms: 0.04542
+  type: 'test'
+  ...
+# Subtest: rejects malformed empty binding
+ok 149 - rejects malformed empty binding
+  ---
+  duration_ms: 0.033284
+  type: 'test'
+  ...
+# Subtest: rejects malformed array hole
+ok 150 - rejects malformed array hole
+  ---
+  duration_ms: 0.03212
+  type: 'test'
+  ...
+# Subtest: rejects malformed oversized page
+ok 151 - rejects malformed oversized page
+  ---
+  duration_ms: 0.048898
+  type: 'test'
+  ...
+# Subtest: rejects malformed too many expected
+ok 152 - rejects malformed too many expected
+  ---
+  duration_ms: 0.261889
+  type: 'test'
+  ...
+# Subtest: rejects malformed too many pages
+ok 153 - rejects malformed too many pages
+  ---
+  duration_ms: 0.076919
+  type: 'test'
+  ...
+# Subtest: rejects malformed ambiguous error
+ok 154 - rejects malformed ambiguous error
+  ---
+  duration_ms: 0.052864
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size 0
+ok 155 - rejects invalid page size 0
+  ---
+  duration_ms: 0.129266
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size -1
+ok 156 - rejects invalid page size -1
+  ---
+  duration_ms: 0.165362
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size 1.5
+ok 157 - rejects invalid page size 1.5
+  ---
+  duration_ms: 0.150792
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size NaN
+ok 158 - rejects invalid page size NaN
+  ---
+  duration_ms: 0.093039
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size Infinity
+ok 159 - rejects invalid page size Infinity
+  ---
+  duration_ms: 0.066946
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size 9007199254740992
+ok 160 - rejects invalid page size 9007199254740992
+  ---
+  duration_ms: 0.068939
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size 2
+ok 161 - rejects invalid page size 2
+  ---
+  duration_ms: 0.071213
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size 1001
+ok 162 - rejects invalid page size 1001
+  ---
+  duration_ms: 0.05749
+  type: 'test'
+  ...
+# Subtest: rejects invalid page size null
+ok 163 - rejects invalid page size null
+  ---
+  duration_ms: 0.072436
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response undefined
+ok 164 - rejects malformed root and response undefined
+  ---
+  duration_ms: 0.166603
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response null
+ok 165 - rejects malformed root and response null
+  ---
+  duration_ms: 0.048005
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response false
+ok 166 - rejects malformed root and response false
+  ---
+  duration_ms: 0.174631
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response 1
+ok 167 - rejects malformed root and response 1
+  ---
+  duration_ms: 0.064126
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response ok
+ok 168 - rejects malformed root and response ok
+  ---
+  duration_ms: 0.044856
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response 
+ok 169 - rejects malformed root and response 
+  ---
+  duration_ms: 0.180416
+  type: 'test'
+  ...
+# Subtest: rejects malformed root and response [object Object]
+ok 170 - rejects malformed root and response [object Object]
+  ---
+  duration_ms: 0.082343
+  type: 'test'
+  ...
+# Subtest: rejects accessors without calling them
+ok 171 - rejects accessors without calling them
+  ---
+  duration_ms: 0.083151
+  type: 'test'
+  ...
+# Subtest: identifier and token length boundaries are inclusive
+ok 172 - identifier and token length boundaries are inclusive
+  ---
+  duration_ms: 0.208093
+  type: 'test'
+  ...
+# Subtest: accepts maximum expected membership, page size and page count
+ok 173 - accepts maximum expected membership, page size and page count
+  ---
+  duration_ms: 45.297188
+  type: 'test'
+  ...
+# Subtest: received-item budget and diagnostic output are bounded
+ok 174 - received-item budget and diagnostic output are bounded
+  ---
+  duration_ms: 55.215978
+  type: 'test'
+  ...
+# Subtest: aggregate string budget rejects individually valid fields
+ok 175 - aggregate string budget rejects individually valid fields
+  ---
+  duration_ms: 29.162837
+  type: 'test'
+  ...
+# Subtest: rejects inherited map at $.expectedAuthorizedIds without executing caller code
+ok 176 - rejects inherited map at $.expectedAuthorizedIds without executing caller code
+  ---
+  duration_ms: 0.31482
+  type: 'test'
+  ...
+# Subtest: rejects inherited map accessor at $.expectedAuthorizedIds without executing caller code
+ok 177 - rejects inherited map accessor at $.expectedAuthorizedIds without executing caller code
+  ---
+  duration_ms: 0.107543
+  type: 'test'
+  ...
+# Subtest: rejects inherited element accessor at $.expectedAuthorizedIds without executing caller code
+ok 178 - rejects inherited element accessor at $.expectedAuthorizedIds without executing caller code
+  ---
+  duration_ms: 0.061062
+  type: 'test'
+  ...
+# Subtest: rejects own element accessor at $.expectedAuthorizedIds without executing caller code
+ok 179 - rejects own element accessor at $.expectedAuthorizedIds without executing caller code
+  ---
+  duration_ms: 0.068685
+  type: 'test'
+  ...
+# Subtest: rejects null prototype at $.expectedAuthorizedIds without executing caller code
+ok 180 - rejects null prototype at $.expectedAuthorizedIds without executing caller code
+  ---
+  duration_ms: 0.554271
+  type: 'test'
+  ...
+# Subtest: rejects inherited map at $.pages without executing caller code
+ok 181 - rejects inherited map at $.pages without executing caller code
+  ---
+  duration_ms: 0.123965
+  type: 'test'
+  ...
+# Subtest: rejects inherited map accessor at $.pages without executing caller code
+ok 182 - rejects inherited map accessor at $.pages without executing caller code
+  ---
+  duration_ms: 0.046173
+  type: 'test'
+  ...
+# Subtest: rejects inherited element accessor at $.pages without executing caller code
+ok 183 - rejects inherited element accessor at $.pages without executing caller code
+  ---
+  duration_ms: 0.038812
+  type: 'test'
+  ...
+# Subtest: rejects own element accessor at $.pages without executing caller code
+ok 184 - rejects own element accessor at $.pages without executing caller code
+  ---
+  duration_ms: 0.089806
+  type: 'test'
+  ...
+# Subtest: rejects null prototype at $.pages without executing caller code
+ok 185 - rejects null prototype at $.pages without executing caller code
+  ---
+  duration_ms: 0.077417
+  type: 'test'
+  ...
+# Subtest: rejects inherited map at $.pages[0].response.ids without executing caller code
+ok 186 - rejects inherited map at $.pages[0].response.ids without executing caller code
+  ---
+  duration_ms: 0.082775
+  type: 'test'
+  ...
+# Subtest: rejects inherited map accessor at $.pages[0].response.ids without executing caller code
+ok 187 - rejects inherited map accessor at $.pages[0].response.ids without executing caller code
+  ---
+  duration_ms: 0.044846
+  type: 'test'
+  ...
+# Subtest: rejects inherited element accessor at $.pages[0].response.ids without executing caller code
+ok 188 - rejects inherited element accessor at $.pages[0].response.ids without executing caller code
+  ---
+  duration_ms: 0.044264
+  type: 'test'
+  ...
+# Subtest: rejects own element accessor at $.pages[0].response.ids without executing caller code
+ok 189 - rejects own element accessor at $.pages[0].response.ids without executing caller code
+  ---
+  duration_ms: 0.075772
+  type: 'test'
+  ...
+# Subtest: rejects null prototype at $.pages[0].response.ids without executing caller code
+ok 190 - rejects null prototype at $.pages[0].response.ids without executing caller code
+  ---
+  duration_ms: 0.076919
+  type: 'test'
+  ...
+# Subtest: inherited map cannot replace the authorized expectation with an unauthorized sentinel
+ok 191 - inherited map cannot replace the authorized expectation with an unauthorized sentinel
+  ---
+  duration_ms: 0.103295
+  type: 'test'
+  ...
+# Subtest: production browser compiler bundle agrees with Node with dynamic code generation disabled
+ok 192 - production browser compiler bundle agrees with Node with dynamic code generation disabled
+  ---
+  duration_ms: 216.009104
+  type: 'test'
+  ...
+# Subtest: catalog storage fixture waits for removed and idle clients to disconnect before stopping PostgreSQL
+ok 193 - catalog storage fixture waits for removed and idle clients to disconnect before stopping PostgreSQL
+  ---
+  duration_ms: 3385.351406
+  type: 'test'
+  ...
+# Subtest: development database asks its dependency to clean up failed startup
+ok 194 - development database asks its dependency to clean up failed startup
+  ---
+  duration_ms: 1.394725
+  type: 'test'
+  ...
+# Subtest: policy context validation binds fields, attributes and action parameters
+ok 195 - policy context validation binds fields, attributes and action parameters
+  ---
+  duration_ms: 39.853486
+  type: 'test'
+  ...
+# Subtest: all declared kinds compile with deterministic fingerprint
+ok 196 - all declared kinds compile with deterministic fingerprint
+  ---
+  duration_ms: 3.543732
+  type: 'test'
+  ...
+# Subtest: restricted views are terminal transform inputs (SEC-03)
+ok 197 - restricted views are terminal transform inputs (SEC-03)
+  ---
+  duration_ms: 2.332205
+  type: 'test'
+  ...
+# Subtest: a restricted view remains a legal object source
+ok 198 - a restricted view remains a legal object source
+  ---
+  duration_ms: 3.405865
+  type: 'test'
+  ...
+# Subtest: transform cycles are rejected
+ok 199 - transform cycles are rejected
+  ---
+  duration_ms: 3.693307
+  type: 'test'
+  ...
+# Subtest: duplicate definitions rejected
+ok 200 - duplicate definitions rejected
+  ---
+  duration_ms: 2.579012
+  type: 'test'
+  ...
+# Subtest: schema fixtures fail strict validation
+ok 201 - schema fixtures fail strict validation
+  ---
+  duration_ms: 23.747967
+  type: 'test'
+  ...
+# Subtest: no external dependency may be silently ignored
+ok 202 - no external dependency may be silently ignored
+  ---
+  duration_ms: 2.768668
+  type: 'test'
+  ...
+# Subtest: schema mapping and identity type mismatches rejected
+ok 203 - schema mapping and identity type mismatches rejected
+  ---
+  duration_ms: 6.674031
+  type: 'test'
+  ...
+# Subtest: UID cannot be an action edit
+ok 204 - UID cannot be an action edit
+  ---
+  duration_ms: 2.499071
+  type: 'test'
+  ...
+# Subtest: function-backed actions require matching inputs and editable typed outputs
+ok 205 - function-backed actions require matching inputs and editable typed outputs
+  ---
+  duration_ms: 9.967544
+  type: 'test'
+  ...
+# Subtest: function declarations accept ontology identities in nested and list envelopes only
+ok 206 - function declarations accept ontology identities in nested and list envelopes only
+  ---
+  duration_ms: 6.761572
+  type: 'test'
+  ...
+# Subtest: Dataset keys require non-null declarations without changing nullable non-key columns
+ok 207 - Dataset keys require non-null declarations without changing nullable non-key columns
+  ---
+  duration_ms: 20.388429
+  type: 'test'
+  ...
+# Subtest: Connection modes enforce the declared output key and independent coverage matrix
+ok 208 - Connection modes enforce the declared output key and independent coverage matrix
+  ---
+  duration_ms: 26.659925
+  type: 'test'
+  ...
+# Subtest: external configuration validates secret references and pool budgets without disclosing values
+ok 209 - external configuration validates secret references and pool budgets without disclosing values
+  ---
+  duration_ms: 1.243453
+  type: 'test'
+  ...
+# Subtest: external pool minimum reserves both bundled handler connection paths
+ok 210 - external pool minimum reserves both bundled handler connection paths
+  ---
+  duration_ms: 0.300184
+  type: 'test'
+  ...
+# Subtest: external URL hosts normalize IPv6 and preserve DNS, IPv4, ports and TLS defaults
+ok 211 - external URL hosts normalize IPv6 and preserve DNS, IPv4, ports and TLS defaults
+  ---
+  duration_ms: 0.303464
+  type: 'test'
+  ...
+# Subtest: database fixture waits for actual pooled socket closure before stopping PostgreSQL
+ok 212 - database fixture waits for actual pooled socket closure before stopping PostgreSQL
+  ---
+  duration_ms: 5462.532902
+  type: 'test'
+  ...
+# Subtest: domain cancellation clients accept only the uniform control receipt
+ok 213 - domain cancellation clients accept only the uniform control receipt
+  ---
+  duration_ms: 17.73117
+  type: 'test'
+  ...
+# Subtest: function runner uses the versioned pipe ABI and native TypeScript with OSDK transport
+ok 214 - function runner uses the versioned pipe ABI and native TypeScript with OSDK transport
+  ---
+  duration_ms: 115.232834
+  type: 'test'
+  ...
+# Subtest: every transport profile rejects work before handlers and preserves response contracts
+    # Subtest: workload loopback
+    ok 1 - workload loopback
+      ---
+      duration_ms: 31.893935
+      type: 'test'
+      ...
+    # Subtest: static loopback
+    ok 2 - static loopback
+      ---
+      duration_ms: 10.897744
+      type: 'test'
+      ...
+    # Subtest: management loopback
+    ok 3 - management loopback
+      ---
+      duration_ms: 15.558181
+      type: 'test'
+      ...
+    # Subtest: management public proxy
+    ok 4 - management public proxy
+      ---
+      duration_ms: 15.42188
+      type: 'test'
+      ...
+    # Subtest: scoped loopback
+    ok 5 - scoped loopback
+      ---
+      duration_ms: 10.678753
+      type: 'test'
+      ...
+    # Subtest: scoped public proxy
+    ok 6 - scoped public proxy
+      ---
+      duration_ms: 12.088702
+      type: 'test'
+      ...
+    1..6
+ok 215 - every transport profile rejects work before handlers and preserves response contracts
+  ---
+  duration_ms: 97.728697
+  type: 'test'
+  ...
+# Subtest: real API, management and scoped factories cannot reach providers or operations before admission
+ok 216 - real API, management and scoped factories cannot reach providers or operations before admission
+  ---
+  duration_ms: 8.029589
+  type: 'test'
+  ...
+# Subtest: forged profiles and unadmitted internal dispatch fail closed
+ok 217 - forged profiles and unadmitted internal dispatch fail closed
+  ---
+  duration_ms: 0.42325
+  type: 'test'
+  ...
+# Subtest: actual static listener rejects before file delivery and preserves HEAD, cache and API separation
+ok 218 - actual static listener rejects before file delivery and preserves HEAD, cache and API separation
+  ---
+  duration_ms: 20.143388
+  type: 'test'
+  ...
+# Subtest: operational health separates schedule lateness, last success and failure evidence
+ok 219 - operational health separates schedule lateness, last success and failure evidence
+  ---
+  duration_ms: 0.482329
+  type: 'test'
+  ...
+# Subtest: operational health checks source ages only in latest committed publication and tolerates missing metadata
+ok 220 - operational health checks source ages only in latest committed publication and tolerates missing metadata
+  ---
+  duration_ms: 0.484584
+  type: 'test'
+  ...
+# Subtest: management active browser graph contains native clients and no retired workspace facade or server dependencies
+ok 221 - management active browser graph contains native clients and no retired workspace facade or server dependencies
+  ---
+  duration_ms: 169.909227
+  type: 'test'
+  ...
+# Subtest: resource views route only the resolved domain and preserve exact-value guidance
+ok 222 - resource views route only the resolved domain and preserve exact-value guidance
+  ---
+  duration_ms: 5.618748
+  type: 'test'
+  ...
+# Subtest: gateway refuses forbidden egress before provider call and rechecks before output
+ok 223 - gateway refuses forbidden egress before provider call and rechecks before output
+  ---
+  duration_ms: 21.623758
+  type: 'test'
+  ...
+# Subtest: protected workload reports successful latency separately from fast rejections and missed dispatches
+ok 224 - protected workload reports successful latency separately from fast rejections and missed dispatches
+  ---
+  duration_ms: 1.196812
+  type: 'test'
+  ...
+# Subtest: a successful HTTP response after the original arrival deadline remains unsuccessful
+ok 225 - a successful HTTP response after the original arrival deadline remains unsuccessful
+  ---
+  duration_ms: 0.141713
+  type: 'test'
+  ...
+# Subtest: legacy catalog readers explicitly reject native snapshot references without resolving storage
+ok 226 - legacy catalog readers explicitly reject native snapshot references without resolving storage
+  ---
+  duration_ms: 0.647286
+  type: 'test'
+  ...
+# Subtest: legacy Python stream dispatch rejects native references before starting a process
+ok 227 - legacy Python stream dispatch rejects native references before starting a process
+  ---
+  duration_ms: 0.262117
+  type: 'test'
+  ...
+# Subtest: configured native indexing workers require explicit bounded scratch configuration before launch
+ok 228 - configured native indexing workers require explicit bounded scratch configuration before launch
+  ---
+  duration_ms: 1.038187
+  type: 'test'
+  ...
+# Subtest: restricted canonical rows survive editable overlays and pinned reads recheck current visibility
+ok 229 - restricted canonical rows survive editable overlays and pinned reads recheck current visibility
+  ---
+  duration_ms: 2.078513
+  type: 'test'
+  ...
+# Subtest: property denial is checked before any rows and property policies cannot inspect row values
+ok 230 - property denial is checked before any rows and property policies cannot inspect row values
+  ---
+  duration_ms: 0.438048
+  type: 'test'
+  ...
+# Subtest: delegated object reads require all current attributes and intersect policy results
+ok 231 - delegated object reads require all current attributes and intersect policy results
+  ---
+  duration_ms: 0.42668
+  type: 'test'
+  ...
+# Subtest: native action contracts retain public names while routing permanent IDs and decoding creation results
+ok 232 - native action contracts retain public names while routing permanent IDs and decoding creation results
+  ---
+  duration_ms: 150.713313
+  type: 'test'
+  ...
+# Subtest: generated ontology names denote identity handles and serialize without properties or transport
+ok 233 - generated ontology names denote identity handles and serialize without properties or transport
+  ---
+  duration_ms: 76.146089
+  type: 'test'
+  ...
+# Subtest: SDK generation is deterministic, standalone and scoped; stale artifacts fail check
+ok 234 - SDK generation is deterministic, standalone and scoped; stale artifacts fail check
+  ---
+  duration_ms: 307.278537
+  type: 'test'
+  ...
+# Subtest: SDK pagination retains typed filter/projection and abort signal without switching identity
+ok 235 - SDK pagination retains typed filter/projection and abort signal without switching identity
+  ---
+  duration_ms: 2.385939
+  type: 'test'
+  ...
+# Subtest: SDK errors retain server diagnostics and actions never retry or invent idempotency keys
+ok 236 - SDK errors retain server diagnostics and actions never retry or invent idempotency keys
+  ---
+  duration_ms: 0.814639
+  type: 'test'
+  ...
+# Subtest: generated clients reject invalid typed inputs and malformed typed responses
+ok 237 - generated clients reject invalid typed inputs and malformed typed responses
+  ---
+  duration_ms: 0.433425
+  type: 'test'
+  ...
+# Subtest: development cluster waits for removed and idle clients to disconnect before stopping
+ok 238 - development cluster waits for removed and idle clients to disconnect before stopping
+  ---
+  duration_ms: 4298.492183
+  type: 'test'
+  ...
+# Subtest: retired commands and configuration fail before instance access
+ok 239 - retired commands and configuration fail before instance access
+  ---
+  duration_ms: 1.348118
+  type: 'test'
+  ...
+# Service startup failed; check configuration and database availability.
+# Subtest: explicit compatibility startup composes management only; neutral hosted apps isolate tokens and origins
+not ok 240 - explicit compatibility startup composes management only; neutral hosted apps isolate tokens and origins
+  ---
+  duration_ms: 2075.477567
+  type: 'test'
+  location: '/work/tests/platform-composition.test.ts:126:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(runtime)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/work/tests/platform-composition.test.ts:150:14)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: one lifecycle contract exercises every production Python adapter
+    # Subtest: stage: success
+    ok 1 - stage: success
+      ---
+      duration_ms: 22.385964
+      type: 'test'
+      ...
+    # Subtest: stage: missing
+    ok 2 - stage: missing
+      ---
+      duration_ms: 3.459763
+      type: 'test'
+      ...
+    # Subtest: stage: invalid
+    ok 3 - stage: invalid
+      ---
+      duration_ms: 18.667942
+      type: 'test'
+      ...
+    # Subtest: stage: launch-error
+    ok 4 - stage: launch-error
+      ---
+      duration_ms: 9.627796
+      type: 'test'
+      ...
+    # Subtest: stage: exit
+    ok 5 - stage: exit
+      ---
+      duration_ms: 20.307486
+      type: 'test'
+      ...
+    # Subtest: stage: signal
+    ok 6 - stage: signal
+      ---
+      duration_ms: 19.567536
+      type: 'test'
+      ...
+    # Subtest: stage: partial
+    ok 7 - stage: partial
+      ---
+      duration_ms: 20.988699
+      type: 'test'
+      ...
+    # Subtest: stage: malformed
+    ok 8 - stage: malformed
+      ---
+      duration_ms: 21.396028
+      type: 'test'
+      ...
+    # Subtest: stage: utf8
+    ok 9 - stage: utf8
+      ---
+      duration_ms: 21.822337
+      type: 'test'
+      ...
+    # Subtest: stage: oversized
+    ok 10 - stage: oversized
+      ---
+      duration_ms: 115.050844
+      type: 'test'
+      ...
+    # Subtest: stage: stderr
+    ok 11 - stage: stderr
+      ---
+      duration_ms: 20.998662
+      type: 'test'
+      ...
+    # Subtest: stage: stall
+    ok 12 - stage: stall
+      ---
+      duration_ms: 305.957552
+      type: 'test'
+      ...
+    # Subtest: stage: ignore-term
+    ok 13 - stage: ignore-term
+      ---
+      duration_ms: 555.577875
+      type: 'test'
+      ...
+    # Subtest: stage: cancel
+    ok 14 - stage: cancel
+      ---
+      duration_ms: 273.949161
+      type: 'test'
+      ...
+    # Subtest: stage: aborted
+    ok 15 - stage: aborted
+      ---
+      duration_ms: 0.448157
+      type: 'test'
+      ...
+    # Subtest: stage: epipe
+    ok 16 - stage: epipe
+      ---
+      duration_ms: 21.589111
+      type: 'test'
+      ...
+    # Subtest: stream: success
+    ok 17 - stream: success
+      ---
+      duration_ms: 23.184439
+      type: 'test'
+      ...
+    # Subtest: stream: missing
+    ok 18 - stream: missing
+      ---
+      duration_ms: 4.245714
+      type: 'test'
+      ...
+    # Subtest: stream: invalid
+    ok 19 - stream: invalid
+      ---
+      duration_ms: 20.959365
+      type: 'test'
+      ...
+    # Subtest: stream: launch-error
+    ok 20 - stream: launch-error
+      ---
+      duration_ms: 11.476086
+      type: 'test'
+      ...
+    # Subtest: stream: exit
+    ok 21 - stream: exit
+      ---
+      duration_ms: 20.536478
+      type: 'test'
+      ...
+    # Subtest: stream: signal
+    ok 22 - stream: signal
+      ---
+      duration_ms: 19.156895
+      type: 'test'
+      ...
+    # Subtest: stream: partial
+    ok 23 - stream: partial
+      ---
+      duration_ms: 21.140023
+      type: 'test'
+      ...
+    # Subtest: stream: malformed
+    ok 24 - stream: malformed
+      ---
+      duration_ms: 24.026828
+      type: 'test'
+      ...
+    # Subtest: stream: utf8
+    ok 25 - stream: utf8
+      ---
+      duration_ms: 20.675339
+      type: 'test'
+      ...
+    # Subtest: stream: oversized
+    ok 26 - stream: oversized
+      ---
+      duration_ms: 24.377681
+      type: 'test'
+      ...
+    # Subtest: stream: stderr
+    ok 27 - stream: stderr
+      ---
+      duration_ms: 20.382785
+      type: 'test'
+      ...
+    # Subtest: stream: stall
+    ok 28 - stream: stall
+      ---
+      duration_ms: 307.291734
+      type: 'test'
+      ...
+    # Subtest: stream: ignore-term
+    ok 29 - stream: ignore-term
+      ---
+      duration_ms: 556.243038
+      type: 'test'
+      ...
+    # Subtest: stream: cancel
+    ok 30 - stream: cancel
+      ---
+      duration_ms: 272.163575
+      type: 'test'
+      ...
+    # Subtest: stream: aborted
+    ok 31 - stream: aborted
+      ---
+      duration_ms: 0.303503
+      type: 'test'
+      ...
+    # Subtest: stream: epipe
+    ok 32 - stream: epipe
+      ---
+      duration_ms: 21.66086
+      type: 'test'
+      ...
+    # Subtest: scoped-read: success
+    ok 33 - scoped-read: success
+      ---
+      duration_ms: 25.704193
+      type: 'test'
+      ...
+    # Subtest: scoped-read: missing
+    ok 34 - scoped-read: missing
+      ---
+      duration_ms: 3.80891
+      type: 'test'
+      ...
+    # Subtest: scoped-read: invalid
+    ok 35 - scoped-read: invalid
+      ---
+      duration_ms: 20.837295
+      type: 'test'
+      ...
+    # Subtest: scoped-read: launch-error
+    ok 36 - scoped-read: launch-error
+      ---
+      duration_ms: 10.281332
+      type: 'test'
+      ...
+    # Subtest: scoped-read: exit
+    ok 37 - scoped-read: exit
+      ---
+      duration_ms: 20.810979
+      type: 'test'
+      ...
+    # Subtest: scoped-read: signal
+    ok 38 - scoped-read: signal
+      ---
+      duration_ms: 19.733259
+      type: 'test'
+      ...
+    # Subtest: scoped-read: partial
+    ok 39 - scoped-read: partial
+      ---
+      duration_ms: 21.548531
+      type: 'test'
+      ...
+    # Subtest: scoped-read: malformed
+    ok 40 - scoped-read: malformed
+      ---
+      duration_ms: 20.935208
+      type: 'test'
+      ...
+    # Subtest: scoped-read: utf8
+    ok 41 - scoped-read: utf8
+      ---
+      duration_ms: 22.010493
+      type: 'test'
+      ...
+    # Subtest: scoped-read: oversized
+    ok 42 - scoped-read: oversized
+      ---
+      duration_ms: 26.986079
+      type: 'test'
+      ...
+    # Subtest: scoped-read: stderr
+    ok 43 - scoped-read: stderr
+      ---
+      duration_ms: 20.920394
+      type: 'test'
+      ...
+    # Subtest: scoped-read: stall
+    ok 44 - scoped-read: stall
+      ---
+      duration_ms: 304.247043
+      type: 'test'
+      ...
+    # Subtest: scoped-read: ignore-term
+    ok 45 - scoped-read: ignore-term
+      ---
+      duration_ms: 552.407309
+      type: 'test'
+      ...
+    # Subtest: scoped-read: cancel
+    ok 46 - scoped-read: cancel
+      ---
+      duration_ms: 272.80319
+      type: 'test'
+      ...
+    # Subtest: scoped-read: aborted
+    ok 47 - scoped-read: aborted
+      ---
+      duration_ms: 0.421604
+      type: 'test'
+      ...
+    # Subtest: scoped-read: epipe
+    ok 48 - scoped-read: epipe
+      ---
+      duration_ms: 20.960441
+      type: 'test'
+      ...
+    # Subtest: metadata: success
+    ok 49 - metadata: success
+      ---
+      duration_ms: 21.089683
+      type: 'test'
+      ...
+    # Subtest: metadata: missing
+    ok 50 - metadata: missing
+      ---
+      duration_ms: 3.483997
+      type: 'test'
+      ...
+    # Subtest: metadata: invalid
+    ok 51 - metadata: invalid
+      ---
+      duration_ms: 20.033589
+      type: 'test'
+      ...
+    # Subtest: metadata: launch-error
+    ok 52 - metadata: launch-error
+      ---
+      duration_ms: 10.128923
+      type: 'test'
+      ...
+    # Subtest: metadata: exit
+    ok 53 - metadata: exit
+      ---
+      duration_ms: 19.178821
+      type: 'test'
+      ...
+    # Subtest: metadata: signal
+    ok 54 - metadata: signal
+      ---
+      duration_ms: 20.689339
+      type: 'test'
+      ...
+    # Subtest: metadata: partial
+    ok 55 - metadata: partial
+      ---
+      duration_ms: 21.796548
+      type: 'test'
+      ...
+    # Subtest: metadata: malformed
+    ok 56 - metadata: malformed
+      ---
+      duration_ms: 21.698553
+      type: 'test'
+      ...
+    # Subtest: metadata: utf8
+    ok 57 - metadata: utf8
+      ---
+      duration_ms: 21.35123
+      type: 'test'
+      ...
+    # Subtest: metadata: oversized
+    ok 58 - metadata: oversized
+      ---
+      duration_ms: 20.42502
+      type: 'test'
+      ...
+    # Subtest: metadata: stderr
+    ok 59 - metadata: stderr
+      ---
+      duration_ms: 18.265753
+      type: 'test'
+      ...
+    # Subtest: metadata: stall
+    ok 60 - metadata: stall
+      ---
+      duration_ms: 305.701289
+      type: 'test'
+      ...
+    # Subtest: metadata: ignore-term
+    ok 61 - metadata: ignore-term
+      ---
+      duration_ms: 556.130266
+      type: 'test'
+      ...
+    # Subtest: metadata: cancel
+    ok 62 - metadata: cancel
+      ---
+      duration_ms: 271.46879
+      type: 'test'
+      ...
+    # Subtest: metadata: aborted
+    ok 63 - metadata: aborted
+      ---
+      duration_ms: 0.292894
+      type: 'test'
+      ...
+    # Subtest: metadata: epipe
+    ok 64 - metadata: epipe
+      ---
+      duration_ms: 21.5299
+      type: 'test'
+      ...
+    # Subtest: snapshot: success
+    ok 65 - snapshot: success
+      ---
+      duration_ms: 24.648837
+      type: 'test'
+      ...
+    # Subtest: snapshot: missing
+    ok 66 - snapshot: missing
+      ---
+      duration_ms: 4.850149
+      type: 'test'
+      ...
+    # Subtest: snapshot: invalid
+    ok 67 - snapshot: invalid
+      ---
+      duration_ms: 26.955833
+      type: 'test'
+      ...
+    # Subtest: snapshot: launch-error
+    ok 68 - snapshot: launch-error
+      ---
+      duration_ms: 13.043346
+      type: 'test'
+      ...
+    # Subtest: snapshot: exit
+    ok 69 - snapshot: exit
+      ---
+      duration_ms: 24.056115
+      type: 'test'
+      ...
+    # Subtest: snapshot: signal
+    ok 70 - snapshot: signal
+      ---
+      duration_ms: 26.813063
+      type: 'test'
+      ...
+    # Subtest: snapshot: partial
+    ok 71 - snapshot: partial
+      ---
+      duration_ms: 30.344457
+      type: 'test'
+      ...
+    # Subtest: snapshot: malformed
+    ok 72 - snapshot: malformed
+      ---
+      duration_ms: 25.433282
+      type: 'test'
+      ...
+    # Subtest: snapshot: utf8
+    ok 73 - snapshot: utf8
+      ---
+      duration_ms: 27.164414
+      type: 'test'
+      ...
+    # Subtest: snapshot: oversized
+    ok 74 - snapshot: oversized
+      ---
+      duration_ms: 24.421402
+      type: 'test'
+      ...
+    # Subtest: snapshot: stderr
+    ok 75 - snapshot: stderr
+      ---
+      duration_ms: 23.433167
+      type: 'test'
+      ...
+    # Subtest: snapshot: stall
+    ok 76 - snapshot: stall
+      ---
+      duration_ms: 306.428376
+      type: 'test'
+      ...
+    # Subtest: snapshot: ignore-term
+    ok 77 - snapshot: ignore-term
+      ---
+      duration_ms: 556.744645
+      type: 'test'
+      ...
+    # Subtest: snapshot: cancel
+    ok 78 - snapshot: cancel
+      ---
+      duration_ms: 271.122206
+      type: 'test'
+      ...
+    # Subtest: snapshot: aborted
+    ok 79 - snapshot: aborted
+      ---
+      duration_ms: 0.252284
+      type: 'test'
+      ...
+    # Subtest: snapshot: epipe
+    ok 80 - snapshot: epipe
+      ---
+      duration_ms: 20.288918
+      type: 'test'
+      ...
+    1..80
+ok 241 - one lifecycle contract exercises every production Python adapter
+  ---
+  duration_ms: 6952.481142
+  type: 'test'
+  ...
+# Subtest: stream iterator return and throw reap a paused child and discard buffered rows
+    # Subtest: stream: return
+    ok 1 - stream: return
+      ---
+      duration_ms: 20.636245
+      type: 'test'
+      ...
+    # Subtest: stream: throw
+    ok 2 - stream: throw
+      ---
+      duration_ms: 21.686513
+      type: 'test'
+      ...
+    # Subtest: scoped-read: return
+    ok 3 - scoped-read: return
+      ---
+      duration_ms: 21.71851
+      type: 'test'
+      ...
+    # Subtest: scoped-read: throw
+    ok 4 - scoped-read: throw
+      ---
+      duration_ms: 22.075861
+      type: 'test'
+      ...
+    1..4
+ok 242 - stream iterator return and throw reap a paused child and discard buffered rows
+  ---
+  duration_ms: 86.684667
+  type: 'test'
+  ...
+# Subtest: the lifecycle owner rejects oversized input before writing and closes blocked stdin
+ok 243 - the lifecycle owner rejects oversized input before writing and closes blocked stdin
+  ---
+  duration_ms: 564.772835
+  type: 'test'
+  ...
+# Subtest: an abnormal exit denies buffered rows before stdio cleanup completes
+    # Subtest: stream
+    ok 1 - stream
+      ---
+      duration_ms: 47.460712
+      type: 'test'
+      ...
+    # Subtest: scoped-read
+    ok 2 - scoped-read
+      ---
+      duration_ms: 57.336993
+      type: 'test'
+      ...
+    1..2
+ok 244 - an abnormal exit denies buffered rows before stdio cleanup completes
+  ---
+  duration_ms: 105.447965
+  type: 'test'
+  ...
+# Subtest: a child crash during a contended authority check retains its native outcome
+ok 245 - a child crash during a contended authority check retains its native outcome
+  ---
+  duration_ms: 49.526314
+  type: 'test'
+  ...
+# Subtest: public hosting is opt-in and rejects ambiguous origins and colliding listeners
+ok 246 - public hosting is opt-in and rejects ambiguous origins and colliding listeners
+  ---
+  duration_ms: 1.106471
+  type: 'test'
+  ...
+# Subtest: SNOTEL preserves zero, missing days, quality flags and request provenance
+ok 247 - SNOTEL preserves zero, missing days, quality flags and request provenance
+  ---
+  duration_ms: 1.459461
+  type: 'test'
+  ...
+# Subtest: SNOTEL rejects invalid ranges, units, duplicates and source failure
+ok 248 - SNOTEL rejects invalid ranges, units, duplicates and source failure
+  ---
+  duration_ms: 1.031025
+  type: 'test'
+  ...
+# Subtest: NRCS CSV preserves exact text, identities, zero, gaps and unknown metadata
+ok 249 - NRCS CSV preserves exact text, identities, zero, gaps and unknown metadata
+  ---
+  duration_ms: 1.251176
+  type: 'test'
+  ...
+# Subtest: NRCS CSV fails closed on incorrect period, units, station, duplicate dates or malformed data
+ok 250 - NRCS CSV fails closed on incorrect period, units, station, duplicate dates or malformed data
+  ---
+  duration_ms: 0.540097
+  type: 'test'
+  ...
+# Subtest: area comparison uses coordinate distance and only the loaded valid station set
+ok 251 - area comparison uses coordinate distance and only the loaded valid station set
+  ---
+  duration_ms: 0.572591
+  type: 'test'
+  ...
+# Subtest: snowpack change compares exact daily endpoints and preserves zero, missing values and units
+ok 252 - snowpack change compares exact daily endpoints and preserves zero, missing values and units
+  ---
+  duration_ms: 0.329154
+  type: 'test'
+  ...
+# Subtest: latest report skips empty dates, preserves a single metric date, and excludes old/future rows
+ok 253 - latest report skips empty dates, preserves a single metric date, and excludes old/future rows
+  ---
+  duration_ms: 3.736426
+  type: 'test'
+  ...
+# Subtest: ontology directory assembly reuses the semantic compiler and preserves separate namespaces
+ok 254 - ontology directory assembly reuses the semantic compiler and preserves separate namespaces
+  ---
+  duration_ms: 7.200996
+  type: 'test'
+  ...
+# Subtest: source assembly rejects missing/nested roots, wrong declaration placement and missing dependencies
+ok 255 - source assembly rejects missing/nested roots, wrong declaration placement and missing dependencies
+  ---
+  duration_ms: 1.190328
+  type: 'test'
+  ...
+# Subtest: repository export compilation validates existing runtime declarations without executing code
+ok 256 - repository export compilation validates existing runtime declarations without executing code
+  ---
+  duration_ms: 2.18335
+  type: 'test'
+  ...
+# Subtest: exact scope and explicit operations deny before filesystem access; empty scope denies
+ok 257 - exact scope and explicit operations deny before filesystem access; empty scope denies
+  ---
+  duration_ms: 51.874568
+  type: 'test'
+  ...
+# Subtest: revoked denies before access and on subsequent read demand
+ok 258 - revoked denies before access and on subsequent read demand
+  ---
+  duration_ms: 37.886313
+  type: 'test'
+  ...
+# Subtest: revoked during source consumption cancels, unlocks and removes private staging
+ok 259 - revoked during source consumption cancels, unlocks and removes private staging
+  ---
+  duration_ms: 51.945868
+  type: 'test'
+  ...
+# Subtest: expired denies before access and on subsequent read demand
+ok 260 - expired denies before access and on subsequent read demand
+  ---
+  duration_ms: 35.886206
+  type: 'test'
+  ...
+# Subtest: expired during source consumption cancels, unlocks and removes private staging
+ok 261 - expired during source consumption cancels, unlocks and removes private staging
+  ---
+  duration_ms: 43.611297
+  type: 'test'
+  ...
+# Subtest: failure denies before access and on subsequent read demand
+ok 262 - failure denies before access and on subsequent read demand
+  ---
+  duration_ms: 30.718806
+  type: 'test'
+  ...
+# Subtest: failure during source consumption cancels, unlocks and removes private staging
+ok 263 - failure during source consumption cancels, unlocks and removes private staging
+  ---
+  duration_ms: 56.329209
+  type: 'test'
+  ...
+# Subtest: successful bounded transfers, ranges, no-clobber and strict validation
+ok 264 - successful bounded transfers, ranges, no-clobber and strict validation
+  ---
+  duration_ms: 52.032021
+  type: 'test'
+  ...
+# Subtest: cancellation releases stalled write source and read handles
+ok 265 - cancellation releases stalled write source and read handles
+  ---
+  duration_ms: 33.545594
+  type: 'test'
+  ...
+# Subtest: authority outage is fail closed, abortable, and never leaks checker errors
+ok 266 - authority outage is fail closed, abortable, and never leaks checker errors
+  ---
+  duration_ms: 48.902568
+  type: 'test'
+  ...
+# Subtest: read release and pre-finalization checks discard newly denied bytes
+ok 267 - read release and pre-finalization checks discard newly denied bytes
+  ---
+  duration_ms: 59.526551
+  type: 'test'
+  ...
+# Subtest: service scope and request snapshots cannot be broadened by later mutation
+ok 268 - service scope and request snapshots cannot be broadened by later mutation
+  ---
+  duration_ms: 48.959144
+  type: 'test'
+  ...
+# Subtest: local: shared streaming contract
+    # Subtest: maintenance collects abandoned staging without exposing a table-wide worker capability
+    ok 1 - maintenance collects abandoned staging without exposing a table-wide worker capability
+      ---
+      duration_ms: 56.008016
+      type: 'test'
+      ...
+    # Subtest: candidate deletion requires its own exact authority and is idempotent
+    ok 2 - candidate deletion requires its own exact authority and is idempotent
+      ---
+      duration_ms: 75.816159
+      type: 'test'
+      ...
+    # Subtest: logical bindings, capability discovery and sanitized errors
+    ok 3 - logical bindings, capability discovery and sanitized errors
+      ---
+      duration_ms: 3.046873
+      type: 'test'
+      ...
+    # Subtest: exact size and bounded chunks fail without final objects
+    ok 4 - exact size and bounded chunks fail without final objects
+      ---
+      duration_ms: 8.867587
+      type: 'test'
+      ...
+    # Subtest: create-only competing writers, exact ranges and bounded reads
+    ok 5 - create-only competing writers, exact ranges and bounded reads
+      ---
+      duration_ms: 79.696894
+      type: 'test'
+      ...
+    # Subtest: cancellation releases pending sources and read streams
+    ok 6 - cancellation releases pending sources and read streams
+      ---
+      duration_ms: 4.298785
+      type: 'test'
+      ...
+    # Subtest: current authority before access, on demand, after source and before finalization
+    ok 7 - current authority before access, on demand, after source and before finalization
+      ---
+      duration_ms: 56.79693
+      type: 'test'
+      ...
+    # Subtest: uncertain finalization preserves complete bytes and rejects retry
+    ok 8 - uncertain finalization preserves complete bytes and rejects retry
+      ---
+      duration_ms: 212.471009
+      type: 'test'
+      ...
+    1..8
+ok 269 - local: shared streaming contract
+  ---
+  duration_ms: 537.564569
+  type: 'test'
+  ...
+# Subtest: s3: shared streaming contract
+    # Subtest: maintenance collects abandoned staging without exposing a table-wide worker capability
+    ok 1 - maintenance collects abandoned staging without exposing a table-wide worker capability
+      ---
+      duration_ms: 49.732475
+      type: 'test'
+      ...
+    # Subtest: candidate deletion requires its own exact authority and is idempotent
+    ok 2 - candidate deletion requires its own exact authority and is idempotent
+      ---
+      duration_ms: 37.55755
+      type: 'test'
+      ...
+    # Subtest: logical bindings, capability discovery and sanitized errors
+    ok 3 - logical bindings, capability discovery and sanitized errors
+      ---
+      duration_ms: 2.840504
+      type: 'test'
+      ...
+    # Subtest: exact size and bounded chunks fail without final objects
+    ok 4 - exact size and bounded chunks fail without final objects
+      ---
+      duration_ms: 35.46788
+      type: 'test'
+      ...
+    # Subtest: create-only competing writers, exact ranges and bounded reads
+    ok 5 - create-only competing writers, exact ranges and bounded reads
+      ---
+      duration_ms: 126.653169
+      type: 'test'
+      ...
+    # Subtest: cancellation releases pending sources and read streams
+    ok 6 - cancellation releases pending sources and read streams
+      ---
+      duration_ms: 16.260509
+      type: 'test'
+      ...
+    # Subtest: current authority before access, on demand, after source and before finalization
+    ok 7 - current authority before access, on demand, after source and before finalization
+      ---
+      duration_ms: 38.406413
+      type: 'test'
+      ...
+    # Subtest: uncertain finalization preserves complete bytes and rejects retry
+    ok 8 - uncertain finalization preserves complete bytes and rejects retry
+      ---
+      duration_ms: 65.768028
+      type: 'test'
+      ...
+    1..8
+ok 270 - s3: shared streaming contract
+  ---
+  duration_ms: 800.901012
+  type: 'test'
+  ...
+# Subtest: acknowledgment follows file and binding directory durability barriers
+ok 271 - acknowledgment follows file and binding directory durability barriers
+  ---
+  duration_ms: 298.580367
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse/table/objects sync EIO
+ok 272 - initialization fails explicitly on warehouse/table/objects sync EIO
+  ---
+  duration_ms: 175.943514
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse/table/objects sync EINVAL
+ok 273 - initialization fails explicitly on warehouse/table/objects sync EINVAL
+  ---
+  duration_ms: 179.987959
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse/table/staging sync EIO
+ok 274 - initialization fails explicitly on warehouse/table/staging sync EIO
+  ---
+  duration_ms: 180.611762
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse/table/staging sync EINVAL
+ok 275 - initialization fails explicitly on warehouse/table/staging sync EINVAL
+  ---
+  duration_ms: 170.263013
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse/table sync EIO
+ok 276 - initialization fails explicitly on warehouse/table sync EIO
+  ---
+  duration_ms: 224.727354
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse/table sync EINVAL
+ok 277 - initialization fails explicitly on warehouse/table sync EINVAL
+  ---
+  duration_ms: 246.350563
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse sync EIO
+ok 278 - initialization fails explicitly on warehouse sync EIO
+  ---
+  duration_ms: 179.742541
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on warehouse sync EINVAL
+ok 279 - initialization fails explicitly on warehouse sync EINVAL
+  ---
+  duration_ms: 194.035765
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on . sync EIO
+ok 280 - initialization fails explicitly on . sync EIO
+  ---
+  duration_ms: 180.453844
+  type: 'test'
+  ...
+# Subtest: initialization fails explicitly on . sync EINVAL
+ok 281 - initialization fails explicitly on . sync EINVAL
+  ---
+  duration_ms: 230.482921
+  type: 'test'
+  ...
+# Subtest: write fault at write:file:sync:before closes handles and preserves finalization outcome
+ok 282 - write fault at write:file:sync:before closes handles and preserves finalization outcome
+  ---
+  duration_ms: 93.992101
+  type: 'test'
+  ...
+# Subtest: write fault at write:link:before closes handles and preserves finalization outcome
+ok 283 - write fault at write:link:before closes handles and preserves finalization outcome
+  ---
+  duration_ms: 98.24051
+  type: 'test'
+  ...
+# Subtest: write fault at write:warehouse/table/objects:sync:before closes handles and preserves finalization outcome
+ok 284 - write fault at write:warehouse/table/objects:sync:before closes handles and preserves finalization outcome
+  ---
+  duration_ms: 147.418981
+  type: 'test'
+  ...
+# Subtest: write fault at write:warehouse/table/staging:sync:before closes handles and preserves finalization outcome
+ok 285 - write fault at write:warehouse/table/staging:sync:before closes handles and preserves finalization outcome
+  ---
+  duration_ms: 170.881527
+  type: 'test'
+  ...
+# Subtest: write fault at write:unlink:before closes handles and preserves finalization outcome
+ok 286 - write fault at write:unlink:before closes handles and preserves finalization outcome
+  ---
+  duration_ms: 145.217399
+  type: 'test'
+  ...
+# Subtest: write fault at write:file:close:after closes handles and preserves finalization outcome
+ok 287 - write fault at write:file:close:after closes handles and preserves finalization outcome
+  ---
+  duration_ms: 97.706126
+  type: 'test'
+  ...
+# Subtest: write fault at write:warehouse/table/objects:close:after closes handles and preserves finalization outcome
+ok 288 - write fault at write:warehouse/table/objects:close:after closes handles and preserves finalization outcome
+  ---
+  duration_ms: 152.850053
+  type: 'test'
+  ...
+# Subtest: cancellation at write:file:sync:after respects finalization
+ok 289 - cancellation at write:file:sync:after respects finalization
+  ---
+  duration_ms: 96.254259
+  type: 'test'
+  ...
+# Subtest: cancellation at write:link:after respects finalization
+ok 290 - cancellation at write:link:after respects finalization
+  ---
+  duration_ms: 154.974416
+  type: 'test'
+  ...
+# Subtest: cancellation at write:warehouse/table/objects:sync:after respects finalization
+ok 291 - cancellation at write:warehouse/table/objects:sync:after respects finalization
+  ---
+  duration_ms: 131.028007
+  type: 'test'
+  ...
+# Subtest: cancellation at write:warehouse/table/staging:sync:after respects finalization
+ok 292 - cancellation at write:warehouse/table/staging:sync:after respects finalization
+  ---
+  duration_ms: 130.453972
+  type: 'test'
+  ...
+# Subtest: SIGKILL at write:file:write:after preserves restart identity and never clobbers
+ok 293 - SIGKILL at write:file:write:after preserves restart identity and never clobbers
+  ---
+  duration_ms: 149.612319
+  type: 'test'
+  ...
+# Subtest: SIGKILL at write:link:before preserves restart identity and never clobbers
+ok 294 - SIGKILL at write:link:before preserves restart identity and never clobbers
+  ---
+  duration_ms: 168.433725
+  type: 'test'
+  ...
+# Subtest: SIGKILL at write:link:after preserves restart identity and never clobbers
+ok 295 - SIGKILL at write:link:after preserves restart identity and never clobbers
+  ---
+  duration_ms: 121.028905
+  type: 'test'
+  ...
+# Subtest: SIGKILL at write:warehouse/table/objects:sync:after preserves restart identity and never clobbers
+ok 296 - SIGKILL at write:warehouse/table/objects:sync:after preserves restart identity and never clobbers
+  ---
+  duration_ms: 142.131884
+  type: 'test'
+  ...
+# Subtest: SIGKILL at write:unlink:after preserves restart identity and never clobbers
+ok 297 - SIGKILL at write:unlink:after preserves restart identity and never clobbers
+  ---
+  duration_ms: 171.032996
+  type: 'test'
+  ...
+# Subtest: SIGKILL at write:warehouse/table/staging:close:after preserves restart identity and never clobbers
+ok 298 - SIGKILL at write:warehouse/table/staging:close:after preserves restart identity and never clobbers
+  ---
+  duration_ms: 177.100686
+  type: 'test'
+  ...
+# Subtest: SIGKILL at ack preserves restart identity and never clobbers
+ok 299 - SIGKILL at ack preserves restart identity and never clobbers
+  ---
+  duration_ms: 159.792308
+  type: 'test'
+  ...
+# Subtest: logical locations reject paths, encodings, unknown versions and authority fields
+ok 300 - logical locations reject paths, encodings, unknown versions and authority fields
+  ---
+  duration_ms: 0.996497
+  type: 'test'
+  ...
+# Subtest: explicit binding scopes identities and rejects unsupported capabilities
+ok 301 - explicit binding scopes identities and rejects unsupported capabilities
+  ---
+  duration_ms: 44.100093
+  type: 'test'
+  ...
+# Subtest: real filesystem symlink and hardlink escapes are rejected
+ok 302 - real filesystem symlink and hardlink escapes are rejected
+  ---
+  duration_ms: 50.957251
+  type: 'test'
+  ...
+# Subtest: real S3 prerequisite: conditional multipart finalization is atomic and create-only
+ok 303 - real S3 prerequisite: conditional multipart finalization is atomic and create-only
+  ---
+  duration_ms: 529.222669
+  type: 'test'
+  ...
+# Subtest: S3 trusted endpoint, bucket and prefix cannot be supplied through logical locations
+ok 304 - S3 trusted endpoint, bucket and prefix cannot be supplied through logical locations
+  ---
+  duration_ms: 409.369161
+  type: 'test'
+  ...
+# Subtest: S3 multipart buffering is bounded by one part and abort removes uploaded parts
+ok 305 - S3 multipart buffering is bounded by one part and abort removes uploaded parts
+  ---
+  duration_ms: 680.533056
+  type: 'test'
+  ...
+# Subtest: S3 rechecks authority after part upload and before completion; reads validate range responses
+ok 306 - S3 rechecks authority after part upload and before completion; reads validate range responses
+  ---
+  duration_ms: 447.158124
+  type: 'test'
+  ...
+# Subtest: S3 requests never load ambient configuration or credential files
+ok 307 - S3 requests never load ambient configuration or credential files
+  ---
+  duration_ms: 636.223174
+  type: 'test'
+  ...
+# Subtest: multi-chunk, empty objects and strict ranges
+ok 308 - multi-chunk, empty objects and strict ranges
+  ---
+  duration_ms: 91.275647
+  type: 'test'
+  ...
+# Subtest: empty chunk producers allow deadline cancellation and staging cleanup
+ok 309 - empty chunk producers allow deadline cancellation and staging cleanup
+  ---
+  duration_ms: 124.316552
+  type: 'test'
+  ...
+# Subtest: malformed transfer options reject without locking or creating files
+ok 310 - malformed transfer options reject without locking or creating files
+  ---
+  duration_ms: 37.886396
+  type: 'test'
+  ...
+# Subtest: listener registration failure releases the reader before filesystem access
+ok 311 - listener registration failure releases the reader before filesystem access
+  ---
+  duration_ms: 26.957278
+  type: 'test'
+  ...
+# Subtest: supplied malformed ranges fail before filesystem access
+ok 312 - supplied malformed ranges fail before filesystem access
+  ---
+  duration_ms: 51.112497
+  type: 'test'
+  ...
+# Subtest: failed, malformed and cancelled writes clean staging and never finalize
+ok 313 - failed, malformed and cancelled writes clean staging and never finalize
+  ---
+  duration_ms: 31.723251
+  type: 'test'
+  ...
+# Subtest: atomic competing finalization does not clobber existing objects
+ok 314 - atomic competing finalization does not clobber existing objects
+  ---
+  duration_ms: 66.765378
+  type: 'test'
+  ...
+# Subtest: bounded producer demand, read cancellation, abort and injected truncation
+ok 315 - bounded producer demand, read cancellation, abort and injected truncation
+  ---
+  duration_ms: 54.123601
+  type: 'test'
+  ...
+# Subtest: runtime chunk validation and mutable range snapshots
+ok 316 - runtime chunk validation and mutable range snapshots
+  ---
+  duration_ms: 47.190283
+  type: 'test'
+  ...
+# Subtest: the reporter preserves ordinary test events
+ok 317 - the reporter preserves ordinary test events
+  ---
+  duration_ms: 0.796389
+  type: 'test'
+  ...
+# Subtest: the real test command rejects an early zero exit and accepts executed cases
+ok 318 - the real test command rejects an early zero exit and accepts executed cases
+  ---
+  duration_ms: 296.349505
+  type: 'test'
+  ...
+# Subtest: the versioned value contract uses the same strict wire vectors in every component
+ok 319 - the versioned value contract uses the same strict wire vectors in every component
+  ---
+  duration_ms: 3.82964
+  type: 'test'
+  ...
+# Subtest: TypeScript and Python produce identical normalized values and canonical typed bytes
+ok 320 - TypeScript and Python produce identical normalized values and canonical typed bytes
+  ---
+  duration_ms: 30.645446
+  type: 'test'
+  ...
+# Subtest: the published JSON schema and runtime descriptor validation agree on supported shapes
+ok 321 - the published JSON schema and runtime descriptor validation agree on supported shapes
+  ---
+  duration_ms: 26.144291
+  type: 'test'
+  ...
+# Subtest: column profiles preserve scalar arrays while function and API records preserve omission
+ok 322 - column profiles preserve scalar arrays while function and API records preserve omission
+  ---
+  duration_ms: 0.369331
+  type: 'test'
+  ...
+# Subtest: compatibility rejects narrowing and destructive column changes without a migration
+ok 323 - compatibility rejects narrowing and destructive column changes without a migration
+  ---
+  duration_ms: 0.433274
+  type: 'test'
+  ...
+# Subtest: policy literals and decimal comparisons use the same exact value semantics
+ok 324 - policy literals and decimal comparisons use the same exact value semantics
+  ---
+  duration_ms: 0.750889
+  type: 'test'
+  ...
+# Subtest: platform clients reject an invocation with an unsupported value version
+ok 325 - platform clients reject an invocation with an unsupported value version
+  ---
+  duration_ms: 10.248878
+  type: 'test'
+  ...
+# Subtest: JSON transports reject lossy native values before issuing a request
+ok 326 - JSON transports reject lossy native values before issuing a request
+  ---
+  duration_ms: 0.376308
+  type: 'test'
+  ...
+# Subtest: JSON transports reject malformed UTF-8 instead of replacing bytes inside values
+ok 327 - JSON transports reject malformed UTF-8 instead of replacing bytes inside values
+  ---
+  duration_ms: 0.44476
+  type: 'test'
+  ...
+# Subtest: wire values reject invalid dates, lossy integers, malformed text and decimal overflow
+ok 328 - wire values reject invalid dates, lossy integers, malformed text and decimal overflow
+  ---
+  duration_ms: 1.564519
+  type: 'test'
+  ...
+# Subtest: timestamps normalize to UTC microseconds without truncating precision
+ok 329 - timestamps normalize to UTC microseconds without truncating precision
+  ---
+  duration_ms: 0.357931
+  type: 'test'
+  ...
+# Subtest: row ingestion normalizes missing nullable values and rejects unknown or missing required fields
+ok 330 - row ingestion normalizes missing nullable values and rejects unknown or missing required fields
+  ---
+  duration_ms: 0.622654
+  type: 'test'
+  ...
+# Subtest: NWS connector preserves missing precipitation and rejects malformed forecasts and source URLs
+ok 331 - NWS connector preserves missing precipitation and rejects malformed forecasts and source URLs
+  ---
+  duration_ms: 0.876428
+  type: 'test'
+  ...
+# Subtest: NWS workload bounds requests, checks its fence before each source, and retains provenance
+ok 332 - NWS workload bounds requests, checks its fence before each source, and retains provenance
+  ---
+  duration_ms: 0.512873
+  type: 'test'
+  ...
+# Subtest: workflow lineage follows active immutable contracts and never invents access or usage
+ok 333 - workflow lineage follows active immutable contracts and never invents access or usage
+  ---
+  duration_ms: 64.05691
+  type: 'test'
+  ...
+1..333
+# tests 476
+# suites 0
+# pass 474
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25777.315732

@@ -1,0 +1,1 @@
+{"event":"source_window_schema_applied","ordinaryDmlDenied":true,"privateStateGuardDenied":true,"unissuedWindowDenied":true,"classification":"isolated synthetic schema and admission-negative proof; not delta publication qualification"}

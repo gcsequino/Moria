@@ -42,6 +42,8 @@ test('architecture checks reject direct, indirect and unregistered capability ac
     'tests/http-boundary.test.ts',
     'tests/static-host-process.integration.test.ts',
     'apps/local/src/development-database.ts',
+    'apps/local/src/native-runtime.ts',
+    'tests/native-local-runtime.integration.test.ts',
     'tests/catalog-storage-database.test.ts',
     'workers/iceberg/stage.ts',
     'workers/iceberg/stream.ts',

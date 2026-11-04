@@ -1,0 +1,7 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T155346969395Z-private-v3-bootstrap-002",
+  "evidence": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-retention/private-v3-bootstrap-002-20261031T155346969395Z",
+  "manifestSha256": "d043b4e904fb29c9aff14d84199559bb5a0f8d484d3e0ede002239088e2fba95",
+  "files": 1134,
+  "classification": "private v3 cohort based on matched frozen v25 backend; not shared-tip qualification"
+}

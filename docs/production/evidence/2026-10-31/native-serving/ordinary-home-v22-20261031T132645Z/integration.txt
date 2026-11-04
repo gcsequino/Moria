@@ -1,0 +1,270 @@
+TAP version 13
+# Subtest: managed source roots checkout, publish, plan and activate coherent definitions
+    # Subtest: registered roots preserve metadata dotfiles and allocate stable exported resource identities
+    ok 1 - registered roots preserve metadata dotfiles and allocate stable exported resource identities
+      ---
+      duration_ms: 3302.736704
+      type: 'test'
+      ...
+    # Subtest: sibling roots are independent and duplicate/nested source registration is rejected
+    ok 2 - sibling roots are independent and duplicate/nested source registration is rejected
+      ---
+      duration_ms: 2014.575464
+      type: 'test'
+      ...
+    # Subtest: plans bind release, principal, current policy and expected active revision
+    ok 3 - plans bind release, principal, current policy and expected active revision
+      ---
+      duration_ms: 1529.961279
+      type: 'test'
+      ...
+    # Subtest: missing declarations are retained until explicit dependency-checked deletion
+    ok 4 - missing declarations are retained until explicit dependency-checked deletion
+      ---
+      duration_ms: 1791.928784
+      type: 'test'
+      ...
+    # Subtest: repeated Source history keeps current classification checks authoritative
+    ok 5 - repeated Source history keeps current classification checks authoritative
+      ---
+      duration_ms: 9108.210609
+      type: 'test'
+      ...
+    # Subtest: replacement retains future restrictions on its original source
+    ok 6 - replacement retains future restrictions on its original source
+      ---
+      duration_ms: 4270.756951
+      type: 'test'
+      ...
+    # Subtest: fresh replacement uses live declaration files while pinned historical files remain protected
+    ok 7 - fresh replacement uses live declaration files while pinned historical files remain protected
+      ---
+      duration_ms: 5768.161308
+      type: 'test'
+      ...
+    # Subtest: omitted definitions retain future restrictions on their declaration directory
+    ok 8 - omitted definitions retain future restrictions on their declaration directory
+      ---
+      duration_ms: 1904.010548
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level publish deny
+    ok 9 - activation respects a resource-level publish deny
+      ---
+      duration_ms: 3643.263605
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level delete deny
+    ok 10 - activation respects a resource-level delete deny
+      ---
+      duration_ms: 4034.810671
+      type: 'test'
+      ...
+    # Subtest: identical namespaces in independent projects activate without identity collisions
+    ok 11 - identical namespaces in independent projects activate without identity collisions
+      ---
+      duration_ms: 5341.17927
+      type: 'test'
+      ...
+    # Subtest: pinned cross-project inputs retain their owning project classifications
+    ok 12 - pinned cross-project inputs retain their owning project classifications
+      ---
+      duration_ms: 4760.233917
+      type: 'test'
+      ...
+    # Subtest: identical imported names from different projects require explicit disambiguation
+    ok 13 - identical imported names from different projects require explicit disambiguation
+      ---
+      duration_ms: 1494.985355
+      type: 'test'
+      ...
+    # Subtest: active transitive dependencies prevent retirement, and retired consumers release that protection
+    ok 14 - active transitive dependencies prevent retirement, and retired consumers release that protection
+      ---
+      duration_ms: 5585.035714
+      type: 'test'
+      ...
+    # Subtest: same-project pinned source dependencies remain usable
+    ok 15 - same-project pinned source dependencies remain usable
+      ---
+      duration_ms: 1455.130614
+      type: 'test'
+      ...
+    # Subtest: cross-project transform outputs require active writable placements and inherit producer restrictions
+    ok 16 - cross-project transform outputs require active writable placements and inherit producer restrictions
+      ---
+      duration_ms: 7203.214979
+      type: 'test'
+      ...
+    # Subtest: code repositories publish CI export manifests without loading source modules
+    ok 17 - code repositories publish CI export manifests without loading source modules
+      ---
+      duration_ms: 2242.710453
+      type: 'test'
+      ...
+    1..17
+ok 1 - managed source roots checkout, publish, plan and activate coherent definitions
+  ---
+  duration_ms: 73953.945564
+  type: 'test'
+  ...
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 284.052732
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 149.817465
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 422.115041
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 222.647328
+      type: 'test'
+      ...
+    # Subtest: whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+    ok 5 - whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+      ---
+      duration_ms: 585.711159
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 6 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 220.913402
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 7 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 88.109865
+      type: 'test'
+      ...
+    # Subtest: typed multi-type edits retain canonical policy rows, atomicity and original input receipts
+    ok 8 - typed multi-type edits retain canonical policy rows, atomicity and original input receipts
+      ---
+      duration_ms: 420.313296
+      type: 'test'
+      ...
+    # Subtest: an ordinary Action waits for its UID home before the environment writer barrier
+    ok 9 - an ordinary Action waits for its UID home before the environment writer barrier
+      ---
+      duration_ms: 334.865242
+      type: 'test'
+      ...
+    # Subtest: authority revoked during a UID-home wait cannot release a prepared Action
+    ok 10 - authority revoked during a UID-home wait cannot release a prepared Action
+      ---
+      duration_ms: 63.47271
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication rechecks changed target and complete multi-target footprint
+    ok 11 - ordinary Action publication rechecks changed target and complete multi-target footprint
+      ---
+      duration_ms: 398.95342
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication rechecks replacement source and current property policy
+    ok 12 - ordinary Action publication rechecks replacement source and current property policy
+      ---
+      duration_ms: 197.701222
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication checks current grants before releasing prepared effects
+    ok 13 - ordinary Action publication checks current grants before releasing prepared effects
+      ---
+      duration_ms: 74.322107
+      type: 'test'
+      ...
+    # Subtest: guarded Action batch matches scalar resource authority without caller demands
+    ok 14 - guarded Action batch matches scalar resource authority without caller demands
+      ---
+      duration_ms: 26.935622
+      type: 'test'
+      ...
+    # Subtest: typed ordinary preparation pins primary expression reads even when primary is not edited
+    ok 15 - typed ordinary preparation pins primary expression reads even when primary is not edited
+      ---
+      duration_ms: 311.427311
+      type: 'test'
+      ...
+    # Subtest: typed ordinary publication rechecks secondary property policy and rolls back all targets
+    ok 16 - typed ordinary publication rechecks secondary property policy and rolls back all targets
+      ---
+      duration_ms: 139.909821
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 17 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 380.949516
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 18 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 152.444662
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 19 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 133.561979
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 20 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 213.242521
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 21 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 87.477314
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    ok 22 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 1035.595772
+      type: 'test'
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 23 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 37.505992
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    ok 24 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 2073.080327
+      type: 'test'
+      ...
+    1..24
+ok 2 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 15881.937785
+  type: 'test'
+  ...
+1..2
+# tests 43
+# suites 0
+# pass 43
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 74635.416139

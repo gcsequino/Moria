@@ -1,0 +1,62 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261030T181330169438Z-native-search-models-indexing-joint",
+    "files": 787,
+    "manifestSha256": "58e86ab53b1573e819e1e221438291b087e1e02e898ad564b53e1a9e4d13bfd9",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "host",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T181330169438Z-native-search-models-indexing-joint,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "build",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T181330169438Z-native-search-models-indexing-joint,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-indexing-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins",
+        "--test",
+        "native_catalog",
+        "--message-format=json"
+      ]
+    }
+  ],
+  "outcome": "failed"
+}

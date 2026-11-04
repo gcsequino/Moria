@@ -1,0 +1,25 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 7 errors:
+/tmp/moria-http-waits.ts:13:14: ERROR: Top-level await is currently not supported with the "cjs" output format
+/tmp/moria-http-waits.ts:18:1: ERROR: Top-level await is currently not supported with the "cjs" output format
+/tmp/moria-http-waits.ts:19:168: ERROR: Top-level await is currently not supported with the "cjs" output format
+/tmp/moria-http-waits.ts:23:18: ERROR: Top-level await is currently not supported with the "cjs" output format
+/tmp/moria-http-waits.ts:25:30: ERROR: Top-level await is currently not supported with the "cjs" output format
+...
+    at failureErrorWithLog (/app/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1752:15)
+    at /app/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1019:50
+    at responseCallbacks.<computed> (/app/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:886:9)
+    at handleIncomingPacket (/app/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:941:12)
+    at Socket.readFromStdout (/app/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:864:7)
+    at Socket.emit (node:events:514:28)
+    at addChunk (node:internal/streams/readable:569:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+    at Readable.push (node:internal/streams/readable:400:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23) {
+  name: 'TransformError'
+}
+
+Node.js v24.22.0

@@ -1,0 +1,120 @@
+TAP version 13
+# Subtest: managed source roots checkout, publish, plan and activate coherent definitions
+    # Subtest: registered roots preserve metadata dotfiles and allocate stable exported resource identities
+    ok 1 - registered roots preserve metadata dotfiles and allocate stable exported resource identities
+      ---
+      duration_ms: 2286.120865
+      type: 'test'
+      ...
+    # Subtest: sibling roots are independent and duplicate/nested source registration is rejected
+    ok 2 - sibling roots are independent and duplicate/nested source registration is rejected
+      ---
+      duration_ms: 1740.093964
+      type: 'test'
+      ...
+    # Subtest: plans bind release, principal, current policy and expected active revision
+    ok 3 - plans bind release, principal, current policy and expected active revision
+      ---
+      duration_ms: 1374.178044
+      type: 'test'
+      ...
+    # Subtest: missing declarations are retained until explicit dependency-checked deletion
+    ok 4 - missing declarations are retained until explicit dependency-checked deletion
+      ---
+      duration_ms: 1501.731262
+      type: 'test'
+      ...
+    # Subtest: repeated Source history keeps current classification checks authoritative
+    ok 5 - repeated Source history keeps current classification checks authoritative
+      ---
+      duration_ms: 6242.369075
+      type: 'test'
+      ...
+    # Subtest: replacement retains future restrictions on its original source
+    ok 6 - replacement retains future restrictions on its original source
+      ---
+      duration_ms: 1376.931543
+      type: 'test'
+      ...
+# {"event":"source_declaration_same_call_counters","requests":2,"scalar":[{"funcname":"native_filesystem_acl_targets_state","calls":2,"self_time":34.677},{"funcname":"native_serving_session","calls":2,"self_time":0.077}],"batch":[{"funcname":"native_filesystem_acl_targets_state","calls":1,"self_time":15.52},{"funcname":"native_serving_session","calls":1,"self_time":0.005}],"scope":"actual metadata checks only; no model inference timing attribution"}
+    # Subtest: fresh replacement uses live declaration files while pinned historical files remain protected
+    ok 7 - fresh replacement uses live declaration files while pinned historical files remain protected
+      ---
+      duration_ms: 2741.870028
+      type: 'test'
+      ...
+    # Subtest: omitted definitions retain future restrictions on their declaration directory
+    ok 8 - omitted definitions retain future restrictions on their declaration directory
+      ---
+      duration_ms: 1159.758928
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level publish deny
+    ok 9 - activation respects a resource-level publish deny
+      ---
+      duration_ms: 956.860267
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level delete deny
+    ok 10 - activation respects a resource-level delete deny
+      ---
+      duration_ms: 947.706487
+      type: 'test'
+      ...
+    # Subtest: identical namespaces in independent projects activate without identity collisions
+    ok 11 - identical namespaces in independent projects activate without identity collisions
+      ---
+      duration_ms: 1320.658375
+      type: 'test'
+      ...
+    # Subtest: pinned cross-project inputs retain their owning project classifications
+    ok 12 - pinned cross-project inputs retain their owning project classifications
+      ---
+      duration_ms: 1184.290297
+      type: 'test'
+      ...
+    # Subtest: identical imported names from different projects require explicit disambiguation
+    ok 13 - identical imported names from different projects require explicit disambiguation
+      ---
+      duration_ms: 353.385025
+      type: 'test'
+      ...
+    # Subtest: active transitive dependencies prevent retirement, and retired consumers release that protection
+    ok 14 - active transitive dependencies prevent retirement, and retired consumers release that protection
+      ---
+      duration_ms: 1358.945426
+      type: 'test'
+      ...
+    # Subtest: same-project pinned source dependencies remain usable
+    ok 15 - same-project pinned source dependencies remain usable
+      ---
+      duration_ms: 350.316146
+      type: 'test'
+      ...
+    # Subtest: cross-project transform outputs require active writable placements and inherit producer restrictions
+    ok 16 - cross-project transform outputs require active writable placements and inherit producer restrictions
+      ---
+      duration_ms: 1711.125944
+      type: 'test'
+      ...
+    # Subtest: code repositories publish CI export manifests without loading source modules
+    ok 17 - code repositories publish CI export manifests without loading source modules
+      ---
+      duration_ms: 579.830339
+      type: 'test'
+      ...
+    1..17
+ok 1 - managed source roots checkout, publish, plan and activate coherent definitions
+  ---
+  duration_ms: 29758.016589
+  type: 'test'
+  ...
+1..1
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30226.909418

@@ -1,0 +1,59 @@
+TAP version 13
+# Subtest: native MCP preserves current authority, typed results and opaque discovery across replicas
+    # Subtest: stateless discovery filters SQL-denied resources without aborting the page
+    ok 1 - stateless discovery filters SQL-denied resources without aborting the page
+      ---
+      duration_ms: 1188.975568
+      type: 'test'
+      ...
+    # Subtest: resource descriptions contain authorized typed metadata only
+    ok 2 - resource descriptions contain authorized typed metadata only
+      ---
+      duration_ms: 910.137902
+      type: 'test'
+      ...
+    # Subtest: queries and actions use protected serving and replica-stable receipts
+    ok 3 - queries and actions use protected serving and replica-stable receipts
+      ---
+      duration_ms: 129.272736
+      type: 'test'
+      ...
+    # Subtest: official Python SDK negotiates and reads protected resources
+    ok 4 - official Python SDK negotiates and reads protected resources
+      ---
+      duration_ms: 1378.331483
+      type: 'test'
+      ...
+    # Subtest: CLI emits a credential reference and calls the dedicated native endpoint
+    ok 5 - CLI emits a credential reference and calls the dedicated native endpoint
+      ---
+      duration_ms: 450.65564
+      type: 'test'
+      ...
+    # Subtest: transport rejects mirrored-header tampering, batches and credential substitution
+    ok 6 - transport rejects mirrored-header tampering, batches and credential substitution
+      ---
+      duration_ms: 44.411256
+      type: 'test'
+      ...
+    # Subtest: epoch changes invalidate cursors and revocation applies to every request
+    ok 7 - epoch changes invalidate cursors and revocation applies to every request
+      ---
+      duration_ms: 472.846566
+      type: 'test'
+      ...
+    1..7
+ok 1 - native MCP preserves current authority, typed results and opaque discovery across replicas
+  ---
+  duration_ms: 8204.009655
+  type: 'test'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8534.706684

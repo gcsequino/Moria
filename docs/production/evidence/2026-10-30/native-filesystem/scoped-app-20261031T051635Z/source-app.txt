@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    not ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 9109.456449
+      type: 'test'
+      location: '/work/tests/native-source-runtime.integration.test.ts:545:13'
+      failureType: 'testCodeFailure'
+      error: 'NOT_FOUND'
+      code: 'NOT_FOUND'
+      name: 'ApiError'
+      stack: |-
+        decode (/work/packages/platform/src/transport.ts:85:13)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:885:38)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:545:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..1
+not ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 19066.611181
+  type: 'test'
+  location: '/work/tests/native-source-runtime.integration.test.ts:22:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19760.215469

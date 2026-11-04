@@ -1,0 +1,98 @@
+TAP version 13
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 10283.673857
+      type: 'test'
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    ok 2 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 19898.506677
+      type: 'test'
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 3 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 14236.365072
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    ok 4 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 5227.279496
+      type: 'test'
+      ...
+    # Subtest: a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+    ok 5 - a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+      ---
+      duration_ms: 14497.56595
+      type: 'test'
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 6 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 14058.805801
+      type: 'test'
+      ...
+    1..6
+ok 1 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ---
+  duration_ms: 83939.68677
+  type: 'test'
+  ...
+# {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"b328c7d8-cd50-4fb0-9024-07a405517761","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"6bf15521-6ef9-45e3-88f6-21a43d68498f"}]}
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 6921.017031
+      type: 'test'
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    ok 2 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 11179.569211
+      type: 'test'
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 3 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 7262.700733
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    ok 4 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 6743.532965
+      type: 'test'
+      ...
+    # Subtest: a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+    ok 5 - a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+      ---
+      duration_ms: 7684.59555
+      type: 'test'
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 6 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 7498.241444
+      type: 'test'
+      ...
+    1..6
+ok 2 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ---
+  duration_ms: 52926.00108
+  type: 'test'
+  ...
+# {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"924e13c4-be79-435b-99a6-f1ad7e07130f","event":"reducer_batches","maxWireBytes":"8388678","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"29cab3ec-806f-4cfd-b46d-2879123f9112"}]}
+1..2
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 137293.174534

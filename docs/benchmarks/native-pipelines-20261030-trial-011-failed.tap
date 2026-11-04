@@ -1,0 +1,71 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 119.164809
+      type: 'test'
+      ...
+    # Subtest: unobserved profile disable and restore fences accepted work before code starts
+    ok 2 - unobserved profile disable and restore fences accepted work before code starts
+      ---
+      duration_ms: 461.349285
+      type: 'test'
+      ...
+    # Subtest: actual bounded guest reads three wide sources and commits both heads with one receipt
+    not ok 3 - actual bounded guest reads three wide sources and commits both heads with one receipt
+      ---
+      duration_ms: 102890.282894
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:559:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":null,"id":"f23cd16a-688c-41df-a396-539718d00ea4","markings":[{"environment":"51b21e15-2c43-40f1-a5b1-b718d77c3250","marking":"private"}],"release":"sha256:d0f00bc79b53374bcee77515c05d49856e6555f9065ebbf88e2edc052e69cfeb","resourceId":"6fb0fb98-320c-487d-82fc-aefadaaf7bf8","result":{"outputs":[{"dataset":"8b5a558b-5cad-4edf-a96d-cdb2f230f4c9","revision":"1","snapshotId":"3813940667006668"},{"dataset":"f9ef75bc-d016-47f7-9822-9aaa4003acfb","revision":"1","snapshotId":"3624593319232148"}],"revision":"2"},"status":"succeeded","valueVersion":1}
+        
+        200 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 200
+      operator: 'strictEqual'
+      stack: |-
+        invoke (/work/tests/native-pipelines.integration.test.ts:422:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:614:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:559:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: public SDK and CLI replay one native receipt without running code again
+    ok 4 - public SDK and CLI replay one native receipt without running code again
+      ---
+      duration_ms: 707.775673
+      type: 'test'
+      ...
+    # Subtest: a second actual guest verifies published Parquet values beyond JS precision through native grants
+    ok 5 - a second actual guest verifies published Parquet values beyond JS precision through native grants
+      ---
+      duration_ms: 63196.443655
+      type: 'test'
+      ...
+    1..5
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 198098.243547
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:31:1'
+  failureType: 'hookFailed'
+  error: "EACCES: permission denied, scandir '/tmp/catalog-storage-fRlDwn/scratch/enginewarehouse'"
+  code: 'EACCES'
+  ...
+1..1
+# tests 6
+# suites 0
+# pass 4
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 198795.30707

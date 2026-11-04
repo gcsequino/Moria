@@ -1,0 +1,107 @@
+TAP version 13
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 148.887186
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 59.392315
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 138.80912
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 83.586948
+      type: 'test'
+      ...
+    # Subtest: whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+    ok 5 - whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+      ---
+      duration_ms: 192.214879
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 6 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 81.378106
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 7 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 33.038583
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 8 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 164.912919
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 9 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 47.365732
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 10 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 54.481067
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 11 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 75.974163
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 12 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 31.138689
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    ok 13 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 1010.439177
+      type: 'test'
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 14 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 28.487976
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    ok 15 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 2539.192343
+      type: 'test'
+      ...
+    1..15
+ok 1 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 6947.010306
+  type: 'test'
+  ...
+1..1
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7386.275262

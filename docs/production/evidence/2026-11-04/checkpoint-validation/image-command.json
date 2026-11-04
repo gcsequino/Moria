@@ -1,0 +1,15 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network=none",
+  "--workdir",
+  "/app",
+  "--env",
+  "CI=true",
+  "--entrypoint",
+  "bash",
+  "moria-test:gate-v27",
+  "-lc",
+  "pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:indexing && pnpm check:python && pnpm build && pnpm check:starter"
+]

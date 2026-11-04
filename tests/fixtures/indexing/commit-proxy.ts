@@ -1,7 +1,7 @@
 import { createServer, connect, type Socket } from 'node:net';
 
 /** Real PostgreSQL transport: withhold only the activation COMMIT acknowledgment. */
-export async function commitProxy(port: number) {
+export async function commitProxy(port: number, functionName = 'moria.indexing_activate') {
   const sockets = new Set<Socket>();
   let committed!: () => void;
   const commit = new Promise<void>((resolve) => {
@@ -34,7 +34,7 @@ export async function commitProxy(port: number) {
         if (input.length < length) return;
         const frame = input.subarray(0, length);
         input = input.subarray(length);
-        if (!startup && frame[0] === 80 && frame.includes(Buffer.from('moria.indexing_activate')))
+        if (!startup && frame[0] === 80 && frame.includes(Buffer.from(functionName)))
           activation = true;
         startup = false;
         backend.write(frame);

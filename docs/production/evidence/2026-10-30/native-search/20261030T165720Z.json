@@ -1,0 +1,91 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261030T165720542131Z-search-query",
+    "files": 731,
+    "manifestSha256": "c47b0af9c726859ac730d6174b1d1f41fd406df04efbb069d2d9cad95cd53f78",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T165720542131Z-search-query,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "build",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T165720542131Z-search-query,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-indexing-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins"
+      ]
+    },
+    {
+      "phase": "test",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T165720542131Z-search-query,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T165720542131Z-search-query/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "tests/native-search.integration.test.ts"
+      ]
+    }
+  ],
+  "outcome": "passed",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "31e253b0a4a71029f09794df3a2fc6eae16cdb2ab546bf0e14d189816c9db192",
+      "version": 5
+    },
+    "sourceDigest": "2950d117481efdeb2649bfcceb17e036bbdb720b1d261a5bf636181e10e06be5"
+  },
+  "binarySha256": "6471866cc4f912eee174bf56810522a4eba64ef1ecc47fb7e7f5f897b002ecfd"
+}

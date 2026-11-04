@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-30",
+  "trials": [
+    {
+      "id": "001",
+      "outcome": "failed",
+      "tap": "native-execution-functions-delivery-sandbox-20261030-trial-001-failed.tap",
+      "compiledRuntime": "native-execution-functions-delivery-sandbox-20261030-trial-001-failed.json",
+      "tests": 42,
+      "passed": 40,
+      "failed": 2,
+      "skipped": 0,
+      "failure": "The broker stored ACTION_CONDITION_FAILED as HTTP 409 but its duplicate response mapping returned HTTP 400 to the guest. The protected failed-action fixture returned 0 instead of 1; its containing test also failed.",
+      "correction": "Use the same status mapping for the actual guest response and durable failed-observation trace. No assertion or timeout is relaxed."
+    },
+    {
+      "id": "002",
+      "outcome": "passed",
+      "tap": "native-execution-functions-delivery-sandbox-20261030-trial-002.tap",
+      "compiledRuntime": "native-execution-functions-delivery-sandbox-20261030-trial-002.json",
+      "tests": 43,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 39029.148612,
+      "coverage": "Real PostgreSQL, native HTTP/processes and Docker: fenced scheduling and delivery; single-attempt isolation; lost public acceptance and publication COMMIT responses; SIGKILL and deadline-driven admission release; live generic-seal, mutation-acknowledgement and worker-scope rejection; nested functions, prepared actions, taint and retained evidence; native worker CLI process replacement."
+    },
+    {
+      "id": "003",
+      "outcome": "passed",
+      "tap": "native-execution-functions-delivery-sandbox-20261030-trial-003.tap",
+      "compiledRuntime": "native-execution-functions-delivery-sandbox-20261030-trial-003.json",
+      "tests": 44,
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 41644.651712,
+      "coverage": "All prior real fault/isolation/authority cases plus an actual guest filesystem move committing retained classification, a monotonic own-mutation epoch acknowledgement/audit, filesystem receipt and successful function result. Shared sandbox mechanism tables preserve the Function compatibility views and all Function authority checks."
+    }
+  ]
+}

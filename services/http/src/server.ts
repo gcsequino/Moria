@@ -4,6 +4,7 @@ import { MoriaError } from '../../../packages/contracts/types.js';
 
 type BrowserAuth = {
   allowRecovery: boolean;
+  requestOrigin?: string;
   sessions: { binding: { origin: string } };
 };
 type Profile =
@@ -42,7 +43,7 @@ export function browserProfile(
       url.password ||
       !auth ||
       auth.allowRecovery ||
-      auth.sessions.binding.origin !== publicOrigin
+      (auth.requestOrigin ?? auth.sessions.binding.origin) !== publicOrigin
     )
       throw new Error('Public hosting requires matching browser auth with local-only recovery.');
   }

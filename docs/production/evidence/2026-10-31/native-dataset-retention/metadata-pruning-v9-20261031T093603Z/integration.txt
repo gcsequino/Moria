@@ -1,0 +1,17 @@
+TAP version 13
+# Subtest: finite metadata pruning preserves a live old-root reader and all physical retention pins
+ok 1 - finite metadata pruning preserves a live old-root reader and all physical retention pins
+  ---
+  duration_ms: 26064.239695
+  type: 'test'
+  ...
+# {"metadataSnapshotsBefore":2,"metadataSnapshotsAfter":1,"oldRootUnexpired":true,"liveReaderRows":64,"currentRows":64,"idempotentNoop":true,"indexingIntent":"normal validated publication path retained"}
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26523.579643

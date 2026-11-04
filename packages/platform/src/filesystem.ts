@@ -12,6 +12,9 @@ import type {
   SourcePlan,
   SourceActivation,
   FilesystemMarking,
+  SourceCompilerContext,
+  SourceCompilerArtifactRef,
+  SourceRuntimeStatus,
 } from '../../contracts/filesystem.js';
 
 export function filesystemClient(transport: Transport) {
@@ -204,6 +207,57 @@ export function filesystemClient(transport: Transport) {
         { expectedSourceDigest, ...(exports ? { exports } : {}) },
         settings,
       ),
+    compilerContext: (settings?: RequestOptions) =>
+      transport.request<SourceCompilerContext>(
+        `${route}/compiler-context`,
+        'GET',
+        undefined,
+        settings,
+      ),
+    runtimeStatus: (id: string, settings?: RequestOptions) =>
+      transport.request<SourceRuntimeStatus>(
+        `${route}/sources/${encodeURIComponent(id)}/runtime`,
+        'GET',
+        undefined,
+        settings,
+      ),
+    publishArtifact: (
+      id: string,
+      expectedSourceDigest: string,
+      artifact: SourceCompilerArtifactRef,
+      settings?: RequestOptions,
+    ) =>
+      transport.request<SourcePublication>(
+        `${route}/sources/${encodeURIComponent(id)}/publish`,
+        'POST',
+        { expectedSourceDigest, artifact },
+        settings,
+      ),
+    async writeCompilerArtifact(
+      rootId: string,
+      sourceDigest: string,
+      parentId: string,
+      name: string,
+      expectedRevision: string,
+      bytes: Uint8Array,
+      settings: ActionOptions,
+    ) {
+      if (bytes.length > 16 * 1024 * 1024) throw new Error('Compiler artifact exceeds16MiB');
+      const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
+      const hash = `sha256:${Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('')}`;
+      const response = await transport.response(
+        `${route}/sources/${encodeURIComponent(rootId)}/artifacts?${new URLSearchParams({ sourceDigest, parentId, name, expectedRevision })}`,
+        'POST',
+        new Uint8Array(bytes),
+        {
+          'content-type': 'application/json',
+          'x-moria-size': String(bytes.length),
+          'x-moria-digest': hash,
+        },
+        settings,
+      );
+      return (await response.json()) as FilesystemReceipt;
+    },
     plan: (id: string, digest: string, deletions: string[] = [], settings?: RequestOptions) =>
       transport.request<SourcePlan>(
         `${route}/sources/${encodeURIComponent(id)}/plan`,

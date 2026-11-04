@@ -1,0 +1,1 @@
+{"protocolVersion":1,"schema":{"checksum":"93f4b6dd2fdce4b499eed9ea9ecb6610206c35fbe7427a23065336a833ff2b17","version":5},"sourceDigest":"a8038e92bf6d788cb96b1072cd238191b2d52ed26516b278ac5ed8cf734c1922"}

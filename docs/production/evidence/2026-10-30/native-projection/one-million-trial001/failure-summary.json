@@ -1,0 +1,25 @@
+{
+  "outcome": "failed",
+  "failedPhase": "indexing-reduce",
+  "error": "UNAUTHENTICATED",
+  "capacityCertified": false,
+  "buildProfile": "dev (unoptimized)",
+  "sourceRows": "1000000",
+  "logicalRowBytes": 4096,
+  "sourceLogicalBytes": "4096000000",
+  "physicalParquetBytes": "4019642204",
+  "sourceProducerSeconds": 22.346792438009288,
+  "nativePublicationSeconds": 418.5,
+  "sealedScanTasks": 245,
+  "sealedScanRows": "1000000",
+  "sealedReducePartitions": 8,
+  "requiredReducePartitions": 16,
+  "maxObservedNativeProcessRssBytes": 96522240.0,
+  "maxObservedCgroupPeakBytes": "10851999744",
+  "notes": [
+    "The original 15-minute ordinary credential expired while real reducers were running. No source generation or typed projection activated.",
+    "Preparation logs and resource samples are raw evidence. This trial does not establish a protected HTTP capacity or throughput result.",
+    "Scan and reduce already use bounded UNNEST batches of 1000. Reducer physical plans were not captured in this trial.",
+    "Resource sampling began during native indexing; cgroup memory includes file cache and is not a native heap measurement."
+  ]
+}

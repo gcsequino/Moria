@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -8,11 +8,13 @@ import { database } from './fixtures/catalog-storage/database.js';
 import { iceberg } from './iceberg-helper.js';
 import { icebergSchema } from '../packages/contracts/iceberg.js';
 import { Authority } from '../services/security/src/authority.js';
+import { WorkloadSessions } from '../services/security/src/sessions.js';
 import { ObjectStore, type ObjectSchema } from '../services/ontology/src/store.js';
 import { IcebergIndexer } from '../services/ontology/src/indexer.js';
 import { ObjectService } from '../services/ontology/src/service.js';
 import { commitProxy } from './fixtures/indexing/commit-proxy.js';
 import { createWorkspace } from '../apps/local/src/workspace.js';
+import { assetSchema, builtinObjectTypes } from '../packages/contracts/bundled-objects.js';
 import { chmod } from 'node:fs/promises';
 
 test(
@@ -24,7 +26,7 @@ test(
     const environment = randomUUID(),
       targetId = randomUUID(),
       warehouse = join(db.root, 'warehouse');
-    const session = { environment, principal: 'pipeline', application: 'indexing' };
+    const context = { environment, principal: 'pipeline', application: 'indexing' };
     const schema: ObjectSchema = {
       primaryKey: 'uid',
       properties: {
@@ -50,6 +52,11 @@ test(
     const operations = ['source:read', 'objects:index', 'objects:read', 'edit:invoke'];
     await authority.setApplication(environment, 'fixture', 'indexing', operations);
     await authority.setGrants(environment, 'fixture', 'pipeline', 'indexing', operations);
+    const credential = await new WorkloadSessions(authority).mint(context, 'fixture');
+    const session = {
+      ...context,
+      sessionHash: createHash('sha256').update(credential.token).digest('hex'),
+    };
     const indexer = new IcebergIndexer(store, authority, {
       source: { kind: 'dataset', resource: 'source', markings: ['private'] },
       target: { resource: 'objects', markings: ['private'], schema },
@@ -615,7 +622,7 @@ test(
         for (let i = 0; i < 200 && !checkedOut; i++) {
           checkedOut = (
             await db.pool.query(
-              "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1 AND wait_event_type='Lock' AND query='SELECT moria.indexing_check($1)') AS waiting",
+              "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1 AND wait_event_type='Lock' AND query LIKE 'SELECT moria.indexing_claim_check%') AS waiting",
               [role],
             )
           ).rows[0].waiting;
@@ -715,6 +722,13 @@ test(
         const workspace = await createWorkspace(db.catalog, warehouse, {
           distributedIndexing: true,
         });
+        await assert.rejects(
+          workspace.ingest(
+            { environment: 'local-workspace', principal: 'operator', application: 'local-ui' },
+            [],
+          ),
+          (error: unknown) => (error as { code?: string }).code === 'UNAUTHENTICATED',
+        );
         const imported = await workspace.ingest('operator', [
           { id: 'one', title: 'Original', region: 'West', status: 'Open', notes: 'Durable' },
         ]);
@@ -739,6 +753,105 @@ test(
         );
         assert.equal(page.objects.length, 1);
         assert.equal(page.objects[0].title, 'Original');
+        const local = {
+          environment: 'local-workspace',
+          principal: 'operator',
+          application: 'local-ui',
+        };
+        await db.pool.query(
+          `UPDATE moria.workload_sessions SET expires_at=clock_timestamp()-interval '1 second'
+           WHERE token_hash=(SELECT context->>'sessionHash' FROM moria.indexing_bindings WHERE environment=$1 AND target='assets')`,
+          [local.environment],
+        );
+        const sourceHead = (await db.catalog.heads(local.environment, ['assets-source']))[0];
+        const replacement = await iceberg({
+          operation: 'stage',
+          warehouse,
+          baseMetadataLocation: sourceHead.metadataLocation,
+          rows: [
+            {
+              uid: page.objects[0].uid,
+              id: 'one',
+              title: 'Saved while indexer expired',
+              region: 'West',
+              status: 'Open',
+              notes: 'Durable',
+            },
+          ],
+        });
+        const publisher = await restarted.sessions.authenticate(
+          `Bearer ${(await restarted.sessions.mint(local, 'fixture')).token}`,
+        );
+        const publishing = randomUUID();
+        const publishingFence = await db.catalog.claim(
+          local.environment,
+          publishing,
+          'workspace-publisher',
+          300,
+        );
+        const epoch = (
+          await restarted.authority.current(local.environment, local.principal, local.application)
+        ).epoch;
+        await db.catalog.publish(
+          {
+            environment: local.environment,
+            execution: publishing,
+            worker: 'workspace-publisher',
+            fence: publishingFence,
+            securityEpoch: epoch,
+            outputs: [
+              {
+                dataset: 'assets-source',
+                expectedRevision: sourceHead.revision,
+                metadataLocation: replacement.metadataLocation,
+                snapshotId: replacement.snapshotId,
+              },
+            ],
+            lineage: {},
+          },
+          (client) =>
+            restarted.authority.assertCurrent(
+              client,
+              local.environment,
+              local.principal,
+              local.application,
+              epoch,
+              publisher.sessionHash,
+            ),
+        );
+        const blocked = await restarted.status();
+        assert.equal(blocked.ready, true);
+        assert.equal(blocked.importing, false);
+        assert.equal(blocked.sourceRevision, '2');
+        assert.equal(blocked.servedSourceRevision, '1');
+        assert.equal(blocked.indexingStatus, 'blocked');
+        assert.equal(blocked.indexingError, 'UNAUTHENTICATED');
+        assert.equal(
+          (await restarted.service.query(publisher, { pageSize: 10 })).objects[0].title,
+          'Original',
+        );
+        const recoveredIndexer = new IcebergIndexer(
+          new ObjectStore(db.catalog),
+          restarted.authority,
+          {
+            source: { kind: 'dataset', resource: 'assets-source', markings: ['workspace'] },
+            target: { resource: 'assets', markings: ['workspace'], schema: assetSchema },
+          },
+        );
+        await recoveredIndexer.registerDistributed(publisher, {
+          targetId: builtinObjectTypes.assets,
+          warehouse,
+        });
+        assert.equal((await restarted.status()).indexingStatus, 'pending');
+        await start('drain').done;
+        const recovered = await restarted.status();
+        assert.equal(recovered.indexingStatus, 'active');
+        assert.equal(recovered.sourceRevision, '2');
+        assert.equal(recovered.servedSourceRevision, '2');
+        assert.equal(
+          (await restarted.service.query(publisher, { pageSize: 10 })).objects[0].title,
+          'Saved while indexer expired',
+        );
       },
     );
   },

@@ -1,0 +1,39 @@
+- complementary:
+  - link "◈ MORIA":
+    - /url: /
+    - text: ◈
+    - generic: MORIA
+  - generic: INSTANCE MANAGEMENT
+  - navigation "Instance navigation":
+    - button "Files and sources"
+    - button "Published resources"
+    - button "Runtime status"
+  - text: Native runtime
+  - text: PostgreSQL + Iceberg
+- main:
+  - generic: INSTANCE / RESOURCES
+  - heading "Work with published resources." [level=1]
+  - paragraph: Every operation uses your current permissions and the published resource contract.
+  - strong: Local recovery
+  - generic: publisher
+  - button "Sign out"
+  - heading "Open a published resource" [level=2]
+  - paragraph: Use a resource ID from Files and sources. Reading its definition grants no permission to query or invoke it.
+  - text: Resource ID
+  - textbox "Resource ID": 0deaaf2c-ee16-499f-8cac-2de03f86a007
+  - button "Open resource"
+  - region "Published resource":
+    - heading "increment Function" [level=3]
+    - paragraph:
+      - code: 0deaaf2c-ee16-499f-8cac-2de03f86a007
+    - generic "Published definition"
+    - region "Function invocation":
+      - heading "Invoke function" [level=4]
+      - text: Input JSON
+      - textbox "Input JSON": "{\"value\":41}"
+      - button "Invoke / retry same request"
+      - button "New request"
+      - paragraph: "Invocation 45b812be-fc2f-428c-9bf4-5e71813882bd: succeeded"
+      - generic: "{ \"artifact\": { \"digest\": \"sha256:a06c3ef3624929e9c9895892b318700d5b10c209cbb531dc3a5dc2e301ba5ac5\", \"uri\": \"oci://127.0.0.1:32926/moria-function-fixture\" }, \"attemptId\": \"1e4e73cc-b53c-476c-968f-c38b98a32864\", \"calls\": [], \"correlationId\": \"b780a5aa-5c63-4720-a9b6-e5e8ac497faf\", \"createdAt\": \"2026-10-31T11:00:04.19789+00:00\", \"effect\": \"readOnly\", \"finishedAt\": \"2026-10-31T11:00:07.380297+00:00\", \"id\": \"45b812be-fc2f-428c-9bf4-5e71813882bd\", \"markings\": [], \"release\": \"sha256:2c5be414dbaf4b8cd9b4f851926f159120e896aae5ca767ee7630791f5ab7ded\", \"resourceId\": \"0deaaf2c-ee16-499f-8cac-2de03f86a007\", \"result\": { \"value\": 42 }, \"status\": \"succeeded\", \"valueVersion\": 1 }"
+      - generic "Invocation events": "1 state: accepted 2 state: running 3 log: function started 4 state: running 5 state: running 6 state: succeeded"
+      - status

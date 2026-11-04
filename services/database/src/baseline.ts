@@ -1,6 +1,15 @@
 import { filesystemRoot } from '../../../packages/contracts/filesystem.js';
+import { identityRuntimeSchema } from './identity-runtime-schema.js';
+import { executionRuntimeSchema } from './execution-runtime-schema.js';
+import { nativeAuthoritySchema } from './native-authority-schema.js';
+import { servingRuntimeSchema, servingFunctionReferenceSchema } from './serving-runtime-schema.js';
+import { browserOriginSchema } from './browser-origin-schema.js';
+import { browserSessionRevocationSchema } from './browser-session-revocation-schema.js';
+import { deliveryRuntimeSchema } from './delivery-runtime-schema.js';
+import { snapshotRuntimeSchema } from './snapshot-runtime-schema.js';
+import { functionRuntimeSchema } from './function-runtime-schema.js';
 
-/** Fresh schema version 3. Development instances must be recreated, not upgraded. */
+/** Fresh baseline. Existing instances require an explicit migration. */
 export const baseline = `
       CREATE SCHEMA IF NOT EXISTS moria;
       CREATE TABLE IF NOT EXISTS moria.environments (
@@ -48,9 +57,14 @@ export const baseline = `
         SELECT id,revision,jsonb_build_object('id',id,'parentId',NULL,'name',name,'kind',kind,
           'revision',revision::text,'projectId',NULL,'environmentId',NULL,'resourceId',NULL,
           'content',NULL,'deleted',false) FROM moria.fs_entries;
+      CREATE FUNCTION moria.identity_key_hash(value text) RETURNS bytea LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE AS $$
+        SELECT pg_catalog.sha256(pg_catalog.convert_to(value,'UTF8'))
+      $$;
       CREATE TABLE IF NOT EXISTS moria.identities (
-        domain text NOT NULL, canonical_key text NOT NULL, uid uuid NOT NULL UNIQUE,
-        created_at timestamptz NOT NULL DEFAULT clock_timestamp(), PRIMARY KEY(domain,canonical_key)
+        domain text COLLATE "C" NOT NULL, canonical_key text COLLATE "C" NOT NULL, uid uuid NOT NULL UNIQUE,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        key_hash bytea GENERATED ALWAYS AS (moria.identity_key_hash(canonical_key)) STORED,
+        PRIMARY KEY(domain,key_hash)
       );
       CREATE TABLE IF NOT EXISTS moria.leases (
         environment text NOT NULL REFERENCES moria.environments(id), execution text NOT NULL,
@@ -289,5 +303,92 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
       job_id text NOT NULL REFERENCES moria.weather_publications(job_id)
     );
   ${indexingSchema}
+  ${identityRuntimeSchema}
+  ${nativeAuthoritySchema}
+  ${executionRuntimeSchema}
+  ${deliveryRuntimeSchema}
+  ${servingRuntimeSchema}
+  ${browserOriginSchema}
+  ${browserSessionRevocationSchema}
+  ${filesystemRuntimeSchema}
+  ${filesystemContentSchema}
+  ${sourceRuntimeSchema}
+  ${snapshotRuntimeSchema}
+  ${functionRuntimeSchema}
+  ${servingFunctionReferenceSchema}
+  ${agentRuntimeSchema}
+  ${jobRuntimeSchema}
+  ${scratchRuntimeSchema}
+  ${evaluationRuntimeSchema}
+  ${changeRuntimeSchema}
+  ${modelRuntimeSchema}
+  ${projectionRuntimeSchema}
+  ${linkConstraintSchema}
+  ${searchRuntimeSchema}
+  ${searchProjectorSchema}
+  ${provenanceRuntimeSchema}
+  ${sourceDeclarationSchema}
+  ${actionAdmissionSchema}
+  ${indexingJobRuntimeSchema}
+  ${recoveryRuntimeSchema}
+  ${secretRuntimeSchema}
+  ${recoveryContentSchema}
+  ${retentionRuntimeSchema}
+  ${filesystemGcSchema}
+  ${executionRootPinsSchema}
+  ${directoryRuntimeSchema}
+  ${pipelineRuntimeSchema}
+  ${automationRuntimeSchema}
+  ${mcpRuntimeSchema}
+  ${historyRuntimeSchema}
   `;
 import { indexingSchema } from './indexing-schema.js';
+import { changeRuntimeSchema } from './change-runtime-schema.js';
+import { filesystemRuntimeSchema } from './filesystem-runtime-schema.js';
+import { modelRuntimeSchema } from './model-runtime-schema.js';
+import { linkConstraintSchema } from './link-constraint-schema.js';
+import { projectionRuntimeSchema } from './projection-runtime-schema.js';
+
+import { searchRuntimeSchema } from './search-runtime-schema.js';
+
+import { agentRuntimeSchema } from './agent-runtime-schema.js';
+
+import { filesystemContentSchema } from './filesystem-content-schema.js';
+
+import { jobRuntimeSchema } from './job-runtime-schema.js';
+
+import { provenanceRuntimeSchema } from './provenance-runtime-schema.js';
+import { actionAdmissionSchema } from './action-admission-schema.js';
+
+import { indexingJobRuntimeSchema } from './indexing-job-runtime-schema.js';
+
+import { sourceRuntimeSchema } from './source-runtime-schema.js';
+
+import { searchProjectorSchema } from './search-projector-schema.js';
+
+import { evaluationRuntimeSchema } from './evaluation-runtime-schema.js';
+
+import { scratchRuntimeSchema } from './scratch-runtime-schema.js';
+
+import { directoryRuntimeSchema } from './directory-runtime-schema.js';
+
+import { pipelineRuntimeSchema } from './pipeline-runtime-schema.js';
+
+import { mcpRuntimeSchema } from './mcp-runtime-schema.js';
+
+import { recoveryRuntimeSchema } from './recovery-runtime-schema.js';
+
+import { retentionRuntimeSchema } from './retention-runtime-schema.js';
+import { recoveryContentSchema } from './recovery-content-schema.js';
+
+import { historyRuntimeSchema } from './history-runtime-schema.js';
+
+import { executionRootPinsSchema } from './execution-root-pins-schema.js';
+
+import { automationRuntimeSchema } from './automation-runtime-schema.js';
+
+import { filesystemGcSchema } from './filesystem-gc-schema.js';
+
+import { secretRuntimeSchema } from './secret-runtime-schema.js';
+
+import { sourceDeclarationSchema } from './source-declaration-schema.js';

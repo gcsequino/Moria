@@ -1,0 +1,28 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "host",
+    "--user",
+    "1000:1000",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-model-local-20261030T140148Z,dst=/usr/local/bin/moria-runtime,readonly",
+    "-e",
+    "MORIA_LOCAL_MODEL_ENDPOINT=http://127.0.0.1:11436/v1/",
+    "-e",
+    "MORIA_MODEL_SMOKE_REPORT=docs/benchmarks/native-model-smoke-gpu-20261030T140148Z.json",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "scripts/native-model-smoke.ts"
+  ],
+  "exit": 0,
+  "binarySha256": "fa0348a6c988892db7a0ff2e10bc9fc057ed3d5fffcc4c3dcddb88829f435e26",
+  "log": "native-model-smoke-gpu-20261030T140148Z.log",
+  "report": "docs/benchmarks/native-model-smoke-gpu-20261030T140148Z.json"
+}

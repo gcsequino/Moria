@@ -1,0 +1,19 @@
+TAP version 13
+# Subtest: native Dataset abandoned multipart cleanup uses exact issued keys across lost ACKs and late provider effects
+ok 1 - native Dataset abandoned multipart cleanup uses exact issued keys across lost ACKs and late provider effects
+  ---
+  duration_ms: 46304.530859
+  type: 'test'
+  ...
+# {"phase":"part","exactMultipartAborted":true,"siblingPreserved":true,"actualProducer":"8b0e9ede-362b-4f74-ab71-9db6a244d33f","receipt":[{"upload_id":"YTc5MTZkZmMtYmJiZC00MTZlLThlNzUtMzllYmI3YjM5NGU1LmRiZWFjY2FhLWQ0NDItNGQwNy1iYTJiLWU5ZjY2ZGJmNDQ4ZHgxNzkzNDM4NDY0ODI5MTU4NTA3","result":"aborted"}]}
+# {"phase":"initiate","exactMultipartAborted":true,"siblingPreserved":true,"actualProducer":"baef01e5-633e-454e-8d4c-548f37c15d2b","receipt":[{"upload_id":"YTc5MTZkZmMtYmJiZC00MTZlLThlNzUtMzllYmI3YjM5NGU1LmY1NjVmOGM2LWJkMmEtNDIzYS05YzgxLWI3ZWI1YWNiYzEyN3gxNzkzNDM4NDY2MTE1MjcwNzAz","result":"aborted"}]}
+# {"phase":"before-initiate","exactMultipartAborted":true,"siblingPreserved":true,"actualProducer":"5926b539-4228-4116-bce0-2ffd83b629fa","receipt":[{"upload_id":"YTc5MTZkZmMtYmJiZC00MTZlLThlNzUtMzllYmI3YjM5NGU1LmU0NjZhZWE4LWFiNWUtNDA5My1iNjE3LThiZDUyMTBlMGMzMngxNzkzNDM4NDY3NDM3MjQ2MDIy","result":"aborted"}]}
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46813.328574

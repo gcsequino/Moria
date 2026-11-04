@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { baseline } from '../services/database/src/baseline.js';
 import { schemaVersion } from '../services/database/src/schema.js';
 
-const path = new URL('../services/indexing/schema.json', import.meta.url);
+const path = new URL('../services/runtime/schema.json', import.meta.url);
 const expected =
   JSON.stringify(
     { version: schemaVersion, checksum: createHash('sha256').update(baseline).digest('hex') },

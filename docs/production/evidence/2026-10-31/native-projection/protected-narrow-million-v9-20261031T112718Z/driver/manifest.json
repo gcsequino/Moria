@@ -1,0 +1,17 @@
+{
+  "baseDriver": "/tmp/moria-proof-drivers/20261031T070644Z-protected-capacity-v7",
+  "changes": [
+    "artifact and output paths only"
+  ],
+  "files": {
+    "package.json": {
+      "sha256": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "million-runner.ts": {
+      "sha256": "ace72b56a7cef85ee329e2ca2929ec7ceb0b5a295a968e23db276a39cb65d80f"
+    },
+    "native-protected-baseline.ts": {
+      "sha256": "4511b0a7aee996dd519420ad57f440061094913a7e19f86494fe59a6fc32ebfc"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 20039.495764
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:28:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    
+    running 1 test
+    test catalog_publication ... 
+    thread 'catalog_publication' (310) panicked at ../../tests/fixtures/native-catalog/harness.rs:149:10:
+    called `Result::unwrap()` on an `Err` value: db error
+    
+    Caused by:
+        ERROR: DATASET_BINDING_INVALID
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    FAILED
+    
+    failures:
+    
+    failures:
+        catalog_publication
+    
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.26s
+    
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/native-pipelines.integration.test.ts:369:72)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20821.46856

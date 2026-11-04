@@ -10,13 +10,7 @@ import { externalDatabase, integer } from '../../../services/database/src/config
 import { DatabaseError, holdSchema, schema } from '../../../services/database/src/schema.js';
 import pg from 'pg';
 import { Catalog } from '../../../services/catalog/src/catalog.js';
-import {
-  createWorkspace,
-  managementOperations,
-  editAction,
-  resetAction,
-  fieldActions,
-} from './workspace.js';
+import { createWorkspace, managementOperations } from './workspace.js';
 import { createLocalServer } from './server.js';
 import { localAppHost, bootstrapManagement } from '../../../services/app-host/src/bootstrap.js';
 import { AppAuth } from '../../../services/app-host/src/auth.js';
@@ -27,15 +21,15 @@ import { publicHosting } from '../../../services/app-host/src/public-hosting.js'
 
 import { configuredFilesystem } from '../../../services/filesystem/src/local.js';
 import { Functions } from '../../../services/functions/src/service.js';
-import { DockerFunctionWorker } from '../../../services/functions/src/docker.js';
-import { functionFilesystem } from '../../api/src/function-platform.js';
+import { nativeFunctionsWorker } from './native-functions.js';
+import { runNativeProcess } from './native-runtime.js';
 
 export type ProcessRole =
   'combined' | 'api' | 'supervisor' | 'scheduler' | 'worker' | 'function-worker';
 
 export function runProcess(
   role: Exclude<ProcessRole, 'function-worker'>,
-  executionFactory?: ExecutionFactory,
+  executionFactory: ExecutionFactory,
 ): Promise<{ close: () => Promise<void>; jobs: Jobs } | undefined>;
 export function runProcess(
   role: ProcessRole,
@@ -45,6 +39,17 @@ export async function runProcess(
   role: ProcessRole,
   executionFactory: ExecutionFactory = createPlatformJobs,
 ) {
+  if (role === 'function-worker') nativeFunctionsWorker();
+  const runtime = process.env.MORIA_LOCAL_RUNTIME ?? 'native';
+  if (!['native', 'legacy'].includes(runtime))
+    throw new DatabaseError('MORIA_LOCAL_RUNTIME must be native or legacy.');
+  if (
+    (runtime === 'legacy' || executionFactory !== createPlatformJobs) &&
+    process.env.NODE_ENV === 'production'
+  )
+    throw new DatabaseError('Production operational services require the native runtime.');
+  if (runtime === 'native' && executionFactory === createPlatformJobs)
+    return runNativeProcess(role);
   const mode = process.env.MORIA_DATABASE_MODE ?? 'development';
   const indexingMode =
     process.env.MORIA_INDEXING_MODE ??
@@ -138,32 +143,6 @@ export async function runProcess(
       await schema(pool, 'apply');
     }
     const catalog = new Catalog(pool, 'verify');
-    if (role === 'function-worker') {
-      const workspace = await createWorkspace(catalog, resolve(directory, 'warehouse'));
-      const filesystem = await configuredFilesystem(
-        catalog,
-        resolve(directory, 'filesystem-warehouse'),
-      );
-      functions = new Functions(
-        filesystem,
-        new Map([['assets', workspace.service]]),
-        new DockerFunctionWorker(),
-        {
-          filesystem: functionFilesystem(filesystem),
-          actions: new Map(
-            [editAction, resetAction, ...fieldActions].map((action) => [
-              action.resource,
-              { service: workspace.service, action },
-            ]),
-          ),
-        },
-      );
-      workspace.service.functions = functions;
-      checkStartup();
-      functions.startWorker();
-      console.log('Moria function worker ready.');
-      return { close, functions };
-    }
     const execution = await executionFactory(catalog);
     jobs = execution.jobs;
     checkStartup();

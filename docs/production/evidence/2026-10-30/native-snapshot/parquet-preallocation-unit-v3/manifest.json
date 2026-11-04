@@ -1,0 +1,61 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261031T050819137948Z-parquet-preallocation-v3",
+  "sourceManifestSha256": "068ef08e4f796200a64485a320359d920b389023063d3b24698d16a8237199ea",
+  "outcome": "passed",
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T050819137948Z-parquet-preallocation-v3,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "unit",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T050819137948Z-parquet-preallocation-v3,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "snapshot::parquet_bounds",
+        "-j",
+        "2",
+        "--",
+        "--nocapture"
+      ]
+    }
+  ]
+}

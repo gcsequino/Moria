@@ -1,0 +1,21 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network=none",
+  "--mount",
+  "type=bind,src=/home/gcseq/moria-current-publish-20261104,dst=/work",
+  "--env",
+  "npm_config_verify_deps_before_run=false",
+  "--env",
+  "npm_config_update_notifier=false",
+  "--env",
+  "CI=true",
+  "--workdir",
+  "/work",
+  "--entrypoint",
+  "bash",
+  "moria-test:gate-v27",
+  "-lc",
+  "pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:indexing && pnpm check:python && pnpm build && pnpm check:starter"
+]

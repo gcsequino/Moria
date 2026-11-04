@@ -1,0 +1,101 @@
+{
+  "classification": "same-frozen-source backend Model phase; no browser ticket created",
+  "artifact": {
+    "snapshot": {
+      "root": "/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22",
+      "files": 2420,
+      "manifestSha256": "39d235b52d18dfa4d91da7519b80afaa2d25871bd9881387233e977f5fe33ae8",
+      "imageDependencyLinks": {
+        ".venv": "/app/.venv"
+      },
+      "dependencyMounts": [
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+      ]
+    },
+    "artifacts": {
+      "moria-runtime": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+        "path": "/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-runtime",
+        "sha256": "463625966b54f05f657201cd576c677306e1563ae4bb3e6fb3671a426a217a73"
+      },
+      "moria-indexing": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+        "path": "/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-indexing",
+        "sha256": "6e6ffb95a5b2a147134d2939d504e247796bf9b622f411beb2bb20a052e637ca"
+      },
+      "moria-native-catalog-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+        "path": "/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-native-catalog-test",
+        "sha256": "a4150d464b1e7a58f4756c68ccea1575bc5f6d6d164426dda0995ae970f77f0f"
+      },
+      "moria-native-retention-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+        "path": "/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-native-retention-test",
+        "sha256": "eb4066986e031cde4ded94adcc9d6499892c1fc6aa5217858045810370971b93"
+      },
+      "moria-native-sandbox-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_sandbox-1c205eafd7b8b6e9",
+        "path": "/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-native-sandbox-test",
+        "sha256": "8a8da0c3d5b6c44a6364df6ac20ca0e4e27e7017da75e8ed1cc4a92b846c3ca4"
+      }
+    },
+    "compiled": {
+      "protocolVersion": 1,
+      "schema": {
+        "checksum": "37eff586493bba00877653cf7a0c6693e78b9d4ad44e18a8f1f4d062ad76b67e",
+        "version": 5
+      },
+      "sourceDigest": "f2ee73ae6a3bc13e7ae34a59c607e500f81ca40c21a6db673493a76a02b2278a"
+    },
+    "evidence": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/20261031T132112Z"
+  },
+  "command": [
+    "flock",
+    "-s",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "host",
+    "--group-add",
+    "108",
+    "-e",
+    "pnpm_config_verify_deps_before_run=false",
+    "-e",
+    "MORIA_NATIVE_WHOLE_INSTANCE=1",
+    "-e",
+    "MORIA_NATIVE_WHOLE_INSTANCE_PREFLIGHT_ONLY=1",
+    "-e",
+    "MORIA_NATIVE_WHOLE_INSTANCE_MODEL_ENDPOINT=http://127.0.0.1:11436/v1/",
+    "-e",
+    "MORIA_NATIVE_BROWSER_PROOF_FILE=/tmp/whole-instance-unused-state.json",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_INDEXING_BINARY=/usr/local/bin/moria-indexing",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-catalog-tests",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T132112794384Z-private-model-fence-http-v22/native-proof-artifacts/moria-native-catalog-test,dst=/usr/local/bin/moria-catalog-tests,readonly",
+    "--mount",
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-source-runtime.integration.test.ts"
+  ],
+  "exit": 1
+}

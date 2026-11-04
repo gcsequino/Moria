@@ -1,0 +1,53 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+    # Subtest: admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+    ok 1 - admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+      ---
+      duration_ms: 34238.141072
+      type: 'test'
+      ...
+    # Subtest: repeats stay separate and comparison rejects a different evaluator version
+    ok 2 - repeats stay separate and comparison rejects a different evaluator version
+      ---
+      duration_ms: 61504.396648
+      type: 'test'
+      ...
+    # Subtest: public SDK and CLI inspect the same native receipt and preserve logical replay
+    ok 3 - public SDK and CLI inspect the same native receipt and preserve logical replay
+      ---
+      duration_ms: 3164.947243
+      type: 'test'
+      ...
+    # Subtest: cancelling a run fences every accepted descendant and stops live model and OCI work
+    ok 4 - cancelling a run fences every accepted descendant and stops live model and OCI work
+      ---
+      duration_ms: 21172.517195
+      type: 'test'
+      ...
+    # Subtest: a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+    ok 5 - a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+      ---
+      duration_ms: 35715.122161
+      type: 'test'
+      ...
+    # Subtest: current clearance and registration protect retained case scores, summaries and events
+    ok 6 - current clearance and registration protect retained case scores, summaries and events
+      ---
+      duration_ms: 345.051456
+      type: 'test'
+      ...
+    1..6
+ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 187262.242966
+  type: 'test'
+  ...
+1..1
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 240994.265882

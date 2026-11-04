@@ -1,0 +1,69 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+    # Subtest: admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+    ok 1 - admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+      ---
+      duration_ms: 36609.731927
+      type: 'test'
+      ...
+    # Subtest: repeats stay separate and comparison rejects a different evaluator version
+    ok 2 - repeats stay separate and comparison rejects a different evaluator version
+      ---
+      duration_ms: 56941.325179
+      type: 'test'
+      ...
+    # Subtest: public SDK and CLI inspect the same native receipt and preserve logical replay
+    ok 3 - public SDK and CLI inspect the same native receipt and preserve logical replay
+      ---
+      duration_ms: 2986.777333
+      type: 'test'
+      ...
+    # Subtest: cancelling a run fences every accepted descendant and stops live model and OCI work
+    not ok 4 - cancelling a run fences every accepted descendant and stops live model and OCI work
+      ---
+      duration_ms: 19219.108854
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:869:13'
+      failureType: 'testCodeFailure'
+      error: '{"status":503,"error":{"code":"CONCURRENT_MODIFICATION","correlationId":"3473ab9c-087f-41e4-9043-b19e4072f063","details":null,"message":"CONCURRENT_MODIFICATION","requestId":"3473ab9c-087f-41e4-9043-b19e4072f063","retryable":true}}'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        native (/work/tests/native-evaluations.integration.test.ts:537:31)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:884:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:869:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+    ok 5 - a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+      ---
+      duration_ms: 85587.765264
+      type: 'test'
+      ...
+    # Subtest: current clearance and registration protect retained case scores, summaries and events
+    ok 6 - current clearance and registration protect retained case scores, summaries and events
+      ---
+      duration_ms: 348.355968
+      type: 'test'
+      ...
+    1..6
+not ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 230986.187201
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:31:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 7
+# suites 0
+# pass 5
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 234933.054126

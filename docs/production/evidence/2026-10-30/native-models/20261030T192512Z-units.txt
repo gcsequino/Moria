@@ -1,0 +1,19 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `resolve_dataset_pin_registered_in` is never used
+   --> src/catalog.rs:684:21
+    |
+684 | pub(crate) async fn resolve_dataset_pin_registered_in(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `moria-runtime` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 4.96s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-6bf34979c374a2ce)
+
+running 2 tests
+test http_admission::tests::accepted_connection_budget_is_held_until_the_socket_closes ... ok
+test http_admission::tests::response_admission_survives_headers_and_releases_on_end_or_drop ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 28 filtered out; finished in 0.02s
+

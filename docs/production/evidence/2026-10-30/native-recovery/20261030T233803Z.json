@@ -1,0 +1,184 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6",
+  "sourceManifestSha256": "befa1f57f9695315957a2406ba3876e1419d3fd81f2aab16bce0e992f03e2411",
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "typescript",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "phase": "canonical-units",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "canonical::tests",
+        "-j",
+        "2"
+      ]
+    },
+    {
+      "phase": "key-units",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "recovery_keys::tests",
+        "-j",
+        "2"
+      ]
+    },
+    {
+      "phase": "offline-units",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "recovery_content::offline::tests",
+        "-j",
+        "2"
+      ]
+    },
+    {
+      "phase": "build",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins",
+        "-j",
+        "2",
+        "--message-format=json"
+      ]
+    },
+    {
+      "phase": "test",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233758049801Z-recovery-clean-host-v6/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "tests/native-recovery.integration.test.ts",
+        "tests/native-http-admission.integration.test.ts",
+        "tests/native-changes.integration.test.ts"
+      ]
+    }
+  ],
+  "outcome": "test failed",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "669eaec77c69ae7b59b92cf1dc38ee8876d94f9369a26c2157bc23c45e123ab2",
+      "version": 5
+    },
+    "sourceDigest": "1ed46b87e5dccdc8ff6d1d3394a0222ee4d3457299539fbf4afc2dc5ee9f9d50"
+  },
+  "binarySha256": "8b908aec916b5a98cf10267abeaa68f664fa101f7a42e90d38a409c5dc3e117b"
+}

@@ -186,11 +186,22 @@ export async function createWorkspace(
   const sessions = new WorkloadSessions(authority);
   const context = (principal: Profile) => ({ environment, principal, application });
   const tokens = new Map<Profile, { token: string; expiresAt: string }>();
-  const resolveContext = (actor: Profile | SessionContext): SessionContext =>
-    typeof actor === 'string' ? context(actor) : actor;
+  const token = async (profile: Profile) => {
+    let entry = tokens.get(profile);
+    if (!entry || Date.parse(entry.expiresAt) < Date.now() + 30000) {
+      entry = await sessions.mint(context(profile), 'local-ui');
+      tokens.set(profile, entry);
+    }
+    return entry.token;
+  };
+  const resolveContext = async (actor: Profile | SessionContext): Promise<SessionContext> => {
+    if (typeof actor === 'string') return sessions.authenticate(`Bearer ${await token(actor)}`);
+    if (!actor.sessionHash) throw new MoriaError('UNAUTHENTICATED', 'Workspace session required.');
+    return actor;
+  };
   let importing = false;
   async function managementGuard(actor: Profile | SessionContext) {
-    const session = resolveContext(actor);
+    const session = await resolveContext(actor);
     if (session.environment !== environment || session.application !== application)
       throw new MoriaError('FORBIDDEN', 'Management application session required.');
     const state = await authority.current(environment, session.principal, application);
@@ -217,14 +228,7 @@ export async function createWorkspace(
     async requireManagement(actor: Profile | SessionContext) {
       await managementGuard(actor);
     },
-    async token(profile: Profile) {
-      let entry = tokens.get(profile);
-      if (!entry || Date.parse(entry.expiresAt) < Date.now() + 30000) {
-        entry = await sessions.mint(context(profile), 'local-ui');
-        tokens.set(profile, entry);
-      }
-      return entry.token;
-    },
+    token,
     async status() {
       const result = await catalog.pool.query(
         'SELECT revision FROM moria.source_generations WHERE environment=$1 AND object_type=$2 ORDER BY revision DESC LIMIT 1',
@@ -232,10 +236,13 @@ export async function createWorkspace(
       );
       const latest = (
         await catalog.pool.query(
-          `SELECT b.status,b.source_revision::text,b.error,
+          `SELECT intent.status,intent.source_revision::text,intent.error,
         (SELECT p.source_revision::text FROM moria.index_provenance p JOIN moria.source_generations g ON g.stage=p.stage
           WHERE g.environment=$1 AND g.object_type='assets' ORDER BY g.revision DESC LIMIT 1) AS served
-        FROM moria.indexing_builds b WHERE b.environment=$1 AND b.target='assets' ORDER BY b.source_revision DESC,b.created_at DESC LIMIT 1`,
+        FROM (
+          SELECT status,source_revision,error,created_at FROM moria.indexing_builds WHERE environment=$1 AND target='assets'
+          UNION ALL SELECT 'blocked',source_revision,error,created_at FROM moria.indexing_blocked_intents WHERE environment=$1 AND target='assets'
+        ) intent ORDER BY intent.source_revision DESC,intent.created_at DESC LIMIT 1`,
           [environment],
         )
       ).rows[0];
@@ -261,7 +268,7 @@ export async function createWorkspace(
       input: unknown,
       refreshIdentity?: () => Promise<SessionContext>,
     ) {
-      const session = resolveContext(actor);
+      const session = await resolveContext(actor);
       if (session.environment !== environment || session.application !== application)
         throw new MoriaError('FORBIDDEN', 'Workspace session required.');
       const rows = validateImport(input);
@@ -306,14 +313,14 @@ export async function createWorkspace(
           )
             throw new MoriaError('UNAUTHENTICATED', 'Session changed during import.');
         }
-        const current = await authority.current(environment, session.principal, application);
-        authorize(current.identity, 'assets-source', 'write', markings);
-        if (typeof actor !== 'string') authorize(current.identity, 'instance', 'manage');
         if (options.distributedIndexing)
           await indexer.registerDistributed(session, {
             targetId: builtinObjectTypes.assets,
             warehouse,
           });
+        const current = await authority.current(environment, session.principal, application);
+        authorize(current.identity, 'assets-source', 'write', markings);
+        if (typeof actor !== 'string') authorize(current.identity, 'instance', 'manage');
         const receipt = await catalog.publish(
           {
             environment,

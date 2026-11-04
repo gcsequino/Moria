@@ -1,0 +1,29 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+not ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 33769.795564
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:27:1'
+  failureType: 'testCodeFailure'
+  error: 'Manifest validation failed'
+  code: 'VALIDATION_FAILED'
+  name: 'MoriaError'
+  stack: |-
+    compileManifest (/work/packages/compiler/src/index.ts:423:11)
+    compileSource (/work/packages/compiler/src/source.ts:207:20)
+    SourceService.publish (/work/services/filesystem/src/source.ts:299:23)
+    async publish (/work/tests/native-evaluations.integration.test.ts:266:27)
+    async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:280:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34369.144808

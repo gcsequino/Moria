@@ -1,0 +1,107 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 92.331424
+      type: 'test'
+      ...
+    # Subtest: private batched authority retains per-request parity and current revocation
+    ok 2 - private batched authority retains per-request parity and current revocation
+      ---
+      duration_ms: 1105.770311
+      type: 'test'
+      ...
+# PIPELINE_AUTHORITY_GUARD_PROBE={"jit":{"setting":"on","available":false},"timingsMillis":{"on":["156.704","133.416","135.026"],"off":["134.849","137.266","134.941"]},"scope":"one dedicated probe connection; worker settings unchanged"}
+# PIPELINE_AUTHORITY_FUNCTION_PROFILE=[{"funcname":"runtime_pipeline_current","calls":"1","total_time":97.450163,"self_time":0.56795},{"funcname":"native_serving_resource_access_batch_state","calls":"1","total_time":95.723633,"self_time":0.702206},{"funcname":"native_serving_filesystem_resource_access_state","calls":"8","total_time":92.96966,"self_time":92.96966},{"funcname":"runtime_data_operational","calls":"20","total_time":1.652045,"self_time":1.652045},{"funcname":"runtime_service_binding_guard","calls":"1","total_time":0.830362,"self_time":0.287661},{"funcname":"native_serving_service_authority","calls":"1","total_time":0.542701,"self_time":0.429118},{"funcname":"runtime_data_origins","calls":"8","total_time":0.33488,"self_time":0.304806},{"funcname":"runtime_dataset_kind","calls":"5","total_time":0.328218,"self_time":0.328218},{"funcname":"runtime_environment_cell_check","calls":"1","total_time":0.113583,"self_time":0.065648},{"funcname":"runtime_data_resource","calls":"16","total_time":0.094916,"self_time":0.094916},{"funcname":"runtime_recovery_check","calls":"1","total_time":0.047935,"self_time":0.034121},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"1","total_time":0.013814,"self_time":0.013814}]
+    # Subtest: unobserved profile disable and restore fences accepted work before code starts
+    ok 3 - unobserved profile disable and restore fences accepted work before code starts
+      ---
+      duration_ms: 606.704243
+      type: 'test'
+      ...
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"queued","hostCpu":{"workerCpuTicks":"67","postgresCpuTicks":"257"},"events":[]}
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"running","hostCpu":{"workerCpuTicks":"546","postgresCpuTicks":"1187"},"events":[{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"4424"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"running","hostCpu":{"workerCpuTicks":"1024","postgresCpuTicks":"2231"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"started","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"4424"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"running","hostCpu":{"workerCpuTicks":"1525","postgresCpuTicks":"3323"},"events":[{"sequence":"8","kind":"enginePhase","payload":{"calls":"82","phase":"inputOpen","state":"started","metrics":{"inputBytes":"24933520","outputBytes":"0","inputRowsEncoded":"12000","outputRowsAppended":"0"}}},{"sequence":"7","kind":"engineProgress","payload":{"calls":"64","methods":{"metadata":"1","inputOpen":"2","inputBatch":"61"},"metrics":{"inputBytes":"19535368","outputBytes":"0","inputRowsEncoded":"9402","outputRowsAppended":"0"},"authority":{"checks":"295","elapsedMicros":"14463439"},"methodMillis":{"metadata":"0","inputOpen":"8943","inputBatch":"2802"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"4519"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"started","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"running","hostCpu":{"workerCpuTicks":"2022","postgresCpuTicks":"4417"},"events":[{"sequence":"9","kind":"enginePhase","payload":{"calls":"82","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"24933520","outputBytes":"0","inputRowsEncoded":"12000","outputRowsAppended":"0"},"elapsedMillis":"4429"}},{"sequence":"8","kind":"enginePhase","payload":{"calls":"82","phase":"inputOpen","state":"started","metrics":{"inputBytes":"24933520","outputBytes":"0","inputRowsEncoded":"12000","outputRowsAppended":"0"}}},{"sequence":"7","kind":"engineProgress","payload":{"calls":"64","methods":{"metadata":"1","inputOpen":"2","inputBatch":"61"},"metrics":{"inputBytes":"19535368","outputBytes":"0","inputRowsEncoded":"9402","outputRowsAppended":"0"},"authority":{"checks":"295","elapsedMicros":"14463439"},"methodMillis":{"metadata":"0","inputOpen":"8943","inputBatch":"2802"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"4519"}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"preparing","hostCpu":{"workerCpuTicks":"2444","postgresCpuTicks":"5580"},"events":[{"sequence":"13","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"},"elapsedMillis":"872"}},{"sequence":"12","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"}}},{"sequence":"11","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"},"elapsedMillis":"871"}},{"sequence":"10","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1883691d-e308-4248-b1ef-3852d2e59992","status":"preparing","hostCpu":{"workerCpuTicks":"2820","postgresCpuTicks":"6831"},"events":[{"sequence":"13","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"},"elapsedMillis":"872"}},{"sequence":"12","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"}}},{"sequence":"11","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"},"elapsedMillis":"871"}},{"sequence":"10","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"}}}]}
+    # Subtest: actual bounded guest reads three wide sources and commits both heads with one receipt
+    ok 4 - actual bounded guest reads three wide sources and commits both heads with one receipt
+      ---
+      duration_ms: 71541.726463
+      type: 'test'
+      ...
+    # Subtest: public SDK and CLI replay one native receipt without running code again
+    ok 5 - public SDK and CLI replay one native receipt without running code again
+      ---
+      duration_ms: 578.745531
+      type: 'test'
+      ...
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"queued","hostCpu":{"workerCpuTicks":"3278","postgresCpuTicks":"8140"},"events":[]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"running","hostCpu":{"workerCpuTicks":"3632","postgresCpuTicks":"9390"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"running","hostCpu":{"workerCpuTicks":"3979","postgresCpuTicks":"10719"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"running","hostCpu":{"workerCpuTicks":"4335","postgresCpuTicks":"12045"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"running","hostCpu":{"workerCpuTicks":"4728","postgresCpuTicks":"13322"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"29204"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"running","hostCpu":{"workerCpuTicks":"5073","postgresCpuTicks":"14643"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"29204"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"running","hostCpu":{"workerCpuTicks":"5408","postgresCpuTicks":"15967"},"events":[{"sequence":"6","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"20727"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"29204"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"preparing","hostCpu":{"workerCpuTicks":"5764","postgresCpuTicks":"17264"},"events":[{"sequence":"8","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"},"elapsedMillis":"3134"}},{"sequence":"7","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"started","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"20727"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"preparing","hostCpu":{"workerCpuTicks":"6098","postgresCpuTicks":"18589"},"events":[{"sequence":"8","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"},"elapsedMillis":"3134"}},{"sequence":"7","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"started","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"20727"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"preparing","hostCpu":{"workerCpuTicks":"6434","postgresCpuTicks":"19926"},"events":[{"sequence":"8","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"},"elapsedMillis":"3134"}},{"sequence":"7","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"started","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"20727"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"d19c140d-3807-429e-8d96-67bc6673d0ee","status":"preparing","hostCpu":{"workerCpuTicks":"6769","postgresCpuTicks":"21265"},"events":[{"sequence":"8","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"},"elapsedMillis":"3134"}},{"sequence":"7","kind":"enginePhase","payload":{"calls":"16","phase":"outputFinish","state":"started","metrics":{"inputBytes":"99536","outputBytes":"928","inputRowsEncoded":"6010","outputRowsAppended":"1"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"20727"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}}]}
+    # Subtest: a second actual guest verifies published Parquet values beyond JS precision through native grants
+    ok 6 - a second actual guest verifies published Parquet values beyond JS precision through native grants
+      ---
+      duration_ms: 112634.420205
+      type: 'test'
+      ...
+# PIPELINE_LIVE_CONTROL={"id":"89727a34-3dd8-4d76-bef3-4411d654a5ec","status":"queued","hostCpu":{"workerCpuTicks":"7130","postgresCpuTicks":"22592"},"events":[]}
+# PIPELINE_LIVE_CONTROL={"id":"89727a34-3dd8-4d76-bef3-4411d654a5ec","status":"running","hostCpu":{"workerCpuTicks":"7482","postgresCpuTicks":"23850"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"89727a34-3dd8-4d76-bef3-4411d654a5ec","status":"running","hostCpu":{"workerCpuTicks":"7827","postgresCpuTicks":"25177"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"89727a34-3dd8-4d76-bef3-4411d654a5ec","status":"running","hostCpu":{"workerCpuTicks":"8162","postgresCpuTicks":"26475"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"7","phase":"outputFinish","state":"started","metrics":{"inputBytes":"1224","outputBytes":"360","inputRowsEncoded":"1","outputRowsAppended":"1"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"20263"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"89727a34-3dd8-4d76-bef3-4411d654a5ec","status":"preparing","hostCpu":{"workerCpuTicks":"8510","postgresCpuTicks":"27776"},"events":[{"sequence":"6","kind":"enginePhase","payload":{"calls":"7","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"1224","outputBytes":"360","inputRowsEncoded":"1","outputRowsAppended":"1"},"elapsedMillis":"3191"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"7","phase":"outputFinish","state":"started","metrics":{"inputBytes":"1224","outputBytes":"360","inputRowsEncoded":"1","outputRowsAppended":"1"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"20263"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+    # Subtest: canonical UUID and scalar arrays survive DuckDB and Parquet; hard spill exhaustion cleans mode000 files before slot reuse
+    not ok 7 - canonical UUID and scalar arrays survive DuckDB and Parquet; hard spill exhaustion cleans mode000 files before slot reuse
+      ---
+      duration_ms: 46791.846476
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:1055:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        0 !== null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        <anonymous> (/work/tests/native-pipelines.integration.test.ts:866:16)
+        until (/work/tests/native-pipelines.integration.test.ts:25:15)
+        async terminal (/work/tests/native-pipelines.integration.test.ts:865:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:1059:20)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:1055:5)
+      ...
+    1..7
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 301447.591863
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:69:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 300000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 6
+# fail 1
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 301986.634573

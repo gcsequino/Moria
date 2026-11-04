@@ -1,0 +1,227 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 3974.930267
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 1868.346235
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    ok 3 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 6096.427719
+      type: 'test'
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 4 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 113.009562
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    ok 5 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 4292.664544
+      type: 'test'
+      ...
+    # {"event":"registered_publication_phases","phases":[{"elapsedMillis":"539","event":"closure_hashed"},{"elapsedMillis":"2000","event":"candidate_registered"},{"elapsedMillis":"541","event":"closure_hashed"},{"elapsedMillis":"2039","event":"candidate_registered"}]}
+    # {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"4366","total_time":3826.933,"self_time":549.59},{"funcname":"runtime_execution_check","calls":"6533","total_time":1549.617,"self_time":167.027},{"funcname":"runtime_binding_authority","calls":"6539","total_time":1392.699,"self_time":327.596},{"funcname":"native_serving_job_delegation","calls":"6533","total_time":1065.093,"self_time":8.349},{"funcname":"native_serving_resource_access_state","calls":"12093","total_time":995.87,"self_time":285.252},{"funcname":"runtime_dataset_labels_state","calls":"8737","total_time":964.976,"self_time":75.589},{"funcname":"native_serving_session","calls":"4413","total_time":801.029,"self_time":58.577},{"funcname":"native_serving_accepted_delegation","calls":"7658","total_time":781.279,"self_time":444.948},{"funcname":"native_serving_session_origin","calls":"10948","total_time":588.674,"self_time":588.674},{"funcname":"runtime_job_delegation_guard","calls":"7660","total_time":442.343,"self_time":442.343},{"funcname":"runtime_job_session_origin","calls":"1123","total_time":397.35,"self_time":37.248},{"funcname":"runtime_data_origins","calls":"12093","total_time":308.075,"self_time":178.732},{"funcname":"runtime_data_resource","calls":"24222","total_time":298.058,"self_time":298.058},{"funcname":"native_serving_filesystem_resource_access_state","calls":"20832","total_time":235.242,"self_time":235.242},{"funcname":"runtime_task_check","calls":"1018","total_time":224.164,"self_time":17.907},{"funcname":"runtime_dataset_kind","calls":"8739","total_time":134.71,"self_time":134.71},{"funcname":"runtime_schema_admit","calls":"4485","total_time":106.896,"self_time":106.896},{"funcname":"runtime_execution_request","calls":"6","total_time":39.824,"self_time":8.196},{"funcname":"runtime_dataset_session_matches","calls":"4373","total_time":37.2,"self_time":37.2},{"funcname":"runtime_snapshot_publish","calls":"6","total_time":36.364,"self_time":7.015},{"funcname":"runtime_worker_check","calls":"1131","total_time":20.601,"self_time":20.601},{"funcname":"runtime_job_delegation_accept","calls":"6","total_time":17.861,"self_time":4.259},{"funcname":"runtime_resource_in_use","calls":"39","total_time":14.117,"self_time":14.117},{"funcname":"runtime_job_acceptance_state","calls":"12","total_time":11.701,"self_time":4.524}]}
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 6 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 3827.788599
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 7 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 3768.073456
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 8 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 3817.220919
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 9 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 3873.514958
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 10 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 4072.990286
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 11 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 4265.680491
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 12 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 329.97924
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 13 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 7539.041112
+      type: 'test'
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        ok 1 - posix
+          ---
+          duration_ms: 2884.692182
+          type: 'test'
+          ...
+        # Subtest: s3
+        ok 2 - s3
+          ---
+          duration_ms: 3839.921565
+          type: 'test'
+          ...
+        1..2
+    ok 14 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 7245.816068
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 15 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 3873.980919
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 16 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 46.956285
+      type: 'test'
+      ...
+    1..16
+ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 62228.709216
+  type: 'test'
+  ...
+# Subtest: native effective projections build off-lock, replay concurrent edits and activate with source generations
+    # Subtest: off-lock paged build replays an actual concurrent native action before atomic activation
+    ok 1 - off-lock paged build replays an actual concurrent native action before atomic activation
+      ---
+      duration_ms: 2348.586128
+      type: 'test'
+      ...
+    # Subtest: strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+    ok 2 - strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+      ---
+      duration_ms: 284.658428
+      type: 'test'
+      ...
+    # Subtest: current actions maintain typed history atomically and exact overflow remains present
+    ok 3 - current actions maintain typed history atomically and exact overflow remains present
+      ---
+      duration_ms: 82.554701
+      type: 'test'
+      ...
+    # Subtest: layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+    ok 4 - layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+      ---
+      duration_ms: 803.396838
+      type: 'test'
+      ...
+    # Subtest: expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+    ok 5 - expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+      ---
+      duration_ms: 2325.428568
+      type: 'test'
+      ...
+    # Subtest: a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+    ok 6 - a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+      ---
+      duration_ms: 1064.89769
+      type: 'test'
+      ...
+    # Subtest: a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+    ok 7 - a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+      ---
+      duration_ms: 1459.571072
+      type: 'test'
+      ...
+    # Subtest: protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+    ok 8 - protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+      ---
+      duration_ms: 274.55529
+      type: 'test'
+      ...
+    # Subtest: protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+    ok 9 - protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+      ---
+      duration_ms: 96.307963
+      type: 'test'
+      ...
+    # Subtest: a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+    ok 10 - a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+      ---
+      duration_ms: 1143.36516
+      type: 'test'
+      ...
+    1..10
+ok 2 - native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ---
+  duration_ms: 18572.983116
+  type: 'test'
+  ...
+# 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.01,"Actual Total Time":0.013,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_64624761d273439982dc9b8189b68d29_1_c","Relation Name":"runtime_projection_64624761d273439982dc9b8189b68d29","Alias":"runtime_projection_64624761d273439982dc9b8189b68d29","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.01,"Actual Total Time":0.012,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.077,"Triggers":[],"Execution Time":0.02}]
+# Subtest: resource data provenance retains classification, bounds cycles and pre-admits publication authority
+    # Subtest: authorized dependency is admitted before its immutable binding captures the resulting epoch
+    ok 1 - authorized dependency is admitted before its immutable binding captures the resulting epoch
+      ---
+      duration_ms: 17.131602
+      type: 'test'
+      ...
+    # Subtest: a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+    ok 2 - a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+      ---
+      duration_ms: 2145.349261
+      type: 'test'
+      ...
+    # Subtest: new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+    ok 3 - new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+      ---
+      duration_ms: 41.786495
+      type: 'test'
+      ...
+    # Subtest: duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+    ok 4 - duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+      ---
+      duration_ms: 26.490944
+      type: 'test'
+      ...
+    1..4
+ok 3 - resource data provenance retains classification, bounds cycles and pre-admits publication authority
+  ---
+  duration_ms: 5158.882907
+  type: 'test'
+  ...
+1..3
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62655.747459

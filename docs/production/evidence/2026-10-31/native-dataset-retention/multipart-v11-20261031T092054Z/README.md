@@ -1,0 +1,9 @@
+# Exact native Dataset multipart reclamation
+
+Fresh functional proof: one test passed, zero skips. The native Source-configured S3 Dataset writer first publishes typed rows. A real accepted native execution then writes through DatasetIoGrant. Actual HTTP proxy barriers interrupt the producer after UploadPart acknowledgement, after Initiate acknowledgement before its ID reaches the worker, and before a delayed Initiate reaches the provider. The producer is SIGKILLed and cancelled through the actual execution API.
+
+Each exact object was issued before any provider effect. Known upload IDs were durably journaled. Lost IDs were discovered only at the issued exact object key under permanent producer tombstones and a real fenced GC claim. A neighboring upload survives exact ListParts checks. The late provider effect appears after the first collector pass and is removed by a subsequent pass after a real 30-second watcher interval. Current typed rows remain readable. Raw ordinary-role producer/issued-object journal forgeries are denied.
+
+Historical data is explicitly synthetic: closed producer/issued timestamps and never-claimed candidates are pre-aged using the archived fixture helper. Existing claims, leases, deadlines and previously claimed watcher timestamps are never aged. The helper accepts only exact selected candidate IDs, requires pending/owner-null/fence-zero/attempts-zero/lease-null state and actual closed producers, and restores immutable triggers in the same administrative transaction. This is not a 24-hour soak claim.
+
+The Rust executable is the frozen header-qualification-v6 artifact; its source/schema/executable metadata is linked in manifest.json. The exact external TypeScript driver and helper, including import rewrites, are archived and hashed. Earlier failed fixture attempts and the actual SQL regex bug remain in separate evidence directories. No timeout or production deadline was increased to obtain this result.

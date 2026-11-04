@@ -1,0 +1,18 @@
+{
+  "profile": "capacity",
+  "metadata": "moria://warehouse/table/metadata/00001-5f5af5dd-3a41-4543-8496-298ede63ecdf.metadata.json",
+  "snapshotId": "1374179312869419453",
+  "tableUuid": "a285a94c-e2c5-4c80-9b47-4307112b3bc7",
+  "objectsFile": "/tmp/catalog-storage-dRB8I6/source/objects.jsonl",
+  "rows": "1000000",
+  "rowBytes": 4096,
+  "logicalBytes": "4096000000",
+  "physicalDataBytes": "4019642204",
+  "objects": 249,
+  "sourceDigest": "b0cfa62c301fc24b997bfc3dbd65295bc713c83b09453bbff0726e509def99a5",
+  "sourceSum": "94494054a3d9bb23e430eeb2268274ef6e39563e4ddc39dbd9bf1d3e2935d7e0",
+  "sourceXor": "fc1cff8956ee26a3a7cc4e9f81c5a89006a682e9fddaa6dfd42ca1a5b5fd9650",
+  "elapsedSeconds": 34.306904626020696,
+  "seed": "moria-capacity-v1",
+  "rowsPerFile": 4096
+}

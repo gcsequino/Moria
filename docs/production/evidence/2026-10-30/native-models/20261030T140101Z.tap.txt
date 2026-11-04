@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: native model gateway protects real HTTP chat, embeddings, schemas and streams
+    # Subtest: configured capabilities remain unavailable until actual probes pass
+    ok 1 - configured capabilities remain unavailable until actual probes pass
+      ---
+      duration_ms: 546.308467
+      type: 'test'
+      ...
+    # Subtest: stable calls replay exactly without another provider request; conflicts fail
+    ok 2 - stable calls replay exactly without another provider request; conflicts fail
+      ---
+      duration_ms: 371.174912
+      type: 'test'
+      ...
+    # Subtest: structured output and tool arguments use a real bounded JSON Schema validator
+    ok 3 - structured output and tool arguments use a real bounded JSON Schema validator
+      ---
+      duration_ms: 671.96902
+      type: 'test'
+      ...
+    # Subtest: embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+    ok 4 - embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+      ---
+      duration_ms: 414.586891
+      type: 'test'
+      ...
+    # Subtest: streams retain ordered text and terminal result; broken streams never restart
+    ok 5 - streams retain ordered text and terminal result; broken streams never restart
+      ---
+      duration_ms: 277.316726
+      type: 'test'
+      ...
+    # Subtest: stream combinations require their own probe and preserve provider extensions
+    ok 6 - stream combinations require their own probe and preserve provider extensions
+      ---
+      duration_ms: 1394.435018
+      type: 'test'
+      ...
+    # Subtest: revocation during inference blocks result release and preserves the failed attempt
+    ok 7 - revocation during inference blocks result release and preserves the failed attempt
+      ---
+      duration_ms: 145.004628
+      type: 'test'
+      ...
+    # Subtest: stream revocation blocks later events and its terminal result
+    ok 8 - stream revocation blocks later events and its terminal result
+      ---
+      duration_ms: 146.28317
+      type: 'test'
+      ...
+    # Subtest: cross-process cancellation interrupts waiting inference and retains uncertain admission
+    ok 9 - cross-process cancellation interrupts waiting inference and retains uncertain admission
+      ---
+      duration_ms: 861.372165
+      type: 'test'
+      ...
+    # Subtest: provider bodies and caller-selected endpoints remain bounded and protected
+    ok 10 - provider bodies and caller-selected endpoints remain bounded and protected
+      ---
+      duration_ms: 344.64686
+      type: 'test'
+      ...
+    # Subtest: the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+    ok 11 - the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+      ---
+      duration_ms: 798.463787
+      type: 'test'
+      ...
+    # Subtest: one shared class budget covers native execution leases and model calls in both directions
+    ok 12 - one shared class budget covers native execution leases and model calls in both directions
+      ---
+      duration_ms: 1276.655337
+      type: 'test'
+      ...
+    # Subtest: bounded embedding batches retain one vector copy and terminal validation failures are recorded
+    ok 13 - bounded embedding batches retain one vector copy and terminal validation failures are recorded
+      ---
+      duration_ms: 1198.260672
+      type: 'test'
+      ...
+    # Subtest: expired capability proofs fail before contacting the provider
+    ok 14 - expired capability proofs fail before contacting the provider
+      ---
+      duration_ms: 226.796917
+      type: 'test'
+      ...
+    1..14
+ok 1 - native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ---
+  duration_ms: 10616.498463
+  type: 'test'
+  ...
+1..1
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10920.17011

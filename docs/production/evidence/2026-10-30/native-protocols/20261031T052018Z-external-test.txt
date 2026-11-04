@@ -1,0 +1,364 @@
+TAP version 13
+# Subtest: native MCP preserves current authority, typed results and opaque discovery across replicas
+    # Subtest: stateless discovery filters SQL-denied resources without aborting the page
+    ok 1 - stateless discovery filters SQL-denied resources without aborting the page
+      ---
+      duration_ms: 1239.348327
+      type: 'test'
+      ...
+    # Subtest: resource descriptions contain authorized typed metadata only
+    ok 2 - resource descriptions contain authorized typed metadata only
+      ---
+      duration_ms: 942.036099
+      type: 'test'
+      ...
+    # Subtest: queries and actions use protected serving and replica-stable receipts
+    ok 3 - queries and actions use protected serving and replica-stable receipts
+      ---
+      duration_ms: 139.191061
+      type: 'test'
+      ...
+    # Subtest: official Python SDK negotiates and reads protected resources
+    ok 4 - official Python SDK negotiates and reads protected resources
+      ---
+      duration_ms: 1537.834372
+      type: 'test'
+      ...
+    # Subtest: CLI emits a credential reference and calls the dedicated native endpoint
+    ok 5 - CLI emits a credential reference and calls the dedicated native endpoint
+      ---
+      duration_ms: 465.328263
+      type: 'test'
+      ...
+    # Subtest: transport rejects mirrored-header tampering, batches and credential substitution
+    ok 6 - transport rejects mirrored-header tampering, batches and credential substitution
+      ---
+      duration_ms: 43.825008
+      type: 'test'
+      ...
+    # Subtest: epoch changes invalidate cursors and revocation applies to every request
+    ok 7 - epoch changes invalidate cursors and revocation applies to every request
+      ---
+      duration_ms: 487.842992
+      type: 'test'
+      ...
+    1..7
+ok 1 - native MCP preserves current authority, typed results and opaque discovery across replicas
+  ---
+  duration_ms: 8356.148669
+  type: 'test'
+  ...
+# Subtest: native model gateway protects real HTTP chat, embeddings, schemas and streams
+    # Subtest: configured capabilities remain unavailable until actual probes pass
+    ok 1 - configured capabilities remain unavailable until actual probes pass
+      ---
+      duration_ms: 792.590926
+      type: 'test'
+      ...
+    # Subtest: stable calls replay exactly without another provider request; conflicts fail
+    ok 2 - stable calls replay exactly without another provider request; conflicts fail
+      ---
+      duration_ms: 603.176606
+      type: 'test'
+      ...
+    # Subtest: structured output and tool arguments use a real bounded JSON Schema validator
+    ok 3 - structured output and tool arguments use a real bounded JSON Schema validator
+      ---
+      duration_ms: 862.292719
+      type: 'test'
+      ...
+    # Subtest: embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+    ok 4 - embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+      ---
+      duration_ms: 540.760817
+      type: 'test'
+      ...
+    # Subtest: streams retain ordered text and terminal result; broken streams never restart
+    ok 5 - streams retain ordered text and terminal result; broken streams never restart
+      ---
+      duration_ms: 352.600674
+      type: 'test'
+      ...
+    # Subtest: stream combinations require their own probe and preserve provider extensions
+    ok 6 - stream combinations require their own probe and preserve provider extensions
+      ---
+      duration_ms: 1924.430269
+      type: 'test'
+      ...
+    # Subtest: revocation during inference blocks result release and preserves the failed attempt
+    ok 7 - revocation during inference blocks result release and preserves the failed attempt
+      ---
+      duration_ms: 192.959683
+      type: 'test'
+      ...
+    # Subtest: an unobserved binding disable and re-enable cannot revive an admitted call
+    ok 8 - an unobserved binding disable and re-enable cannot revive an admitted call
+      ---
+      duration_ms: 357.848055
+      type: 'test'
+      ...
+    # Subtest: stream revocation blocks later events and its terminal result
+    ok 9 - stream revocation blocks later events and its terminal result
+      ---
+      duration_ms: 180.410896
+      type: 'test'
+      ...
+    # Subtest: cross-process cancellation interrupts waiting inference and retains uncertain admission
+    ok 10 - cross-process cancellation interrupts waiting inference and retains uncertain admission
+      ---
+      duration_ms: 915.091032
+      type: 'test'
+      ...
+    # Subtest: provider bodies and caller-selected endpoints remain bounded and protected
+    ok 11 - provider bodies and caller-selected endpoints remain bounded and protected
+      ---
+      duration_ms: 391.823333
+      type: 'test'
+      ...
+    # Subtest: the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+    ok 12 - the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+      ---
+      duration_ms: 1151.837678
+      type: 'test'
+      ...
+    # Subtest: one shared class budget covers native execution leases and model calls in both directions
+    ok 13 - one shared class budget covers native execution leases and model calls in both directions
+      ---
+      duration_ms: 1566.36503
+      type: 'test'
+      ...
+    # Subtest: bounded embedding batches retain one vector copy and terminal validation failures are recorded
+    ok 14 - bounded embedding batches retain one vector copy and terminal validation failures are recorded
+      ---
+      duration_ms: 1593.311596
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+    ok 15 - a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+      ---
+      duration_ms: 6006.128351
+      type: 'test'
+      ...
+    # Subtest: Ollama embedding transport disables truncation and records terminal context failure
+    ok 16 - Ollama embedding transport disables truncation and records terminal context failure
+      ---
+      duration_ms: 1131.996362
+      type: 'test'
+      ...
+    # Subtest: expired capability proofs fail before contacting the provider
+    ok 17 - expired capability proofs fail before contacting the provider
+      ---
+      duration_ms: 259.452995
+      type: 'test'
+      ...
+    1..17
+ok 2 - native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ---
+  duration_ms: 21433.324063
+  type: 'test'
+  ...
+# Subtest: registered native search projects full Dataset objects and replays a complete action frame
+not ok 3 - registered native search projects full Dataset objects and replays a complete action frame
+  ---
+  duration_ms: 10140.183272
+  type: 'test'
+  location: '/work/tests/native-search-projector.integration.test.ts:13:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"error":{"code":"INTERNAL","correlationId":"15be1569-c42b-48b5-ab3e-58e8f72658d4","details":null,"message":"INTERNAL","requestId":"15be1569-c42b-48b5-ab3e-58e8f72658d4","retryable":false}}
+    
+    500 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 500
+  operator: 'strictEqual'
+  stack: |-
+    post (/work/tests/native-search-projector.integration.test.ts:287:18)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Object.onVerified (/work/tests/native-search-projector.integration.test.ts:291:26)
+    async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:476:7)
+    async TestContext.<anonymous> (/work/tests/native-search-projector.integration.test.ts:18:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: native exact retrieval ranks a trusted sealed fixture generation after current protection
+    # Subtest: public native retrieval shares protected results and rejects invalid authority before billing
+    not ok 1 - public native retrieval shares protected results and rejects invalid authority before billing
+      ---
+      duration_ms: 101.013545
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:328:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"SCHEMA_CHANGED","correlationId":"17b476c6-7cb6-42fc-8e69-c70205e1c56a","details":null,"message":"SCHEMA_CHANGED","requestId":"17b476c6-7cb6-42fc-8e69-c70205e1c56a","retryable":false}}
+        
+        409 !== 200
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 200
+      actual: 409
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-search.integration.test.ts:336:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-search.integration.test.ts:328:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: actual pgvector cosine ranks complete authorized rows with a stable tie
+    not ok 2 - actual pgvector cosine ranks complete authorized rows with a stable tie
+      ---
+      duration_ms: 140.027735
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:376:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":"SCHEMA_CHANGED"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search.integration.test.ts:169:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:526:24)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: selected-property denial and invalid topK fail before model dispatch
+    ok 3 - selected-property denial and invalid topK fail before model dispatch
+      ---
+      duration_ms: 361.779448
+      type: 'test'
+      ...
+    # Subtest: current tombstones and effective restrictions filter before topK
+    not ok 4 - current tombstones and effective restrictions filter before topK
+      ---
+      duration_ms: 144.213003
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:426:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":"SCHEMA_CHANGED"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search.integration.test.ts:169:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:526:24)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: retained embedding labels precede ranking and cache bytes cannot be rewritten
+    not ok 5 - retained embedding labels precede ranking and cache bytes cannot be rewritten
+      ---
+      duration_ms: 144.755825
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:439:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":"SCHEMA_CHANGED"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search.integration.test.ts:169:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:526:24)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: current canonical policy still applies across source replacement
+    not ok 6 - current canonical policy still applies across source replacement
+      ---
+      duration_ms: 149.851912
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:490:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":"SCHEMA_CHANGED"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search.integration.test.ts:169:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:526:24)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: a different model binding cannot mix query vectors with the active generation
+    not ok 7 - a different model binding cannot mix query vectors with the active generation
+      ---
+      duration_ms: 138.311667
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:521:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /SEARCH_MODEL_CHANGED/. Input:
+        
+        'Error: {"error":"SCHEMA_CHANGED"}\n'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: |-
+        {"error":"SCHEMA_CHANGED"}
+        
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search.integration.test.ts:169:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:526:24)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-search.integration.test.ts:530:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-search.integration.test.ts:521:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: visibility tokens bind incarnation and generation
+    not ok 8 - visibility tokens bind incarnation and generation
+      ---
+      duration_ms: 138.049627
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:539:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":"SCHEMA_CHANGED"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search.integration.test.ts:169:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:526:24)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: revocation during actual inference withholds ranked documents
+    not ok 9 - revocation during actual inference withholds ranked documents
+      ---
+      duration_ms: 176668.638931
+      type: 'test'
+      location: '/work/tests/native-search.integration.test.ts:552:13'
+      failureType: 'cancelledByParent'
+      error: 'test did not finish before its parent and was cancelled'
+      code: 'ERR_TEST_FAILURE'
+      ...
+    1..9
+not ok 4 - native exact retrieval ranks a trusted sealed fixture generation after current protection
+  ---
+  duration_ms: 180331.42533
+  type: 'test'
+  location: '/work/tests/native-search.integration.test.ts:11:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 180000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..4
+# tests 37
+# suites 0
+# pass 27
+# fail 8
+# cancelled 2
+# skipped 0
+# todo 0
+# duration_ms 221380.91376

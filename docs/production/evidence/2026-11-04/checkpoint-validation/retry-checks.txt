@@ -1,0 +1,14 @@
+[ERR_PNPM_UNSAFE_MODULES_DIR] Refusing to remove the modules directory at "/app/node_modules" because its resolved target is not a strict subdirectory of the project root at "/work".
+[ERROR] Command failed with exit code 1: pnpm install
+
+pnpm: Command failed with exit code 1: pnpm install
+    at getFinalError (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:89986:14)
+    at makeError (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:92293:21)
+    at getSyncResult (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:94137:10)
+    at spawnSubprocessSync (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:94097:14)
+    at execaCoreSync (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:94027:23)
+    at callBoundExeca (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:96555:23)
+    at boundExeca (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:96532:49)
+    at sync2 (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:96687:14)
+    at runPnpmCli (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:276906:5)
+    at runDepsStatusCheck (file:///usr/local/lib/node_modules/pnpm/dist/pnpm.mjs:278122:7)

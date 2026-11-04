@@ -1,0 +1,276 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+    ok 1 - reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+      ---
+      duration_ms: 6141.445728
+      type: 'test'
+      ...
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 2 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 6525.667696
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 3 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 3223.179505
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    ok 4 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 10031.151274
+      type: 'test'
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 5 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 148.906612
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    ok 6 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 6894.42849
+      type: 'test'
+      ...
+    # {"event":"registered_publication_phases","phases":[{"elapsedMillis":"961","event":"closure_hashed"},{"elapsedMillis":"3400","event":"candidate_registered"},{"elapsedMillis":"868","event":"closure_hashed"},{"elapsedMillis":"3153","event":"candidate_registered"}]}
+    # {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"3636","total_time":4277.524,"self_time":600.753},{"funcname":"runtime_execution_check","calls":"6347","total_time":2025.69,"self_time":265.148},{"funcname":"runtime_binding_authority","calls":"6354","total_time":1656.456,"self_time":367.101},{"funcname":"native_serving_resource_access_batch_state","calls":"4550","total_time":1409.43,"self_time":470.153},{"funcname":"native_serving_job_delegation","calls":"6347","total_time":1289.32,"self_time":8.63},{"funcname":"native_serving_session","calls":"4602","total_time":1042.273,"self_time":60.564},{"funcname":"native_serving_accepted_delegation","calls":"7294","total_time":984.921,"self_time":474.179},{"funcname":"native_serving_session_origin","calls":"10951","total_time":953.127,"self_time":660.545},{"funcname":"runtime_data_operational","calls":"21954","total_time":467.799,"self_time":467.799},{"funcname":"runtime_job_delegation_guard","calls":"7296","total_time":465.184,"self_time":465.184},{"funcname":"runtime_job_session_origin","calls":"945","total_time":429.355,"self_time":37.432},{"funcname":"runtime_environment_cell_check","calls":"17298","total_time":354.072,"self_time":159.372},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"25771","total_time":314.601,"self_time":314.601},{"funcname":"runtime_data_origins","calls":"12847","total_time":248.784,"self_time":209.834},{"funcname":"runtime_task_check","calls":"817","total_time":236.069,"self_time":15.317},{"funcname":"runtime_schema_admit","calls":"8473","total_time":199.993,"self_time":199.993},{"funcname":"runtime_recovery_check","calls":"17298","total_time":194.669,"self_time":93.036},{"funcname":"native_serving_filesystem_resource_access_state","calls":"12854","total_time":176.457,"self_time":176.457},{"funcname":"runtime_dataset_kind","calls":"9107","total_time":154.855,"self_time":154.855},{"funcname":"runtime_data_resource","calls":"25730","total_time":94.107,"self_time":94.107},{"funcname":"runtime_dataset_admit_write","calls":"75","total_time":87.372,"self_time":1.106},{"funcname":"runtime_dataset_issue","calls":"75","total_time":86.261,"self_time":1.681},{"funcname":"runtime_dataset_object_read","calls":"2930","total_time":75.865,"self_time":75.865},{"funcname":"runtime_dataset_labels_policy_state","calls":"9105","total_time":69.684,"self_time":69.684}]}
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 7 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 6792.23119
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 8 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 13147.911074
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 9 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 6673.579116
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 10 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 6427.039763
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 11 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 6476.837295
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 12 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 6685.392709
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 13 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 396.791793
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 14 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 13022.15386
+      type: 'test'
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        ok 1 - posix
+          ---
+          duration_ms: 14420.137466
+          type: 'test'
+          ...
+        # Subtest: s3
+        ok 2 - s3
+          ---
+          duration_ms: 20138.944849
+          type: 'test'
+          ...
+        1..2
+    ok 15 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 35276.522758
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 16 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 6425.058707
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 17 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 47.154754
+      type: 'test'
+      ...
+    1..17
+ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 137143.309379
+  type: 'test'
+  ...
+# {"event":"reader_window_actual_counts","decoderReads":128,"baseline":{"counts":{"providerBytes":128,"providerRanges":128,"providerVersions":128},"elapsedMillis":"4880","event":"reader_window_baseline"},"buffered":{"counts":{"providerBytes":4938,"providerRanges":1,"providerVersions":1},"elapsedMillis":"45","event":"reader_window_buffered","privateWindowBytesMaximum":1048576},"baselineGuards":[{"funcname":"runtime_dataset_io_check","calls":"768"},{"funcname":"runtime_dataset_object_read","calls":"768"}],"windowGuards":[{"funcname":"runtime_dataset_io_check","calls":"6"},{"funcname":"runtime_dataset_object_read","calls":"6"}]}
+# Subtest: actual accepted verifier scopes bound encoded multi-column row-group header IO
+not ok 2 - actual accepted verifier scopes bound encoded multi-column row-group header IO
+  ---
+  duration_ms: 10393.150055
+  type: 'test'
+  location: '/work/tests/native-header-window.integration.test.ts:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: /usr/local/bin/moria-catalog-tests --ignored --exact catalog_publication --nocapture --test-threads=1
+    
+    thread 'catalog_publication' (473) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+    called `Result::unwrap()` on an `Err` value: invalid type: string "1", expected i64 at line 1 column 633
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+  code: 101
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+# Subtest: native effective projections build off-lock, replay concurrent edits and activate with source generations
+    # Subtest: off-lock paged build replays an actual concurrent native action before atomic activation
+    ok 1 - off-lock paged build replays an actual concurrent native action before atomic activation
+      ---
+      duration_ms: 3013.347193
+      type: 'test'
+      ...
+    # Subtest: physical primary UID checks reject missing or different values and protected UID queries seek canonical UID
+    ok 2 - physical primary UID checks reject missing or different values and protected UID queries seek canonical UID
+      ---
+      duration_ms: 98.196044
+      type: 'test'
+      ...
+    # Subtest: strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+    ok 3 - strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+      ---
+      duration_ms: 258.499581
+      type: 'test'
+      ...
+    # Subtest: current actions maintain typed history atomically and exact overflow remains present
+    ok 4 - current actions maintain typed history atomically and exact overflow remains present
+      ---
+      duration_ms: 111.566976
+      type: 'test'
+      ...
+    # Subtest: layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+    ok 5 - layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+      ---
+      duration_ms: 987.791171
+      type: 'test'
+      ...
+    # Subtest: expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+    ok 6 - expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+      ---
+      duration_ms: 2979.868346
+      type: 'test'
+      ...
+    # Subtest: a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+    ok 7 - a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+      ---
+      duration_ms: 1560.919901
+      type: 'test'
+      ...
+    # Subtest: a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+    ok 8 - a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+      ---
+      duration_ms: 2085.791343
+      type: 'test'
+      ...
+    # Subtest: protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+    ok 9 - protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+      ---
+      duration_ms: 364.578646
+      type: 'test'
+      ...
+    # Subtest: protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+    ok 10 - protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+      ---
+      duration_ms: 143.506167
+      type: 'test'
+      ...
+    # Subtest: a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+    ok 11 - a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+      ---
+      duration_ms: 1623.786838
+      type: 'test'
+      ...
+    1..11
+ok 3 - native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ---
+  duration_ms: 24043.977979
+  type: 'test'
+  ...
+# canonical UID seek plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":3.55,"Plan Rows":2,"Plan Width":16,"Actual Startup Time":0.007,"Actual Total Time":0.008,"Actual Rows":2,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_d252eb1f5626452cb2cad7b4288dba53_uid","Relation Name":"runtime_projection_d252eb1f5626452cb2cad7b4288dba53","Alias":"p","Startup Cost":0.27,"Total Cost":8.47,"Plan Rows":5,"Plan Width":16,"Actual Startup Time":0.007,"Actual Total Time":0.007,"Actual Rows":2,"Actual Loops":1,"Disabled":false,"Index Cond":"(uid >= '00000127-0000-4000-8000-000000000000'::uuid)","Rows Removed by Index Recheck":0,"Filter":"(NOT deleted)","Rows Removed by Filter":0,"Index Searches":1,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":723,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.862,"Triggers":[],"Execution Time":0.017}]
+# 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.01,"Actual Total Time":0.013,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_d252eb1f5626452cb2cad7b4288dba53_1_c","Relation Name":"runtime_projection_d252eb1f5626452cb2cad7b4288dba53","Alias":"runtime_projection_d252eb1f5626452cb2cad7b4288dba53","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.009,"Actual Total Time":0.012,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.072,"Triggers":[],"Execution Time":0.018}]
+# Subtest: explicit retention controls exact-issued versioned backup reclamation and real claim fences
+    # Subtest: fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+    ok 1 - fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+      ---
+      duration_ms: 685.275161
+      type: 'test'
+      ...
+    # Subtest: no policy means no collection, and explicit historical retirement removes only its qualified version
+    ok 2 - no policy means no collection, and explicit historical retirement removes only its qualified version
+      ---
+      duration_ms: 929.850103
+      type: 'test'
+      ...
+    # Subtest: a retained foreign root blocks planning even for an expired retired producer
+    ok 3 - a retained foreign root blocks planning even for an expired retired producer
+      ---
+      duration_ms: 369.39015
+      type: 'test'
+      ...
+    # Subtest: policy revocation after a held HEAD prevents the removal effect
+    ok 4 - policy revocation after a held HEAD prevents the removal effect
+      ---
+      duration_ms: 527.493279
+      type: 'test'
+      ...
+    # Subtest: real expired claim ownership is fenced before a replacement removes the version
+    ok 5 - real expired claim ownership is fenced before a replacement removes the version
+      ---
+      duration_ms: 29532.124469
+      type: 'test'
+      ...
+    # Subtest: unqualified null-version objects stay unsupported and are never deleted
+    ok 6 - unqualified null-version objects stay unsupported and are never deleted
+      ---
+      duration_ms: 501.604766
+      type: 'test'
+      ...
+    1..6
+ok 4 - explicit retention controls exact-issued versioned backup reclamation and real claim fences
+  ---
+  duration_ms: 34988.325659
+  type: 'test'
+  ...
+1..4
+# tests 40
+# suites 0
+# pass 39
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 207754.52722

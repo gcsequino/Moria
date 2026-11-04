@@ -1,0 +1,113 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 104.386062
+      type: 'test'
+      ...
+    # Subtest: unobserved profile disable and restore fences accepted work before code starts
+    ok 2 - unobserved profile disable and restore fences accepted work before code starts
+      ---
+      duration_ms: 460.142189
+      type: 'test'
+      ...
+    # Subtest: actual bounded guest reads three wide sources and commits both heads with one receipt
+    not ok 3 - actual bounded guest reads three wide sources and commits both heads with one receipt
+      ---
+      duration_ms: 889.95639
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:559:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"result":{"error":"PIPELINE_FAILED","id":"4f7724b0-d42e-430a-9ff8-54cd374630b7","markings":[{"environment":"620bd676-0258-49ce-97bc-daa297042f0b","marking":"private"}],"release":"sha256:462a18da80eb37374925c75a7c7b244eb78dbafa501fa604c3305761b35d6b2d","resourceId":"a8d41799-5775-47ce-b4e5-a69e14221775","result":null,"status":"failed","valueVersion":1},"events":{"after":"4","events":[{"markings":[{"environment":"620bd676-0258-49ce-97bc-daa297042f0b","marking":"private"}],"payload":{"tasks":1},"sequence":"1","type":"accepted"},{"markings":[{"environment":"620bd676-0258-49ce-97bc-daa297042f0b","marking":"private"}],"payload":{"fence":"1","owner":"cfdc28cc-7c39-4ec1-a0be-77c8ccb755ac","task":"c0baf834-3e96-49e9-a40b-9f457fb59dca"},"sequence":"2","type":"claimed"},{"markings":[{"environment":"620bd676-0258-49ce-97bc-daa297042f0b","marking":"private"}],"payload":{"cause":"INDEXING_FAILED","error":"PIPELINE_FAILED","sqlState":null,"stage":"SANDBOX_PREPARE"},"sequence":"3","type":"failed"},{"markings":[{"environment":"620bd676-0258-49ce-97bc-daa297042f0b","marking":"private"}],"payload":{},"sequence":"4","type":"noCodeStart"}]}}
+        + actual - expected
+        
+        + 'failed'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:565:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:559:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: public SDK and CLI replay one native receipt without running code again
+    not ok 4 - public SDK and CLI replay one native receipt without running code again
+      ---
+      duration_ms: 68.84361
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:617:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'failed'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:630:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:617:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a second actual guest verifies published Parquet values beyond JS precision through native grants
+    not ok 5 - a second actual guest verifies published Parquet values beyond JS precision through native grants
+      ---
+      duration_ms: 137.45347
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:653:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"INTERNAL","correlationId":"ef68d540-4b54-4851-91d7-73cd529c99a8","details":null,"message":"INTERNAL","requestId":"ef68d540-4b54-4851-91d7-73cd529c99a8","retryable":false}}
+        
+        500 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 500
+      operator: 'strictEqual'
+      stack: |-
+        invoke (/work/tests/native-pipelines.integration.test.ts:422:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:656:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:653:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..5
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 32195.592538
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:31:1'
+  failureType: 'subtestsFailed'
+  error: '3 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 6
+# suites 0
+# pass 2
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33198.925378

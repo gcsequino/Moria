@@ -1,0 +1,53 @@
+TAP version 13
+# Subtest: native exact retrieval ranks a trusted sealed fixture generation after current protection
+    # Subtest: actual pgvector cosine ranks complete authorized rows with a stable tie
+    ok 1 - actual pgvector cosine ranks complete authorized rows with a stable tie
+      ---
+      duration_ms: 474.343085
+      type: 'test'
+      ...
+    # Subtest: selected-property denial and invalid topK fail before model dispatch
+    ok 2 - selected-property denial and invalid topK fail before model dispatch
+      ---
+      duration_ms: 312.366672
+      type: 'test'
+      ...
+    # Subtest: current tombstones and effective restrictions filter before topK
+    ok 3 - current tombstones and effective restrictions filter before topK
+      ---
+      duration_ms: 366.287506
+      type: 'test'
+      ...
+    # Subtest: a different model binding cannot mix query vectors with the active generation
+    ok 4 - a different model binding cannot mix query vectors with the active generation
+      ---
+      duration_ms: 121.902399
+      type: 'test'
+      ...
+    # Subtest: visibility tokens bind incarnation and generation
+    ok 5 - visibility tokens bind incarnation and generation
+      ---
+      duration_ms: 327.492104
+      type: 'test'
+      ...
+    # Subtest: revocation during actual inference withholds ranked documents
+    ok 6 - revocation during actual inference withholds ranked documents
+      ---
+      duration_ms: 160.013584
+      type: 'test'
+      ...
+    1..6
+ok 1 - native exact retrieval ranks a trusted sealed fixture generation after current protection
+  ---
+  duration_ms: 3911.921015
+  type: 'test'
+  ...
+1..1
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4220.467462

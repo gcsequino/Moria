@@ -1,0 +1,45 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T125812052729Z-dataset-composite-pk-v4",
+  "sourceManifestSha256": "d7119a98d2e3d34a89a1ca18de6124e84b3dd9249e47b21534e27dc03b97aafe",
+  "generatedSchema": {
+    "command": [
+      "tsx",
+      "scripts/indexing-schema.ts",
+      "--write"
+    ],
+    "path": "services/runtime/schema.json",
+    "sha256": "b4ef4276651c7cef2e64a73d8321958496f3fbc6bb4296289b49e6250f38d488"
+  },
+  "buildCommand": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T125812052729Z-dataset-composite-pk-v4,dst=/work",
+    "--mount",
+    "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+    "--mount",
+    "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+    "-w",
+    "/work/services/runtime",
+    "moria-indexing-toolchain:local",
+    "cargo",
+    "build",
+    "--locked",
+    "--bin",
+    "moria-runtime",
+    "--test",
+    "native_catalog",
+    "--test",
+    "native_retention",
+    "-j",
+    "2",
+    "--message-format=json"
+  ],
+  "buildExitCode": 101
+}

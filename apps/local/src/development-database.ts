@@ -1,11 +1,22 @@
 import { access } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import EmbeddedPostgres from 'embedded-postgres';
+import exitHooks from 'async-exit-hook';
 import pg from 'pg';
 
 /** Only the development launcher owns a cluster. Existing paths and credentials
  * stay unchanged for supported versioned databases. */
-export async function startDevelopmentDatabase(directory: string, port: number, password: string) {
+export async function startDevelopmentDatabase(
+  directory: string,
+  port: number,
+  password: string,
+  signalOwner: 'library' | 'caller' = 'library',
+) {
+  if (signalOwner === 'caller') {
+    // The caller drains native workers and clients before explicitly stopping this database.
+    exitHooks.unhookEvent('SIGINT');
+    exitHooks.unhookEvent('SIGTERM');
+  }
   const db = new EmbeddedPostgres({
     databaseDir: resolve(directory, 'postgres'),
     user: 'moria_local',

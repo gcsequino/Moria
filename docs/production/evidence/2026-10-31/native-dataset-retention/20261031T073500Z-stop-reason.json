@@ -1,0 +1,5 @@
+{
+  "container": "670a31ba32db",
+  "sourceSnapshot": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17",
+  "reason": "Earlier test failure left an admitted transaction held because the old fixture lacked finally cleanup; stop the failed owned run rather than report its skipped downstream checks as success."
+}

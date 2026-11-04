@@ -1,0 +1,39 @@
+{
+  "scope": "exploratory",
+  "fullProfileCertified": false,
+  "outcome": "failed",
+  "errorCode": "UNCLASSIFIED_FAILURE",
+  "failedPhase": "source-publication",
+  "failedPhaseElapsedMs": 188.44519800000126,
+  "population": 1000000,
+  "rowBytes": 4096,
+  "elapsedMs": 124316.584069,
+  "timings": {
+    "identityMs": 85625.345544,
+    "producerMs": 38249.31789200001
+  },
+  "runs": {
+    "identity": {
+      "elapsedMs": 85624.577955,
+      "exitCode": 0
+    },
+    "publication": {
+      "elapsedMs": 119.79907399999502,
+      "exitCode": 101
+    }
+  },
+  "timeline": [
+    {
+      "phase": "setup",
+      "elapsedMs": 253.53049099999998
+    },
+    {
+      "phase": "identity",
+      "elapsedMs": 85625.278171
+    },
+    {
+      "phase": "source-production",
+      "elapsedMs": 38249.32223199999
+    }
+  ]
+}

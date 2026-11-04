@@ -1,0 +1,113 @@
+TAP version 13
+# Subtest: Rust indexing publishes complete native Iceberg partitions through the shared authority
+    # Subtest: source publication rollback leaves neither a new head nor indexing intent
+    ok 1 - source publication rollback leaves neither a new head nor indexing intent
+      ---
+      duration_ms: 10.323926
+      type: 'test'
+      ...
+    # Subtest: replacement fences a paused Rust executor without a second upload
+    ok 2 - replacement fences a paused Rust executor without a second upload
+      ---
+      duration_ms: 721.062293
+      type: 'test'
+      ...
+    # Subtest: a newer accepted snapshot supersedes an older prepared attempt
+    ok 3 - a newer accepted snapshot supersedes an older prepared attempt
+      ---
+      duration_ms: 849.106167
+      type: 'test'
+      ...
+    # Subtest: actual COMMIT survives killing Rust before its acknowledgment arrives
+    ok 4 - actual COMMIT survives killing Rust before its acknowledgment arrives
+      ---
+      duration_ms: 7419.406287
+      type: 'test'
+      ...
+    # Subtest: duplicate UIDs across different Iceberg files prevent activation
+    ok 5 - duplicate UIDs across different Iceberg files prevent activation
+      ---
+      duration_ms: 790.74061
+      type: 'test'
+      ...
+    # Subtest: operator retry reuses pinned input after a real file access failure
+    not ok 6 - operator retry reuses pinned input after a real file access failure
+      ---
+      duration_ms: 168.589585
+      type: 'test'
+      location: '/work/tests/indexing-rust.integration.test.ts:519:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Rust retry failed (1): {"error":"INDEXING_DELEGATION_INACTIVE"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/indexing-rust.integration.test.ts:175:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: cancellation prevents activation and cannot revoke a committed success
+    ok 7 - cancellation prevents activation and cannot revoke a committed success
+      ---
+      duration_ms: 221.668002
+      type: 'test'
+      ...
+    # Subtest: corrupt binary task plans fail before any object generation is exposed
+    ok 8 - corrupt binary task plans fail before any object generation is exposed
+      ---
+      duration_ms: 282.713636
+      type: 'test'
+      ...
+    # Subtest: loss of the lifetime schema lease stops admission while checked-out connections fence migration
+    ok 9 - loss of the lifetime schema lease stops admission while checked-out connections fence migration
+      ---
+      duration_ms: 287.287021
+      type: 'test'
+      ...
+    # Subtest: revocation before release preserves the previous object head
+    ok 10 - revocation before release preserves the previous object head
+      ---
+      duration_ms: 287.595769
+      type: 'test'
+      ...
+    # Subtest: generic imports persist source/served status and recover in a new workspace instance
+    not ok 11 - generic imports persist source/served status and recover in a new workspace instance
+      ---
+      duration_ms: 418.87826
+      type: 'test'
+      location: '/work/tests/indexing-rust.integration.test.ts:718:13'
+      failureType: 'testCodeFailure'
+      error: 'Current authorization must be rechecked'
+      code: 'AUTHORIZATION_CHANGED'
+      name: 'MoriaError'
+      stack: |-
+        <anonymous> (/work/services/catalog/src/catalog.ts:262:15)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Catalog.transaction (/work/services/catalog/src/catalog.ts:116:24)
+        async Object.ingest (/work/apps/local/src/workspace.ts:324:25)
+        async TestContext.<anonymous> (/work/tests/indexing-rust.integration.test.ts:732:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/indexing-rust.integration.test.ts:718:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..11
+not ok 1 - Rust indexing publishes complete native Iceberg partitions through the shared authority
+  ---
+  duration_ms: 14394.300541
+  type: 'test'
+  location: '/work/tests/indexing-rust.integration.test.ts:20:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 12
+# suites 0
+# pass 9
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20165.739433

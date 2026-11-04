@@ -1,0 +1,116 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5",
+  "sourceManifestSha256": "2857b66c773549392550443cc1159b9fef3f92e4e913283b9528bae86047d004",
+  "derivedRunnerSha256": "ab427501787f64d564f5624e8e38738dc0e1126b20f2d2421748b5c20b0f2c22",
+  "commands": [
+    {
+      "phase": "evidence-output-permission",
+      "path": "/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5/.proof-output",
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "phase": "population-1000",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--name",
+        "moria-data-qualified-1000-v6",
+        "--memory",
+        "12g",
+        "--memory-swap",
+        "24g",
+        "--cpus",
+        "4",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-drivers/20261031T052835Z-protected-capacity-v6,dst=/proof-driver,readonly",
+        "-w",
+        "/work",
+        "-e",
+        "MORIA_RUNTIME_BINARY=/work/.proof-artifacts/moria-runtime",
+        "-e",
+        "MORIA_CATALOG_TEST_BINARY=/work/.proof-artifacts/native_catalog",
+        "-e",
+        "MORIA_CAPACITY_ROWS=1000",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "/proof-driver/million-runner.ts"
+      ]
+    },
+    {
+      "phase": "population-1000000",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--name",
+        "moria-data-qualified-1000000-v6",
+        "--memory",
+        "12g",
+        "--memory-swap",
+        "24g",
+        "--cpus",
+        "4",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-drivers/20261031T052835Z-protected-capacity-v6,dst=/proof-driver,readonly",
+        "-w",
+        "/work",
+        "-e",
+        "MORIA_RUNTIME_BINARY=/work/.proof-artifacts/moria-runtime",
+        "-e",
+        "MORIA_CATALOG_TEST_BINARY=/work/.proof-artifacts/native_catalog",
+        "-e",
+        "MORIA_CAPACITY_ROWS=1000000",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "/proof-driver/million-runner.ts"
+      ]
+    }
+  ],
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "5887a18fcff7dedf3db65303e039fdd22767abee52d1fe7debc2f6512a80c92d",
+      "version": 5
+    },
+    "sourceDigest": "dbe88a34c92984b158a5e0609759ed9d5b29b35c682750620fe3688c0f2247ea"
+  },
+  "artifacts": {
+    "moria-runtime": {
+      "cargoPath": "/work/services/runtime/target/release/moria-runtime",
+      "path": "/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5/.proof-artifacts/moria-runtime",
+      "sha256": "f1934e8c48fe327af8db66dcdff57a7994e22070ca7caef679877f7665a6b70d"
+    },
+    "moria-indexing": {
+      "cargoPath": "/work/services/runtime/target/release/moria-indexing",
+      "path": "/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5/.proof-artifacts/moria-indexing",
+      "sha256": "ed6cd0ff67e424056464e1b16f0fee6290f9a7047858e35840ebc8568b79cc53"
+    },
+    "native_catalog": {
+      "cargoPath": "/work/services/runtime/target/release/deps/native_catalog-94d99389a8077992",
+      "path": "/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5/.proof-artifacts/native_catalog",
+      "sha256": "88405f69f884f74599c8a086b2e5ad8491c6df34f6998da1231c6ff19a5e86ed"
+    }
+  },
+  "outcome": "passed",
+  "retryOf": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-projection/qualified-million-release-v5-20261031T051614Z/manifest.json",
+  "driver": "/tmp/moria-proof-drivers/20261031T052835Z-protected-capacity-v6",
+  "driverManifestSha256": "d802f68c6eb776ce0c788f3192e71d970cff06a0d2d67c5e75944321046907b7"
+}

@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: bounded OIDC refresh preserves existing session/provider/CSRF semantics
+not ok 1 - bounded OIDC refresh preserves existing session/provider/CSRF semantics
+  ---
+  duration_ms: 3708.241652
+  type: 'test'
+  location: '/work/tests/native-oidc-refresh.integration.test.ts:20:1'
+  failureType: 'testCodeFailure'
+  error: 'The "string" argument must be of type string. Received type object (null)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: ~
+  operator: 'match'
+  stack: |-
+    checkAuth (/work/tests/fixtures/auth-checks.ts:214:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/work/tests/native-oidc-refresh.integration.test.ts:26:7)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: split OIDC callback and accepted-human refresh use actual IdP evidence without renewing ordinary expiry
+not ok 2 - split OIDC callback and accepted-human refresh use actual IdP evidence without renewing ordinary expiry
+  ---
+  duration_ms: 2876.922474
+  type: 'test'
+  location: '/work/tests/native-oidc-refresh.integration.test.ts:32:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'split')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (/work/tests/native-oidc-refresh.integration.test.ts:93:52)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7000.931847

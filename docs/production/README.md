@@ -9,6 +9,7 @@ System of record: [goal #1](https://github.com/gcsequino/Moria/issues/1), [M0 #2
 - [Workloads and benchmark contract](WORKLOADS.md)
 - [Architecture, authority, and compatibility](ARCHITECTURE.md)
 - [Distributed indexing protocol for the Rust implementation](INDEXING-PROTOCOL.md)
+- [Native runtime component inventory and API contracts](RUST-PLATFORM-PROGRAM.md)
 - [Delivery, failures, cost, and decision register](DELIVERY.md)
 - [Current machine-readable calibration profiles](workloads.v0.2.json)
 - [Historical v0.1 calibration profiles](workloads.v0.1.json)

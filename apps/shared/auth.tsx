@@ -48,6 +48,59 @@ export function useAppSession(client: Transport['auth']) {
     );
     return () => clearTimeout(id);
   }, [session]);
+  const refreshUrl = session?.refresh?.url,
+    refreshOrigin = session?.refresh?.origin;
+  const refreshActive = Boolean(session?.user || session?.refresh?.required);
+  useEffect(() => {
+    if (!refreshActive || !refreshUrl || !refreshOrigin) return;
+    const endpoint = new URL(refreshUrl);
+    if (
+      endpoint.origin !== refreshOrigin ||
+      endpoint.hostname !== location.hostname ||
+      endpoint.protocol !== location.protocol
+    )
+      return;
+    const frame = document.createElement('iframe');
+    frame.hidden = true;
+    frame.title = 'Session verification';
+    let live = true;
+    const reload = () => {
+      frame.src = refreshUrl;
+    };
+    const message = async (event: MessageEvent) => {
+      if (
+        event.origin !== refreshOrigin ||
+        event.source !== frame.contentWindow ||
+        event.data?.type !== 'moria:session-refreshed'
+      )
+        return;
+      try {
+        const next = await client.session();
+        if (live) {
+          setSession(next);
+          if (next.user) setError('');
+          else if (!event.data.ok) setError('Your identity could not be refreshed. Sign in again.');
+        }
+      } catch {
+        if (live) setError('Your session could not be verified.');
+      }
+    };
+    window.addEventListener('message', message);
+    document.body.append(frame);
+    reload();
+    const interval = setInterval(reload, 20000);
+    const visible = () => {
+      if (document.visibilityState === 'visible') reload();
+    };
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      live = false;
+      clearInterval(interval);
+      frame.remove();
+      window.removeEventListener('message', message);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [client, refreshUrl, refreshOrigin, refreshActive]);
   async function login(provider: string) {
     setError('');
     try {

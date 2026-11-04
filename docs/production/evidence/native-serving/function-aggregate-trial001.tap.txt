@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: native function global aggregate evidence is bounded and protects retained results and logs
+not ok 1 - native function global aggregate evidence is bounded and protects retained results and logs
+  ---
+  duration_ms: 2056.503849
+  type: 'test'
+  location: '/work/tests/native-function-aggregate.integration.test.ts:20:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: docker run --detach --rm --name moria-function-registry-ac3e9f35-732f-438f-9e8e-6a0f5e9a4bb3 --publish 127.0.0.1::5000 registry@sha256:d4032d4cc323c1731c707931ecada07a53076eac38e3b61ae57533f170f2c6c3
+    permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+    
+  code: 1
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2644.321811

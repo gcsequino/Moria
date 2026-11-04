@@ -1,0 +1,167 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2",
+  "sourceManifestSha256": "d45b95f94fb027c9d019f786e0ef4a4aed5144681c2c2dc1a60504c89c24f73f",
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "typescript",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "phase": "build-retention",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "native_retention",
+        "--no-run",
+        "-j",
+        "2",
+        "--message-format=json"
+      ]
+    },
+    {
+      "phase": "build-binaries",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins",
+        "-j",
+        "2",
+        "--message-format=json"
+      ]
+    },
+    {
+      "phase": "integration",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2/native-retention-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2/native-retention-artifacts/moria-native-retention-test,dst=/usr/local/bin/moria-native-retention-test,readonly",
+        "-e",
+        "MORIA_NATIVE_RETENTION_TEST_BINARY=/usr/local/bin/moria-native-retention-test",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "tests/native-retention.integration.test.ts"
+      ]
+    }
+  ],
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "7c2b26cf18043f58230bf90d93bf36bb58f674100d2fe25998f7e4e0ea5c451f",
+      "version": 5
+    },
+    "sourceDigest": "36a0ca5afcd9406c1bd2f972b494794db3acf13f14b08678cb0d68e7bbb79b57"
+  },
+  "artifacts": {
+    "moria-runtime": {
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "path": "/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2/native-retention-artifacts/moria-runtime",
+      "sha256": "7f30131913fb06f80427b99a416727bfbffefdc50cb254090912bef0958f29a9"
+    },
+    "moria-indexing": {
+      "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+      "path": "/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2/native-retention-artifacts/moria-indexing",
+      "sha256": "0bc36d6f8a1996ac9e14a1317a2eee006f079741a3379f17b0cf59f3410f5df8"
+    },
+    "moria-native-retention-test": {
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+      "path": "/tmp/moria-proof-snapshots/20261031T045146092434Z-native-retention-policy-v2/native-retention-artifacts/moria-native-retention-test",
+      "sha256": "158108c0b759099af12d2e9af87a95f03b792a2708cc46aee4497e41c2d722c8"
+    }
+  },
+  "outcome": "integration failed"
+}

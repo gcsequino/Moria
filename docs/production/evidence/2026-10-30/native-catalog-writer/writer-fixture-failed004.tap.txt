@@ -1,0 +1,592 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 4729.300997
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 2069.796734
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    not ok 3 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 6572.988608
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:369:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+          {
+            event: 'read',
+        +   historicalRows: 0,
+            revision: '1',
+            rows: 300
+          }
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        event: 'read'
+        rows: 300
+        revision: '1'
+      actual:
+        event: 'read'
+        historicalRows: 0
+        revision: '1'
+        rows: 300
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:401:16)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:369:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 4 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 128.33828
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    ok 5 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 4847.597478
+      type: 'test'
+      ...
+    # {"event":"registered_publication_phases","phases":[{"elapsedMillis":"578","event":"closure_hashed"},{"elapsedMillis":"2215","event":"candidate_registered"},{"elapsedMillis":"629","event":"closure_hashed"},{"elapsedMillis":"2319","event":"candidate_registered"}]}
+    # {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"4366","total_time":4421.827,"self_time":624.56},{"funcname":"runtime_execution_check","calls":"6533","total_time":1779.779,"self_time":195.435},{"funcname":"runtime_binding_authority","calls":"6539","total_time":1595.173,"self_time":373.325},{"funcname":"native_serving_job_delegation","calls":"6533","total_time":1221.834,"self_time":9.608},{"funcname":"native_serving_resource_access_state","calls":"12093","total_time":1187.724,"self_time":344.985},{"funcname":"runtime_dataset_labels_state","calls":"8737","total_time":1140.062,"self_time":88.858},{"funcname":"native_serving_accepted_delegation","calls":"7658","total_time":903.155,"self_time":512.525},{"funcname":"native_serving_session","calls":"4413","total_time":902.441,"self_time":64.829},{"funcname":"native_serving_session_origin","calls":"10948","total_time":673.375,"self_time":673.375},{"funcname":"runtime_job_delegation_guard","calls":"7660","total_time":498.998,"self_time":498.998},{"funcname":"runtime_job_session_origin","calls":"1123","total_time":447.831,"self_time":41.108},{"funcname":"runtime_data_origins","calls":"12093","total_time":364.322,"self_time":210.963},{"funcname":"runtime_data_resource","calls":"24222","total_time":355.119,"self_time":355.119},{"funcname":"native_serving_filesystem_resource_access_state","calls":"20832","total_time":279.035,"self_time":279.035},{"funcname":"runtime_task_check","calls":"1018","total_time":257.251,"self_time":20.634},{"funcname":"runtime_dataset_kind","calls":"8739","total_time":157.793,"self_time":157.793},{"funcname":"runtime_schema_admit","calls":"4485","total_time":111.763,"self_time":111.763},{"funcname":"runtime_snapshot_publish","calls":"6","total_time":50.656,"self_time":9.93},{"funcname":"runtime_execution_request","calls":"6","total_time":45.729,"self_time":9.632},{"funcname":"runtime_dataset_session_matches","calls":"4373","total_time":42.096,"self_time":42.096},{"funcname":"runtime_worker_check","calls":"1131","total_time":23.216,"self_time":23.216},{"funcname":"runtime_job_delegation_accept","calls":"6","total_time":20.74,"self_time":5.2},{"funcname":"runtime_resource_in_use","calls":"39","total_time":14.515,"self_time":14.515},{"funcname":"runtime_job_acceptance_state","calls":"12","total_time":13.535,"self_time":5.316}]}
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 6 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 4276.947538
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 7 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 4728.223898
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 8 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 4424.469702
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 9 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 4627.644685
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 10 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 4223.769149
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 11 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 4371.992294
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 12 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 329.792353
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 13 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 8140.961949
+      type: 'test'
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        ok 1 - posix
+          ---
+          duration_ms: 7907.261777
+          type: 'test'
+          ...
+        # Subtest: s3
+        ok 2 - s3
+          ---
+          duration_ms: 10307.453126
+          type: 'test'
+          ...
+        1..2
+    ok 14 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 18784.512939
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 15 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 4173.557364
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 16 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 47.695873
+      type: 'test'
+      ...
+    1..16
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 80305.823797
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:17:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native effective projections build off-lock, replay concurrent edits and activate with source generations
+    # Subtest: off-lock paged build replays an actual concurrent native action before atomic activation
+    ok 1 - off-lock paged build replays an actual concurrent native action before atomic activation
+      ---
+      duration_ms: 2325.87682
+      type: 'test'
+      ...
+    # Subtest: strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+    ok 2 - strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+      ---
+      duration_ms: 311.004053
+      type: 'test'
+      ...
+    # Subtest: current actions maintain typed history atomically and exact overflow remains present
+    ok 3 - current actions maintain typed history atomically and exact overflow remains present
+      ---
+      duration_ms: 83.418788
+      type: 'test'
+      ...
+    # Subtest: layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+    ok 4 - layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+      ---
+      duration_ms: 875.970594
+      type: 'test'
+      ...
+    # Subtest: expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+    ok 5 - expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+      ---
+      duration_ms: 2579.044684
+      type: 'test'
+      ...
+    # Subtest: a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+    ok 6 - a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+      ---
+      duration_ms: 1130.349918
+      type: 'test'
+      ...
+    # Subtest: a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+    ok 7 - a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+      ---
+      duration_ms: 1529.443799
+      type: 'test'
+      ...
+    # Subtest: protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+    ok 8 - protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+      ---
+      duration_ms: 298.934935
+      type: 'test'
+      ...
+    # Subtest: protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+    ok 9 - protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+      ---
+      duration_ms: 101.710157
+      type: 'test'
+      ...
+    # Subtest: a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+    ok 10 - a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+      ---
+      duration_ms: 1265.065658
+      type: 'test'
+      ...
+    1..10
+ok 2 - native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ---
+  duration_ms: 20601.270201
+  type: 'test'
+  ...
+# 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.013,"Actual Total Time":0.017,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_e798e84c73014cad9e99f0f5f22d396e_1_c","Relation Name":"runtime_projection_e798e84c73014cad9e99f0f5f22d396e","Alias":"runtime_projection_e798e84c73014cad9e99f0f5f22d396e","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.013,"Actual Total Time":0.016,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.075,"Triggers":[],"Execution Time":0.023}]
+# Subtest: resource data provenance retains classification, bounds cycles and pre-admits publication authority
+    # Subtest: authorized dependency is admitted before its immutable binding captures the resulting epoch
+    ok 1 - authorized dependency is admitted before its immutable binding captures the resulting epoch
+      ---
+      duration_ms: 19.5626
+      type: 'test'
+      ...
+    # Subtest: a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+    ok 2 - a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+      ---
+      duration_ms: 2146.62897
+      type: 'test'
+      ...
+    # Subtest: new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+    ok 3 - new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+      ---
+      duration_ms: 48.35392
+      type: 'test'
+      ...
+    # Subtest: duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+    ok 4 - duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+      ---
+      duration_ms: 27.481031
+      type: 'test'
+      ...
+    1..4
+ok 3 - resource data provenance retains classification, bounds cycles and pre-admits publication authority
+  ---
+  duration_ms: 5732.671077
+  type: 'test'
+  ...
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 189.180191
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 73.285396
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 151.917677
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 91.827646
+      type: 'test'
+      ...
+    # Subtest: whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+    ok 5 - whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+      ---
+      duration_ms: 219.926403
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 6 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 88.601392
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 7 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 34.788318
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 8 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 175.269831
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 9 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 60.055068
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 10 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 58.922639
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 11 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 82.449858
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 12 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 33.007226
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    ok 13 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 1011.945136
+      type: 'test'
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 14 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 23.367035
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    ok 15 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 1784.955846
+      type: 'test'
+      ...
+    1..15
+ok 4 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 7725.088058
+  type: 'test'
+  ...
+# Subtest: native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+    # Subtest: POSIX publication indexes 300 canonical objects using current namespace read authority
+    ok 1 - POSIX publication indexes 300 canonical objects using current namespace read authority
+      ---
+      duration_ms: 3318.80929
+      type: 'test'
+      ...
+    # Subtest: MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+    ok 2 - MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+      ---
+      duration_ms: 5737.158736
+      type: 'test'
+      ...
+    # Subtest: an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+    ok 3 - an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+      ---
+      duration_ms: 5936.829786
+      type: 'test'
+      ...
+    # Subtest: stale and ambiguous provider bindings cannot activate an object generation
+    ok 4 - stale and ambiguous provider bindings cannot activate an object generation
+      ---
+      duration_ms: 5099.470875
+      type: 'test'
+      ...
+    # Subtest: a pinned physical object with changed bytes fails semantic verification before activation
+    ok 5 - a pinned physical object with changed bytes fails semantic verification before activation
+      ---
+      duration_ms: 3718.030981
+      type: 'test'
+      ...
+    # Subtest: cached verification is immutable and physical file versions are still checked by concurrent task reads
+    ok 6 - cached verification is immutable and physical file versions are still checked by concurrent task reads
+      ---
+      duration_ms: 6160.238955
+      type: 'test'
+      ...
+    # Subtest: a ready verification never caches permission across current authority revocation
+    ok 7 - a ready verification never caches permission across current authority revocation
+      ---
+      duration_ms: 5933.690647
+      type: 'test'
+      ...
+    # Subtest: an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+    ok 8 - an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+      ---
+      duration_ms: 9341.316253
+      type: 'test'
+      ...
+    # Subtest: a published native index retains every enabled Dataset namespace classification after later disable
+    ok 9 - a published native index retains every enabled Dataset namespace classification after later disable
+      ---
+      duration_ms: 52.16483
+      type: 'test'
+      ...
+    1..9
+ok 5 - native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ---
+  duration_ms: 51777.832515
+  type: 'test'
+  ...
+# Subtest: native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+    # Subtest: real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+        # Subtest: native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+            # Subtest: valid
+            ok 1 - valid
+              ---
+              duration_ms: 1663.421142
+              type: 'test'
+              ...
+            # Subtest: wrong-table
+            ok 2 - wrong-table
+              ---
+              duration_ms: 590.46008
+              type: 'test'
+              ...
+            # Subtest: wrong-snapshot
+            ok 3 - wrong-snapshot
+              ---
+              duration_ms: 594.943333
+              type: 'test'
+              ...
+            # Subtest: missing
+            ok 4 - missing
+              ---
+              duration_ms: 1016.391849
+              type: 'test'
+              ...
+            # Subtest: extra
+            ok 5 - extra
+              ---
+              duration_ms: 1546.545248
+              type: 'test'
+              ...
+            # Subtest: malformed-manifest
+            ok 6 - malformed-manifest
+              ---
+              duration_ms: 1029.686806
+              type: 'test'
+              ...
+            # Subtest: malformed-parquet
+            ok 7 - malformed-parquet
+              ---
+              duration_ms: 1120.238045
+              type: 'test'
+              ...
+            # Subtest: nullable-array
+            ok 8 - nullable-array
+              ---
+              duration_ms: 620.181479
+              type: 'test'
+              ...
+            # Subtest: historical-schema
+            ok 9 - historical-schema
+              ---
+              duration_ms: 1527.970959
+              type: 'test'
+              ...
+            # Subtest: cycle
+            ok 10 - cycle
+              ---
+              duration_ms: 1485.452616
+              type: 'test'
+              ...
+            # Subtest: duplicate-schema
+            ok 11 - duplicate-schema
+              ---
+              duration_ms: 579.06643
+              type: 'test'
+              ...
+            # Subtest: current-projection
+            ok 12 - current-projection
+              ---
+              duration_ms: 1164.911788
+              type: 'test'
+              ...
+            # Subtest: missing-sort-orders
+            ok 13 - missing-sort-orders
+              ---
+              duration_ms: 569.299098
+              type: 'test'
+              ...
+            # Subtest: foreign-reference
+            ok 14 - foreign-reference
+              ---
+              duration_ms: 621.202611
+              type: 'test'
+              ...
+            # Subtest: deleted-valid
+            ok 15 - deleted-valid
+              ---
+              duration_ms: 2424.513589
+              type: 'test'
+              ...
+            # Subtest: deleted-corrupt
+            ok 16 - deleted-corrupt
+              ---
+              duration_ms: 1265.715458
+              type: 'test'
+              ...
+            1..16
+        ok 1 - native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+          ---
+          duration_ms: 17824.085493
+          type: 'test'
+          ...
+        # Subtest: valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO
+            # Subtest: posix
+            ok 1 - posix
+              ---
+              duration_ms: 1060.01344
+              type: 'test'
+              ...
+            # Subtest: s3
+            ok 2 - s3
+              ---
+              duration_ms: 1377.375873
+              type: 'test'
+              ...
+            1..2
+        ok 2 - valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO
+          ---
+          duration_ms: 2437.995784
+          type: 'test'
+          ...
+        1..2
+    ok 1 - real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+      ---
+      duration_ms: 45316.909576
+      type: 'test'
+      ...
+    # Subtest: SIGKILL after a durable page commit reopens exact bounded closure state
+    ok 2 - SIGKILL after a durable page commit reopens exact bounded closure state
+      ---
+      duration_ms: 8509.422076
+      type: 'test'
+      ...
+    # Subtest: a provider version change between chunks denies subsequent range release
+    ok 3 - a provider version change between chunks denies subsequent range release
+      ---
+      duration_ms: 218.11155
+      type: 'test'
+      ...
+    # Subtest: an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks
+    ok 4 - an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks
+      ---
+      duration_ms: 1177.2184
+      type: 'test'
+      ...
+    # Subtest: expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools
+    ok 5 - expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools
+      ---
+      duration_ms: 314.326006
+      type: 'test'
+      ...
+    # Subtest: disabled namespace bindings deny both source reads and artifact writes
+    ok 6 - disabled namespace bindings deny both source reads and artifact writes
+      ---
+      duration_ms: 476.783506
+      type: 'test'
+      ...
+    # Subtest: current authority revocation denies native I/O without publishing any object generation
+    ok 7 - current authority revocation denies native I/O without publishing any object generation
+      ---
+      duration_ms: 1411.920033
+      type: 'test'
+      ...
+    1..7
+ok 6 - native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+  ---
+  duration_ms: 62135.096323
+  type: 'test'
+  ...
+1..6
+# tests 89
+# suites 0
+# pass 87
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 80886.243862

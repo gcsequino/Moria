@@ -1,0 +1,64 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T155346969395Z-private-v3-bootstrap-002",
+  "classification": "private v3 bootstrap/reader cohort; not shared-tip qualification",
+  "sourceManifestSha256": "d043b4e904fb29c9aff14d84199559bb5a0f8d484d3e0ede002239088e2fba95",
+  "generatedSchema": {
+    "command": [
+      "tsx",
+      "scripts/indexing-schema.ts",
+      "--write"
+    ],
+    "path": "services/runtime/schema.json",
+    "sha256": "4c2999ad6738fc97a315a64d8744e5bfefd42c3bc2bd61ffdbb034e717417fde"
+  },
+  "buildCommand": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T155346969395Z-private-v3-bootstrap-002,dst=/work",
+    "--mount",
+    "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+    "--mount",
+    "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+    "-w",
+    "/work/services/runtime",
+    "moria-indexing-toolchain:local",
+    "cargo",
+    "build",
+    "--locked",
+    "--bin",
+    "moria-runtime",
+    "--test",
+    "native_catalog",
+    "-j",
+    "2",
+    "--message-format=json"
+  ],
+  "buildExitCode": 0,
+  "artifacts": {
+    "moria-runtime": {
+      "path": "/tmp/moria-proof-snapshots/20261031T155346969395Z-private-v3-bootstrap-002/native-proof-artifact/moria-runtime",
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "sha256": "066048b9981c483c638214bc592a3d14d000fef04d3901732bfac71fccea4bc7"
+    },
+    "native_catalog": {
+      "path": "/tmp/moria-proof-snapshots/20261031T155346969395Z-private-v3-bootstrap-002/native-proof-artifact/moria-native-catalog-test",
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+      "sha256": "6c834b33829f363680f13b13cfad25dca9653cc9818f234e77fcabd77bc41c1c"
+    }
+  },
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "09bfb2b4492037aa1dbf0296b927e0495baf856e48c203c4388af038d092d021",
+      "version": 5
+    },
+    "sourceDigest": "6b0e8f86afb45a05e9b95bb50de5d13c488a7fe64f33972e4b2b58cd877ff3c1"
+  }
+}

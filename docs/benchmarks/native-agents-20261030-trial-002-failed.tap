@@ -1,0 +1,117 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+      ---
+      duration_ms: 1998.65671
+      type: 'test'
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    not ok 2 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 1493.624829
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:515:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"attemptId":"2c4a5824-96ad-4273-9f38-3a41ae5e7943","correlationId":"0313f0bb-756e-4ed3-b150-25c8022bfb4d","error":{"code":"FUNCTION_FAILED","message":"Agent execution failed"},"id":"b6044646-b2ce-4d4a-bc8f-6931b243c293","markings":[{"environment":"agents-854f193c-2295-44e2-86d4-97ea3482f0b2","marking":"private"}],"modelCalls":[],"release":"sha256:1a846c90cbdcc961451795adcacefcc3d5a3ac9a7862d68dff5e20c5827f5cd2","resource":"50daca4e-a1cb-4b88-ae8d-bd582bd6c70a","status":"failed"}
+        + actual - expected
+        
+        + 'failed'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:522:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:515:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    ok 3 - healthy long-running agent work renews the same single-attempt database lease
+      ---
+      duration_ms: 11437.869748
+      type: 'test'
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    not ok 4 - bound model dispatch stops after real worker-scope revocation and cannot publish a result
+      ---
+      duration_ms: 10057.843067
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:577:13'
+      failureType: 'testCodeFailure'
+      error: 'Real provider was not reached'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:587:42)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:585:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:577:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    ok 5 - cancellation and supervisor SIGKILL fence the graph without re-executing user code
+      ---
+      duration_ms: 2049.125948
+      type: 'test'
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    ok 6 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+      ---
+      duration_ms: 1819.494874
+      type: 'test'
+      ...
+    # Subtest: accepted agent code remains pinned across redeployment and current authority gates retained results
+    not ok 7 - accepted agent code remains pinned across redeployment and current authority gates retained results
+      ---
+      duration_ms: 2707.264293
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:677:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"attemptId":"4b0bb0cb-358d-4c7e-b5db-a8d3af6cca96","correlationId":"90fe3574-0b99-42ad-8142-a80f6d3504e7","id":"8c4277a3-c39a-4a3f-9f0a-95b48451d7e2","markings":[],"modelCalls":[],"release":"sha256:1a846c90cbdcc961451795adcacefcc3d5a3ac9a7862d68dff5e20c5827f5cd2","resource":"50daca4e-a1cb-4b88-ae8d-bd582bd6c70a","result":{"answer":"hello"},"status":"succeeded"}
+        
+        200 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 200
+      operator: 'strictEqual'
+      stack: |-
+        enqueue (/work/tests/native-agents.integration.test.ts:439:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:691:25)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:677:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..7
+not ok 1 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 54985.647691
+  type: 'test'
+  location: '/work/tests/native-agents.integration.test.ts:29:1'
+  failureType: 'subtestsFailed'
+  error: '3 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 4
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59970.361727

@@ -1,0 +1,46 @@
+{
+  "source": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17",
+  "sourceManifestSha256": "6a18fba9cef7566326c8bdfb57bdc8b0b8c5d329d417003d7d5e9582a422d4c5",
+  "artifacts": {
+    "runtime": {
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/native-proof-artifact/moria-runtime",
+      "sha256": "2011c83249a7059b1ed36efe90da42066eb11a5820624e87646df44fa6e8ba4d"
+    },
+    "catalog": {
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/native-proof-artifact/moria-native-catalog-test",
+      "sha256": "e6145c9c30398623f12e4bec644f9793e71e608307c96a9e2507a672e5fe9131"
+    }
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/native-proof-artifact/moria-native-catalog-test,dst=/usr/local/bin/moria-catalog-tests,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-catalog-tests",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-catalog.integration.test.ts",
+    "tests/native-projection.integration.test.ts"
+  ],
+  "exitCode": 0
+}

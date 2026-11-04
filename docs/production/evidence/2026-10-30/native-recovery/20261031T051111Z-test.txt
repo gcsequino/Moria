@@ -1,0 +1,175 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 323.242921
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 380.712979
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 637.852193
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 573.836277
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 5534.08762
+  type: 'test'
+  ...
+# Subtest: native HTTP admission bounds pending bodies across shared and component routes
+    # Subtest: local CLI profiles use real revocable workload sessions
+    ok 1 - local CLI profiles use real revocable workload sessions
+      ---
+      duration_ms: 60.52638
+      type: 'test'
+      ...
+    # Subtest: a missed CLI approval disable pulse permanently fences its issued session
+    ok 2 - a missed CLI approval disable pulse permanently fences its issued session
+      ---
+      duration_ms: 6.746954
+      type: 'test'
+      ...
+    # Subtest: app-bound browser cookies enforce exact origin and current session
+    ok 3 - app-bound browser cookies enforce exact origin and current session
+      ---
+      duration_ms: 45.583384
+      type: 'test'
+      ...
+    # Subtest: managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+    ok 4 - managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+      ---
+      duration_ms: 5873.725726
+      type: 'test'
+      ...
+    # Subtest: four compiler requests hold their slots through an incomplete body
+    ok 5 - four compiler requests hold their slots through an incomplete body
+      ---
+      duration_ms: 90.77382
+      type: 'test'
+      ...
+    # Subtest: model admission retains its separate32 request budget
+    ok 6 - model admission retains its separate32 request budget
+      ---
+      duration_ms: 233.746135
+      type: 'test'
+      ...
+    # Subtest: the shared64 request budget rejects additional work before buffering
+    ok 7 - the shared64 request budget rejects additional work before buffering
+      ---
+      duration_ms: 416.095816
+      type: 'test'
+      ...
+    # Subtest: readiness is current, metrics require instance authority and disabled CLI approval survives restart
+    ok 8 - readiness is current, metrics require instance authority and disabled CLI approval survives restart
+      ---
+      duration_ms: 177.411705
+      type: 'test'
+      ...
+    # Subtest: SIGTERM bounds drain while an actual admitted body is unfinished
+    ok 9 - SIGTERM bounds drain while an actual admitted body is unfinished
+      ---
+      duration_ms: 2009.151173
+      type: 'test'
+      ...
+    1..9
+ok 2 - native HTTP admission bounds pending bodies across shared and component routes
+  ---
+  duration_ms: 12535.2216
+  type: 'test'
+  ...
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+not ok 3 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ---
+  duration_ms: 57.613546
+  type: 'test'
+  location: '/work/tests/native-indexing-service.integration.test.ts:21:3'
+  failureType: 'testCodeFailure'
+  error: 'spawn /usr/local/bin/moria-catalog-tests ENOENT'
+  code: 'ENOENT'
+  stack: |-
+    ChildProcess._handle.onexit (node:internal/child_process:316:19)
+    onErrorNT (node:internal/child_process:554:16)
+    process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+  ...
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+not ok 4 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ---
+  duration_ms: 42.57491
+  type: 'test'
+  location: '/work/tests/native-indexing-service.integration.test.ts:21:3'
+  failureType: 'testCodeFailure'
+  error: 'spawn /usr/local/bin/moria-catalog-tests ENOENT'
+  code: 'ENOENT'
+  stack: |-
+    ChildProcess._handle.onexit (node:internal/child_process:316:19)
+    onErrorNT (node:internal/child_process:554:16)
+    process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+  ...
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 454.558094
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 1134.753837
+      type: 'test'
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 155.624651
+      type: 'test'
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 109.522098
+      type: 'test'
+      ...
+    1..4
+ok 5 - native disabled restore fences real work and external uncertainty without losing permanent state
+  ---
+  duration_ms: 5880.241253
+  type: 'test'
+  ...
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+ok 6 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+  ---
+  duration_ms: 12770.859328
+  type: 'test'
+  ...
+# verified posix restore approval completed
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+ok 7 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+  ---
+  duration_ms: 13832.023312
+  type: 'test'
+  ...
+# verified s3 restore approval completed
+1..7
+# tests 24
+# suites 0
+# pass 22
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32972.170403

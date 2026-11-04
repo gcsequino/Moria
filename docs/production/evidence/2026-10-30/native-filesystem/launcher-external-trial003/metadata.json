@@ -1,0 +1,64 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261031T053748378014Z-native-scoped-app-observation",
+    "files": 1586,
+    "manifestSha256": "26933de8b1bdd437bff061fac750d62f0e97a29836f6af0c6629ff3acc4c889a",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "overrides": {
+    "apps/local/src/native-runtime.ts": "b50164ff6509cde07c307f79a7c83ed3c07f7d565b044bcdd2ca35006bac43bc",
+    "services/security/src/browser-sessions.ts": "46cb7c92aa23a423c96b53dc80d6a30b0d86898b107cfd9aefe9822adf236a8e",
+    "services/app-host/src/auth.ts": "f93dc0aac15c9343ae3f9a12841bb8238618aaa283759689c3eca5f5b72504f7",
+    "tests/native-local-runtime.integration.test.ts": "28630db8160f2f002824fadf62a440bf6214cd86c68758e6d338b2be55c32dbf",
+    "tests/fixtures/native-local-process.ts": "cde810bf3a37a578eaac8e95bab02cc7edb13b4477a3616e5da2a1cd14db87ee"
+  },
+  "command": [
+    "flock",
+    "-s",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "host",
+    "--group-add",
+    "108",
+    "-e",
+    "pnpm_config_verify_deps_before_run=false",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T053748378014Z-native-scoped-app-observation,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T053748378014Z-native-scoped-app-observation/native-proof-artifact/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T053748378014Z-native-scoped-app-observation/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T053748378014Z-native-scoped-app-observation/native-proof-artifact/moria-catalog-tests,dst=/usr/local/bin/moria-catalog-tests,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-filesystem/launcher-external-trial003/test-only-overrides/apps/local/src/native-runtime.ts,dst=/work/apps/local/src/native-runtime.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-filesystem/launcher-external-trial003/test-only-overrides/services/security/src/browser-sessions.ts,dst=/work/services/security/src/browser-sessions.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-filesystem/launcher-external-trial003/test-only-overrides/services/app-host/src/auth.ts,dst=/work/services/app-host/src/auth.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-filesystem/launcher-external-trial003/test-only-overrides/tests/native-local-runtime.integration.test.ts,dst=/work/tests/native-local-runtime.integration.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-filesystem/launcher-external-trial003/test-only-overrides/tests/fixtures/native-local-process.ts,dst=/work/tests/fixtures/native-local-process.ts,readonly",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-local-runtime.integration.test.ts"
+  ],
+  "exit": 0
+}

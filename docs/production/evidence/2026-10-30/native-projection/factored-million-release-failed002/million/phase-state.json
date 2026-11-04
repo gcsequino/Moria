@@ -1,0 +1,18 @@
+{
+  "activePhase": "source-publication",
+  "timeline": [
+    {
+      "phase": "setup",
+      "elapsedMs": 253.53049099999998
+    },
+    {
+      "phase": "identity",
+      "elapsedMs": 85625.278171
+    },
+    {
+      "phase": "source-production",
+      "elapsedMs": 38249.32223199999
+    }
+  ],
+  "elapsedMs": 124128.130894
+}

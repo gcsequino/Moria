@@ -1,0 +1,16 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+    Finished `test` profile [unoptimized] target(s) in 13.68s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-caa1227c937bb40e)
+
+running 8 tests
+test snapshot::parquet_bounds::tests::compact_nesting_is_bounded ... ok
+test snapshot::parquet_bounds::tests::oversized_page_rejected_before_any_decode ... ok
+test snapshot::parquet_bounds::tests::encoded_column_walk_is_exact ... ok
+test snapshot::parquet_bounds::tests::oversized_value_count_rejected_before_any_decode ... ok
+test snapshot::parquet_bounds::tests::raw_collection_claim_is_rejected_without_allocating ... ok
+test snapshot::parquet_bounds::tests::real_page_header_size_claim_is_rejected_before_decode ... ok
+test snapshot::parquet_bounds::tests::real_plain_and_small_dictionary_columns_have_exact_bounded_walks ... ok
+test snapshot::parquet_bounds::tests::real_dictionary_array_expansion_is_rejected_before_decode ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 53 filtered out; finished in 0.17s
+

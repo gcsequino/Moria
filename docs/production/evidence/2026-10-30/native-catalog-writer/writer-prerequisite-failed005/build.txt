@@ -1,0 +1,13 @@
+   Compiling arrow-schema v58.4.1
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+   Compiling arrow-data v58.4.1
+   Compiling arrow-array v58.4.1
+   Compiling arrow-select v58.4.1
+   Compiling arrow-arith v58.4.1
+   Compiling arrow-ipc v58.4.1
+   Compiling arrow-ord v58.4.1
+   Compiling arrow-string v58.4.1
+   Compiling parquet v58.4.1
+   Compiling arrow-cast v58.4.1
+   Compiling iceberg v0.10.1
+    Finished `dev` profile [unoptimized] target(s) in 32.60s

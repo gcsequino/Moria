@@ -1,0 +1,22 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "d80f903796d0254a61da2d46e0b42e7e33f514c5c42fe980c2572e865bba0bd8",
+      "version": 5
+    },
+    "sourceDigest": "0045d075e4022e7d00dfd1ef576e8a5fa993df3f593d67ed36658b21e350471d"
+  },
+  "sourceManifestSha256": "6a18fba9cef7566326c8bdfb57bdc8b0b8c5d329d417003d7d5e9582a422d4c5",
+  "artifacts": {
+    "moria-runtime": {
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/native-proof-artifact/moria-runtime",
+      "sha256": "2011c83249a7059b1ed36efe90da42066eb11a5820624e87646df44fa6e8ba4d"
+    },
+    "moria-catalog-tests": {
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/native-proof-artifact/moria-native-catalog-test",
+      "sha256": "e6145c9c30398623f12e4bec644f9793e71e608307c96a9e2507a672e5fe9131"
+    }
+  }
+}

@@ -11,6 +11,7 @@ import {
   objectDispatchers,
   httpListeners,
   processAdapters,
+  processLifecycleOwners,
   httpClientImports,
   sandboxEntrypoints,
 } from './protected-boundaries.js';
@@ -221,9 +222,7 @@ export function architectureViolations(root: string): string[] {
             if (
               member === 'kill' &&
               /(?:^|\/)(?:child_process|process)\.d\.ts$/.test(path) &&
-              !['services/process/src/python.ts', 'services/functions/src/docker.ts'].includes(
-                name(file),
-              )
+              !(processLifecycleOwners as readonly string[]).includes(name(file))
             ) {
               const call: ts.Node = node.parent;
               const probe =

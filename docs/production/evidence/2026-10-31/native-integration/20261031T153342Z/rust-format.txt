@@ -1,0 +1,80 @@
+Diff in /work/tests/fixtures/native-transport/harness.rs:184:
+         let _ = driver.await;
+     });
+ 
+-    let mut directory=environment_directory_client::EnvironmentDirectoryClient::new(connection);
+-    let env_context=|| {let mut c=context(&f.incarnation);c.environment_id=f.environment.clone();Some(c)};
+-    let placed=directory.inspect_placement(InspectPlacementRequest{context:env_context()}).await?.into_inner();
+-    assert_eq!(placed.owner.as_ref().unwrap().cell_id,f.cell);
++    let mut directory = environment_directory_client::EnvironmentDirectoryClient::new(connection);
++    let env_context = || {
++        let mut c = context(&f.incarnation);
++        c.environment_id = f.environment.clone();
++        Some(c)
++    };
++    let placed = directory
++        .inspect_placement(InspectPlacementRequest {
++            context: env_context(),
++        })
++        .await?
++        .into_inner();
++    assert_eq!(placed.owner.as_ref().unwrap().cell_id, f.cell);
+     assert!(placed.serving && placed.leases_fenced);
+-    let freezing=FreezePlacementRequest{context:env_context(),expected:placed.owner.clone(),next_cell_id:f.other_cell.clone()};
+-    assert_eq!(directory.freeze_placement(freezing.clone()).await.unwrap_err().code(),Code::PermissionDenied);
++    let freezing = FreezePlacementRequest {
++        context: env_context(),
++        expected: placed.owner.clone(),
++        next_cell_id: f.other_cell.clone(),
++    };
++    assert_eq!(
++        directory
++            .freeze_placement(freezing.clone())
++            .await
++            .unwrap_err()
++            .code(),
++        Code::PermissionDenied
++    );
+     db.execute("UPDATE moria.native_service_peers SET roles=array_append(roles,'environment-admin') WHERE fingerprint=$1",&[&f.peer_fingerprint]).await?;
+-    let frozen=directory.freeze_placement(freezing.clone()).await?.into_inner();
++    let frozen = directory
++        .freeze_placement(freezing.clone())
++        .await?
++        .into_inner();
+     assert!(!frozen.serving && frozen.leases_fenced);
+-    assert_eq!(frozen.owner.as_ref().unwrap().fence,2);
+-    assert_eq!(directory.freeze_placement(freezing.clone()).await?.into_inner().owner.unwrap().fence,2);
+-    let active=directory.activate_placement(ActivatePlacementRequest{context:env_context(),expected:frozen.owner}).await?.into_inner();
++    assert_eq!(frozen.owner.as_ref().unwrap().fence, 2);
++    assert_eq!(
++        directory
++            .freeze_placement(freezing.clone())
++            .await?
++            .into_inner()
++            .owner
++            .unwrap()
++            .fence,
++        2
++    );
++    let active = directory
++        .activate_placement(ActivatePlacementRequest {
++            context: env_context(),
++            expected: frozen.owner,
++        })
++        .await?
++        .into_inner();
+     assert!(active.serving && active.leases_fenced);
+-    assert_eq!(active.owner.unwrap().cell_id,f.other_cell);
+-    assert_eq!(directory.freeze_placement(freezing).await.unwrap_err().code(),Code::FailedPrecondition);
++    assert_eq!(active.owner.unwrap().cell_id, f.other_cell);
++    assert_eq!(
++        directory
++            .freeze_placement(freezing)
++            .await
++            .unwrap_err()
++            .code(),
++        Code::FailedPrecondition
++    );
+     db.execute(
+         "UPDATE moria.native_service_peers SET enabled=false WHERE fingerprint=$1",
+         &[&f.peer_fingerprint],

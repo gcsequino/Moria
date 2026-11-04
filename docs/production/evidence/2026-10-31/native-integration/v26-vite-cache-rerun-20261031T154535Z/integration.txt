@@ -1,0 +1,61 @@
+TAP version 13
+# Subtest: app artifacts publish immutably, promote atomically, retain old assets and recover damaged releases
+ok 1 - app artifacts publish immutably, promote atomically, retain old assets and recover damaged releases
+  ---
+  duration_ms: 85.490553
+  type: 'test'
+  ...
+# Subtest: CLI bootstraps, verifies and recovers the bundled app without a database or running UI
+ok 2 - CLI bootstraps, verifies and recovers the bundled app without a database or running UI
+  ---
+  duration_ms: 2840.076396
+  type: 'test'
+  ...
+# Subtest: React import parser preserves CSV Unicode, quoting and multiline notes
+ok 3 - React import parser preserves CSV Unicode, quoting and multiline notes
+  ---
+  duration_ms: 0.451808
+  type: 'test'
+  ...
+# Subtest: development cluster waits for removed and idle clients to disconnect before stopping
+ok 4 - development cluster waits for removed and idle clients to disconnect before stopping
+  ---
+  duration_ms: 1476.717924
+  type: 'test'
+  ...
+# Subtest: retired commands and configuration fail before instance access
+ok 5 - retired commands and configuration fail before instance access
+  ---
+  duration_ms: 1.268661
+  type: 'test'
+  ...
+# Moria management: http://127.0.0.1:33297/
+# Management recovery: pnpm moria auth recover --app management
+# Google setup: pnpm moria auth setup. Local recovery: pnpm moria auth recover.
+# Data persists in /tmp/platform-composition-r9NmZq. Press Ctrl+C to stop.
+# Subtest: explicit compatibility startup composes management only; neutral hosted apps isolate tokens and origins
+not ok 6 - explicit compatibility startup composes management only; neutral hosted apps isolate tokens and origins
+  ---
+  duration_ms: 3323.880284
+  type: 'test'
+  location: '/work/tests/platform-composition.test.ts:126:1'
+  failureType: 'testCodeFailure'
+  error: 'Invalid URL'
+  code: 'ERR_INVALID_URL'
+  name: 'TypeError'
+  stack: |-
+    new URL (node:internal/url:895:25)
+    new BrowserSessions (/work/services/security/src/browser-sessions.ts:52:22)
+    TestContext.<anonymous> (/work/tests/platform-composition.test.ts:235:26)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 5
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5475.656156

@@ -1,4 +1,5 @@
 import { runProcess } from '../../../apps/local/src/runtime.js';
+process.env.MORIA_LOCAL_RUNTIME = 'legacy';
 
 const runtime = await runProcess('api');
 if (!runtime) {

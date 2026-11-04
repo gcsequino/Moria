@@ -1,0 +1,37 @@
+{
+  "samples": 311,
+  "maxCgroupCurrentBytes": 12225998848.0,
+  "maxCgroupPeakBytes": 12322816000.0,
+  "maxAnonymousBytes": 472162304.0,
+  "maxFileCacheBytes": 11887771648.0,
+  "processes": [
+    {
+      "name": "bash",
+      "maxRssBytes": 3268608.0
+    },
+    {
+      "name": "esbuild",
+      "maxRssBytes": 17874944.0
+    },
+    {
+      "name": "MainThread",
+      "maxRssBytes": 157204480.0
+    },
+    {
+      "name": "moria-runtime",
+      "maxRssBytes": 85012480.0
+    },
+    {
+      "name": "native-catalog",
+      "maxRssBytes": 33120256.0
+    },
+    {
+      "name": "postgres",
+      "maxRssBytes": 223682560.0
+    },
+    {
+      "name": "python",
+      "maxRssBytes": 197316608.0
+    }
+  ]
+}

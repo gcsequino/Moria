@@ -1,0 +1,85 @@
+TAP version 13
+# Subtest: management active browser graph contains native clients and no retired workspace facade or server dependencies
+ok 1 - management active browser graph contains native clients and no retired workspace facade or server dependencies
+  ---
+  duration_ms: 145.779999
+  type: 'test'
+  ...
+# Subtest: resource views route only the resolved domain and preserve exact-value guidance
+ok 2 - resource views route only the resolved domain and preserve exact-value guidance
+  ---
+  duration_ms: 4.965576
+  type: 'test'
+  ...
+# Subtest: browser origin ownership is canonical, immutable and checked before native exposure across replicas and restart
+not ok 3 - browser origin ownership is canonical, immutable and checked before native exposure across replicas and restart
+  ---
+  duration_ms: 3338.845717
+  type: 'test'
+  location: '/work/tests/native-browser-origins.integration.test.ts:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The validation function is expected to return "true". Received false
+    
+    Caught error:
+    
+    Error: Database migration is busy; stop services and retry.
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/work/tests/native-browser-origins.integration.test.ts:181:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+not ok 4 - default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+  ---
+  duration_ms: 2861.386623
+  type: 'test'
+  location: '/work/tests/native-local-runtime.integration.test.ts:21:1'
+  failureType: 'testCodeFailure'
+  error: "EROFS: read-only file system, open '/work/node_modules/.vite-temp/vite.config.ts.timestamp-1793437040111-3432f73796912.mjs'"
+  code: 'EROFS'
+  stack: |-
+    async open (node:internal/fs/promises:1345:25)
+    async Object.writeFile (node:internal/fs/promises:1972:14)
+    async loadConfigFromBundledFile (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:38130:3)
+    async bundleAndLoadConfigFile (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:37978:21)
+    async loadConfigFromFile (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:37938:42)
+    async resolveConfig (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:37540:22)
+    async createBuilder (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:35112:17)
+    async build (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:34567:18)
+    async buildNativeManagement (/work/tests/fixtures/native-common/management.ts:5:3)
+    async TestContext.<anonymous> (/work/tests/native-local-runtime.integration.test.ts:38:5)
+  ...
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+not ok 5 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 2929.870346
+  type: 'test'
+  location: '/work/tests/native-source-runtime.integration.test.ts:33:1'
+  failureType: 'testCodeFailure'
+  error: "EROFS: read-only file system, open '/work/node_modules/.vite-temp/vite.config.ts.timestamp-1793437043796-48c1523b2e173.mjs'"
+  code: 'EROFS'
+  stack: |-
+    async open (node:internal/fs/promises:1345:25)
+    async Object.writeFile (node:internal/fs/promises:1972:14)
+    async loadConfigFromBundledFile (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:38130:3)
+    async bundleAndLoadConfigFile (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:37978:21)
+    async loadConfigFromFile (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:37938:42)
+    async resolveConfig (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:37540:22)
+    async createBuilder (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:35112:17)
+    async build (/work/node_modules/.pnpm/vite@8.3.4_@types+node@26.6.5_esbuild@0.28.2_tsx@4.23.15/node_modules/vite/dist/node/chunks/node.js:34567:18)
+    async buildNativeManagement (/work/tests/fixtures/native-common/management.ts:5:3)
+    async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:188:5)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 2
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11388.462644

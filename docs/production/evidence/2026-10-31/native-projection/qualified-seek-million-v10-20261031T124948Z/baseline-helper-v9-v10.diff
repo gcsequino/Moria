@@ -1,0 +1,130 @@
+--- archived-v9-local-helper
++++ frozen-v10-current-helper
+@@ -3,9 +3,9 @@
+ import { randomUUID } from 'node:crypto';
+ import { writeFile } from 'node:fs/promises';
+ import { setTimeout as delay } from 'node:timers/promises';
+-import { fingerprint } from '/work/packages/compiler/src/index.js';
+-import { Authority } from '/work/services/security/src/authority.js';
+-import { WorkloadSessions } from '/work/services/security/src/sessions.js';
++import { fingerprint } from '../packages/compiler/src/index.js';
++import { Authority } from '../services/security/src/authority.js';
++import { WorkloadSessions } from '../services/security/src/sessions.js';
+ import type { NativeProjectionFixture } from './native-projection.js';
+ 
+ type Kind = 'detail' | 'page' | 'filterSort' | 'action' | 'multiAction' | 'aggregate';
+@@ -34,6 +34,65 @@
+   windowMs?: number;
+   maxOutstanding?: number;
+   timeoutMs?: number;
++}
++
++export function completeProtectedSample(sample: Sample, elapsedMs: number, timeoutMs: number) {
++  sample.completedMs = elapsedMs;
++  if (sample.successful && sample.completedMs - sample.scheduledMs > timeoutMs) {
++    sample.successful = false;
++    sample.error = 'ARRIVAL_DEADLINE';
++  }
++  return sample;
++}
++
++export function summarizeProtectedSamples(items: readonly Sample[]) {
++  const distribution = (values: number[]) => {
++    values.sort((a, b) => a - b);
++    const percentile = (p: number) =>
++      values.length ? values[Math.min(values.length - 1, Math.ceil(values.length * p) - 1)] : null;
++    return {
++      count: values.length,
++      p50Ms: percentile(0.5),
++      p95Ms: percentile(0.95),
++      p99Ms: percentile(0.99),
++      maxMs: values.at(-1) ?? null,
++    };
++  };
++  const successful = items.filter((sample) => sample.successful);
++  const failed = items.filter((sample) => !sample.successful);
++  const { count: _count, ...allLatency } = distribution(
++    items.map((sample) => sample.completedMs - sample.scheduledMs),
++  );
++  return {
++    scheduled: items.length,
++    successful: successful.length,
++    unsuccessfulFraction: items.length ? failed.length / items.length : null,
++    latencyBasis: 'all-scheduled-arrivals',
++    ...allLatency,
++    successfulLatency: distribution(
++      successful.map((sample) => sample.completedMs - sample.scheduledMs),
++    ),
++    dispatchDelay: distribution(
++      items
++        .filter((sample) => sample.dispatchMs !== undefined)
++        .map((sample) => sample.dispatchMs! - sample.scheduledMs),
++    ),
++    notDispatched: items.filter((sample) => sample.dispatchMs === undefined).length,
++    statuses: Object.fromEntries(
++      [
++        ...new Set(items.map((sample) => sample.status).filter((status) => status !== undefined)),
++      ].map((status) => [
++        String(status),
++        items.filter((sample) => sample.status === status).length,
++      ]),
++    ),
++    errors: Object.fromEntries(
++      [...new Set(failed.map((sample) => sample.error))].map((error) => [
++        String(error),
++        failed.filter((sample) => sample.error === error).length,
++      ]),
++    ),
++  };
+ }
+ 
+ /** Short open-loop diagnostic. This does not replace the production workload protocol. */
+@@ -255,8 +314,7 @@
+           sample.error =
+             error instanceof Error ? error.message.slice(0, 256) : String(error).slice(0, 256);
+         }
+-        sample.completedMs = performance.now() - started;
+-        samples.push(sample);
++        samples.push(completeProtectedSample(sample, performance.now() - started, timeoutMs));
+       };
+       for (const arrival of arrivals) {
+         const wait = arrival.offsetMs - (performance.now() - started);
+@@ -280,36 +338,15 @@
+       await Promise.all(pending);
+       assert.equal(samples.length, count, 'Every scheduled arrival is counted');
+       samples.sort((a, b) => a.sequence - b.sequence);
+-      const summarize = (items: Sample[]) => {
+-        const latency = items.map((s) => s.completedMs - s.scheduledMs).sort((a, b) => a - b);
+-        const percentile = (p: number) =>
+-          latency.length
+-            ? latency[Math.min(latency.length - 1, Math.ceil(latency.length * p) - 1)]
+-            : null;
+-        return {
+-          scheduled: items.length,
+-          successful: items.filter((s) => s.successful).length,
+-          p50Ms: percentile(0.5),
+-          p95Ms: percentile(0.95),
+-          p99Ms: percentile(0.99),
+-          maxMs: latency.at(-1) ?? null,
+-          errors: Object.fromEntries(
+-            [...new Set(items.filter((s) => !s.successful).map((s) => s.error))].map((error) => [
+-              String(error),
+-              items.filter((s) => s.error === error).length,
+-            ]),
+-          ),
+-        };
+-      };
+       windows.push({
+         rate,
+         windowMs,
+         startedAt,
+-        total: summarize(samples),
++        total: summarizeProtectedSamples(samples),
+         classes: Object.fromEntries(
+           [...new Set(kinds)].map((kind) => [
+             kind,
+-            summarize(samples.filter((s) => s.kind === kind)),
++            summarizeProtectedSamples(samples.filter((s) => s.kind === kind)),
+           ]),
+         ),
+       });

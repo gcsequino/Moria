@@ -1,0 +1,27 @@
+TAP version 13
+# Subtest: operator filesystem GC permanently retires abandoned uploads, honors the grace interval and deletes only an exact qualified S3 version
+not ok 1 - operator filesystem GC permanently retires abandoned uploads, honors the grace interval and deletes only an exact qualified S3 version
+  ---
+  duration_ms: 11840.459244
+  type: 'test'
+  location: '/work/tests/native-filesystem-gc.integration.test.ts:25:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"error":"INDEXING_FAILED"}
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/native-filesystem-gc.integration.test.ts:192:61)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12263.339592

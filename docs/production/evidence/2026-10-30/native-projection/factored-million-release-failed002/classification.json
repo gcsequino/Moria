@@ -1,0 +1,6 @@
+{
+  "scope": "failed prerequisite, no population/capacity result",
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T214528796612Z-factored-million-release-v2",
+  "runnerSha256": "ae0d2db6b9ce491db597e5738a73b467e3b1236a9fd895cc2f868acc89f269e5",
+  "error": "PostgreSQL ambiguous generation variable in native task authority; current source already uses accepted_generation"
+}

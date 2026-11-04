@@ -307,6 +307,25 @@ export class SourceService {
       },
       this.compilerContext,
     );
+    const descriptorEntry = snapshot.files.find(
+      (file) => file.path === `.${snapshot.role.kind}.json`,
+    )!.entry.id;
+    const resourceFiles = new Map<string, Set<string>>();
+    for (const [index, file] of files.entries()) {
+      if (!/\.(?:object|link|action|resource)\.json$/.test(file.path)) continue;
+      const reference = resourceRef(JSON.parse(file.text) as Resource);
+      resourceFiles.set(reference, new Set([snapshot.files[index].entry.id]));
+    }
+    const declaredReferences = new Set(resourceFiles.keys());
+    for (const reference of assembled.owned) {
+      const entries = resourceFiles.get(reference) ?? new Set<string>();
+      if (snapshot.role.kind === 'repository' && !declaredReferences.has(reference))
+        for (const file of snapshot.files)
+          if (!/\.(?:object|link|action|resource)\.json$/.test(file.path))
+            entries.add(file.entry.id);
+      entries.add(descriptorEntry);
+      resourceFiles.set(reference, entries);
+    }
     const digest = fingerprint({
       source: snapshot.digest,
       compiled: assembled.compiled.fingerprint,
@@ -349,6 +368,12 @@ export class SourceService {
             state.members[0].id,
           ],
         );
+        for (const [reference, entries] of resourceFiles)
+          for (const entry of entries)
+            await client.query(
+              'INSERT INTO moria.fs_source_resource_files(digest,reference,entry_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',
+              [digest, reference, entry],
+            );
         for (const reference of assembled.owned)
           await client.query(
             `INSERT INTO moria.fs_resource_identities(root_id,reference,resource_id) VALUES($1,$2,$3) ON CONFLICT(root_id,reference) DO NOTHING`,

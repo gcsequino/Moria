@@ -1,0 +1,705 @@
+{
+  "version": 1,
+  "canonical": [
+    {
+      "name": "number-0",
+      "value": 0,
+      "canonical": "0",
+      "fingerprint": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "number-1",
+      "value": 0,
+      "canonical": "0",
+      "fingerprint": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "number-2",
+      "value": 1,
+      "canonical": "1",
+      "fingerprint": "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "name": "number-3",
+      "value": -1,
+      "canonical": "-1",
+      "fingerprint": "sha256:1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464"
+    },
+    {
+      "name": "number-4",
+      "value": 1.5,
+      "canonical": "1.5",
+      "fingerprint": "sha256:9f29a130438b81170b92a42650f9a94291ecad60bd47af2a3886e75f7f728725"
+    },
+    {
+      "name": "number-5",
+      "value": 1e-7,
+      "canonical": "1e-7",
+      "fingerprint": "sha256:5b33e02f2c5103a05d32f6ba9cb058294452bfbf393967f68bb30c1bdcbbab22"
+    },
+    {
+      "name": "number-6",
+      "value": 0.000001,
+      "canonical": "0.000001",
+      "fingerprint": "sha256:159fb29a827ad04b260aa6c8ab6d8637f8f2b38af5c4f3cb49d6a21205e040f8"
+    },
+    {
+      "name": "number-7",
+      "value": 100000000000000000000,
+      "canonical": "100000000000000000000",
+      "fingerprint": "sha256:c344e9487bfbd5c4e03c9fb90d62a5dde5e00b54d55c46e9f4a803aea162b80c"
+    },
+    {
+      "name": "number-8",
+      "value": 1e21,
+      "canonical": "1e+21",
+      "fingerprint": "sha256:241c4643fa70b1dcde1205b71be4e3bebb17e9f880c8e1a33d0ead6c27271d3c"
+    },
+    {
+      "name": "number-9",
+      "value": 1e30,
+      "canonical": "1e+30",
+      "fingerprint": "sha256:7412d94bdf30adfa71080e057185e1a8de86e2e99a8350b011df8ac41ed5a6e3"
+    },
+    {
+      "name": "number-10",
+      "value": -1e21,
+      "canonical": "-1e+21",
+      "fingerprint": "sha256:d1b781c586a6becc3c6bba876b259268cbead2c6085737f4799c2fd0607f55a4"
+    },
+    {
+      "name": "number-11",
+      "value": 5e-324,
+      "canonical": "5e-324",
+      "fingerprint": "sha256:c46e7ca1be4c8734f373a56530787288fa2058d73d07855e9247e949f811a42a"
+    },
+    {
+      "name": "number-12",
+      "value": 1.7976931348623157e308,
+      "canonical": "1.7976931348623157e+308",
+      "fingerprint": "sha256:c2784e1abd6317452708f3fbf9641c16b959561bc621a1d408c23a20aa2cb585"
+    },
+    {
+      "name": "number-13",
+      "value": 0.30000000000000004,
+      "canonical": "0.30000000000000004",
+      "fingerprint": "sha256:06bad31060c1212ae832de4c031f7b31e3b48aed57858294478cb19450cf34ca"
+    },
+    {
+      "name": "number-14",
+      "value": 9007199254740992,
+      "canonical": "9007199254740992",
+      "fingerprint": "sha256:c681da39d7273a6a24c15c9cac3a75526ff2ecf8ba4ee60346a0c70c8163bdb2"
+    },
+    {
+      "name": "number-15",
+      "value": 1000000000000000100,
+      "canonical": "1000000000000000100",
+      "fingerprint": "sha256:8fa4a0cdb0a98b4d9a79cc496f69b1d9ea172390094239961266446383d2988b"
+    },
+    {
+      "name": "utf16-order",
+      "value": {
+        "": 1,
+        "😀": 2,
+        "alpha": 3
+      },
+      "canonical": "{\"alpha\":3,\"😀\":2,\"\":1}",
+      "fingerprint": "sha256:5f1aa62d94b7cacacf2fca84e39b8d11ed1a9f0703a80a5bf0f9e1c66d4c2072"
+    },
+    {
+      "name": "escaped-strings",
+      "value": ["\b\t\n\f\r\u0000", "quote\" slash/ backslash\\", "雪😀  "],
+      "canonical": "[\"\\b\\t\\n\\f\\r\\u0000\",\"quote\\\" slash/ backslash\\\\\",\"雪😀  \"]",
+      "fingerprint": "sha256:6fe135b867599b561f2977ef4057d8e3d1ea937da873e5d39d7b9cfca0b76e33"
+    },
+    {
+      "name": "nested-order",
+      "value": {
+        "z": [
+          {
+            "b": null,
+            "a": true
+          }
+        ],
+        "a": false
+      },
+      "canonical": "{\"a\":false,\"z\":[{\"a\":true,\"b\":null}]}",
+      "fingerprint": "sha256:4617d92bc938233844bdaf32c9918c3883d32c68a2c14737a1058ffbae808735"
+    }
+  ],
+  "typed": [
+    {
+      "name": "ontology object identity",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": {
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "uid": "00000000-0000-4000-8000-000000000006"
+      },
+      "fingerprint": "sha256:e3226828166db639aa9086d8ff7488de67aa8e96097d9a478a74420b430b2b09"
+    },
+    {
+      "name": "list of ontology objects",
+      "schema": {
+        "type": "list",
+        "items": {
+          "type": "ontologyObject",
+          "objectType": "00000000-0000-4000-8000-000000000004",
+          "nullable": false
+        }
+      },
+      "definitions": {},
+      "value": [
+        {
+          "objectType": "00000000-0000-4000-8000-000000000004",
+          "uid": "00000000-0000-4000-8000-000000000006"
+        }
+      ],
+      "fingerprint": "sha256:aff84cbefd6fcf7803fdc19026d49f40ca061f45a0c8f38148773ba3009044a6"
+    },
+    {
+      "name": "nullable ontology object",
+      "schema": {
+        "type": "ontologyObject",
+        "objectType": "00000000-0000-4000-8000-000000000004",
+        "nullable": true
+      },
+      "definitions": {},
+      "value": null,
+      "fingerprint": "sha256:14de2693ee0061e6e25fb5a92e4c779767d87db2b786320c7cd8e970bdec2400"
+    },
+    {
+      "name": "string-0",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "",
+      "fingerprint": "sha256:6f86ec5dfb4a22d0650c44adbb03b9fe95cd6f7bddc86889872f6449fa3a8e50"
+    },
+    {
+      "name": "string-1",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "hello",
+      "fingerprint": "sha256:9b87fbf6e557ba5d1fbea6e7afddac5d0671340e069ca51d06ce9c87fea3b76d"
+    },
+    {
+      "name": "string-2",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "é雪😀",
+      "fingerprint": "sha256:94dd1c13548aad8ca2ca6166ccbee0d32141cb5bf8adb196304b97f783d488ba"
+    },
+    {
+      "name": "string-3",
+      "schema": {
+        "type": "string",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "line\n\"quote\"\\slash",
+      "fingerprint": "sha256:f9a8ae31d9c41f75a65fae4fac73c6642ac02649f8fd40112cba18aed57d6379"
+    },
+    {
+      "name": "boolean-true",
+      "schema": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": true,
+      "fingerprint": "sha256:8584b13ff17d031f49ea31a883033bb22fd3ffe2eb4a3f808e62529f4280b538"
+    },
+    {
+      "name": "boolean-false",
+      "schema": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": false,
+      "fingerprint": "sha256:e7f6664f2d70c91bc173f5d7254f37e410936814b467946267d219d3639b1f0e"
+    },
+    {
+      "name": "float-6",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 0,
+      "fingerprint": "sha256:1e252ef73852a40b9c7459abed7a2ea9ee73863927788b4611d59a6fb58e1e9a"
+    },
+    {
+      "name": "float-7",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 1,
+      "fingerprint": "sha256:76889d2c0e3925538af35badd6a9fe1a930630fee2b65a43fe98d9749a94ad65"
+    },
+    {
+      "name": "float-8",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": -1,
+      "fingerprint": "sha256:7152ef3963046dc9c94bf6edeb73d5bb192c0c26e24f04f57de4ecffac3d96f6"
+    },
+    {
+      "name": "float-9",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 1e-7,
+      "fingerprint": "sha256:a94f1ab5228f8293d2493ea0f28a8b45c8d6e4ab409453ddcd570cecc68fd236"
+    },
+    {
+      "name": "float-10",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 1e21,
+      "fingerprint": "sha256:5df54c4bad7316fe8dba64a408ea40c1bee75f7668e8a1e2c61e20e089ec5429"
+    },
+    {
+      "name": "float-11",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 1.7976931348623157e308,
+      "fingerprint": "sha256:231ae5b0901ea681d4a4e82285a1cf79f781656b6510772a14dd72f025645af7"
+    },
+    {
+      "name": "float-12",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 5e-324,
+      "fingerprint": "sha256:c92d97beeb9b8e10dda25f4e6911b5c9e6d3d02621d7f964968b26f6899b1280"
+    },
+    {
+      "name": "float-13",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 1152921504606847000,
+      "fingerprint": "sha256:f0cfacd909bc9fb72663c87cd73413d4856cc918deac884be300f319454cac96"
+    },
+    {
+      "name": "negative-float-zero",
+      "schema": {
+        "type": "float64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": 0,
+      "fingerprint": "sha256:1e252ef73852a40b9c7459abed7a2ea9ee73863927788b4611d59a6fb58e1e9a"
+    },
+    {
+      "name": "int64-0",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "0",
+      "fingerprint": "sha256:75cf43dd5d7a36631e6b7ccc5e35ca2a8386bcc1f7bd582d8b35c238d3f5e528"
+    },
+    {
+      "name": "int64--1",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "-1",
+      "fingerprint": "sha256:753f4e08dffea898ae9089eea52b4855cfc9baa8e66d1432406f8164fb2f726e"
+    },
+    {
+      "name": "int64-9223372036854775807",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "9223372036854775807",
+      "fingerprint": "sha256:46844a94906399d003198aca5f5577e2d888e054d0c5410a78982bcbbd1c7a27"
+    },
+    {
+      "name": "int64--9223372036854775808",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "-9223372036854775808",
+      "fingerprint": "sha256:e21f58b723e44de3085eba061acc048371c7c5103b5a461d99d856c3612c47b6"
+    },
+    {
+      "name": "negative-int-zero",
+      "schema": {
+        "type": "int64",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "-0",
+      "fingerprint": "sha256:75cf43dd5d7a36631e6b7ccc5e35ca2a8386bcc1f7bd582d8b35c238d3f5e528"
+    },
+    {
+      "name": "decimal-normalized",
+      "schema": {
+        "type": "decimal",
+        "precision": 8,
+        "scale": 2,
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "12.3",
+      "fingerprint": "sha256:fff599812b9c0481bef3058c558d23e512fd8209277ac0963532a3b0a9c0e14f"
+    },
+    {
+      "name": "decimal-negative-zero",
+      "schema": {
+        "type": "decimal",
+        "precision": 2,
+        "scale": 2,
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "-0.0",
+      "fingerprint": "sha256:30fe16050da72927c51f473e5ae976d0e8b3a670e00258c75e9de7d0faeffe2b"
+    },
+    {
+      "name": "decimal-max",
+      "schema": {
+        "type": "decimal",
+        "precision": 38,
+        "scale": 0,
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "99999999999999999999999999999999999999",
+      "fingerprint": "sha256:2ee0423e7e3322e8a974966aa336dbef394f15b2b3e9800177ad723e84050071"
+    },
+    {
+      "name": "decimal-fraction",
+      "schema": {
+        "type": "decimal",
+        "precision": 38,
+        "scale": 38,
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "0.11111111111111111111111111111111111111",
+      "fingerprint": "sha256:86f6f6decfb37db84d0237e96cf43bba1660ca5feb5ec9f9b7577c169ff85a50"
+    },
+    {
+      "name": "decimal-zero",
+      "schema": {
+        "type": "decimal",
+        "precision": 2,
+        "scale": 2,
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "0",
+      "fingerprint": "sha256:30fe16050da72927c51f473e5ae976d0e8b3a670e00258c75e9de7d0faeffe2b"
+    },
+    {
+      "name": "decimal-negative",
+      "schema": {
+        "type": "decimal",
+        "precision": 5,
+        "scale": 3,
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "-12.34",
+      "fingerprint": "sha256:bb4d7d5ec26660163b692fd8744b18f07506a7185e0db0e7195b4ccc08ccfa0b"
+    },
+    {
+      "name": "date-0001-01-01",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "0001-01-01",
+      "fingerprint": "sha256:37e84d4962320233f26be81aa1da5a7793021d53f90598b6d437d4830399ae1e"
+    },
+    {
+      "name": "date-2000-02-29",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "2000-02-29",
+      "fingerprint": "sha256:238706d3ef46e5f42d8db8c4103db8d75730250255512b22108c6a7819ff87ff"
+    },
+    {
+      "name": "date-9999-12-31",
+      "schema": {
+        "type": "date",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "9999-12-31",
+      "fingerprint": "sha256:3177b14f87f444c33b4d1b5dd6f625c5743cd048d9955f983be53e2ccba17567"
+    },
+    {
+      "name": "timestamp-plain",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "2026-10-29T01:02:03Z",
+      "fingerprint": "sha256:0a1e9b5939ee6d755b41b4f31a50a1b930bb82ebae9d0a8d0634515673a3457c"
+    },
+    {
+      "name": "timestamp-micros",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "0001-01-01T00:00:00.000001Z",
+      "fingerprint": "sha256:314206508b27bc582ea5f35e2635243c787211d606fb8d2b02f0f581d322b7f0"
+    },
+    {
+      "name": "timestamp-max",
+      "schema": {
+        "type": "timestamp",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "9999-12-31T23:59:59.999999Z",
+      "fingerprint": "sha256:f7bc56a2894efea0dfe2d3cb67baefb9fa2360441c39a7f4d33aa9fda570dbe5"
+    },
+    {
+      "name": "uid",
+      "schema": {
+        "type": "uid",
+        "nullable": false
+      },
+      "definitions": {},
+      "value": "00000000-0000-0000-0000-000000000000",
+      "fingerprint": "sha256:a243d56f351086363313733668c4543adb181c65fd25db8cc9c3155194614aae"
+    },
+    {
+      "name": "nullable",
+      "schema": {
+        "type": "string",
+        "nullable": true
+      },
+      "definitions": {},
+      "value": null,
+      "fingerprint": "sha256:f78ee43e935ae850e557e1a1a7e994d92768688851294aeb03ee63e08a0c6839"
+    },
+    {
+      "name": "array-empty",
+      "schema": {
+        "type": "array",
+        "nullable": false,
+        "items": {
+          "type": "int64",
+          "nullable": false
+        }
+      },
+      "definitions": {},
+      "value": [],
+      "fingerprint": "sha256:d008c99fd52331f52fb593bf317b55be5d0b81f975cbb7e9756aa6081682f6c3"
+    },
+    {
+      "name": "array-order",
+      "schema": {
+        "type": "array",
+        "nullable": false,
+        "items": {
+          "type": "string",
+          "nullable": false
+        }
+      },
+      "definitions": {},
+      "value": ["b", "a", "b"],
+      "fingerprint": "sha256:d5d1a73e1d25199fca3a1f01a1ece17f81be585ad4c0cdad6b68e199acffbb18"
+    },
+    {
+      "name": "nullable-array",
+      "schema": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "date",
+          "nullable": false
+        }
+      },
+      "definitions": {},
+      "value": null,
+      "fingerprint": "sha256:ce40c888a9a5e7cde99adbc5340c87923a27046f0f0f9450739bfbc1ac0b54a2"
+    },
+    {
+      "name": "list-null-items",
+      "schema": {
+        "type": "list",
+        "items": {
+          "type": "boolean",
+          "nullable": true
+        }
+      },
+      "definitions": {},
+      "value": [true, null, false],
+      "fingerprint": "sha256:6bf123de7eafeff26fb00826440ee998464bf7a8a1726d81da7b2b0c74bad26d"
+    },
+    {
+      "name": "nested-record",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "decimal",
+            "precision": 8,
+            "scale": 2,
+            "nullable": false
+          },
+          "items": {
+            "type": "list",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "nullable": false
+                },
+                "note": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "optional": ["note"]
+            }
+          }
+        }
+      },
+      "definitions": {},
+      "value": {
+        "amount": "1.2",
+        "items": [
+          {
+            "name": "a"
+          },
+          {
+            "name": "b",
+            "note": null
+          }
+        ]
+      },
+      "fingerprint": "sha256:2f2dc9cd467647d637d4e9ee7bd320c007ab7b1055d6cfa6d5683e9f05fd0a9f"
+    },
+    {
+      "name": "alias",
+      "schema": {
+        "ref": "Amount"
+      },
+      "definitions": {
+        "Amount": {
+          "type": "decimal",
+          "precision": 8,
+          "scale": 2,
+          "nullable": false
+        }
+      },
+      "value": "2.5",
+      "fingerprint": "sha256:764832cfab7b7e38cea49415d77fc4aeec53602492394255a8c58dac7b9dd01f"
+    },
+    {
+      "name": "empty-record",
+      "schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "definitions": {},
+      "value": {},
+      "fingerprint": "sha256:d34f16b7dac1596f2b096ea3d87f529d58071ea1343fc21eb3ab5764d0be95e7"
+    },
+    {
+      "name": "optional-field-order",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "string",
+            "nullable": false
+          },
+          "z": {
+            "type": "float64",
+            "nullable": false
+          }
+        },
+        "optional": ["z", "a"]
+      },
+      "definitions": {},
+      "value": {
+        "z": 0
+      },
+      "fingerprint": "sha256:5388ef211dcdff9113422c4ea3a9263e5c73cb670a1343063b6f0ca4d7f65070"
+    },
+    {
+      "name": "empty-optionals",
+      "schema": {
+        "type": "object",
+        "properties": {},
+        "optional": []
+      },
+      "definitions": {},
+      "value": {},
+      "fingerprint": "sha256:d34f16b7dac1596f2b096ea3d87f529d58071ea1343fc21eb3ab5764d0be95e7"
+    },
+    {
+      "name": "hyphenated-property",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "field-name": {
+            "type": "int64",
+            "nullable": false
+          }
+        }
+      },
+      "definitions": {},
+      "value": {
+        "field-name": "9223372036854775807"
+      },
+      "fingerprint": "sha256:b35e4ef4f95a6a8af0cf4166f3a4eccf30816941cf84ac31ad9c9864c5fb1180"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261030T164824691246Z-reducer-wide",
+    "files": 706,
+    "manifestSha256": "08a569c92e275ab3533017032b091495bb53871c7dac366a4d18e9d4e7d5dd27",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "host",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T164824691246Z-reducer-wide,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "build",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T164824691246Z-reducer-wide,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-indexing-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins",
+        "--test",
+        "native_catalog",
+        "--message-format=json"
+      ]
+    },
+    {
+      "phase": "test",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "host",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T164824691246Z-reducer-wide,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T164824691246Z-reducer-wide/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T164824691246Z-reducer-wide/native-proof-artifact/moria-catalog-tests,dst=/usr/local/bin/moria-catalog-tests,readonly",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "benchmarks/native-projection.ts",
+        "80",
+        "docs/benchmarks/native-wide-reducer-proof",
+        "1048576",
+        "wide-reducer-regression"
+      ]
+    }
+  ],
+  "outcome": "passed"
+}

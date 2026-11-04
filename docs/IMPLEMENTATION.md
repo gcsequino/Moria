@@ -1,5 +1,359 @@
 # Implementation checkpoint
 
+## November 4 remote checkpoint
+
+This checkpoint preserves the latest recoverable shared implementation and its
+recorded test evidence. The temporary Linux checkout no longer exists. Source
+was recovered from the locally retained `moria-test:gate-v27` image
+(`sha256:aa5426fb38bab92ecbbc15cc0dcb81557cacc3b37b9f2ff2bc87ca9feb36955f`),
+which contains the newer October 31 source and includes every file in the Windows
+review mirror. The mirror's twelve intentional deletions of the superseded
+`services/indexing` Rust crate were preserved; that runtime now lives in
+`services/runtime`. Recovery uses a persistent Linux checkout.
+
+This is a work-in-progress implementation checkpoint, not a release or production
+capacity certification. The previously recorded 77 native units and 55-case
+functional slice passed on their frozen sources. Full Agent/Evaluation/Automation
+composition, Connector credentials and checkpoints, sparse Dataset MOR and
+incremental Source/index publication, a complete inspectable local instance and
+end-to-end qualification remain unfinished. Private experiments outside the
+preserved shared source are not included. No terminal result from the interrupted
+whole-program gate is available; its success must not be inferred. The full
+production workload ladder and latest independent CI remain required.
+
+Checkpoint verification reran offline in the preserved image: formatting,
+architecture, SDK drift, TypeScript, exact native artifacts and all 77 native
+unit tests pass; both React builds pass. The Python workload validator rejects
+the approved implementation-target metadata because its schema still requires
+the old proposed/unapproved form. The starter check also detects a stale example
+SDK. The complete integration suite was not rerun for this preservation push.
+See `production/evidence/2026-11-04/checkpoint-validation` for commands, failures
+and recovery provenance.
+
+## October 31 latest native qualification
+
+The v26b exact-source build passes full TypeScript, architecture/SDK checks, Rust formatting, 77 native units, all six harness builds and the eight-file 55/55 functional slice with zero skips. It includes strict pending-observation public gates, typed live-parent child progress, Function-only immutable foreign keys and Search candidate fairness. A separate real held-child proof passes three selected tests: no early log/Action/Model/public release, and the parent/child publication barrier completes without deadlock with one receipt each. Full Agent and Evaluation files remain in progress; the latter has an actual RESOURCE_BUSY/controller failure under investigation.
+
+The forty-file non-integration TypeScript run passes 474/476 with zero skips. An external read-only dependency mount prevented Vite temporary writes; the corrected cache mount passes the app-host cases. The remaining obsolete compatibility fixture initialized BrowserSessions with an empty origin; it now binds the actual listener before origin reservation and credential issuance, and its three-case rerun passes. These are separate explicit runs, not one combined all-green gate.
+
+The v10 fixed million-object comparison passes its exact count/sum/xor oracle. Its unchanged short windows deliver 600/600 at 20/s (successful p95 56.806ms), 1500/1500 at 50/s (63.524ms) and 2962/3000 at 100/s (464.074ms, p99 955.705ms). The last window still fails: 38 RESOURCE_LIMIT/429 responses (1.267%). Every failure occurs in its final 0.51 seconds with 64 prior client requests outstanding; request admission saturation is an inference, without exact internal rejection-site telemetry. Native preparation takes 1874.83 seconds under the unchanged four-CPU/12GiB envelope. See `production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z`; this is not the full production ladder.
+
+The latest v26b all-domain HTTP provisioning attempt times out its aggregate Chat probe while each completed provider call remains within the original per-call deadline. The failed trial is retained. A fresh retry uses the existing ordinary-authenticated CLI full-probe provisioning path, with all actual API/worker operations still native HTTP; backend and browser readiness are not yet qualified.
+
+The immutable v20 Source Secret/Models/Dataset/Search/MCP/recovery slice passes 76 native units and 53/53 integration tests. The v22 and v23 slices each pass 77 native units and 54/54 integration tests with zero skips. Their exact sources, derived/compiled schemas, commands and hashes are recorded under `production/evidence/2026-10-31/native-integration/20261031T122345Z`, `20261031T132112Z` and `20261031T134056Z`. The earlier failures below remain historical evidence, not current qualification.
+
+Actual Source-aware Search credential integration additionally passes 7/7 with zero skips in 150.68s: real published Model/Provider/Policy/Secret declarations, explicit operator custody, independent service file/use grants, immutable accepted approval reference, disable/reenable fencing before provider I/O, fresh projection, Action replay, embedding reuse and Model Source replacement. See `production/evidence/2026-10-31/native-search-secrets/20261031T141335Z`. The fixture uses explicitly qualified Source markings; the capacity fixture's default markings, rates and budgets remain unchanged.
+
+Actual Agent Model/tool and credential-generation cases now pass independently on v23, including protected Object reads, committed tool effects, private material classification, missed approval pulses and fresh acceptance. An independently polled Model guard fixes a reproduced asynchronous execution-lock self-wait; task fences now precede private-session readers in completion paths. Full Agent/Evaluation/Automation qualification remains open. The latest pending-call diagnostic caught a public Agent status response while observation state was still pending; its 409 assertion remains strict. Evaluation also requires publication-conflict retry and service-lifecycle proofs. Failed trials are retained in the execution ledger.
+
+The new source-declaration batch preserves current/pinned file, descriptor, classification and scalar filesystem permission checks. Actual PostgreSQL tests pass 18/18; a two-resource diagnostic reduces two authority/ACL passes to one, without an authority cache. The v24 snapshot includes this batch, exact task-fence ordering, bounded active HTTP handler idle handling, class-before-origin Model admission and only definite 40001/40P01 Function publication retries. Its combined integration run passes 53/55 with zero skips: an exact-purpose revocation subtest and its parent fail on guard-error precedence. A separately archived rerun passes 7/7 while retaining actual socket-abort and unchanged-visibility assertions. The genuine Source Chat/Embed HTTP composition passes 2/2 with every declared capability under unchanged deadlines. The v25 strict pending Agent read passes its actual held-call regression, and 77 native units plus all six harness builds pass. Full composed qualification remains open.
+
+The v9 million-object run passes the exact full-row oracle. Its unchanged short offered load yields 600/600 successes at 20/s (p95 all 127.39ms), 1492/1500 at 50/s and 1583/3000 at 100/s. Higher rates still fail. A subsequent protected native plan proves a real UID range seek after removing redundant final-WHERE BooleanTest wrappers; its 43-case current serving/Source proof passes. The next million-object comparison has an immutable release build and 1k preflight, but has not run. These remain exploratory windows rather than the full production ladder.
+
+Sparse Dataset MOR/qualified key visibility and incremental Source/index publication remain private development and are not activated or qualified. Connector checkpoints, secret callbacks/multi-slot mappings and all accepted capabilities still need actual composed proofs. The final full local gate, inspectable whole instance and latest independent CI remain required before publication/merge.
+
+The next shared work includes a worker-local ordered Search candidate scan so an unauthorized or unready collection cannot terminate scheduling for independent ready collections. Its real regression places an ungranted earlier collection before a ready replay, requires the direct public request to remain forbidden, and checks no execution is created for the blocked collection. This change is not qualified by the earlier seven-case executable.
+
+The complete local/CI gate now stages separate disposable ext4 pools for Pipeline and whole-instance databases, preserving incarnation markers, and limits test-file concurrency to two without changing in-test concurrency assertions or deadlines. Agent and engine fixture dependencies move to locked test-image preparation; fixture builds disable networking and reject stale package/requirements locks. The refreshed image, complete gate and owned-resource cleanup remain unexecuted while the isolated million-object run owns the proof resources.
+
+## October 31 integration and scale corrections in progress
+
+The combined002 execution snapshot passes 72 library tests. The real eight-file Model,
+Search/projector, MCP, history and clean-host recovery regression completed
+51/53 tests in 154.98 seconds; its only failing subcase (and enclosing test) was
+an old MCP expectation of 403 for a disabled principal. Revocation now destroys
+the credential and returns 401. The corrected MCP test, including an off/on pulse
+that cannot revive that credential, passes 8/8 tests with zero skips in 8.535
+seconds on the same exact executable/schema. These are two explicit runs, not
+one all-green combined result. Evidence is
+`production/evidence/2026-10-31/native-protocols/20261031T102405Z` and
+`production/evidence/2026-10-31/native-mcp/20261031T103243Z`.
+Successful Model receipts clear uncertainty; canceled calls reject new provider
+attempts. Actual held provider work also terminates on worker-scope revocation,
+with failed call bookkeeping; the broader execution suite still has open
+Automation/Evaluation composition failures under active correction.
+
+The combined Dataset expiry/cleanup/backup/clean-host restore case now passes
+with zero skips in 61.913 seconds
+(`production/evidence/2026-10-31/native-dataset-retention/20261031T102121Z-external.json`).
+It checks exact old-version removal with a newer external version preserved,
+current typed rows, backup after source cleanup, old/current typed snapshot
+readback after actual cell reassignment/fresh identity, a new finite policy with
+complete current-incarnation/physical-fingerprint root/member qualification, and a different restore
+reusing the restored S3 prefix denied with dispatch disabled. It uses the frozen
+custody/pruning v7 runtime plus explicitly archived external test sources; the
+latest whole-program gate remains pending.
+
+The second complete million-object comparison retained the exact source/effective/
+UID oracle. At 20/s, 600/600 arrivals succeeded with p95 367.782 ms and p99
+492.262 ms; at 50/s, 963/1,500 succeeded with 537 admission rejections; at 100/s,
+985/3,000 succeeded with 2,015 rejections. Its 2,694.555-second total included
+747.035 seconds of publication and 1,662.263 seconds of indexing/projection.
+These are short exploratory windows, not the full accepted production profile.
+The busy/peak failures remain failures. See
+`production/evidence/2026-10-31/native-projection/window-uid-million-v7-20261031T073753Z`.
+The next immutable comparison tests bounded Parquet-header coalescing. A real
+24-header microcase reduced provider range requests from 24 to 2 and SQL storage/
+verifier checks from 144 each to 14 each, while preserving current checks before
+and after the header phase.
+
+Operational history now has a three-case expanded PostgreSQL proof with zero
+skips: retired-generation DROP waits for the actual recovery admission lock,
+current/last-two and retained cursor/read roots remain protected, Source and Link
+history prune without floor rewind, and ordinary runtime-role policy mutation is
+denied (`production/evidence/2026-10-31/native-history/branches-external-20261031T074802Z`).
+Real Dataset multipart cleanup passes all three provider-fault branches in one
+47-second case: lost part acknowledgement, lost initiation acknowledgement, and
+a late initiation after the first absent-object collection. Exact sibling upload
+IDs survive; current typed rows remain readable. A separate 26-second case holds
+an actual old-reader task across metadata pruning, keeps its old root readable,
+and verifies a repeat creates no extra head. Combined exact-version cleanup and
+clean-host Dataset recovery remain pending the latest-source run.
+
+Default native API/Source/frontend integration passes nine cases with zero skips
+in 76.75 seconds, including the shipped React bundle, immutable browser-origin
+reservation, private bootstrap/CSP, inert uploaded HTML/SVG headers and revocation.
+Provider/browser-session revocation passes three additional cases in 28.7 seconds,
+including a disable/re-enable pulse and restart. Actual interactive browser
+acceptance and final combined Evaluation/Automation/service composition are still
+open. An omitted trusted scratch/closure configuration correctly blocked the
+first interactive fixture before it exposed browser recovery state; its startup
+configuration is being made explicit.
+
+The production workload profile is the implementation target. The million-object
+run retained its exact 1,000,000-row/UID oracle but failed latency and overload
+acceptance; no larger-run capacity or production certification follows from it.
+The physical primary UID now has protected HTTP range/equality/order oracles and
+an actual indexed plan. A measured 128-byte-read microcase reduced provider reads
+from 128 to 1 and SQL I/O checks from 768 to 6, with 5,266 ms versus 50 ms. Current
+source revocation still denies buffered reads. The complete repeated offered-load
+workload remains pending.
+
+Real Source-installed versioned-S3 Dataset writers and typed array readback pass
+(`native-dataset-retention/20261031T071409Z-external.json`, one case, zero skips).
+The expanded expiry/cleanup fixture caught ordinary runtime-role retention
+self-approval. Operator entry points and SQL mutation controls now distinguish the
+actual operator session from ordinary runtime credentials. The new rejection,
+closed-history expiration, first-observed 24-hour grace, exact-version deletion
+and recovery-after-source-cleanup tests require their combined current proof.
+Historical-age imports are explicitly synthetic closed metadata; no active lease
+is aged or manufactured.
+
+Model receipts now retain their DB-derived private execution origin and recheck
+current source evidence, input ancestry, markings and destination restrictions on
+replay/inspection/completion reconciliation. The new shared proof exposed a native
+HTTP future stack overflow in a real Source upload; the source-proof boundary is
+now heap allocated. Compilation alone did not establish this integration fix;
+fresh actual Source/Agent/Search regression testing is required. Earlier failing
+snapshots and raw output remain retained.
+
+## October 30 native platform program in progress
+
+The current native MCP endpoint passes eight real integration cases with zero
+skips in 7.19 seconds, including official Python SDK 2.3.0 negotiation, two-replica
+discovery/cursors, protected query/action results, idempotent action replay,
+transport tampering and live revocation. Evidence is
+`native-models/20261030T211807Z`. Native directory/HTTP admission additionally
+passed the 24-case combined authority/model fixture and actual mutual-TLS
+directory RPC transfer proof (`20261030T194142Z` and
+`native-projection/directory-rpc-20261030T194311Z`). These are functional proofs,
+not production throughput or independent-failure-domain certification.
+
+The permanent indexing service now passes a 14-case real managed Source/Dataset
+suite. It verifies mapped raw/effective rows, unrelated environment and instance
+epoch refresh through fresh immutable metadata, tightening and broadening policy
+behavior, classified-source publication with blocked stale indexing authority,
+and accepted maximum-width rows. The two wide rows require 8,388,678 bytes each
+for raw plus mapped payload; the normal 8 MiB batch and existing single-row
+16 MiB allowance remain unchanged. Exact UID/typed projection and protected
+pagination pass. Native Evaluation separately passed seven actual cases,
+including score oracles, cancellation and root COMMIT acknowledgment loss
+without rerunning user code. Retained failed trials remain part of the evidence.
+
+Native Arrow IPC and the engine I/O broker are implemented with metadata/buffer
+preflight before decoding, continuous chunked typed streams and private grouped
+output roots. Hard spill reservations verify dedicated ext4 filesystems and
+persistent owner markers; uncertain creation/cleanup keeps a slot quarantined.
+Actual whole OCI engine integration, complete create/link semantics, recovery
+content closure, retention, fresh-instance acceptance and production workload
+qualification remain active work. Recovery currently has fenced maintenance
+leases and a native exported-snapshot PostgreSQL dump path; no recovery-set or
+restore completion is claimed from those pieces alone.
+
+Current follow-up checks found two concrete issues. Arrow IPC compaction was
+charging shared encoded backing repeatedly across columns; it now charges the
+backing once and retains the original schema. Real unit cases include a narrow
+slice of a 2 MiB allocation and a four-column 2 KiB row. The unchanged 120-second
+three-input engine fixture now transfers all 18,000 input rows and writes its
+6,000 output rows, but still misses completion at output sealing; repeated current
+authority checks are being measured and factored within each call.
+
+Source creation, managed-Link frames/cardinality rollback, complete reverse
+fanout denial, explicit source attachment and subsequent native import have a
+real two-replica integration proof. The native create survives an actual empty
+Dataset replacement and indexing/projection refresh. Later raw data loss blocks
+invalid clearOverride/refresh while preserving the prior valid generation.
+Global mapped non-primary-key one-to-one constraints subsequently passed a real
+Source redeploy and same-head native indexing proof (19 cases, zero skips). It
+verifies pending readiness, complete key population, duplicate creation rollback,
+deletion freeing a key and conflicting restoration denial. Later child-observation
+and application-host composition changes still need their combined proof.
+
+Recovery's combined fixture now passes 20 tests with zero skips in 35.72 seconds
+(`native-recovery/20261030T235343Z`, source digest
+`8e51edeeeb9696b9da7bc98c521f32edeb4097a41e8b50230b28b1b8304df73e`).
+POSIX and MinIO both capture a consistent PostgreSQL archive larger than 24 MiB
+in bounded parts plus a real 2 MiB filesystem object. Clean-host restore verifies
+metadata/content/keys before one dispatch approval transaction, rotates the
+incarnation, fences old credentials and workers, requires new CLI-key approval,
+reassigns paused cells/domains and reconciles exact retries. Tampered manifests
+and missing keys stay closed. Key custody checks the actual configured session
+key and its physical versions. Normal runtime database roles stay non-owning;
+only the explicit recovery connection uses operator schema admission to preserve
+owners and ACLs. Earlier failed trials are retained. Managed typed Dataset and
+historical Iceberg readback are the next recovery integration gate, not implied
+by filesystem recovery.
+
+The optimized million-object trial exposed a projection-page regression after
+adding Action-created object union semantics. Its actual custom/generic plans
+walked 975,000 remaining rows and performed as many overlay lookups to select
+1,000 rows, taking about 14 seconds per page. The original incomplete trial and
+database are retained; it has no successful oracle or capacity claim. A bounded
+key-only per-branch TOPK plan measured 13–17 ms on the same population and is
+being tested on a fresh pipeline. Publication itself completed in 645 seconds;
+full indexing/projection/HTTP workload evidence still remains open.
+
+Qualified versioned MinIO storage passes 29 actual cases with zero skips,
+including exact old-version reads/deletion after overwrite and survival of the
+newer version. This qualifies that provider primitive. It does not enable
+unversioned/POSIX removal or complete retention/garbage collection. The native
+retention controller starts with explicit issued-object custody, retain-forever
+by default and separately approved policies; general Dataset/history expiration
+requires complete publication/pin admission and remains gated.
+
+The production-scale v0.2 profiles were selected as implementation targets on
+October 30: 1m/10m/50m objects with a 100m repeat and their specified request
+rates, latency, freshness and recovery requirements. This is target selection;
+capacity, cost and failure-domain certification still require actual evidence.
+
+The [component inventory and API boundaries](production/RUST-PLATFORM-PROGRAM.md)
+catalog N01–N28, including versioned physical serving indexes as a separate
+requirement from bounded query correctness. The shared native crate now lives in
+`services/runtime`; `moria-indexing` remains compatible and `moria-runtime` hosts
+independent roles. Fresh schema version 5 is required. This branch has no live
+migration or deployment, and the whole-platform acceptance gate remains open.
+
+Real component integration proofs currently cover policy/SQL parity, concurrent
+identity ownership, execution/delivery, protected two-replica serving, immutable
+POSIX/S3 transfer, complete retained Iceberg closure verification, grouped
+snapshot publication, native snapshot indexing and OCI supervision. S3 cases
+include multipart invisibility, server-committed lost acknowledgments and guarded
+recovery. Concurrent indexing now shares a durable exact verification attestation
+and lazily resolves approved file descriptors instead of rescanning the entire
+closure per task. Per-transfer authority and physical-version checks remain.
+
+Native model protocol tests cover chat, ordered streaming, embeddings, schema and
+tool validation, stable call replay and in-flight revocation. Configuration alone
+does not establish capabilities: persisted, binding/endpoint-specific probes gate
+new calls. Real local inference runs separately from deterministic HTTP fixtures.
+The test image includes actual pgvector 0.8.7 for PostgreSQL 18; a prerequisite
+test executes its exact cosine operator. That engine test does not complete
+protected retrieval or certify its performance.
+
+Source-generation changes and overlay versions now capture complete transactional
+replay frames, exact version references and end markers. Rollback/process-loss
+and monotonic replay-pin proofs pass. Binding-change composition, search,
+retention and the snapshot/log handoff still require integration.
+
+Native public function admission, immutable descriptor replay, nested/proposal
+brokers and the default function worker cutover pass 44 combined execution,
+delivery, function and real OCI cases. The latest trial includes filesystem callback
+composition; each raw trial retains its own exact compiled metadata. Native
+filesystem metadata passes seven cases and two-replica serving passes 15. Typed
+projection construction passes eight core cases; its real protected HTTP and
+capacity paths are being verified separately.
+
+Permanent identity allocation now retains full 64 KiB keys outside PostgreSQL
+B-tree tuples, indexes a generated SHA-256 key, and compares exact original keys
+on conflicts. Eight real cases cover legacy/native width, concurrent allocation,
+ownership transfer and lost acknowledgments. Immutable reservations reject
+update/deletion. No accepted key-width bound was reduced.
+
+The model gateway passes 15 real integration cases, including independent
+stream-tools/structured probes, protected extensions, one-copy embedding batches,
+shared class budgets, cross-process cancellation and uncertainty retention. An
+actual local GPU run on pinned Qwen3/Nomic digests passes six chat capability
+probes plus embeddings in 23.06 seconds; this is functional evidence, not an SLO.
+Raw reports are retained under `docs/benchmarks` and
+`docs/production/evidence/2026-10-30/native-models`.
+
+Protected exact-query retrieval passes ten real pgvector/native-gateway cases
+with classified immutable embedding cache entries, policy checks before LIMIT,
+current source replacement/deletion, strict model/visibility pins and revocation.
+The registered-service projector additionally passes six real pipeline cases:
+64-object Dataset publication/indexing, batched embeddings, Unicode action
+catch-up, later background frame replay, cache-preserving replacement, purpose
+revocation that closes the actual provider socket, a real 30-second worker lease
+expiry and higher-fence takeover, and a model change that builds a separate
+complete generation. The six-case trial took 67.30 seconds; raw evidence and its
+immutable source are in `native-projection/search-projector-20261030T183516Z`.
+The preceding shared-source indexing/model/search run passed 43 cases with zero
+skips in 26.47 seconds (`native-search-models-indexing-joint-20261030T181459Z`).
+Complete Dataset refresh, recovery, whole-instance and production R05 gates remain
+open. The Unicode/paragraph chunker has native coverage.
+
+The native Agent host and real locked LangGraph guest pass thirteen actual cases,
+including protected model/tool flow, held-provider lease revocation and inspection
+of a durably accepted model intent before its provider receipt exists. Native
+Evaluation and the ingestion/analytics adapters remain under integration testing.
+Native source publication, CLI publication, qualified POSIX/S3 bytes and filesystem
+lease recovery have independent functional proofs; browser publication and final
+instance composition remain in progress.
+
+The release-mode million-object fixture passed its complete one-million by 4 KiB
+Dataset publication, distributed index, typed projection and streaming identity,
+source and effective-value oracle in 27 minutes 51.484 seconds. Its immutable
+snapshot predates the within-query authorization factoring. Publication took
+847.492 seconds and indexing/projection took 642.776 seconds; the reducer plan
+exposed excessive task-first reads, so the build/partition/UID access path is
+being corrected before larger runs. Raw logs, plans, complete oracles and resource
+samples are retained in `native-projection/one-million-release-trial002`.
+This is functional correctness evidence at one million objects. It does not
+establish mixed HTTP rates/latencies, retained history, production topology, HA,
+cost or soak requirements. The approved workload figures are implementation
+targets; production capacity is not certified.
+
+The first actual HTTP admission trial passed 21 integration cases with zero skips
+in 19.46 seconds, including real pending request bodies at the shared 64,
+model 32 and compiler 4 limits, plus all seventeen model protocol cases. Native
+unit coverage verifies the 256-connection listener and permit ownership through
+response body chunks, EOF and cancellation. The raw trial is
+`native-models/20261030T190247Z`; browser/local CLI authentication is being added
+and rechecked. Dedicated hard-bounded ext4 spill filesystems are provisioned for
+real engine integration; terminal container cleanup and uncertain create outcomes
+must be proved before their slots may be reused.
+
+Retention/recovery and complete native instance composition remain in progress.
+The full `pnpm check` gate and independent latest-source Linux CI are required
+before human invariant review and merge.
+
+The later model protocol proof passes 17/17 cases with no skips, including a
+permanently held COMMIT acknowledgment under the configured five-second call
+deadline, receipt reconciliation and lock release. An immutable-source local GPU
+run (`native-model-smoke-gpu-20261030T164649Z`) also passes the native Ollama
+no-truncation adapter and explicit oversized-context rejection. These are
+functional protocol results; no inference throughput or quality target is claimed.
+
+The real wide-row indexing regression passes 80 one-megabyte source objects,
+complete source/effective checksums and physical typed-index checks in 39.97
+seconds. PostgreSQL bounds each reducer response before sending JSON; the actual
+single partition uses 12 batches with a largest payload of 7,340,137 bytes.
+Raw source, commands, schemas, checksums and query plans are retained under
+`native-projection/wide-reducer-20261030T164824Z`. This width regression does not
+certify large-population throughput. The earlier million-object trial failed
+before activation at the caller credential's ordinary expiry; it remains failed
+evidence pending the private accepted-job/release-build rerun.
+
 ## October 30 Rust dataset-to-object indexing
 
 Implemented the first execution slice of the indexing protocol in
@@ -129,7 +483,6 @@ branch update is part of this work. The release requires a fresh schema version 
 database; older databases continue to fail without automatic mutation. A passing
 combined gate does not establish the cause of historical issue #67 or production
 capacity, and human invariant review remains required before merge.
-
 
 ### Hosted Docker compatibility correction
 
@@ -565,7 +918,6 @@ An earlier run reported one PostgreSQL teardown termination after its assertions
 passed; it did not recur in the final full gate. No fixture or criterion was relaxed.
 No production deployment, new engine, paid model call or capacity benchmark was run.
 
-
 ## October 28 filesystem metadata foundation
 
 The filesystem starts with a fresh version 2 schema; version 1 development databases
@@ -656,7 +1008,6 @@ An internal coordinator now ties ObjectStore staging to catalog-published Iceber
 Generated OSDK/React, isolated production workers, agents/retrieval/evaluations/MCP, install/backup/restore, license inventory and full performance gates remain pending. Python dependency versions are constrained from the Linux test image; dependency hashes and apt snapshot locking remain release work. Test-container isolation does not prove the eventual worker sandbox.
 
 Continue current authorization and pinned-read/cursor enforcement, compiler policy contexts and worker isolation. Keep local commits and measured evidence. Do not expose internal store methods directly to clients or equate library tests with production readiness.
-
 
 ## Catalog-resolved indexing checkpoint
 
@@ -806,7 +1157,6 @@ Google live credentials/consent remain pending. UserInfo validation is not Works
 
 Validation: pnpm check passes all 70 tests on Windows. Browser QA verified signed-out/setup state, CLI recovery in an existing tab, station/chart loading, refresh, sign-out, and cookie-session persistence across a full local runtime restart. The existing five stations and 1,925 observations remain available. Live Google login awaits user credentials; Linux was not rerun.
 
-
 Live Google verification completed: the invited account signed in through Google and the browser session endpoint reported recovery=false. A browser refresh retained login and loaded stations/charts. Read-only inspection of current PostgreSQL grants and application scopes found exactly snow-stations:read and snow-observations:read. Protected object queries using the live session context succeeded; authority checks rejected write/index/source-write/unrelated-read/action-invoke permissions. Browser requests for unrelated assets on the snow host returned NOT_FOUND; the management API rejected the same browser session as UNAUTHENTICATED. No grants or source data were changed during verification.
 
 ## Management Google authentication and explicit administrators — October 20, 2026
@@ -858,6 +1208,7 @@ Final additional-scope verification: pnpm format and pnpm check pass again after
 Added docs/production version 0.1: workload cards and calibration JSON, benchmark specification, service/state/authority boundaries, existing-contract disposition, failure matrix, cost model, decision register, and prioritized M1-M2 backlog. GitHub goal #1 and M0 #2 track delivery. Numerical targets are synthetic proposals, not measured ServiceNow capacity or accepted production SLAs. No runtime behavior or production deployment changed; no new capacity/failure/recovery benchmark was run.
 
 Validation: JSON parsing, request mix totals, monotonic load ladders, arithmetic, local document links, and content checks passed. Existing source history and uncommitted implementation were preserved. GitHub source publication remains a separate reviewed prerequisite; M0 remains open for decision review and contract reconciliation.
+
 ## Production architecture M0 contract review — October 24, 2026
 
 Version 0.2 makes shared and tier-specific workload inputs explicit, accounts for unsuccessful offered arrivals, separates retained-storage recovery from full warehouse reconstruction, and defines a non-overlapping cost ledger. Added acceptance traceability and mechanism proof gates; reconciled historical deployment defaults with production direction while preserving behavioral contracts. The v0.1 calibration remains unchanged. Source publication is complete at baseline 702daeb; M0 remains open for reviewed merge and explicit product-decision dispositions.
@@ -1055,15 +1406,15 @@ Validation on non-root Linux: Node 24.21.0, pnpm 11.25.0, workspace Python 3.11.
 Temporary synthetic PostgreSQL clusters and fixture artifacts only; no live data,
 production credentials, external model service or deployment was used.
 
-| Command | Result |
-|---|---|
-| `pnpm format` | Passed; protected files unchanged. |
-| Focused auth/composition/execution/scheduler tests | 6 passed; no skips. Later auth/composition regression run: 4 passed. |
-| `pnpm check` after fixes | Passed: formatting, SDK drift, TypeScript, 348 runtime tests, Python checks, both builds and starter checks; zero failures/skips. |
-| `pnpm check:python` | Passed, including Black, specification/workload validation and 14 Python tests. Run separately because full gate stops at runtime failures. |
-| `pnpm build` | Passed for management and retained Snow fixture. This is required check coverage, not default startup composition. |
-| `pnpm check:starter` | Passed type/build/hosting/static isolation checks. |
-| `git diff --check` | Passed. |
+| Command                                            | Result                                                                                                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm format`                                      | Passed; protected files unchanged.                                                                                                          |
+| Focused auth/composition/execution/scheduler tests | 6 passed; no skips. Later auth/composition regression run: 4 passed.                                                                        |
+| `pnpm check` after fixes                           | Passed: formatting, SDK drift, TypeScript, 348 runtime tests, Python checks, both builds and starter checks; zero failures/skips.           |
+| `pnpm check:python`                                | Passed, including Black, specification/workload validation and 14 Python tests. Run separately because full gate stops at runtime failures. |
+| `pnpm build`                                       | Passed for management and retained Snow fixture. This is required check coverage, not default startup composition.                          |
+| `pnpm check:starter`                               | Passed type/build/hosting/static isolation checks.                                                                                          |
+| `git diff --check`                                 | Passed.                                                                                                                                     |
 
 Passing full output for this workspace is in `/tmp/issue47-check-latest.log`;
 supplemental checks are in `/tmp/issue47-python.log`, `/tmp/issue47-build.log` and
@@ -1469,7 +1820,7 @@ pnpm 11.25.0 and workspace Python 3.11.17:
   Synthetic inputs include two 150-row files with exact int64/decimal/date/time/
   array values, a competing retained snapshot and a row exceeding the frame limit.
 - `pnpm format` and `.venv/bin/python -m black workers benchmarks docs/spec/schemas
-  tests/fixtures/iceberg-scoped-storage` completed; fixture Black check passed.
+tests/fixtures/iceberg-scoped-storage` completed; fixture Black check passed.
 - Full `pnpm check` passed: 444 tests, zero failures/cancellations/skips, plus
   formatting, SDK drift, TypeScript, Python/spec validation, both application
   builds and starter build/hosting smoke. Local command output is retained at
@@ -1625,7 +1976,6 @@ Independent-environment validation, clean independent review, current-main
 integration and exact-revision Linux CI remain unverified controller gates; #17
 remains open. Changes are left uncommitted.
 
-
 ## Issue #58 — API-only management artifact lifecycle separation (2026-10-25)
 
 Scope: the existing runtime skips management bootstrap for API-only, and the
@@ -1751,7 +2101,7 @@ Validation:
   no skips (`/tmp/issue-61-repeat-1.log` through `-6.log`). Fixed run counts;
   no retry-until-pass behavior.
 - `pnpm format` and `git diff --check` passed. The complete repaired `pnpm
-  check` exited 1: formatting, SDK drift and TypeScript passed; 421/422 runtime
+check` exited 1: formatting, SDK drift and TypeScript passed; 421/422 runtime
   tests passed, zero skips (156.84 seconds). Both the new regression and the
   original composition test passed. The sole failure is
   `tests/api-only-process.integration.test.ts:78`: `TypeError: fetch failed`,
@@ -1776,7 +2126,6 @@ Environment: non-root Linux, Node 24.21.0, pnpm 11.25.0, repository-local Python
 main integration, exact-head Linux CI and merged-main validation remain
 unverified controller gates. No publication, commits, live operations, external
 contacts or paid model calls were performed. Changes remain uncommitted.
-
 
 ## Issue #56 — final focused initial-pinning cancellation pass (2026-10-25)
 
@@ -2039,7 +2388,6 @@ Final focused verification:
   (`/tmp/issue-65-remaining-checks.log`). This does not turn a failed full gate
   into a pass. No database tests were skipped or checks disabled.
 
-
 Bounded review repair 1: recovery initially reused the metadata-only Python
 validator. To preserve the complete publisher's child isolation/resource envelope,
 recovery now reuses `validateSnapshot` after content verification and before row
@@ -2098,7 +2446,6 @@ environment/review, current-main integration and exact-head Linux quality CI
 remain unverified and controller-owned. #17 remains open; #18/#19 remain
 dependency-gated. Changes remain uncommitted.
 
-
 ## Protected point-read release check — October 27, 2026
 
 ObjectService.read now rechecks current authority after object evaluation, inside
@@ -2113,7 +2460,6 @@ also denies release, and subsequent valid and missing-object reads verify cleanu
 No session-row mutation after snapshot creation is used to simulate wall-clock
 expiry. Full quality results are recorded in the pull request. This narrow repair
 does not implement the shared lifecycle/enforcement work in #72 or resolve #67.
-
 
 ## Protected-operation owner — October 27, 2026
 
@@ -2131,7 +2477,6 @@ docs/production/PROTECTED-OPERATIONS.md for owners, proof boundaries and unmet
 external enforcement. #72 remains open until independently enforced review and
 all required evidence are satisfied. Full check results belong in the PR.
 
-
 ## Shared HTTP transport owner — October 28, 2026
 
 All four native listener factories and their nested workload dispatchers now use
@@ -2145,7 +2490,6 @@ factory. Existing SQL auth and independent process suites remain in the full gat
 See docs/production/HTTP-BOUNDARY.md for the inventory, proxy trust assumption,
 intentional response differences and unmet independent enforcement/review gates.
 Full exact-revision verification is recorded in the PR; #73 remains open.
-
 
 ## Shared Python lifecycle owner — October 28, 2026
 
@@ -2165,3 +2509,263 @@ This addresses the observed cleanup path without diagnosing #67's validator fail
 See docs/production/PROCESS-LIFECYCLE.md for limits, outcome mappings, OS/dependency
 assumptions and unmet independent review/enforcement gates. Full exact-revision
 results belong in the PR; #74 remains open.
+
+## Native Dataset publication and indexing — October 30, 2026
+
+Native scoped POSIX/MinIO transfer, immutable sealing, bounded durable closure
+verification and transactional grouped Dataset publication have real integration
+evidence. The native replace writer now emits UUID and scalar-array Parquet with
+accepted Iceberg metadata, retains previous snapshots and verifies complete
+current/historical readback on both providers. Managed Dataset IO additionally
+binds the published Dataset identity, exact accepted schema, namespace revision
+and physical provider identity. The catalog contract documents these boundaries.
+
+The release pipeline completed one million 4-KiB objects with permanent UID
+allocation, registered Sync publication, native indexing, projection activation
+and a complete streaming identity/source/effective checksum oracle. This remains
+functional evidence; the measured 27m51s trial predates the reducer build-prefix
+and within-call SQL guard optimizations. Mixed protected HTTP SLOs, ten-million
+objects, wider-than-RAM and soak/recovery targets are not certified by it.
+
+Permanent indexing now captures full Dataset columns, mapped Object properties,
+serving policy/revision and projection revision under a registered indexing
+purpose. Fresh builds may reauthorize that same exact purpose at current epochs
+without rewriting old proofs. Actual small mapped-source tests have demonstrated
+epoch refresh and captured-policy behavior; the final combined proof and the
+maximum-width mapped profile remain open. Failed and exploratory trials are
+retained separately in the native catalog evidence ledger.
+
+General external Parquet pre-allocation bounds, approved history expiration,
+conditional physical garbage collection, final integrated runtime checks and
+target-scale certification remain required. Existing limits and authorization
+checks have not been raised or bypassed to claim completion.
+
+The native DuckDB engine now streams three pinned 6,000-row wide inputs through
+an isolated OCI guest and commits 6,000 detail plus ten aggregate rows in one
+grouped publication. Trial 021 passed that path in 82.77 seconds under the
+unchanged 120-second job deadline, including SDK/CLI receipt replay and numeric
+event pagination. A measured current-authority bottleneck was reduced from
+452 ms to 100 ms by checking an identical filesystem origin/operation once per
+guard invocation; all twenty operational checks remained. There is no cache
+across calls. Trial 024 passed the authority negatives and repeated the grouped
+publication in 74.35 seconds under an exclusive host resource lock, but the
+overall suite failed on UUID IPC metadata parity in the verifier. The exact
+metadata bridge passes a real PyArrow/native golden-schema test and codec
+roundtrip. Trial 026 then passed all eight tests: grouped publication in 70.98s,
+native UUID/array Parquet verification in 47.98s and a final 32.81s guest that
+exhausted a real dedicated ext4 filesystem at 105,906,176 bytes. Cleanup removed
+mode000 files and reused the same slot for all three jobs; each database deadline
+remained 120 seconds. The observed worker RSS was 80,703,488 bytes. This is a
+replace-only functional proof. Sync checkpoint/fault cases, the durable callback
+observation journal and complete engine acceptance remain open. Raw failed
+trials and source/artifact fingerprints remain in the native pipeline ledger.
+
+### Exact-issued recovery reclamation proof (2026-10-30)
+
+The explicit recovery retention controller passes **7/7 actual PostgreSQL/MinIO tests, zero skips (35.242s)**. The fresh producer uses actual recovery authority and backup writes; expiration/deletion controls use separately labeled historical closed DATA and actual qualified versions. Coverage includes retention and namespace reservation, terminal producer fencing, retained foreign-reference denial, exact-version removal, policy revoke after held HEAD, killed collector/real lease expiry/higher fence takeover, and null-version no-delete. Evidence: `production/evidence/2026-10-30/native-retention/20261031T045252Z/`. General C04 Dataset/history expiration and broad object reclamation remain gated on the reference/pin/publication inventory; this evidence does not close those paths or establish 24-hour aging or capacity certification.
+
+### Combined native recovery, indexing and lifecycle (2026-10-30)
+
+The v10 immutable source passed all 61 Rust library tests and a combined 37/37
+actual integration cases, zero skips, in 294.931 seconds. The initial trial had
+an absent catalog harness executable path; the successful external driver set
+that path explicitly and used the same unchanged runtime and catalog binaries.
+Evidence: `production/evidence/2026-10-30/native-recovery/20261031T051616Z-external.json`
+and its raw test log; the original failed run remains retained.
+
+The combined run covers bounded HTTP admission, current readiness and protected
+metrics, disabled CLI approval across restart, unfinished-body drain timeout,
+numeric change pagination, restore fencing and lost acknowledgments, clean-host
+POSIX/MinIO metadata/content/key restoration, and permanent mapped indexing at
+small and maximum row widths. A managed Dataset was restored into new physical
+Dataset/filesystem roots, read through actual native scoped IO, replaced by a
+real native publication, captured/restored a second time, and read at both the
+current and prior snapshot. Logical namespace/schema/Source identity remained
+exact while physical binding and binding revision changed under the restore proof.
+
+A separate v10 protocol trial passed expanded MCP discovery across replicas with
+102 visible Object resources, the official Python SDK, typed metadata/actions,
+transport tampering and revocation, and all 17 Model gateway cases. The combined
+protocol trial failed search: a manually seeded generation used the old declared
+binding revision, and rebuild used a nonexistent provenance column. The fixture
+now derives the actual authority-generation fingerprint; unchanged-binary
+retrieval then passed all nine cases. The production join correction requires a
+fresh compiled proof. These results do not close the complete quality gate,
+production workload ladder, general history collection or HA certification.
+
+### Fresh native protocol closure (2026-10-30)
+
+The fresh v12 snapshot passed 61 Rust library tests and all 42 actual protocol
+integration cases, zero skips. This combines expanded MCP/official SDK and CLI
+checks, all 17 model-gateway cases, exact protected pgvector retrieval and the
+registered Dataset-to-Object search projector with full action replay, durable
+embedding reuse, complete source/model replacement generations, and exact-purpose
+revocation that closes a held upstream socket without changing heads or visibility.
+The production provenance join now uses the actual immutable `contract` column;
+the first existing grant check identifies exact projector revocation before its
+more general Dataset epoch check, while retaining all lease/current-authority
+checks. Evidence: `production/evidence/2026-10-30/native-protocols/20261031T053004Z.json`
+and its raw test/build logs. Earlier failed trials remain. This closes this
+functional protocol checkpoint, not general retention, whole-instance acceptance,
+the complete quality gate or production capacity certification.
+
+## Native operational history retention — October 31, 2026
+
+Operational PostgreSQL history now has explicit operator policy and a monotonic
+revision floor, normalized retained read pins and bounded transactional collection.
+The default retains all history. An approved plan observes a full-day grace period
+and rechecks live cursor, execution, build, search and replay pins before each step.
+Collection retains two source generations, the floor generation and permanent
+identity/audit headers; expired reads fail explicitly. Filesystem and physical
+Dataset/object reclamation remain separate controllers.
+
+The v13 immutable source passed 61 Rust units and an eight-case actual history and
+change integration checkpoint after a separately archived expected-phase-list test
+correction. The runtime and catalog binaries were unchanged. Actual native Dataset
+publication/index/projection and real protected Actions produced closed projection
+intervals; cleanup removed obsolete intervals while all 64 current rows, source
+payloads and protected HTTP reads remained exact. The ordinary source-history
+fixture retained two complete generations and permanent UID/header state. Positive
+aging uses labeled historical DATA timestamps, not fabricated live leases or an
+elapsed-day claim. Evidence: `production/evidence/2026-10-31/native-history/20261031T061533Z-external.json`.
+The subsequent recovery-admission DDL guard, retired-table collection, all races,
+full latest-revision gate and target-scale maintenance still require fresh evidence.
+
+2026-10-31 Dataset retention checkpoint: explicit managed-S3 policy/expiration/reconciliation controller now compiles with the exact issued-object journal, qualified root versions, execution/indexing pins, immutable candidate tombstones, 24-hour first-observed orphan grace, Iceberg metadata rewrite and final head CAS. Frozen source `20261031T063554295001Z-c04-expiration-private-v1` passed schema generation, TypeScript, metadata-pruning unit (1/1) and actual native Source/writer/managed recovery regression (15/15, zero skips, 290.36s). Raw evidence: `docs/production/evidence/2026-10-31/native-retention/expiration-component-20261031T063941Z`. Dedicated positive expiration, qualified provider deletion, pin/CAS, recovery and held-provider fault tests remain required. No external or POSIX snapshots become eligible by this checkpoint.
+
+The qualified one-million-object trial completed its exact source/effective/UID oracle, but did not meet protected HTTP targets. Twenty scheduled requests/second completed 600/600 with p95 1238ms; 50/s completed 798/1500 (702 HTTP 429), and 100/s completed 850/3000 (2150 HTTP 429). Raw immutable evidence remains `docs/production/evidence/2026-10-30/native-projection/qualified-million-driver-v6-20261031T052859Z`. Reader I/O amplification and whole-population typed UID access are active measured bottlenecks; this is not a capacity certification and does not justify proceeding to ten million yet.
+
+2026-10-31 native composition checkpoint: immutable source
+`20261031T065101356371Z-native-launcher-development-observation` passed 7/7 actual
+integration cases with zero skips (86.14 seconds). It includes the default external
+and development launchers, qualified embedded PostgreSQL/vector loading, native
+children-before-database shutdown, split OIDC and accepted-human verification,
+complete failed-secondary-action observation replay, and the composed Source,
+protected frontend/SDK, native writer/index and creation-refresh path. Evidence:
+`production/evidence/2026-10-30/native-filesystem/native-launcher-development-20261031T065101Z`.
+This does not certify production capacity or every management UI workflow.
+
+The shared native source validator now accepts the same scalar-array column
+profile for Dataset columns, Object properties and Action inputs; four focused
+native validation cases passed, including the shared compiler vectors. The
+whole-library suite passed 67/67 with no ignored cases after adding permanent-UID
+predicate aliasing and the operator filesystem-retirement mechanism. Actual
+projection CHECK/HTTP/plan regression and a fresh offered-load run remain required
+before attributing a performance improvement. Filesystem orphan reclamation is
+implemented but its qualified-provider integration proof is still pending.
+
+2026-10-31 filesystem orphan/multipart retirement checkpoint: immutable source
+`20261031T073038927146Z-native-filesystem-multipart-gc` passed the actual native
+HTTP/MinIO fault test (1/1, zero skips, 12.81 seconds). It proves grace enforcement,
+permanent upload tombstones, historical-reference protection and interval reset,
+qualified exact-version removal that preserves a newer version, separate operator
+and SQL privileges, durable pre-Initiate ownership, known-ID Part acknowledgement
+loss and 17 lost Initiate acknowledgements reconciled in bounded exact-key pages.
+A neighboring upload survives. Earlier failures and the narrowly qualified MinIO
+pagination variant are preserved. Evidence:
+`production/evidence/2026-10-30/native-filesystem/filesystem-multipart-gc-20261031T073039Z`.
+POSIX physical deletion remains explicitly unsupported; no unconditional removal
+fallback or production-capacity claim is added.
+
+2026-10-31 operational-history branch checkpoint: the actual collector/projection
+fixtures passed 3/3 with zero skips (18.72 seconds), using the exact native artifact
+from `20261031T073038927146Z` plus separately archived test/helper changes. Five
+real native projection generations and six native Link actions exercise actual
+retired-table DROP, complete link-history compaction, shared backup admission,
+current/latest-two/floor retention, structural active-Search pinning and positive
+collection after pin release. New cursor and normalized read pins after planning
+block publication; below-floor pins fail without rewinding it. A true non-owning
+connection cannot self-approve or edit collection/floor state. Evidence:
+`production/evidence/2026-10-31/native-history/branches-external-20261031T074802Z`.
+No history SQL change or fabricated live execution lease was needed.
+
+### Data custody and capacity checkpoint, 2026-10-31
+
+The qualified one-million-object release trial preserved the exact source/effective/UID oracle. On four CPUs and 12 GiB RAM, publication took 747.0 seconds, native indexing/projection 1,662.3 seconds and the total through HTTP 44m55s. All 600 arrivals at 20/s succeeded (all-arrival p95 367.8 ms); 50/s and 100/s rejected 537/1,500 and 2,015/3,000 arrivals with RESOURCE_LIMIT/429. These short exploratory windows do not certify production targets. Raw evidence: `production/evidence/2026-10-31/native-projection/window-uid-million-v7-20261031T073753Z`.
+
+Subsequent actual accepted-verifier micro coverage measured the remaining per-file Parquet header path: eight columns, three row groups and 24 headers changed from 24 ranges/24 versions and 144 checks in each current-authority category to two ranges/three versions and 14 checks. The window read 2 MiB instead of 459 KiB; allocation and final authority checks remain bounded. A fresh million-object trial is needed to measure end-to-end effects.
+
+Qualified managed S3 Dataset cleanup now journals real producer-issued outputs and acknowledged multipart IDs, uses permanent tombstones plus distinct exact-version deletion/exact-upload abort authority, and retains a late-effect watcher. The actual three-point Dataset multipart fault proof passed with a neighboring upload preserved and current typed rows unchanged. Ordinary producer/issued journal forgeries are denied. Scoped ordinary BackupAuthority IO remains supported through validated lease helpers; only the actual operator controller initializes budgets. Restore target custody and immutable Dataset requalification are implemented, with full fresh S3 roundtrip coverage pending. POSIX/unversioned deletion and external legacy Dataset reclamation remain unsupported. Current metadata pruning independent of pinned old physical roots is being completed separately.
+
+### Execution and Connector admission checkpoint, 2026-10-31
+
+Combined execution trial004 retains its failed result: 51/53 tests passed, with Agent and Evaluation setup rejected by the new Source Model policy agreement check. The fixtures now declare qualified private Markings and matching Source/operator destination policies; this correction has not yet passed a fresh native run. Function control-only cancellation and completed-result preservation, durable observations, execution authority and sandbox tests passed within that failed trial. Earlier failed trials remain separate.
+
+Agent/Evaluation metadata now captures complete Model/Secret classifications before code, includes exact required Secret use operations, and pins immutable approval references for current and retained checks. A real Evaluation→Agent→Function service-purpose fixture is staged. Connector checkpoint identity is separated from lease/revocation generations and expected output heads; it binds interpretation, physical output schema/key/namespace, endpoint and approved material semantics. These changes are pending the next coherent immutable build and real regression. The active capacity trial holds native build/test resources; no runtime pass is inferred from static integration.
+
+### Protected query and composed browser checkpoint, 2026-10-31
+
+The ordinary scalar/multi-object Action path now prepares under shared admission and
+revalidates sealed source, overlay, authority, policy and binding anchors inside its
+short publication transaction. Create, Link, attachment and Function-prepared paths
+retain their existing admission. Actual barrier/race/rollback and published Source
+tests passed 26/26 without skips. Narrow typed projection maps preserve both captured
+and current policy predicates while avoiding unused wide source/effective JSON.
+
+The exact v20 native artifact passed another 13/13 actual PostgreSQL/native HTTP
+tests, including canonical float cursor keys, complete old-cursor pagination across
+projection replacement, effective current-policy restrictions and typed query/point
+parity. Protected seven-field plans at 300 rows use 26/48 shared buffer hits; these
+small diagnostic plans do not certify production capacity. Evidence:
+`production/evidence/2026-10-31/native-serving/native-ratio-source-v20-20261031T122733Z`.
+
+The same-offered million-object v9 run preserved its exact oracle. At 20/s all 600
+arrivals succeeded; 50/s rejected 8/1,500 and 100/s rejected 1,417/3,000 with bounded
+RESOURCE_LIMIT responses. Higher-rate production targets remain unmet. Actual browser
+management Action/retry, Function 41-to-42 with terminal event, independent published
+frontend creation/readback and cross-origin denial were observed. That disposable
+outer browser trial remains failed because its final fixture compared float JSON as
+text; the corrected typed numeric oracle is now checked before future browser waits.
+The broader single-instance Model/Search/Agent/Evaluation/Pipeline/Automation browser
+composition and a retained inspectable local instance are still outstanding.
+
+2026-10-31 protected UID seek checkpoint: the actual typed PostgreSQL A/B showed
+that wrapping a UID comparison in `IS TRUE` prevented a range index condition.
+Only redundant final-WHERE wrappers were removed; observable Boolean expressions,
+policy evaluation and all current/captured predicates are preserved. The fresh
+immutable native build passed 38/38 Source, Action, projection and protected HTTP
+checks without skips (96.09 seconds). Its actual HTTP UID-range page at ordinal
+211 seeks the canonical UID index with zero preceding filtered rows. Evidence:
+`production/evidence/2026-10-31/native-serving/native-protected-plan-20261031T124421Z`.
+No million-row capacity result is inferred from this functional plan.
+
+A separate actual PostgreSQL/retained-publisher Source regression passed 17/17.
+Current operations require live files from the exact current resource release;
+historical release restrictions still contribute classifications. Explicit pinned
+old executable/declaration reads continue to require their exact live mapped files.
+Replacing a deleted declaration through a genuine new publication permits current
+resource access, preserves its protected historical label, and still denies the
+old pinned file proof. An exact resource grant works without global filesystem
+browse permission, while a direct filesystem read remains forbidden. This
+authorization invariant change requires independent human review.
+
+### Data history and delta protocol checkpoint
+
+Young metadata compaction and scheduling-time retained-snapshot resolution passed
+the real held-reader proof in
+`production/evidence/2026-10-31/native-retention/dataset-history-selection-v2-20261031T111934Z`.
+Physical retention ages and real pins are unchanged. Managed versioned-S3 cleanup,
+independent backup recovery and permanent restore-target custody have combined
+proof in the C04 evidence already recorded above.
+
+Replacement persists actual Source primary keys/allowed modes and verifies key
+uniqueness with bounded spill before publication. Task partsets bind accepted
+mode/coverage, schema/key hashes and expected head. Dataset key declarations remain
+non-null, matching the accepted Python validator; nullable non-key columns remain
+valid. Compiler Connection coverage/key checks match the native contract. The
+additional real composite scalar fixture is being verified separately.
+
+Append/upsert/delete activation is gated on the complete protocol in
+`production/contracts/dataset-writes.md` and `production/contracts/dataset-deltas.md`:
+receiver-qualified persistent closure/run directories, standard Iceberg equality
+deletes with bounded merge-on-read/compaction, and incremental Source/index
+publication. Private directory, authenticated-chunk and packed-key-run primitives
+have focused tests; graph SQL has isolated syntax coverage. Custody/refcount/recovery,
+standard-delete oracle and transactional publication integration are still being
+implemented. These primitives do not imply an enabled production mode or capacity
+certification.
+
+Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed 3/3 native integration tests with zero skips (125.88s), including exact boundary scalar values, canonical composite duplicates, null-key rejection, preserved prior typed rows/head, and live-reader retained-history compaction. Evidence: `docs/production/evidence/2026-10-31/native-retention/dataset-composite-pk-v6-20261031T133255Z/`. Incremental MOR/qualified graph and Source delta publication remain under implementation and are not enabled by this checkpoint.
+
+
+Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.

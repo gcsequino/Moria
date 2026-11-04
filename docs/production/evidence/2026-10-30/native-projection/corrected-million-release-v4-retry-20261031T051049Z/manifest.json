@@ -1,0 +1,75 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261031T045536035060Z-corrected-million-release-v4",
+  "sourceManifestSha256": "0c566824b196e6cd04a971a577c91d2be7be5174517157f876b6e55590fc6d03",
+  "derivedRunnerSha256": "fa3b7d3d53bbd6aab2812a2688b4029fe8beefcdf7a5cea91c44c87c0e80cc8f",
+  "commands": [
+    {
+      "phase": "evidence-output-permission",
+      "path": "/tmp/moria-proof-snapshots/20261031T045536035060Z-corrected-million-release-v4/.proof-output",
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "phase": "population-1000",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--name",
+        "moria-data-corrected-1000-v4b",
+        "--memory",
+        "12g",
+        "--memory-swap",
+        "24g",
+        "--cpus",
+        "4",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T045536035060Z-corrected-million-release-v4,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "-e",
+        "MORIA_RUNTIME_BINARY=/work/.proof-artifacts/moria-runtime",
+        "-e",
+        "MORIA_CATALOG_TEST_BINARY=/work/.proof-artifacts/native_catalog",
+        "-e",
+        "MORIA_CAPACITY_ROWS=1000",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        ".proof-output/million-runner.ts"
+      ]
+    }
+  ],
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "7c2b26cf18043f58230bf90d93bf36bb58f674100d2fe25998f7e4e0ea5c451f",
+      "version": 5
+    },
+    "sourceDigest": "5ca711a1dac8d0098cc563c37329ea9aff58ecfde276b8aff055c232d389cd63"
+  },
+  "artifacts": {
+    "moria-runtime": {
+      "cargoPath": "/work/services/runtime/target/release/moria-runtime",
+      "path": "/tmp/moria-proof-snapshots/20261031T045536035060Z-corrected-million-release-v4/.proof-artifacts/moria-runtime",
+      "sha256": "964387fb8f596384d90ff2af024de9b0da38daf7b60cfe9af94cd430be8e36f0"
+    },
+    "moria-indexing": {
+      "cargoPath": "/work/services/runtime/target/release/moria-indexing",
+      "path": "/tmp/moria-proof-snapshots/20261031T045536035060Z-corrected-million-release-v4/.proof-artifacts/moria-indexing",
+      "sha256": "8c8fda4845880fc92734376500d17f5a3368bfcb4ed7a0399b2515d4ac38781f"
+    },
+    "native_catalog": {
+      "cargoPath": "/work/services/runtime/target/release/deps/native_catalog-94d99389a8077992",
+      "path": "/tmp/moria-proof-snapshots/20261031T045536035060Z-corrected-million-release-v4/.proof-artifacts/native_catalog",
+      "sha256": "4287117c8726a4d04ae37d0eca6cfb2d2a475114918ef777698eed2836b9c90f"
+    }
+  },
+  "outcome": "population-1000 failed",
+  "retryOf": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-30/native-projection/corrected-million-release-v4-20261031T045609Z/manifest.json"
+}

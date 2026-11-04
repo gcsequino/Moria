@@ -1,0 +1,143 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.979268
+      type: 'test'
+      ...
+    # Subtest: SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+    ok 2 - SDK and CLI use the persistent native API and the agent worker replaces its Node launcher # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.120736
+      type: 'test'
+      ...
+    # Subtest: a durable model intent commits before gateway admission while public callback data stays withheld
+    ok 3 - a durable model intent commits before gateway admission while public callback data stays withheld # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.0774
+      type: 'test'
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    ok 4 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.090199
+      type: 'test'
+      ...
+    # Subtest: Agent admission captures approved material before code and a missed approval pulse cannot revive it
+    ok 5 - Agent admission captures approved material before code and a missed approval pulse cannot revive it # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.064375
+      type: 'test'
+      ...
+    # Subtest: exact Agent invocation scope admits required dependencies without filesystem browsing
+    ok 6 - exact Agent invocation scope admits required dependencies without filesystem browsing # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.078563
+      type: 'test'
+      ...
+    # Subtest: a pending child observation blocks parent logs, actions and model dispatch
+    ok 7 - a pending child observation blocks parent logs, actions and model dispatch
+      ---
+      duration_ms: 58429.225636
+      type: 'test'
+      ...
+    # Subtest: private child progress crosses a held dependency insertion and resumes after terminal proof
+    ok 8 - private child progress crosses a held dependency insertion and resumes after terminal proof
+      ---
+      duration_ms: 16482.483658
+      type: 'test'
+      ...
+    # Subtest: Agent observes actual Function child failure labels before returning a caught outcome
+    ok 9 - Agent observes actual Function child failure labels before returning a caught outcome # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.196006
+      type: 'test'
+      ...
+    # Subtest: Agent cancellation fences a running Function child without a second attempt
+    ok 10 - Agent cancellation fences a running Function child without a second attempt # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.065861
+      type: 'test'
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    ok 11 - healthy long-running agent work renews the same single-attempt database lease # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.034282
+      type: 'test'
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    ok 12 - bound model dispatch stops after real worker-scope revocation and cannot publish a result # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.020117
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    ok 13 - cancellation and supervisor SIGKILL fence the graph without re-executing user code # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.016117
+      type: 'test'
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    ok 14 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.013621
+      type: 'test'
+      ...
+    # Subtest: registered worker class admission is independent of unrelated class ordering
+    ok 15 - registered worker class admission is independent of unrelated class ordering # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.013283
+      type: 'test'
+      ...
+    # Subtest: Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+    ok 16 - Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.011969
+      type: 'test'
+      ...
+    # Subtest: accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+    ok 17 - accepted private job authority survives ordinary session expiry while public and stale lease credentials fail # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.07107
+      type: 'test'
+      ...
+    # Subtest: newly granted tool permissions cannot widen an already accepted job capability
+    ok 18 - newly granted tool permissions cannot widen an already accepted job capability # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.036545
+      type: 'test'
+      ...
+    # Subtest: postclaim filesystem rejection records no code start after an expired original session
+    ok 19 - postclaim filesystem rejection records no code start after an expired original session # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.022717
+      type: 'test'
+      ...
+    # Subtest: deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active
+    ok 20 - deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.050888
+      type: 'test'
+      ...
+    # Subtest: accepted agent code remains pinned across redeployment and current authority gates retained results
+    ok 21 - accepted agent code remains pinned across redeployment and current authority gates retained results # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.024811
+      type: 'test'
+      ...
+    1..21
+ok 1 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 93903.529654
+  type: 'test'
+  ...
+1..1
+# tests 22
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 19
+# todo 0
+# duration_ms 94486.449743

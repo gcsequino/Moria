@@ -1,0 +1,41 @@
+▶ native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+  ▶ real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+    ▶ native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+      ✔ valid (5751.881122ms)
+      ✔ wrong-table (2221.777163ms)
+      ✔ wrong-snapshot (2167.35607ms)
+      ✔ missing (2599.021789ms)
+      ✔ extra (5946.328355ms)
+      ✔ malformed-manifest (2674.579359ms)
+      ✔ malformed-parquet (3247.713263ms)
+      ✔ nullable-array (2708.738945ms)
+      ✔ historical-schema (5463.483498ms)
+      ✔ cycle (5610.60482ms)
+      ✔ duplicate-schema (1981.980175ms)
+      ✔ current-projection (4684.081902ms)
+      ✔ missing-sort-orders (3071.861439ms)
+      ✔ foreign-reference (3088.486359ms)
+      ✔ deleted-valid (11621.772887ms)
+      ✔ deleted-corrupt (6089.201029ms)
+    ✔ native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet (68934.765404ms)
+    ▶ valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO
+      ✔ posix (3226.220853ms)
+      ✔ s3 (3714.189759ms)
+    ✔ valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO (6941.325586ms)
+  ✔ real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing (157211.391388ms)
+  ✔ qualified versioned MinIO reads and removal preserve a newer object version (597.629394ms)
+  ✔ SIGKILL after a durable page commit reopens exact bounded closure state (40261.177766ms)
+  ✔ a provider version change between chunks denies subsequent range release (613.436678ms)
+  ✔ an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks (2908.918371ms)
+  ✔ expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools (636.823477ms)
+  ✔ disabled namespace bindings deny both source reads and artifact writes (1001.83868ms)
+  ✔ current authority revocation denies native I/O without publishing any object generation (2736.732523ms)
+✔ native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state (216838.832506ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 217479.449105

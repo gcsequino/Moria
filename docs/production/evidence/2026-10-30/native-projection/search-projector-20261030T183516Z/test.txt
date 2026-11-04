@@ -1,0 +1,47 @@
+TAP version 13
+# Subtest: registered native search projects full Dataset objects and replays a complete action frame
+    # Subtest: a fresh background service execution atomically replays later changes
+    ok 1 - a fresh background service execution atomically replays later changes
+      ---
+      duration_ms: 1561.115574
+      type: 'test'
+      ...
+    # Subtest: a complete replacement generation reuses persisted embedding bytes
+    ok 2 - a complete replacement generation reuses persisted embedding bytes
+      ---
+      duration_ms: 5581.108772
+      type: 'test'
+      ...
+    # Subtest: a real expired attempt is fenced and a replacement reuses the warm cache
+    ok 3 - a real expired attempt is fenced and a replacement reuses the warm cache
+      ---
+      duration_ms: 35902.443891
+      type: 'test'
+      ...
+    # Subtest: a model binding change creates a complete separately pinned generation
+    ok 4 - a model binding change creates a complete separately pinned generation
+      ---
+      duration_ms: 8193.265153
+      type: 'test'
+      ...
+    # Subtest: revoking the exact projector purpose closes held upstream work without visibility
+    ok 5 - revoking the exact projector purpose closes held upstream work without visibility
+      ---
+      duration_ms: 1310.424197
+      type: 'test'
+      ...
+    1..5
+ok 1 - registered native search projects full Dataset objects and replays a complete action frame
+  ---
+  duration_ms: 66929.756095
+  type: 'test'
+  ...
+1..1
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67305.610493

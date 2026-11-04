@@ -1,0 +1,278 @@
+{
+  "classification": "exploratory-short-open-loop-baseline",
+  "seed": 1836020329,
+  "rows": 1000000,
+  "rowBytes": 4096,
+  "rates": [
+    20,
+    50,
+    100
+  ],
+  "windowMs": 30000,
+  "maxOutstanding": 256,
+  "timeoutMs": 10000,
+  "replicas": 1,
+  "authorization": "one actual workload session with two markings; full-visibility row policy",
+  "mix": {
+    "detail": 35,
+    "page": 30,
+    "filterSort": 15,
+    "action": 10,
+    "multiAction": 5,
+    "aggregate": 5
+  },
+  "queryContract": "Whole-population indexed queries without optional scope/budget; page uses uid>=sampled UID; filter/sort uses rank>=0 over the complete population. Client validates actual responses <=256KiB and uses a10s arrival deadline.",
+  "pageProjection": [
+    "uid",
+    "id",
+    "name",
+    "region",
+    "enabled",
+    "rank",
+    "amount"
+  ],
+  "distribution": "80% uniform full population / 20% hot 1%; multiAction five selected objects; aggregate exact one-UID scope",
+  "limitations": [
+    "Single source generation; no preloaded overlay history",
+    "No human browser or restricted-visibility mix",
+    "No relation fanout or contention sub-run",
+    "Short windows without production warm-up, recovery, repetitions or soak",
+    "Shared host resources; no production capacity/SLO certification"
+  ],
+  "windows": [
+    {
+      "rate": 20,
+      "windowMs": 30000,
+      "startedAt": "2026-10-31T12:15:12.413Z",
+      "total": {
+        "scheduled": 600,
+        "successful": 600,
+        "p50Ms": 24.46802100003697,
+        "p95Ms": 127.38613100000657,
+        "p99Ms": 161.99547299998812,
+        "maxMs": 250.92913400009274,
+        "errors": {}
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 192,
+          "successful": 192,
+          "p50Ms": 18.612987000029534,
+          "p95Ms": 22.52975600003265,
+          "p99Ms": 80.76035399991088,
+          "maxMs": 84.74073299998417,
+          "errors": {}
+        },
+        "page": {
+          "scheduled": 188,
+          "successful": 188,
+          "p50Ms": 81.41737199993804,
+          "p95Ms": 144.99417400010861,
+          "p99Ms": 166.6115910001099,
+          "maxMs": 250.92913400009274,
+          "errors": {}
+        },
+        "filterSort": {
+          "scheduled": 97,
+          "successful": 97,
+          "p50Ms": 22.318071000045165,
+          "p95Ms": 28.338781000114977,
+          "p99Ms": 77.5112819999922,
+          "maxMs": 77.5112819999922,
+          "errors": {}
+        },
+        "action": {
+          "scheduled": 62,
+          "successful": 62,
+          "p50Ms": 40.79450700012967,
+          "p95Ms": 92.35505699994974,
+          "p99Ms": 194.45397899998352,
+          "maxMs": 194.45397899998352,
+          "errors": {}
+        },
+        "multiAction": {
+          "scheduled": 31,
+          "successful": 31,
+          "p50Ms": 57.14819000009447,
+          "p95Ms": 171.34291499992833,
+          "p99Ms": 172.03431600006297,
+          "maxMs": 172.03431600006297,
+          "errors": {}
+        },
+        "aggregate": {
+          "scheduled": 30,
+          "successful": 30,
+          "p50Ms": 22.007082999916747,
+          "p95Ms": 44.26421399996616,
+          "p99Ms": 206.4821369999554,
+          "maxMs": 206.4821369999554,
+          "errors": {}
+        }
+      }
+    },
+    {
+      "rate": 50,
+      "windowMs": 30000,
+      "startedAt": "2026-10-31T12:15:44.819Z",
+      "total": {
+        "scheduled": 1500,
+        "successful": 1492,
+        "p50Ms": 474.7450289998669,
+        "p95Ms": 1274.5613969999831,
+        "p99Ms": 1443.7748910000082,
+        "maxMs": 1721.5105939998757,
+        "errors": {
+          "RESOURCE_LIMIT\n\n429 !== 200\n": 8
+        }
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 520,
+          "successful": 518,
+          "p50Ms": 395.9580639998894,
+          "p95Ms": 1156.0755159999244,
+          "p99Ms": 1343.3276970000006,
+          "maxMs": 1373.0409919999074,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 2
+          }
+        },
+        "page": {
+          "scheduled": 463,
+          "successful": 461,
+          "p50Ms": 457.43735500006005,
+          "p95Ms": 1185.3456830000505,
+          "p99Ms": 1436.8353959999513,
+          "maxMs": 1478.7654110000003,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 2
+          }
+        },
+        "filterSort": {
+          "scheduled": 204,
+          "successful": 203,
+          "p50Ms": 414.9643780000042,
+          "p95Ms": 1096.4950069999322,
+          "p99Ms": 1335.406200000085,
+          "maxMs": 1383.088667999953,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 1
+          }
+        },
+        "action": {
+          "scheduled": 155,
+          "successful": 152,
+          "p50Ms": 628.4614750000183,
+          "p95Ms": 1542.864343999885,
+          "p99Ms": 1694.3091909999494,
+          "maxMs": 1721.5105939998757,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 3
+          }
+        },
+        "multiAction": {
+          "scheduled": 80,
+          "successful": 80,
+          "p50Ms": 813.7613279998768,
+          "p95Ms": 1426.4327459998894,
+          "p99Ms": 1623.918488000054,
+          "maxMs": 1623.918488000054,
+          "errors": {}
+        },
+        "aggregate": {
+          "scheduled": 78,
+          "successful": 78,
+          "p50Ms": 477.7041559999343,
+          "p95Ms": 1119.9878420000896,
+          "p99Ms": 1352.1202199999243,
+          "maxMs": 1352.1202199999243,
+          "errors": {}
+        }
+      }
+    },
+    {
+      "rate": 100,
+      "windowMs": 30000,
+      "startedAt": "2026-10-31T12:16:18.600Z",
+      "total": {
+        "scheduled": 3000,
+        "successful": 1583,
+        "p50Ms": 785.7548630000092,
+        "p95Ms": 1539.8153299998958,
+        "p99Ms": 1769.1357829999179,
+        "maxMs": 1988.1870780000463,
+        "errors": {
+          "RESOURCE_LIMIT\n\n429 !== 200\n": 1417
+        }
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 1036,
+          "successful": 538,
+          "p50Ms": 751.6584409999195,
+          "p95Ms": 1363.3626929998863,
+          "p99Ms": 1491.941753000021,
+          "maxMs": 1557.4369069999084,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 498
+          }
+        },
+        "page": {
+          "scheduled": 909,
+          "successful": 483,
+          "p50Ms": 805.6000359999016,
+          "p95Ms": 1428.4528850000352,
+          "p99Ms": 1523.4361459999345,
+          "maxMs": 1674.130821999861,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 426
+          }
+        },
+        "filterSort": {
+          "scheduled": 468,
+          "successful": 247,
+          "p50Ms": 779.0813629999757,
+          "p95Ms": 1352.9217349998653,
+          "p99Ms": 1503.648380999919,
+          "maxMs": 1567.1496279998682,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 221
+          }
+        },
+        "action": {
+          "scheduled": 290,
+          "successful": 140,
+          "p50Ms": 0.8238099999725819,
+          "p95Ms": 1796.2344760000706,
+          "p99Ms": 1935.5679230000824,
+          "maxMs": 1988.1870780000463,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 150
+          }
+        },
+        "multiAction": {
+          "scheduled": 149,
+          "successful": 80,
+          "p50Ms": 1076.503636999987,
+          "p95Ms": 1786.0250130000059,
+          "p99Ms": 1878.8402619999833,
+          "maxMs": 1986.4293160000816,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 69
+          }
+        },
+        "aggregate": {
+          "scheduled": 148,
+          "successful": 95,
+          "p50Ms": 1076.4426789998543,
+          "p95Ms": 1398.3990149998572,
+          "p99Ms": 1471.4153100000694,
+          "maxMs": 1490.0708119999617,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 53
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+TAP version 13
+# {"event":"browser-fixture-indexing-blocked","builds":[{"status":"failed","error":"INDEXING_FAILED","source_revision":"4"},{"status":"failed","error":"VALUE_INVALID","source_revision":"3"},{"status":"active","error":null,"source_revision":"2"},{"status":"active","error":null,"source_revision":"1"},{"status":"active","error":null,"source_revision":"1"}],"blocked":[],"process":{"exitCode":null,"errors":"{\\"build\\":\\"a6e938d5-0300-4ad4-934e-1f6eb3bd71c8\\",\\"error\\":\\"INDEXING_FAILED\\",\\"phase\\":\\"INDEXING_PLAN_TABLE\\",\\"sqlState\\":null}\\n"}}
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    not ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 45805.110712
+      type: 'test'
+      location: '/work/tests/native-source-runtime.integration.test.ts:596:13'
+      failureType: 'testCodeFailure'
+      error: 'Default native indexing child did not publish the refreshed Dataset'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:1351:21)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:596:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..1
+not ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 56858.179748
+  type: 'test'
+  location: '/work/tests/native-source-runtime.integration.test.ts:33:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57570.189362

@@ -3,6 +3,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import test from 'node:test';
+import pg from 'pg';
+import { setTimeout as delay } from 'node:timers/promises';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 import { FilesystemAuthority } from '../services/security/src/filesystem.js';
@@ -398,6 +400,85 @@ test(
       );
       return { root, declarations, declaration, definition, publish, first, resource, initialPlan };
     }
+    await t.test(
+      'repeated Source history keeps current classification checks authoritative',
+      async () => {
+        const unit = await isolatedOntology('history_authority');
+        const note = await file(unit.root.id, 'history.txt', 'initial');
+        for (let generation = 0; generation < 8; generation++) {
+          const bytes = new TextEncoder().encode(`history-${generation}`);
+          await filesystem.writeFile(
+            context,
+            randomUUID(),
+            {
+              op: 'write',
+              id: note.id,
+              expectedRevision: (await store.get(note.id)).revision,
+              content: {
+                size: bytes.length,
+                digest: `sha256:${createHash('sha256').update(bytes).digest('hex')}`,
+                mediaType: 'text/plain',
+              },
+            },
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(bytes);
+                controller.close();
+              },
+            }),
+          );
+          const release = await unit.publish();
+          await source.apply(
+            context,
+            (await source.plan(context, unit.root.id, release.digest)).id,
+          );
+        }
+        const resource = (
+          await db.pool.query(
+            'SELECT id FROM moria.fs_entries WHERE resource_id=$1 AND NOT deleted',
+            [unit.resource.resourceId],
+          )
+        ).rows[0].id;
+        assert.equal(
+          (
+            await db.pool.query(
+              'SELECT count(*)::int AS count FROM moria.fs_resource_release_history WHERE entry_id=$1',
+              [resource],
+            )
+          ).rows[0].count,
+          9,
+        );
+        const labels = async () =>
+          (
+            await db.pool.query("SELECT moria.native_filesystem_access($1,$2,'read') AS labels", [
+              createHash('sha256').update(token.token).digest('hex'),
+              resource,
+            ])
+          ).rows[0].labels;
+        assert.deepEqual(await labels(), []);
+        await security.setPolicy('operator', note.id, '0', {
+          markings: [{ environment, marking: 'protected' }],
+          grants: [],
+        });
+        assert.deepEqual(await labels(), ['protected']);
+        await authority.syncPrincipal(environment, 'operator', principal, {
+          kind: 'workload',
+          enabled: true,
+          attributes: {},
+          markings: [],
+        });
+        try {
+          await assert.rejects(labels(), /FORBIDDEN/);
+        } finally {
+          await authority.syncPrincipal(environment, 'operator', principal, {
+            kind: 'workload',
+            enabled: true,
+            attributes: {},
+            markings: ['protected'],
+          });
+        }
+      },
+    );
     await t.test('replacement retains future restrictions on its original source', async () => {
       const unit = await isolatedOntology('replacement'),
         holding = await directory(project.id, 'old-replacement-source');
@@ -428,6 +509,243 @@ test(
         ),
       );
     });
+    await t.test(
+      'fresh replacement uses live declaration files while pinned historical files remain protected',
+      async () => {
+        const unit = await isolatedOntology('live_replacement');
+        await security.setPolicy('operator', unit.declaration.id, '0', {
+          markings: [{ environment, marking: 'protected' }],
+          grants: [],
+        });
+        const old = await unit.publish();
+        await source.apply(context, (await source.plan(context, unit.root.id, old.digest)).id);
+        const readerApplication = 'scoped-replacement-reader';
+        const readOperation = `${unit.resource.resourceId}:read`;
+        await authority.setApplication(environment, 'operator', readerApplication, [readOperation]);
+        await authority.setGrants(environment, 'operator', principal, readerApplication, [
+          readOperation,
+        ]);
+        const issued = await new WorkloadSessions(authority).mint(
+          { environment, principal, application: readerApplication },
+          'operator',
+        );
+        const hash = createHash('sha256').update(issued.token).digest('hex');
+        const current = () =>
+          db.pool.query('SELECT moria.native_resource_filesystem_access($1,$2,$3) labels', [
+            hash,
+            unit.resource.resourceId,
+            'read',
+          ]);
+        const pinned = (digest: string) =>
+          db.pool.query('SELECT moria.native_resource_release_access($1,$2,$3,$4) labels', [
+            hash,
+            unit.resource.resourceId,
+            'read',
+            digest,
+          ]);
+        assert.deepEqual((await current()).rows[0].labels, ['protected']);
+        assert.deepEqual((await pinned(old.digest)).rows[0].labels, ['protected']);
+        const declarationBatch = (requests: unknown[]) =>
+          db.pool.query('SELECT moria.native_source_declaration_labels_batch($1,$2) labels', [
+            hash,
+            JSON.stringify(requests),
+          ]);
+        assert.deepEqual(
+          (
+            await declarationBatch([
+              { resource: unit.resource.resourceId, release: old.digest },
+              { resource: unit.resource.resourceId, release: old.digest },
+            ])
+          ).rows[0].labels,
+          ['protected'],
+        );
+        await assert.rejects(
+          declarationBatch([
+            { resource: unit.resource.resourceId, release: old.digest, allow: true },
+          ]),
+          { message: 'SOURCE_FILE_PROOF_REQUIRED' },
+        );
+        const datasetId = old.resources.find(
+          (resource) => resource.reference === 'live_replacement/Dataset/source',
+        )!.id;
+        const requests = [
+          { resource: unit.resource.resourceId, release: old.digest },
+          { resource: datasetId, release: old.digest },
+        ];
+        const measured = await db.pool.connect();
+        try {
+          await measured.query("SET track_functions='pl'");
+          const counters = async () => {
+            await measured.query('SELECT pg_stat_force_next_flush()');
+            for (let attempt = 0; attempt < 30; attempt++) {
+              await measured.query('SELECT pg_stat_clear_snapshot()');
+              const rows = (
+                await measured.query(
+                  "SELECT funcname,calls::int,self_time FROM pg_stat_user_functions WHERE schemaname='moria' AND funcname=ANY($1) ORDER BY funcname",
+                  [['native_filesystem_acl_targets_state', 'native_serving_session']],
+                )
+              ).rows;
+              if (rows.length === 2 && rows.every((row) => row.calls > 0)) return rows;
+              await delay(10);
+            }
+            throw Error('Actual source function statistics must be flushed');
+          };
+          const reset = () =>
+            measured.query(
+              "SELECT pg_stat_reset_single_function_counters('moria.native_filesystem_acl_targets_state(jsonb,uuid[],text,boolean)'::regprocedure::oid),pg_stat_reset_single_function_counters('moria.native_serving_session(text)'::regprocedure::oid)",
+            );
+          await reset();
+          const scalar = [];
+          for (const request of requests)
+            scalar.push(
+              (
+                await measured.query(
+                  'SELECT moria.native_source_declaration_labels($1,$2,$3) labels',
+                  [hash, request.resource, request.release],
+                )
+              ).rows[0].labels as string[],
+            );
+          const scalarCounters = await counters();
+          await reset();
+          const batch = (
+            await measured.query(
+              'SELECT moria.native_source_declaration_labels_batch($1,$2) labels',
+              [hash, JSON.stringify(requests)],
+            )
+          ).rows[0].labels;
+          const batchCounters = await counters();
+          assert.deepEqual(batch, [...new Set(scalar.flat())].sort());
+          assert(scalarCounters.every((row) => row.calls === 2));
+          assert(batchCounters.every((row) => row.calls === 1));
+          console.log(
+            JSON.stringify({
+              event: 'source_declaration_same_call_counters',
+              requests: requests.length,
+              scalar: scalarCounters,
+              batch: batchCounters,
+              scope: 'actual metadata checks only; no model inference timing attribution',
+            }),
+          );
+        } finally {
+          await measured.query("SET track_functions='none'");
+          measured.release();
+        }
+
+        const restrictedRole = 'source_batch_' + randomUUID().replaceAll('-', '');
+        const restrictedPassword = randomUUID();
+        await db.pool.query(`CREATE ROLE ${restrictedRole} LOGIN PASSWORD '${restrictedPassword}'`);
+        await db.pool.query(`GRANT USAGE ON SCHEMA moria TO ${restrictedRole}`);
+        const restricted = new pg.Pool({
+          ...db.pool.options,
+          user: restrictedRole,
+          password: restrictedPassword,
+        });
+        try {
+          await assert.rejects(
+            restricted.query('SELECT moria.native_filesystem_acl_targets_state($1,$2,$3,false)', [
+              {
+                instanceId: instanceId,
+                environment,
+                identity: {
+                  markings: ['protected'],
+                  grantedOperations: ['instance:manage'],
+                  applicationScopes: ['instance:manage'],
+                },
+              },
+              [unit.declaration.id],
+              'read',
+            ]),
+            { code: '42501' },
+          );
+          await assert.rejects(
+            restricted.query('SELECT moria.native_source_declaration_labels_batch_state($1,$2)', [
+              { instanceId: instanceId, environment },
+              JSON.stringify([{ resource: unit.resource.resourceId, release: old.digest }]),
+            ]),
+            { code: '42501' },
+          );
+          assert.deepEqual(
+            (
+              await restricted.query(
+                'SELECT moria.native_source_declaration_labels_batch($1,$2) labels',
+                [
+                  hash,
+                  JSON.stringify([{ resource: unit.resource.resourceId, release: old.digest }]),
+                ],
+              )
+            ).rows[0].labels,
+            ['protected'],
+          );
+        } finally {
+          await restricted.end();
+        }
+
+        await assert.rejects(
+          db.pool.query('SELECT moria.native_filesystem_access($1,$2,$3)', [
+            hash,
+            unit.declaration.id,
+            'read',
+          ]),
+          { message: 'FORBIDDEN' },
+        );
+        await filesystem.apply(context, randomUUID(), [
+          {
+            op: 'delete',
+            id: unit.declaration.id,
+            expectedRevision: (await store.get(unit.declaration.id)).revision,
+            expectedParentRevision: (await store.get(unit.declarations.id)).revision,
+          },
+        ]);
+        await assert.rejects(current(), { message: 'NOT_FOUND' });
+        await file(unit.declarations.id, 'replacement.object.json', unit.definition);
+        const replacement = await unit.publish();
+        await source.apply(
+          context,
+          (await source.plan(context, unit.root.id, replacement.digest)).id,
+        );
+        assert.deepEqual(
+          (await current()).rows[0].labels,
+          ['protected'],
+          'Historical classifications remain after replacing a tombstoned declaration',
+        );
+        assert.deepEqual((await pinned(replacement.digest)).rows[0].labels, ['protected']);
+        await assert.rejects(pinned(old.digest), { message: 'NOT_FOUND' });
+        assert.deepEqual(
+          (
+            await declarationBatch([
+              { resource: unit.resource.resourceId, release: replacement.digest },
+            ])
+          ).rows[0].labels,
+          ['protected'],
+        );
+        await assert.rejects(
+          declarationBatch([
+            { resource: unit.resource.resourceId, release: replacement.digest },
+            { resource: unit.resource.resourceId, release: old.digest },
+          ]),
+          { message: 'NOT_FOUND' },
+        );
+
+        assert.deepEqual(
+          (
+            await db.pool.query('SELECT moria.native_source_declaration_labels($1,$2,$3) labels', [
+              hash,
+              unit.resource.resourceId,
+              replacement.digest,
+            ])
+          ).rows[0].labels,
+          ['protected'],
+        );
+        await assert.rejects(
+          db.pool.query('SELECT moria.native_source_declaration_labels($1,$2,$3)', [
+            hash,
+            unit.resource.resourceId,
+            old.digest,
+          ]),
+          { message: 'NOT_FOUND' },
+        );
+      },
+    );
     await t.test(
       'omitted definitions retain future restrictions on their declaration directory',
       async () => {

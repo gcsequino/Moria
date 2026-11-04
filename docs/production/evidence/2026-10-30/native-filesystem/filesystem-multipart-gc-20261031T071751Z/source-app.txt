@@ -1,0 +1,33 @@
+TAP version 13
+# Subtest: operator filesystem GC permanently retires abandoned uploads, honors the grace interval and deletes only an exact qualified S3 version
+not ok 1 - operator filesystem GC permanently retires abandoned uploads, honors the grace interval and deletes only an exact qualified S3 version
+  ---
+  duration_ms: 5947.208964
+  type: 'test'
+  location: '/work/tests/native-filesystem-gc.integration.test.ts:23:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/work/tests/native-filesystem-gc.integration.test.ts:507:7)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6392.851675

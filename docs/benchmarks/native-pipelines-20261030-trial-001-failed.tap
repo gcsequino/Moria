@@ -1,0 +1,29 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 21044.177325
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:28:1'
+  failureType: 'testCodeFailure'
+  error: 'Resource requires its ontology file or repository export'
+  code: 'SOURCE_INVALID'
+  name: 'MoriaError'
+  stack: |-
+    invalid (/work/packages/compiler/src/source-core.ts:12:9)
+    assembleSource (/work/packages/compiler/src/source-core.ts:166:7)
+    compileSource (/work/packages/compiler/src/source.ts:10:43)
+    SourceService.publish (/work/services/filesystem/src/source.ts:299:23)
+    async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:167:23)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 21805.556918

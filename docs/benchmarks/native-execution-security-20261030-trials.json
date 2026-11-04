@@ -1,0 +1,81 @@
+{
+  "latestPassed": "004",
+  "trials": [
+    {
+      "trial": "001",
+      "status": "failed",
+      "stage": "preflight",
+      "reason": "Proof helper stopped before infrastructure: schema manifest has schema version/checksum; source digest is independently derived by shared native artifact guard.",
+      "sourceManifestSha256": "9629a1773b47b2b3209672580194f0b52aaec67c3ca44f56313ccdb4b0e95330",
+      "runtime": {
+        "protocolVersion": 1,
+        "schema": {
+          "checksum": "b86d4df6fe904fa089bca70b07e40d668d28b02f86b601a20ab739071c60657d",
+          "version": 5
+        },
+        "sourceDigest": "cdabd2ebf1b9ef906aaafb89e3b0aa7713151ef6e6620e6a2b719651b7e2b30d"
+      },
+      "tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "trial": "002",
+      "status": "failed",
+      "stage": "behavior",
+      "reason": "Actual SQL guard exposed ambiguous PL/pgSQL generation identifier; corrected to accepted_generation. Execution fixture also required sandbox harness mount.",
+      "sourceManifestSha256": "3601e953b2298492c820a6eb9b8b0c8ab32a69dfc642ad1f808c90d4a7006174",
+      "runtime": {
+        "protocolVersion": 1,
+        "schema": {
+          "checksum": "b86d4df6fe904fa089bca70b07e40d668d28b02f86b601a20ab739071c60657d",
+          "version": 5
+        },
+        "sourceDigest": "9df0f21787adea4dde4778be607508866877dcf47b2281393c6efd98f06a0d51"
+      },
+      "tests": 29,
+      "passed": 20,
+      "failed": 9,
+      "skipped": 0
+    },
+    {
+      "trial": "003",
+      "status": "passed",
+      "stage": "behavior",
+      "reason": "Passed actual execution, delivery and registered service/private credential regression, including monotonic worker generation and service/target epoch revocation.",
+      "sourceManifestSha256": "1aa7b647f4416273fd7d2657b48eb950132d695141b473a2ce6ed6fc5189185b",
+      "runtime": {
+        "protocolVersion": 1,
+        "schema": {
+          "checksum": "9e756e530b8ecbba1f9be7b2aedd24520eda962dba40ed57a6b2036062e740d3",
+          "version": 5
+        },
+        "sourceDigest": "bfa116a7929dec7c346a9f19057862f93171067884cc314715b12155dbe2d1b7"
+      },
+      "tests": 29,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "trial": "004",
+      "status": "passed",
+      "stage": "behavior",
+      "reason": "Passed 30 real execution, private credential and delivery cases; added destination disable/restore without an intervening observer: no later dispatch and successful action receipt retained.",
+      "sourceManifestSha256": "5c4046d649f691b962cf3d8142966a5b15061325c0c62a0f6451ae38adf8cb82",
+      "runtime": {
+        "protocolVersion": 1,
+        "schema": {
+          "checksum": "3ccc66e6872631eb62829c5ad1678ae2935b769251d3198d3b46219faf9160b2",
+          "version": 5
+        },
+        "sourceDigest": "fc1b94d4e50812869120b8645546fd9f9451e9e267aa1d4a061bce20033b6eca"
+      },
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261031T091704834285Z-browser-auth-revocation",
+    "files": 2050,
+    "manifestSha256": "1b00eb1831d4ac642e27b68bc42af7f3ffc8b7bad5535fa9c390b6728a5b90b4",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "command": [
+    "flock",
+    "-s",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "host",
+    "--group-add",
+    "108",
+    "-e",
+    "pnpm_config_verify_deps_before_run=false",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T091704834285Z-browser-auth-revocation,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-browser-revocation.integration.test.ts",
+    "tests/native-oidc-refresh.integration.test.ts"
+  ],
+  "exit": 0
+}

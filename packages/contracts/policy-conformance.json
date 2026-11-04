@@ -1,0 +1,2036 @@
+{
+  "version": 1,
+  "valid": [
+    {
+      "name": "constant true",
+      "request": {
+        "expression": {
+          "literal": true
+        },
+        "types": {},
+        "values": {},
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "constant false",
+      "request": {
+        "expression": {
+          "literal": false
+        },
+        "types": {},
+        "values": {},
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "and true true",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": true,
+            "b": true
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "or true true",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": true,
+            "b": true
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "and true false",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": true,
+            "b": false
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "or true false",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": true,
+            "b": false
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "and true null",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": true,
+            "b": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": null
+    },
+    {
+      "name": "or true null",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": true,
+            "b": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "and false true",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": false,
+            "b": true
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "or false true",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": false,
+            "b": true
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "and false false",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": false,
+            "b": false
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "or false false",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": false,
+            "b": false
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "and false null",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": false,
+            "b": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "or false null",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": false,
+            "b": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": null
+    },
+    {
+      "name": "and null true",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": null,
+            "b": true
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": null
+    },
+    {
+      "name": "or null true",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": null,
+            "b": true
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "and null false",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": null,
+            "b": false
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "or null false",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": null,
+            "b": false
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": null
+    },
+    {
+      "name": "and null null",
+      "request": {
+        "expression": {
+          "op": "and",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": null,
+            "b": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": null
+    },
+    {
+      "name": "or null null",
+      "request": {
+        "expression": {
+          "op": "or",
+          "args": [
+            {
+              "principalAttribute": "a"
+            },
+            {
+              "principalAttribute": "b"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "a": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "b": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "a": null,
+            "b": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": null
+    },
+    {
+      "name": "missing attributes deny under NOT",
+      "request": {
+        "expression": {
+          "op": "not",
+          "args": [
+            {
+              "op": "eq",
+              "args": [
+                {
+                  "field": "region"
+                },
+                {
+                  "principalAttribute": "region"
+                }
+              ]
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "region": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "attributes": {
+            "region": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "region": "West"
+          }
+        },
+        "fieldColumns": {
+          "region": "f0"
+        }
+      },
+      "result": null
+    },
+    {
+      "name": "int64 beyond double precision",
+      "request": {
+        "expression": {
+          "op": "gt",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "9007199254740992"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": "9007199254740993"
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "negative int64 comparison",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "-9007199254740992"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": "-9007199254740993"
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "null ordered operand",
+      "request": {
+        "expression": {
+          "op": "gt",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "0"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": null
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": null
+    },
+    {
+      "name": "decimal comparison without scaled integer overflow",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "field": "small"
+            },
+            {
+              "field": "large"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "small": {
+              "type": "decimal",
+              "nullable": false,
+              "precision": 38,
+              "scale": 38
+            },
+            "large": {
+              "type": "decimal",
+              "nullable": false,
+              "precision": 38,
+              "scale": 0
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "small": "0.99999999999999999999999999999999999999",
+            "large": "99999999999999999999999999999999999999"
+          }
+        },
+        "fieldColumns": {
+          "large": "f0",
+          "small": "f1"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "negative decimal exactness",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "-0.00000000000000000000000000000000000001"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "decimal",
+              "nullable": false,
+              "precision": 38,
+              "scale": 38
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": "-0.00000000000000000000000000000000000002"
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "decimal negative zero",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "0.00"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "decimal",
+              "nullable": false,
+              "precision": 12,
+              "scale": 2
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": "-0"
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "UTC microseconds exact",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "time"
+            },
+            {
+              "literal": "2026-10-30T12:00:00.100000Z"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "time": {
+              "type": "timestamp",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "time": "2026-10-30T12:00:00.1Z"
+          }
+        },
+        "fieldColumns": {
+          "time": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "UTC microseconds do not round",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "field": "time"
+            },
+            {
+              "literal": "2026-10-30T12:00:00.100001Z"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "time": {
+              "type": "timestamp",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "time": "2026-10-30T12:00:00.100000Z"
+          }
+        },
+        "fieldColumns": {
+          "time": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "calendar leap day order",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "field": "day"
+            },
+            {
+              "literal": "2000-03-01"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "day": {
+              "type": "date",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "day": "2000-02-29"
+          }
+        },
+        "fieldColumns": {
+          "day": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "Unicode code point ordering",
+      "request": {
+        "expression": {
+          "op": "gt",
+          "args": [
+            {
+              "field": "text"
+            },
+            {
+              "literal": ""
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "text": {
+              "type": "string",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "text": "😀"
+          }
+        },
+        "fieldColumns": {
+          "text": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "membership preserves unknown",
+      "request": {
+        "expression": {
+          "op": "in",
+          "args": [
+            {
+              "field": "region"
+            },
+            {
+              "literal": ["West", null]
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "region": {
+              "type": "string",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "region": "East"
+          }
+        },
+        "fieldColumns": {
+          "region": "f0"
+        }
+      },
+      "result": null
+    },
+    {
+      "name": "empty membership with null",
+      "request": {
+        "expression": {
+          "op": "in",
+          "args": [
+            {
+              "field": "region"
+            },
+            {
+              "literal": []
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "region": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "region": null
+          }
+        },
+        "fieldColumns": {
+          "region": "f0"
+        }
+      },
+      "result": false
+    },
+    {
+      "name": "typed int64 membership",
+      "request": {
+        "expression": {
+          "op": "in",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": ["9007199254740993", "9223372036854775807"]
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": "9223372036854775807"
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "contains decimal array",
+      "request": {
+        "expression": {
+          "op": "contains",
+          "args": [
+            {
+              "field": "numbers"
+            },
+            {
+              "parameter": "n"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "numbers": {
+              "type": "array",
+              "nullable": false,
+              "items": {
+                "type": "decimal",
+                "nullable": false,
+                "precision": 12,
+                "scale": 2
+              }
+            }
+          },
+          "parameters": {
+            "n": {
+              "type": "decimal",
+              "nullable": false,
+              "precision": 12,
+              "scale": 2
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "numbers": ["0.10", "12.30"]
+          },
+          "parameters": {
+            "n": "12.3"
+          }
+        },
+        "fieldColumns": {
+          "numbers": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "null source array",
+      "request": {
+        "expression": {
+          "op": "contains",
+          "args": [
+            {
+              "field": "numbers"
+            },
+            {
+              "literal": "1"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "numbers": {
+              "type": "array",
+              "nullable": true,
+              "items": {
+                "type": "int64",
+                "nullable": false
+              }
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "numbers": null
+          }
+        },
+        "fieldColumns": {
+          "numbers": "f0"
+        }
+      },
+      "result": null
+    },
+    {
+      "name": "all-null array literal gets declared SQL element type",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "literal": [null]
+            },
+            {
+              "field": "numbers"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "numbers": {
+              "type": "array",
+              "nullable": false,
+              "items": {
+                "type": "int64",
+                "nullable": false
+              }
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "numbers": ["3"]
+          }
+        },
+        "fieldColumns": {
+          "numbers": "f0"
+        }
+      },
+      "result": false
+    },
+    {
+      "name": "empty array equality",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "literal": []
+            },
+            {
+              "field": "numbers"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "numbers": {
+              "type": "array",
+              "nullable": false,
+              "items": {
+                "type": "int64",
+                "nullable": false
+              }
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "numbers": []
+          }
+        },
+        "fieldColumns": {
+          "numbers": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "nullable principal attributes override descriptor nullability",
+      "request": {
+        "expression": {
+          "op": "isNull",
+          "args": [
+            {
+              "principalAttribute": "region"
+            }
+          ]
+        },
+        "types": {
+          "attributes": {
+            "region": {
+              "type": "string",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "attributes": {
+            "region": null
+          }
+        },
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "UUID literal canonical",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "uid"
+            },
+            {
+              "literal": "00000000-0000-0000-0000-000000000000"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "uid": {
+              "type": "uid",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "uid": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "fieldColumns": {
+          "uid": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "malicious text stays a bound value",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "name"
+            },
+            {
+              "literal": "x'; DROP TABLE moria.identities; --"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "name": {
+              "type": "string",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "name": "ordinary"
+          }
+        },
+        "fieldColumns": {
+          "name": "f0"
+        }
+      },
+      "result": false
+    },
+    {
+      "name": "non-equality",
+      "request": {
+        "expression": {
+          "op": "ne",
+          "args": [
+            {
+              "literal": "x"
+            },
+            {
+              "literal": "y"
+            }
+          ]
+        },
+        "types": {},
+        "values": {},
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "less or equal inclusive",
+      "request": {
+        "expression": {
+          "op": "lte",
+          "args": [
+            {
+              "literal": 5
+            },
+            {
+              "literal": 5
+            }
+          ]
+        },
+        "types": {},
+        "values": {},
+        "fieldColumns": {}
+      },
+      "result": true
+    },
+    {
+      "name": "greater or equal false",
+      "request": {
+        "expression": {
+          "op": "gte",
+          "args": [
+            {
+              "literal": 4
+            },
+            {
+              "literal": 5
+            }
+          ]
+        },
+        "types": {},
+        "values": {},
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "boolean negation",
+      "request": {
+        "expression": {
+          "op": "not",
+          "args": [
+            {
+              "literal": true
+            }
+          ]
+        },
+        "types": {},
+        "values": {},
+        "fieldColumns": {}
+      },
+      "result": false
+    },
+    {
+      "name": "typed int64 literal on the left",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "literal": "9007199254740992"
+            },
+            {
+              "field": "n"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": "9007199254740993"
+          }
+        },
+        "fieldColumns": {
+          "n": "f0"
+        }
+      },
+      "result": true
+    },
+    {
+      "name": "decimal arrays compare numeric values",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "a"
+            },
+            {
+              "field": "b"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "a": {
+              "type": "array",
+              "nullable": false,
+              "items": {
+                "type": "decimal",
+                "nullable": false,
+                "precision": 12,
+                "scale": 2
+              }
+            },
+            "b": {
+              "type": "array",
+              "nullable": false,
+              "items": {
+                "type": "decimal",
+                "nullable": false,
+                "precision": 12,
+                "scale": 2
+              }
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "a": ["0.10", "12.30"],
+            "b": ["0.1", "12.3"]
+          }
+        },
+        "fieldColumns": {
+          "a": "f0",
+          "b": "f1"
+        }
+      },
+      "result": true
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown AST member",
+      "request": {
+        "expression": {
+          "literal": true,
+          "sql": "x"
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "unknown field",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "missing"
+            },
+            {
+              "literal": "a"
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "equality to null",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "x"
+            },
+            {
+              "literal": null
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "x": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        },
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "unknown operator",
+      "request": {
+        "expression": {
+          "op": "eval",
+          "args": [
+            {
+              "literal": true
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "invalid operator arity",
+      "request": {
+        "expression": {
+          "op": "not",
+          "args": [
+            {
+              "literal": true
+            },
+            {
+              "literal": false
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "boolean ordering",
+      "request": {
+        "expression": {
+          "op": "lt",
+          "args": [
+            {
+              "literal": false
+            },
+            {
+              "literal": true
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "array ordering",
+      "request": {
+        "expression": {
+          "op": "gt",
+          "args": [
+            {
+              "literal": ["x"]
+            },
+            {
+              "literal": ["a"]
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "heterogeneous literals",
+      "request": {
+        "expression": {
+          "op": "in",
+          "args": [
+            {
+              "literal": "x"
+            },
+            {
+              "literal": ["x", true]
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "structured literal",
+      "request": {
+        "expression": {
+          "op": "isNull",
+          "args": [
+            {
+              "literal": {
+                "x": 1
+              }
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "membership requires list",
+      "request": {
+        "expression": {
+          "op": "in",
+          "args": [
+            {
+              "literal": "x"
+            },
+            {
+              "literal": "xyz"
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "non-boolean policy root",
+      "request": {
+        "expression": {
+          "literal": "text"
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "bad runtime value",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "1"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": false
+            }
+          }
+        },
+        "values": {
+          "fields": {
+            "n": 1
+          }
+        }
+      },
+      "code": "VALUE_INVALID"
+    },
+    {
+      "name": "overflowing int64 literal",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "field": "n"
+            },
+            {
+              "literal": "9223372036854775808"
+            }
+          ]
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "int64",
+              "nullable": false
+            }
+          }
+        },
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "NUL literal",
+      "request": {
+        "expression": {
+          "op": "eq",
+          "args": [
+            {
+              "literal": "x\u0000y"
+            },
+            {
+              "literal": "xy"
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "invalid decimal descriptor",
+      "request": {
+        "expression": {
+          "literal": true
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "decimal",
+              "nullable": false,
+              "precision": 39,
+              "scale": 2
+            }
+          }
+        },
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "nullable column array elements",
+      "request": {
+        "expression": {
+          "literal": true
+        },
+        "types": {
+          "fields": {
+            "n": {
+              "type": "array",
+              "nullable": false,
+              "items": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        },
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "literal array entry budget",
+      "request": {
+        "expression": {
+          "op": "in",
+          "args": [
+            {
+              "literal": "x"
+            },
+            {
+              "literal": [
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x"
+              ]
+            }
+          ]
+        },
+        "types": {},
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    },
+    {
+      "name": "unknown type member",
+      "request": {
+        "expression": {
+          "literal": true
+        },
+        "types": {
+          "fields": {
+            "x": {
+              "type": "string",
+              "nullable": false,
+              "sql": "text"
+            }
+          }
+        },
+        "values": {}
+      },
+      "code": "POLICY_INVALID"
+    }
+  ]
+}

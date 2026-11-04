@@ -1,0 +1,199 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 3177.729152
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 1418.909094
+      type: 'test'
+      ...
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 3 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 3020.387362
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 4 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 2970.113719
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 5 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 2916.013864
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 6 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 2916.491911
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 7 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 2917.15009
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 8 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 3099.980858
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    not ok 9 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 2896.351727
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:462:13'
+      failureType: 'testCodeFailure'
+      error: 'Missing expected rejection.'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:481:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:462:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 10 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 7804.926286
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 11 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 2916.028011
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 12 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 48.402309
+      type: 'test'
+      ...
+    1..12
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 39226.737421
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:16:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: resource data provenance retains classification, bounds cycles and pre-admits publication authority
+    # Subtest: authorized dependency is admitted before its immutable binding captures the resulting epoch
+    ok 1 - authorized dependency is admitted before its immutable binding captures the resulting epoch
+      ---
+      duration_ms: 18.514671
+      type: 'test'
+      ...
+    # Subtest: a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+    ok 2 - a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+      ---
+      duration_ms: 2147.166222
+      type: 'test'
+      ...
+    # Subtest: new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+    ok 3 - new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+      ---
+      duration_ms: 50.63962
+      type: 'test'
+      ...
+    # Subtest: duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+    ok 4 - duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+      ---
+      duration_ms: 36.876122
+      type: 'test'
+      ...
+    1..4
+ok 2 - resource data provenance retains classification, bounds cycles and pre-admits publication authority
+  ---
+  duration_ms: 4532.856287
+  type: 'test'
+  ...
+# Subtest: native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+    # Subtest: POSIX publication indexes 300 canonical objects using current namespace read authority
+    ok 1 - POSIX publication indexes 300 canonical objects using current namespace read authority
+      ---
+      duration_ms: 2759.274445
+      type: 'test'
+      ...
+    # Subtest: MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+    ok 2 - MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+      ---
+      duration_ms: 4489.600735
+      type: 'test'
+      ...
+    # Subtest: an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+    ok 3 - an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+      ---
+      duration_ms: 4642.31545
+      type: 'test'
+      ...
+    # Subtest: stale and ambiguous provider bindings cannot activate an object generation
+    ok 4 - stale and ambiguous provider bindings cannot activate an object generation
+      ---
+      duration_ms: 3480.354971
+      type: 'test'
+      ...
+    # Subtest: a pinned physical object with changed bytes fails semantic verification before activation
+    ok 5 - a pinned physical object with changed bytes fails semantic verification before activation
+      ---
+      duration_ms: 2454.218023
+      type: 'test'
+      ...
+    # Subtest: cached verification is immutable and physical file versions are still checked by concurrent task reads
+    ok 6 - cached verification is immutable and physical file versions are still checked by concurrent task reads
+      ---
+      duration_ms: 4489.400163
+      type: 'test'
+      ...
+    # Subtest: a ready verification never caches permission across current authority revocation
+    ok 7 - a ready verification never caches permission across current authority revocation
+      ---
+      duration_ms: 4281.85425
+      type: 'test'
+      ...
+    # Subtest: an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+    ok 8 - an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+      ---
+      duration_ms: 8227.889459
+      type: 'test'
+      ...
+    # Subtest: a published native index retains every enabled Dataset namespace classification after later disable
+    ok 9 - a published native index retains every enabled Dataset namespace classification after later disable
+      ---
+      duration_ms: 51.379648
+      type: 'test'
+      ...
+    1..9
+ok 3 - native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ---
+  duration_ms: 39784.302636
+  type: 'test'
+  ...
+1..3
+# tests 28
+# suites 0
+# pass 26
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40318.373972

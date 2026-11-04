@@ -1,0 +1,12 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T155540356409Z-indexing-provenance-authority-v4",
+  "manifestSha256": "87521426baa2b65e30193cb3bb39a9450a64dda7a1756a8ab2dd8be0d390c9d5",
+  "runtimeSha256": "dcd8fbb9732bd389942868a841f7f02ca4dcc3b75f3e5748f2f12333e7c701ba",
+  "catalogSha256": "d891917a63f3d8f12fd8f1177fc5ef7ed87e01c9dfb930540e354cf7363a8a94",
+  "storageSha256": "ac98a5ba93287014f87d2bd4da91c6c98513404f7ab8cf2818fad506c0921476",
+  "schema": {
+    "version": 5,
+    "checksum": "a4b643b45442056b7de74a70e80ef56f8cbb572451ed3f482d0a8f1030347f46"
+  },
+  "sourceDigest": "13513dbf127c53ab937acf062103003476e3e7f70119b81b06ada40f6f51b56d"
+}

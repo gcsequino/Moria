@@ -59,6 +59,9 @@ export function externalDatabase(
     throw new DatabaseError(
       'Database pool budget exceeded: replicas × pool maximum + one migration connection must fit.',
     );
+  const cell = env.MORIA_NATIVE_CELL_ID;
+  if (cell !== undefined && !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(cell))
+    throw new DatabaseError('MORIA_NATIVE_CELL_ID must be a canonical cell UUID.');
   return {
     host: url.hostname.replace(/^\[(.*)\]$/, '$1'),
     port: Number(url.port || 5432),
@@ -70,5 +73,6 @@ export function externalDatabase(
     connectionTimeoutMillis: 5000,
     idleTimeoutMillis: 30000,
     application_name: `moria-${purpose}`,
+    ...(cell ? { options: `-c moria.cell_id=${cell}` } : {}),
   };
 }

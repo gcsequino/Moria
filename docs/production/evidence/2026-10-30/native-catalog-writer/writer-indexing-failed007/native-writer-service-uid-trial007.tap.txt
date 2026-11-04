@@ -1,0 +1,248 @@
+▶ native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ✔ real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once (4232.267833ms)
+  ✔ a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan (2020.015618ms)
+  ✔ pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot (6267.868308ms)
+  ✔ a live producer lease cannot read an undeclared Dataset (123.887647ms)
+  ✔ a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied (4495.786934ms)
+  ℹ {"event":"registered_publication_phases","phases":[{"elapsedMillis":"551","event":"closure_hashed"},{"elapsedMillis":"2111","event":"candidate_registered"},{"elapsedMillis":"543","event":"closure_hashed"},{"elapsedMillis":"2112","event":"candidate_registered"}]}
+  ℹ {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"4470","total_time":4250.332,"self_time":585.262},{"funcname":"runtime_execution_check","calls":"6689","total_time":1706.462,"self_time":177.239},{"funcname":"runtime_binding_authority","calls":"6695","total_time":1490.855,"self_time":338.246},{"funcname":"native_serving_job_delegation","calls":"6689","total_time":1152.598,"self_time":8.318},{"funcname":"native_serving_resource_access_state","calls":"12379","total_time":1107.978,"self_time":363.074},{"funcname":"runtime_dataset_labels_state","calls":"8945","total_time":1054.647,"self_time":79.606},{"funcname":"native_serving_session","calls":"4517","total_time":903.906,"self_time":64.014},{"funcname":"native_serving_accepted_delegation","calls":"7840","total_time":874.899,"self_time":466.28},{"funcname":"native_serving_session_origin","calls":"11208","total_time":715.963,"self_time":619.226},{"funcname":"runtime_job_delegation_guard","calls":"7842","total_time":453.137,"self_time":453.137},{"funcname":"runtime_job_session_origin","calls":"1149","total_time":424.732,"self_time":37.673},{"funcname":"runtime_data_origins","calls":"12379","total_time":323.923,"self_time":186.26},{"funcname":"runtime_data_resource","calls":"24794","total_time":314.239,"self_time":314.239},{"funcname":"runtime_task_check","calls":"1044","total_time":250.139,"self_time":18.147},{"funcname":"native_serving_filesystem_resource_access_state","calls":"21326","total_time":246.231,"self_time":246.231},{"funcname":"runtime_environment_cell_check","calls":"17897","total_time":145.331,"self_time":145.331},{"funcname":"runtime_dataset_kind","calls":"8947","total_time":139.307,"self_time":139.307},{"funcname":"runtime_schema_admit","calls":"4591","total_time":117.543,"self_time":117.543},{"funcname":"runtime_dataset_binding","calls":"4475","total_time":45.072,"self_time":45.072},{"funcname":"runtime_execution_request","calls":"6","total_time":43.547,"self_time":8.74},{"funcname":"runtime_snapshot_publish","calls":"6","total_time":43.342,"self_time":8.315},{"funcname":"runtime_dataset_session_matches","calls":"4477","total_time":37.247,"self_time":37.247},{"funcname":"runtime_worker_check","calls":"1157","total_time":21.077,"self_time":21.077},{"funcname":"runtime_job_delegation_accept","calls":"6","total_time":20.631,"self_time":4.315}]}
+  ✔ SIGKILL before authority commit leaves immutable candidates invisible (4180.476066ms)
+  ✔ one output conflict rolls back the whole group and execution completion (4274.24202ms)
+  ✔ checkpoint CAS failure rolls back both output heads and completion (4172.813695ms)
+  ✔ namespace revision changes revoke already prepared candidates (4126.014948ms)
+  ✔ stale coordinator fences cannot publish prepared candidates (4124.67892ms)
+  ✔ loss of a commit acknowledgement replays the durable receipt without duplicate publication (4272.958003ms)
+  ✔ output writes require explicit read and write and complete inherited marking coverage (338.128624ms)
+  ✔ native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO (8277.840595ms)
+  ▶ native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+    ✔ posix (8864.329279ms)
+    ✔ s3 (11619.691799ms)
+  ✔ native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO (21153.063945ms)
+  ✔ current session and security revocation deny commit after preparation (4174.083776ms)
+  ✔ namespace policy revisions cannot be reused after disable, replacement or deletion (53.338858ms)
+✔ native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution (79414.245406ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (3068.848833ms)
+✖ native effective projections build off-lock, replay concurrent edits and activate with source generations (5263.956205ms)
+▶ resource data provenance retains classification, bounds cycles and pre-admits publication authority
+  ✔ permanent indexing revisions use exact canonical strings for large epochs (2.232837ms)
+  ✔ authorized dependency is admitted before its immutable binding captures the resulting epoch (19.391628ms)
+  ✔ a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head (2157.156958ms)
+  ✔ new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs (44.960719ms)
+  ✔ duplicate admission is epoch-stable and cyclic provenance terminates with retained union (32.342526ms)
+  ✔ registered producer metadata admits exact declared provenance and rejects authority or output-floor substitution atomically (104.679851ms)
+✔ resource data provenance retains classification, bounds cycles and pre-admits publication authority (5228.798322ms)
+▶ native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ✖ POSIX publication indexes 300 canonical objects using current namespace read authority (98.396091ms)
+  ✖ MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials (32174.193669ms)
+  ✖ an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt (2450.397972ms)
+  ✔ stale and ambiguous provider bindings cannot activate an object generation (4948.382901ms)
+  ✔ a pinned physical object with changed bytes fails semantic verification before activation (2651.01676ms)
+  ✖ cached verification is immutable and physical file versions are still checked by concurrent task reads (2759.424566ms)
+  ✖ a ready verification never caches permission across current authority revocation (2832.392944ms)
+  ✖ an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards (6320.152071ms)
+  ✔ a published native index retains every enabled Dataset namespace classification after later disable (43.405369ms)
+✖ native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants (59835.670241ms)
+▶ native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+  ▶ real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+    ▶ native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+      ✔ valid (1393.79905ms)
+      ✔ wrong-table (537.340383ms)
+      ✔ wrong-snapshot (551.695575ms)
+      ✔ missing (935.262832ms)
+      ✔ extra (1447.336868ms)
+      ✔ malformed-manifest (950.955105ms)
+      ✔ malformed-parquet (971.500917ms)
+      ✔ nullable-array (532.87807ms)
+      ✔ historical-schema (1306.348582ms)
+      ✔ cycle (1376.471621ms)
+      ✔ duplicate-schema (542.418641ms)
+      ✔ current-projection (1143.728421ms)
+      ✔ missing-sort-orders (544.807688ms)
+      ✔ foreign-reference (577.3806ms)
+      ✔ deleted-valid (2235.534418ms)
+      ✔ deleted-corrupt (1224.08173ms)
+    ✔ native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet (16275.134303ms)
+    ▶ valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO
+      ✔ posix (1063.535494ms)
+      ✔ s3 (1369.911013ms)
+    ✔ valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO (2433.987374ms)
+  ✔ real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing (42581.881894ms)
+  ✔ SIGKILL after a durable page commit reopens exact bounded closure state (8631.974301ms)
+  ✔ a provider version change between chunks denies subsequent range release (245.379803ms)
+  ✔ an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks (1170.847178ms)
+  ✔ expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools (306.394805ms)
+  ✔ disabled namespace bindings deny both source reads and artifact writes (469.845713ms)
+  ✔ current authority revocation denies native I/O without publishing any object generation (1262.940955ms)
+✔ native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state (58349.321679ms)
+ℹ tests 66
+ℹ suites 0
+ℹ pass 57
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 212972.48522
+
+✖ failing tests:
+
+test at tests/native-indexing-service.integration.test.ts:18:1
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (3068.848833ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'id')
+      at TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:132:7)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/native-projection.integration.test.ts:19:1
+✖ native effective projections build off-lock, replay concurrent edits and activate with source generations (5263.956205ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (506) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"60c80bec-fa9a-42dc-bcd3-7b075e0551dd","event":"planning","fence":"1","worker":"dbc2c581-c03c-40c7-95dd-29fe436e68e2"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.09s\n\n',
+    stderr: "\nthread 'catalog_publication' (506) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-snapshot-indexing.integration.test.ts:188:13
+✖ POSIX publication indexes 300 canonical objects using current namespace read authority (98.396091ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (636) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"c0a833ba-8c95-44b0-9b24-1991ea12e081","event":"planning","fence":"1","worker":"e22ca206-2fba-47fd-af65-98400fc24cc6"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.09s\n\n',
+    stderr: "\nthread 'catalog_publication' (636) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-snapshot-indexing.integration.test.ts:242:13
+✖ MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials (32174.193669ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (677) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"c6817be5-b3d5-49f6-bf17-3dfdeac19c3a","event":"planning","fence":"2","worker":"42acaca4-3460-4bcf-9f76-955bbe40f667"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 29.98s\n\n',
+    stderr: "\nthread 'catalog_publication' (677) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-snapshot-indexing.integration.test.ts:260:13
+✖ an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt (2450.397972ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (697) panicked at ../../tests/fixtures/native-catalog/harness.rs:77:10:
+  called `Result::unwrap()` on an `Err` value: Condition failed: `worker.plan().await?`
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... FAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.07s\n\n',
+    stderr: "\nthread 'catalog_publication' (697) panicked at ../../tests/fixtures/native-catalog/harness.rs:77:10:\ncalled `Result::unwrap()` on an `Err` value: Condition failed: `worker.plan().await?`\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-snapshot-indexing.integration.test.ts:371:13
+✖ cached verification is immutable and physical file versions are still checked by concurrent task reads (2759.424566ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (750) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"c14b1ac7-d5ff-4602-a72b-f5b20d1e46a8","event":"planning","fence":"1","worker":"d0dee616-90ec-4993-8cc8-f6ca633e1389"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.12s\n\n',
+    stderr: "\nthread 'catalog_publication' (750) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-snapshot-indexing.integration.test.ts:419:13
+✖ a ready verification never caches permission across current authority revocation (2832.392944ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (763) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"2eed6568-48a2-4a44-8484-aa02532dbbbd","event":"planning","fence":"1","worker":"1755202e-e187-4bd9-bf3d-f23f9e0005b4"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.12s\n\n',
+    stderr: "\nthread 'catalog_publication' (763) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-snapshot-indexing.integration.test.ts:437:13
+✖ an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards (6320.152071ms)
+  Error: Command failed: /work/.proof-artifacts/moria-runtime drain
+  
+  thread 'main' (775) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: true,
+    signal: null,
+    cmd: '/work/.proof-artifacts/moria-runtime drain',
+    stdout: '{"build":"c212571e-6f73-4f9e-89cf-94ecf04a78eb","event":"planning","fence":"1","worker":"2769e932-03f0-4f38-9b19-b618136c6db8"}\n',
+    stderr: "\nthread 'main' (775) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }

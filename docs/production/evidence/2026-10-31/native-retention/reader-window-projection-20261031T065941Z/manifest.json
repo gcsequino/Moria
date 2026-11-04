@@ -1,0 +1,173 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1",
+  "sourceManifestSha256": "58c07c6369021390505b541e5bb5a101e7fa623c0e3e417fe7d9e57ffeca1632",
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "typescript",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "phase": "units",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "-j",
+        "2",
+        "--",
+        "--nocapture"
+      ]
+    },
+    {
+      "phase": "build-catalog-and-binaries",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins",
+        "--test",
+        "native_catalog",
+        "-j",
+        "2",
+        "--message-format=json"
+      ]
+    },
+    {
+      "phase": "integration",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1/native-qualified-reader-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1/native-qualified-reader-artifacts/moria-catalog-tests,dst=/usr/local/bin/moria-catalog-tests,readonly",
+        "-e",
+        "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-catalog-tests",
+        "-e",
+        "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "tests/native-catalog.integration.test.ts",
+        "tests/native-projection.integration.test.ts",
+        "tests/native-indexing-service.integration.test.ts"
+      ]
+    }
+  ],
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "d45ec5dfe584ee7e588a950d7cdd91ba9caaa8f8f8b76f402111f0d04c5bf925",
+      "version": 5
+    },
+    "sourceDigest": "bc8e6f7bf9d33f7145b0a3013232efb026f6f5afa352739fc7dfa595e692bc7c"
+  },
+  "artifacts": {
+    "moria-runtime": {
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "path": "/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1/native-qualified-reader-artifacts/moria-runtime",
+      "sha256": "9b95b6437a4201951ae304c34f6bd392f1f04bdec1802d77f22ad2fe96b7a059"
+    },
+    "moria-indexing": {
+      "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+      "path": "/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1/native-qualified-reader-artifacts/moria-indexing",
+      "sha256": "32f55ac1f9707cbc067152a01130c9cbdbe89da3844c890c6b6a453922f61e8e"
+    },
+    "moria-catalog-tests": {
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+      "path": "/tmp/moria-proof-snapshots/20261031T065922851847Z-reader-window-projection-v1/native-qualified-reader-artifacts/moria-catalog-tests",
+      "sha256": "d93aad36fb91dec1bbf5ae8af00975d56a4f1e6ba9bd960901e87b3e00a97129"
+    }
+  },
+  "outcome": "integration failed"
+}

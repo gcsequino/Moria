@@ -1,0 +1,71 @@
+TAP version 13
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 160.253686
+      type: 'test'
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+      ---
+      duration_ms: 192.14093
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 296.368595
+      type: 'test'
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential
+      ---
+      duration_ms: 312.356806
+      type: 'test'
+      ...
+    # Subtest: missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+    ok 5 - missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+      ---
+      duration_ms: 491.366669
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    ok 6 - current target, application, grants, clearance, worker scope and actor disable revoke private authority
+      ---
+      duration_ms: 1633.001928
+      type: 'test'
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    ok 7 - an unobserved worker disable and restore cannot revive a live lease or private credential
+      ---
+      duration_ms: 452.607108
+      type: 'test'
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    ok 8 - a genuinely expired worker registration remains fenced after its expiry is extended
+      ---
+      duration_ms: 2546.862148
+      type: 'test'
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    ok 9 - lease takeover invalidates the old private credential and replacement capabilities remain bounded
+      ---
+      duration_ms: 486.363967
+      type: 'test'
+      ...
+    1..9
+ok 1 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 8800.190952
+  type: 'test'
+  ...
+1..1
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9127.187564

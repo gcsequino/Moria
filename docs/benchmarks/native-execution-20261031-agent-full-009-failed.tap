@@ -1,0 +1,199 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+      ---
+      duration_ms: 6803.4704
+      type: 'test'
+      ...
+    # Subtest: SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+    ok 2 - SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+      ---
+      duration_ms: 8752.001982
+      type: 'test'
+      ...
+    # Subtest: a durable model intent commits before gateway admission while public callback data stays withheld
+    ok 3 - a durable model intent commits before gateway admission while public callback data stays withheld
+      ---
+      duration_ms: 11089.492085
+      type: 'test'
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    ok 4 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 31488.318661
+      type: 'test'
+      ...
+    # Subtest: Agent admission captures approved material before code and a missed approval pulse cannot revive it
+    ok 5 - Agent admission captures approved material before code and a missed approval pulse cannot revive it
+      ---
+      duration_ms: 14470.738072
+      type: 'test'
+      ...
+    # Subtest: exact Agent invocation scope admits required dependencies without filesystem browsing
+    ok 6 - exact Agent invocation scope admits required dependencies without filesystem browsing
+      ---
+      duration_ms: 6934.236352
+      type: 'test'
+      ...
+    # Subtest: a pending child observation blocks parent logs, actions and model dispatch
+    ok 7 - a pending child observation blocks parent logs, actions and model dispatch
+      ---
+      duration_ms: 47868.666488
+      type: 'test'
+      ...
+    # Subtest: private child progress crosses a held dependency insertion and resumes after terminal proof
+    ok 8 - private child progress crosses a held dependency insertion and resumes after terminal proof
+      ---
+      duration_ms: 17078.707119
+      type: 'test'
+      ...
+    # Subtest: Agent observes actual Function child failure labels before returning a caught outcome
+    ok 9 - Agent observes actual Function child failure labels before returning a caught outcome
+      ---
+      duration_ms: 21895.212092
+      type: 'test'
+      ...
+    # Subtest: Agent cancellation fences a running Function child without a second attempt
+    ok 10 - Agent cancellation fences a running Function child without a second attempt
+      ---
+      duration_ms: 12617.617619
+      type: 'test'
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    ok 11 - healthy long-running agent work renews the same single-attempt database lease
+      ---
+      duration_ms: 16115.860239
+      type: 'test'
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    ok 12 - bound model dispatch stops after real worker-scope revocation and cannot publish a result
+      ---
+      duration_ms: 8006.281256
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    ok 13 - cancellation and supervisor SIGKILL fence the graph without re-executing user code
+      ---
+      duration_ms: 6542.571089
+      type: 'test'
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    ok 14 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+      ---
+      duration_ms: 7833.784344
+      type: 'test'
+      ...
+    # Subtest: registered worker class admission is independent of unrelated class ordering
+    ok 15 - registered worker class admission is independent of unrelated class ordering
+      ---
+      duration_ms: 7030.02831
+      type: 'test'
+      ...
+    # Subtest: Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+    not ok 16 - Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+      ---
+      duration_ms: 51966.986319
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1587:13'
+      failureType: 'testCodeFailure'
+      error: 'Cannot use a pool after calling end on the pool'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        BoundPool.connect (/work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:192:19)
+        Catalog.transaction (/work/services/catalog/src/catalog.ts:96:38)
+        SourceService.apply (/work/services/filesystem/src/source.ts:499:42)
+        publish (/work/tests/native-agents.integration.test.ts:329:23)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:2045:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1587:5)
+      ...
+    # Subtest: accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+    not ok 17 - accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+      ---
+      duration_ms: 1.987558
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:2051:13'
+      failureType: 'testCodeFailure'
+      error: 'Cannot use a pool after calling end on the pool'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Authority.current (/work/services/security/src/authority.ts:260:20)
+        async WorkloadSessions.mint (/work/services/security/src/sessions.ts:15:19)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:2054:24)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:2051:5)
+      ...
+    # Subtest: newly granted tool permissions cannot widen an already accepted job capability
+    not ok 18 - newly granted tool permissions cannot widen an already accepted job capability
+      ---
+      duration_ms: 2.175969
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:2147:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+    # Subtest: postclaim filesystem rejection records no code start after an expired original session
+    not ok 19 - postclaim filesystem rejection records no code start after an expired original session
+      ---
+      duration_ms: 0.429836
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:2178:13'
+      failureType: 'testCodeFailure'
+      error: 'Cannot use a pool after calling end on the pool'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Authority.current (/work/services/security/src/authority.ts:260:20)
+        async WorkloadSessions.mint (/work/services/security/src/sessions.ts:15:19)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:2181:24)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:2178:5)
+      ...
+    # Subtest: deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active
+    not ok 20 - deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active
+      ---
+      duration_ms: 1.670363
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:2262:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+    # Subtest: accepted agent code remains pinned across redeployment and current authority gates retained results
+    not ok 21 - accepted agent code remains pinned across redeployment and current authority gates retained results
+      ---
+      duration_ms: 0.803396
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:2342:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+    1..21
+not ok 1 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 303221.543489
+  type: 'test'
+  location: '/work/tests/native-agents.integration.test.ts:32:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 300000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 22
+# suites 0
+# pass 15
+# fail 6
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 303891.466793

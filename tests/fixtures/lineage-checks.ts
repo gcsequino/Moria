@@ -44,14 +44,25 @@ export async function checkLineage(catalog: Catalog) {
      VALUES($1,$2,'objects',0,0,'published',$3)`,
     [stage, environment, revision],
   );
-  await catalog.pool.query(
-    `INSERT INTO moria.source_generations(environment,object_type,revision,stage) VALUES($1,'objects',$2,$3)`,
-    [environment, revision, stage],
-  );
-  await catalog.pool.query(
-    `INSERT INTO moria.source_generations(environment,object_type,revision) VALUES($1,'unlinked',$2)`,
-    [environment, revision],
-  );
+  const publication = await catalog.pool.connect();
+  try {
+    await publication.query('BEGIN');
+    await publication.query('UPDATE moria.environments SET revision=$2 WHERE id=$1', [
+      environment,
+      revision,
+    ]);
+    await publication.query(
+      `INSERT INTO moria.source_generations(environment,object_type,revision,stage)
+       VALUES($1,'objects',$2,$3),($1,'unlinked',$2,NULL)`,
+      [environment, revision, stage],
+    );
+    await publication.query('COMMIT');
+  } catch (error) {
+    await publication.query('ROLLBACK');
+    throw error;
+  } finally {
+    publication.release();
+  }
   await catalog.pool.query(
     `INSERT INTO moria.index_provenance(stage,environment,principal,application,contract,source_dataset,source_revision,metadata_location,snapshot_id)
      VALUES($1,$2,'worker','indexer','contract-fingerprint','source',$3,$4,'snapshot-123')`,

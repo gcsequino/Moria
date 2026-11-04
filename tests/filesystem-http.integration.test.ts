@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID, randomBytes } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { mkdir, readFile, writeFile, symlink, access, readdir } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -303,7 +304,7 @@ test(
 
     await t.test(
       'CLI round trips a local source checkout and rejects stale or escaped files',
-      async () => {
+      async (t) => {
         const credentials = join(db.root, 'cli');
         await mkdir(credentials);
         await writeFile(join(credentials, 'credentials.json'), JSON.stringify({ accessKey: key }));
@@ -317,16 +318,86 @@ test(
         await filesystemCommand(['push', local], options);
         const remote = await reader.resolve(`${path}/README.md`);
         assert.equal(await (await reader.readFile(remote.id)).text(), 'local source\n');
-        const published = (await filesystemCommand(['publish', path], options)) as {
-          digest: string;
-        };
-        const plan = (await filesystemCommand(['plan', path, published.digest], options)) as {
-          id: string;
-        };
-        assert.equal(
-          ((await filesystemCommand(['apply', plan.id], options)) as { digest: string }).digest,
-          published.digest,
+        const dbRole = `cli_native_${randomUUID().replaceAll('-', '')}`,
+          password = randomUUID();
+        await db.pool.query(
+          `CREATE ROLE ${dbRole} LOGIN PASSWORD '${password}';GRANT USAGE ON SCHEMA moria TO ${dbRole};GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA moria TO ${dbRole};GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA moria TO ${dbRole}`,
         );
+        const native = spawn(
+          process.env.MORIA_RUNTIME_BINARY ?? '/usr/local/bin/moria-indexing',
+          ['serve'],
+          {
+            env: {
+              PATH: process.env.PATH,
+              MORIA_INDEXING_DATABASE_SECRET_REF: 'CLI_NATIVE_DATABASE',
+              CLI_NATIVE_DATABASE: `postgresql://${dbRole}:${password}@127.0.0.1:${db.pool.options.port}/postgres`,
+              MORIA_INDEXING_DATABASE_TLS: 'disable',
+              MORIA_NATIVE_LISTEN: '127.0.0.1:0',
+              MORIA_NATIVE_FILESYSTEM_STORAGE_REVISION: 'v1',
+              MORIA_NATIVE_STORAGE_BINDINGS: JSON.stringify([
+                {
+                  namespace: { warehouseId: 'filesystem', tableId: 'content', revision: 'v1' },
+                  provider: {
+                    kind: 'posix',
+                    root: join(db.root, 'files'),
+                    limits: { maxObjectBytes: 64 * 1024 * 1024, chunkBytes: 1024 * 1024 },
+                  },
+                },
+              ]),
+            },
+            stdio: ['ignore', 'pipe', 'pipe'],
+          },
+        );
+        let stdout = '',
+          stderr = '';
+        native.stdout.on('data', (chunk) => (stdout += chunk));
+        native.stderr.on('data', (chunk) => (stderr += chunk));
+        const exited = new Promise((resolve) => native.once('exit', resolve));
+        t.after(async () => {
+          native.kill('SIGKILL');
+          await exited;
+        });
+        let nativeOrigin = '';
+        for (let i = 0; i < 500 && !nativeOrigin; i++) {
+          assert.equal(native.exitCode, null, stderr);
+          for (const line of stdout.split('\n'))
+            try {
+              const event = JSON.parse(line);
+              if (event.event === 'serving') nativeOrigin = `http://${event.address}`;
+            } catch {}
+          if (!nativeOrigin) await delay(10);
+        }
+        assert.ok(nativeOrigin, stderr);
+        const context = await fetch(`${nativeOrigin}/api/management/v1/fs/compiler-context`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${await workspace.token('operator')}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ principalAttributes: {} }),
+        });
+        assert.equal(context.status, 200, await context.text());
+        const priorToken = process.env.MORIA_API_TOKEN;
+        let published: { digest: string };
+        try {
+          process.env.MORIA_API_TOKEN = await workspace.token('west-editor');
+          const nativeOptions = { ...options, url: nativeOrigin };
+          published = (await filesystemCommand(['publish', path], nativeOptions)) as {
+            digest: string;
+          };
+          const plan = (await filesystemCommand(
+            ['plan', path, published.digest],
+            nativeOptions,
+          )) as { id: string };
+          assert.equal(
+            ((await filesystemCommand(['apply', plan.id], nativeOptions)) as { digest: string })
+              .digest,
+            published.digest,
+          );
+        } finally {
+          if (priorToken === undefined) delete process.env.MORIA_API_TOKEN;
+          else process.env.MORIA_API_TOKEN = priorToken;
+        }
         const stale = join(db.root, 'stale');
         await filesystemCommand(['checkout', path, stale], options);
         await writeFile(join(local, 'README.md'), 'updated\n');

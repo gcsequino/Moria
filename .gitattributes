@@ -1,2 +1,6 @@
 * text=auto eol=lf
 *.ps1 text eol=crlf
+
+# Preserve captured benchmark and validation evidence byte for byte.
+docs/benchmarks/** -text
+docs/production/evidence/** -text

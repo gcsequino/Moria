@@ -1,0 +1,143 @@
+TAP version 13
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 276.067396
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 145.847175
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 412.101551
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 186.053349
+      type: 'test'
+      ...
+    # Subtest: whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+    ok 5 - whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+      ---
+      duration_ms: 534.343868
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 6 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 208.518028
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 7 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 88.043249
+      type: 'test'
+      ...
+    # Subtest: typed multi-type edits retain canonical policy rows, atomicity and original input receipts
+    ok 8 - typed multi-type edits retain canonical policy rows, atomicity and original input receipts
+      ---
+      duration_ms: 432.905642
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication rechecks changed target and complete multi-target footprint
+    ok 9 - ordinary Action publication rechecks changed target and complete multi-target footprint
+      ---
+      duration_ms: 424.615401
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication rechecks replacement source and current property policy
+    ok 10 - ordinary Action publication rechecks replacement source and current property policy
+      ---
+      duration_ms: 200.678192
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication checks current grants before releasing prepared effects
+    ok 11 - ordinary Action publication checks current grants before releasing prepared effects
+      ---
+      duration_ms: 70.002724
+      type: 'test'
+      ...
+    # Subtest: guarded Action batch matches scalar resource authority without caller demands
+    ok 12 - guarded Action batch matches scalar resource authority without caller demands
+      ---
+      duration_ms: 24.170951
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 13 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 367.873293
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 14 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 160.40616
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 15 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 135.831754
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 16 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 211.465813
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 17 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 83.888345
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    ok 18 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 1019.562517
+      type: 'test'
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 19 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 35.448546
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    ok 20 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 1909.973572
+      type: 'test'
+      ...
+    1..20
+ok 1 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 11359.640517
+  type: 'test'
+  ...
+# Subtest: configured native indexing workers require explicit bounded scratch configuration before launch
+ok 2 - configured native indexing workers require explicit bounded scratch configuration before launch
+  ---
+  duration_ms: 0.76222
+  type: 'test'
+  ...
+1..2
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12091.300133

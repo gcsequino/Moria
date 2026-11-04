@@ -1,0 +1,62 @@
+✖ actual Source/S3 v2 bootstrap and rooted v3 scan/key lookup uid (5540.926834ms)
+✖ actual Source/S3 v2 bootstrap and rooted v3 scan/key lookup array (5479.450431ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11493.57663
+
+✖ failing tests:
+
+test at ../proof-driver/bootstrap.test.mts:4:47
+✖ actual Source/S3 v2 bootstrap and rooted v3 scan/key lookup uid (5540.926834ms)
+  Error: Command failed: /work/native-proof-artifact/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (126) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: relation "moria.runtime_execution_cancellations" does not exist
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/native-proof-artifact/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... FAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.09s\n\n',
+    stderr: '\nthread \'catalog_publication\' (126) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: relation "moria.runtime_execution_cancellations" does not exist\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }
+
+test at ../proof-driver/bootstrap.test.mts:4:47
+✖ actual Source/S3 v2 bootstrap and rooted v3 scan/key lookup array (5479.450431ms)
+  Error: Command failed: /work/native-proof-artifact/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (204) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: relation "moria.runtime_execution_cancellations" does not exist
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/native-proof-artifact/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... FAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.09s\n\n',
+    stderr: '\nthread \'catalog_publication\' (204) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: relation "moria.runtime_execution_cancellations" does not exist\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }

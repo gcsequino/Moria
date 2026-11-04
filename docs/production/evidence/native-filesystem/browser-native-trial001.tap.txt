@@ -1,0 +1,42 @@
+▶ filesystem platform API client provides scoped authoring and coherent source deployment
+  ✔ non-browser bearer writes authenticate on a browser-enabled management host (31.837469ms)
+  ✔ verified local profiles and workload sessions cannot impersonate each other (184.651321ms)
+  ✔ ordinary authors can create projects and versioned source files without instance administration (947.080961ms)
+  ✔ disconnecting during an HTTP upload leaves no visible file and cleans private staging (195.912244ms)
+  ✔ CLI round trips a local source checkout and rejects stale or escaped files (3520.367066ms)
+  ✔ strict JSON, query and mutation-key boundaries reject ambiguous requests (14.965423ms)
+✔ filesystem platform API client provides scoped authoring and coherent source deployment (7433.222234ms)
+▶ native filesystem replicas enforce current namespace authority and atomic receipts (posix)
+  ✔ permission filtering precedes directory limits and direct hidden reads remain concealed (365.398448ms)
+  ✔ opaque directory cursors resume concurrently across replicas with one original expiry (171.184652ms)
+  ✔ same-key races commit one namespace mutation and conflict on different input (472.178464ms)
+  ✔ a later failed change rolls back earlier entries, versions and parent touches (33.19753ms)
+  ✔ moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations (240.758402ms)
+  ✔ native home provisioning binds only the verified principal and administrative group/enable operations retain current authority (128.437495ms)
+  ✔ native source publication verifies qualified compiler artifacts and atomically activates permanent resource identities (4892.75083ms)
+  ✔ qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas (1069.857585ms)
+  ✔ native file copy preserves source provenance and policy writes enforce CAS, deny precedence and marking monotonicity (113.281476ms)
+  ✔ managed/cyclic placements, untrusted content and malformed names fail atomically (53.453826ms)
+  ✔ a sealed upload survives uploader suspension and database loss, then recovers under the next fence (28085.456047ms)
+✔ native filesystem replicas enforce current namespace authority and atomic receipts (posix) (40249.636032ms)
+▶ native filesystem replicas enforce current namespace authority and atomic receipts (s3)
+  ✔ permission filtering precedes directory limits and direct hidden reads remain concealed (312.003702ms)
+  ✔ opaque directory cursors resume concurrently across replicas with one original expiry (157.044265ms)
+  ✔ same-key races commit one namespace mutation and conflict on different input (441.892566ms)
+  ✔ a later failed change rolls back earlier entries, versions and parent touches (30.361824ms)
+  ✔ moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations (210.024146ms)
+  ✔ native home provisioning binds only the verified principal and administrative group/enable operations retain current authority (104.339447ms)
+  ✔ native source publication verifies qualified compiler artifacts and atomically activates permanent resource identities (6455.083643ms)
+  ✔ qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas (1755.359716ms)
+  ✔ native file copy preserves source provenance and policy writes enforce CAS, deny precedence and marking monotonicity (113.352701ms)
+  ✔ managed/cyclic placements, untrusted content and malformed names fail atomically (53.367564ms)
+  ✔ a sealed upload survives uploader suspension and database loss, then recovers under the next fence (28460.112785ms)
+✔ native filesystem replicas enforce current namespace authority and atomic receipts (s3) (42878.760026ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91453.122201

@@ -1,0 +1,137 @@
+{
+  "source": {
+    "snapshot": {
+      "root": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b",
+      "files": 2612,
+      "manifestSha256": "746d5d2d9f8a8fc6d894586abcb316af9063f74a9499dc46ac2e159a3e20933c",
+      "imageDependencyLinks": {
+        ".venv": "/app/.venv"
+      },
+      "dependencyMounts": [
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+      ]
+    },
+    "artifacts": {
+      "moria-indexing-tests": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/moria_runtime-caa1227c937bb40e",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing-tests",
+        "sha256": "517bd5764913e9adfee4bfd738e9c41d99538d75dde71992bfbb129be1c2db99"
+      },
+      "moria-runtime": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-runtime",
+        "sha256": "882fdb0b9ade8ccd537d7b99657c695db2019faa3421d1a498cedd3393fdf9ba"
+      },
+      "moria-indexing": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing",
+        "sha256": "507e7316f296057261fff050816f73b8acd7d0f6fed45e0bcf296d7623c35f6e"
+      },
+      "moria-native-catalog-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-catalog-test",
+        "sha256": "99b842cbea2eee7a4e4ed5f3c5fdde6326cedfc57a8752bb8b3d49c4e7712a05"
+      },
+      "moria-native-retention-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-retention-test",
+        "sha256": "039ac799358ba7f09921728d12d0587c807f4dbfa614521cf343eb2653e9fcf6"
+      },
+      "moria-native-sandbox-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_sandbox-1c205eafd7b8b6e9",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-sandbox-test",
+        "sha256": "b870208bf34f59a1a4b03101442c8d3f03f3b29847d7aa78684b392a803670ac"
+      },
+      "moria-native-policy-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_policy-685b52096da78e97",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-policy-test",
+        "sha256": "14012c4dbb472fed92e4d2872f741ab5b6a4cbbe694552d0367d5f8b69184182"
+      },
+      "moria-native-storage-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_storage-18ace889955c532f",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-storage-test",
+        "sha256": "192c23c90e7d4c8499b5fe5f4fc29ae8a3f25ee8ffdfb5be31f3b48212605d0d"
+      },
+      "moria-native-transport-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_transport-c71322eea327c600",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-transport-test",
+        "sha256": "f96aaa93f5749d2e8208d8b98ed183fce3dd488b5372105c5b4baf6b802bfd8f"
+      }
+    },
+    "compiled": {
+      "protocolVersion": 1,
+      "schema": {
+        "checksum": "0da6122246679fd9dff1fabab2a560b826349cd88351551f6e7b8b8f2db78507",
+        "version": 5
+      },
+      "sourceDigest": "0fc7cf0ec9465aac28969ac99474c44f9ee4da0f4c166c951a0280ccfd8aa4f0"
+    },
+    "evidence": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/20261031T153618Z"
+  },
+  "overlays": [
+    {
+      "path": "tests/platform-composition.test.ts",
+      "sha256": "fab9b8e8995df82b51858214932b8fdfc35310ce111a39dc98b425e4ca9ed3cb",
+      "copy": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/v26-origin-fixture-rerun-20261031T154650Z/platform-composition.test.ts"
+    }
+  ],
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "moria-root-units-v26-20261031t154650z",
+    "--network",
+    "none",
+    "--tmpfs",
+    "/work/node_modules/.vite-temp:uid=1000,gid=1000,mode=0700,size=64m",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/v26-origin-fixture-rerun-20261031T154650Z/platform-composition.test.ts,dst=/work/tests/platform-composition.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing-tests,dst=/usr/local/bin/moria-indexing-tests,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-retention-test,dst=/usr/local/bin/moria-native-retention-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-sandbox-test,dst=/usr/local/bin/moria-native-sandbox-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-policy-test,dst=/usr/local/bin/moria-native-policy-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-storage-test,dst=/usr/local/bin/moria-native-storage-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-transport-test,dst=/usr/local/bin/moria-native-transport-test,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_NATIVE_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_INDEXING_BINARY=/usr/local/bin/moria-indexing",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+    "-e",
+    "MORIA_NATIVE_RETENTION_TEST_BINARY=/usr/local/bin/moria-native-retention-test",
+    "-w",
+    "/work",
+    "moria-test:offline-v26",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=2",
+    "tests/platform-composition.test.ts"
+  ],
+  "watchdogSeconds": 1500,
+  "outcome": 0,
+  "imageId": "sha256:c1beb07bd4b92dacb9bdfa1e96ed31dabd8d292574785e9f375888066bf31b91"
+}

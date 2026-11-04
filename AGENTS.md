@@ -11,19 +11,21 @@ Run pnpm check for TypeScript changes. Keep progress and deviations in docs/IMPL
 Linux is the sole supported development and target hosting OS. Windows hosts must
 use a Linux container or WSL2 Linux filesystem; native Windows is unsupported.
 Use Node 24, pnpm 11.25.0, Python 3.11 with a repository-local `.venv`, and
-Rust 1.99 for the indexing service. The test image supplies matching native
-runtime/test executables; stale artifacts fail `pnpm check:indexing`.
+Rust 1.99 for the native runtime. The test image supplies matching native
+runtime/test executables and the pinned pgvector extension; stale artifacts fail `pnpm check:indexing`.
 Follow README development setup; the complete gate is `pnpm check` for every PR.
 Linux requires a non-root user and the libraries listed in deploy/test/Dockerfile.
 OpenHands setup uses `.openhands/setup.sh` after provisioning those prerequisites;
-its completion hook runs the same gate. Never skip database tests to obtain a pass.
+its completion hook runs the same gate. Never skip database tests to obtain a pass. The complete test command limits concurrent test files to two so PostgreSQL and OCI fixtures fit the local and CI memory budget; concurrency assertions inside each test remain unchanged.
 
 `apps` contains entry points and React applications; `packages` contains contracts,
 authorization, compilation, and SDK generation; `services` implements stateful
 runtime behavior; `workers/iceberg` contains Python data processing. Tests and
 isolated fixtures live in `tests`. Regenerate SDK files with `pnpm sdk:generate`.
 Read docs/production/ACCEPTANCE.md for production obligations and docs/spec for
-existing semantic contracts. Proposed workload numbers are not approved targets.
+existing semantic contracts. The production workload v0.2 numbers are approved
+implementation targets; achieved capacity and production certification still require
+the specified evidence.
 
 ## Bounded delivery
 

@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "acceptedDeadlinesChanged": false,
+  "latestPassed": null,
+  "trials": [
+    {
+      "trial": "001",
+      "status": "interrupted-failed",
+      "raw": "native-execution-combined-20261031-trial-001-failed.tap",
+      "rawSha256": "66393c14ce39f37d064ad2fa328407dac400eff9cf9dcdf41c3c5588ad736c6a",
+      "sourceManifest": "native-execution-combined-20261031-trial-001-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-001-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-001-schema.json",
+      "libraryTests": {
+        "passed": 72,
+        "failed": 0,
+        "ignored": 0
+      },
+      "functionalCounts": null,
+      "note": "Exact native build/schema/artifact preflight and 72 library units passed. Actual Agent admission exposed a missing model_binding SELECT column required by its new retained check, causing a native panic. The failed functional driver was stopped early, exit137 and partial raw retained; its exact owned registry was removed. The projection is corrected for the next fresh trial."
+    },
+    {
+      "trial": "002",
+      "status": "failed",
+      "raw": "native-execution-combined-20261031-trial-002-failed.tap",
+      "rawSha256": "d0fd4d5973234c58170f4b9e6dde31b4b511bf11fed0c79d19778a6003f69d4a",
+      "sourceManifest": "native-execution-combined-20261031-trial-002-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-002-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-002-schema.json",
+      "libraryTests": {
+        "passed": 72,
+        "failed": 0,
+        "ignored": 0
+      },
+      "functionalCounts": {
+        "tests": 78,
+        "passed": 66,
+        "failed": 12,
+        "skipped": 0
+      },
+      "durationMillis": 413157,
+      "note": "Execution, Function, sandbox, job authority and secondary Action outcome suites passed. Agent passed sixteen of seventeen subtests, including real held-provider scope revocation, missed identity-disable pulses and 72-class discovery; Automation factory returned no linked child. Evaluation completion improperly inspected unfinished sibling Agent observations, and controller polling/cancellation entered protected public result paths. Aggregate edit-proposal static denial lacked a completed negative observation. These boundaries are being corrected without weakening public journal gates or deadlines."
+    },
+    {
+      "trial": "003",
+      "status": "failed",
+      "scope": [
+        "agents",
+        "evaluations",
+        "function-aggregate"
+      ],
+      "raw": "native-execution-combined-20261031-trial-003-failed.tap",
+      "rawSha256": "977dce0814c0574b09d2c341c2b1ff9c51a5a68c9203ee62da02c51c960b5309",
+      "sourceManifest": "native-execution-combined-20261031-trial-003-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-003-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-003-schema.json",
+      "libraryTests": {
+        "passed": 72,
+        "failed": 0,
+        "ignored": 0
+      },
+      "functionalCounts": {
+        "tests": 30,
+        "passed": 25,
+        "failed": 5,
+        "skipped": 0
+      },
+      "durationMillis": 398843,
+      "note": "Evaluation full runs, repeats, SDK/CLI, real lost-COMMIT-ack/SIGKILL and retained Fixture/Model receipt revocation passed after fixing case-only publication and private progress. Cancellation itself fenced descendants/provider/OCI within ten seconds; its old fixture then incorrectly expected public GET/events instead of the required pending-observation denial. Static aggregate denial is now proved. Automation failed SQL42703: its binding row has no resource_class column; the guard now reads spec.resourceClass. No job deadlines or denial gates were relaxed.",
+      "externalDiagnostics": {
+        "raw": "native-execution-combined-20261031-trial-003-external-agent-diagnostics-failed.tap",
+        "rawSha256": "09a550f329e2bf812e903e531b4959ae75a50e9b44901583980259c722cf47d5",
+        "fixtures": "native-execution-combined-20261031-trial-003-external-agent-diagnostics-fixtures.json",
+        "note": "The exact trial003 product artifact was reused with the archived test/proxy files. Bounded diagnostic fields confirmed SQL42703 originated in runtime_automation_binding_guard. This diagnostic is not a whole-source passing certificate."
+      }
+    },
+    {
+      "trial": "004",
+      "status": "failed",
+      "raw": "native-execution-combined-20261031-trial-004-failed.tap",
+      "rawSha256": "9ab76b10b5c583c703eaf6706f86ac58e1d57111696f6454e74b26624ba3d884",
+      "sourceManifest": "native-execution-combined-20261031-trial-004-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-004-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-004-schema.json",
+      "functionalCounts": {
+        "tests": 53,
+        "passed": 51,
+        "failed": 2,
+        "skipped": 0
+      },
+      "durationMillis": 182861,
+      "note": "Execution, Function, job authority, sandbox, aggregate and secondary Action suites passed, including uniform Function control ACK, completed receipt preservation and terminal success event. Agent/Evaluation failed setup before their domain assertions: the newly included Source-backed Model policy gate correctly rejected their historical mismatch between empty declared allowed markings and private operator destination policy. Fixtures are being migrated to real qualified Marking declarations consistently; no Source check is bypassed. Automation/Evaluation/cancellation changes remain unqualified until a later fresh run."
+    },
+    {
+      "trial": "005",
+      "status": "failed",
+      "raw": "native-execution-combined-20261031-trial-005-failed.tap",
+      "rawSha256": "5eaec76c8e56ca234cf799f6cd56c18cce47171714c6d4950e0188638aa9bae7",
+      "sourceManifest": "native-execution-combined-20261031-trial-005-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-005-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-005-schema.json",
+      "reusedArtifactMetadata": "native-execution-combined-20261031-trial-005-reuse.json",
+      "functionalCounts": {
+        "passed": 47,
+        "failed": 24,
+        "skipped": 0
+      },
+      "durationMillis": 597364,
+      "note": "Reused exact current v20 schema/runtime/catalog artifacts after hash and source preflight. Agent fixture exact-ops assertion omitted newly required Model.invoke, leaving a queued scoped job and cascading later once-worker checks. Evaluation Function tool declared int64 but its raw guest body supplied a numeric float64; corrected actual typed fixture and Model operation assertions. New current-file liveness check also exposed historical/current proof conflation: removed historical descriptors incorrectly denied fresh Source admissions; Serving corrected current required files while preserving historical labels and pinned old-release denial. Execution single-attempt test requires native_sandbox harness, missing from reused descriptor; warm same-source harness build required. No cancellation/denial assertion or product deadline relaxed; all failures retained."
+    },
+    {
+      "trial": "006",
+      "status": "failed",
+      "raw": "native-execution-combined-20261031-trial-006-failed.tap",
+      "rawSha256": "e04476a622690ccb6ae966fe37cabaea57afbc3dbc9ee47393826a1a6f0a32ce",
+      "sourceManifest": "native-execution-combined-20261031-trial-006-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-006-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-006-schema.json",
+      "reusedArtifactMetadata": "native-execution-combined-20261031-trial-006-reuse.json",
+      "functionalCounts": {
+        "passed": 66,
+        "failed": 14,
+        "cancelled": 1,
+        "skipped": 0
+      },
+      "durationMillis": 822366,
+      "note": "Exact Serving124421 artifacts plus same-source native_sandbox harness. New Agent accepted SecretReference metadata and actual Evaluation Function tool executions were exercised; complete Agent/Evaluation suites failed and are not qualified. Fresh isolated no-class-barrier model diagnostic proved runtime_executions shared-to-update tuple/transaction-ID cycles, independent of the obsolete pending-public-view fixture assertion. Model completion and Agent post-model transactions are being reordered to acquire the exact execution fence before private session resolution; no authority conditions removed. Existing cancellation fixture expected child failure rather than durable cancellation; now checks parent-rooted signal plus exact cancelled task/NULL lease/cleaned OCI/one attempt/no receipt. All product deadlines preserved."
+    },
+    {
+      "trial": "007-critical",
+      "status": "failed",
+      "raw": "native-execution-combined-20261031-trial-007-critical-failed.tap",
+      "rawSha256": "c8af67a77d08e6ce1de579a3e5ffc1d5b7d337b7431470d156ba9b13ae8a848e",
+      "sourceManifest": "native-execution-combined-20261031-trial-007-critical-source.json",
+      "runtimeMetadata": "native-execution-combined-20261031-trial-007-critical-runtime.json",
+      "schema": "native-execution-combined-20261031-trial-007-critical-schema.json",
+      "reusedArtifactMetadata": "native-execution-combined-20261031-trial-007-critical-reuse.json",
+      "functionalCounts": {
+        "passed": 16,
+        "failed": 13,
+        "skipped": 0
+      },
+      "durationMillis": 635453,
+      "note": "Attempted Node name filtering matched root tests and selected all descendants: this run actually executed full Agent/Evaluation files, not the intended minimal subset. First-fence transaction changes were included, but an independent async guard bug remained: timer branch awaited authority while pausing work that held a shared execution lock. The concurrent guard-loop fix is implemented for the next artifact. Source descriptor replacement/old pinned denial passed; full service factory and Secret generation qualifications remain open. No product deadline or authority gate relaxed."
+    },
+    {
+      "trial": "008-evaluation-critical",
+      "status": "failed",
+      "raw": "native-execution-combined-20261031-trial-008-evaluation-critical-failed.tap",
+      "rawSha256": "e957553d93aa5d54e2b8e43883fd0dc2536e96bf96024aa075d37bb213be3481",
+      "sourceManifest": "native-execution-combined-20261031-trial-008-evaluation-critical-source.json",
+      "schema": "native-execution-combined-20261031-trial-008-evaluation-critical-schema.json",
+      "reusedArtifactMetadata": "native-execution-combined-20261031-trial-008-evaluation-critical-reuse.json",
+      "functionalCounts": {
+        "passed": 5,
+        "failed": 4,
+        "skipped": 0
+      },
+      "durationMillis": 491202,
+      "note": "Full Evaluation file on immutable v23. Initial ten cases, exact expected outcomes, private model marks, 18 single attempts and receipt completed, then obsolete zero-Function assertion failed because two real tools are now intended. Scoped repeats/comparison, SDK/CLI receipt replay, live-family cancellation and revoked Fixture authority for direct Agent/Model receipts passed. Actual lost-COMMIT root receipt committed and recovered after SIGKILL, but one sealed Function child failed publication, changing strict summary 4 to 3; terminal publication cause was not recorded by this artifact. New bounded four-attempt retry is restricted to definitive 40001/40P01 rollback inside original DB deadline, with safe cause/SQLSTATE diagnostics. Service Automation to Evaluation remained active at lifecycle barrier; diagnostic detail is added for the next artifact. No failed assertion or deadline relaxed and no whole-factory pass claim."
+    }
+  ]
+}

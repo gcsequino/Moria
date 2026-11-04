@@ -1,0 +1,25 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 167.94942
+      type: 'test'
+      ...
+# PIPELINE_AUTHORITY_GUARD_PROBE={"jit":{"setting":"on","available":false},"timingsMillis":{"on":["502.359","535.820","520.209"],"off":["488.330","470.668","446.486"]},"scope":"one dedicated probe connection; worker settings unchanged"}
+# PIPELINE_AUTHORITY_FUNCTION_PROFILE=[{"funcname":"runtime_pipeline_current","calls":"1","total_time":452.267077,"self_time":1.231684},{"funcname":"native_serving_resource_access_state","calls":"8","total_time":449.106221,"self_time":1.333413},{"funcname":"native_serving_filesystem_resource_access_state","calls":"20","total_time":443.703171,"self_time":443.703171},{"funcname":"runtime_data_operational","calls":"20","total_time":2.73228,"self_time":2.73228},{"funcname":"runtime_data_origins","calls":"8","total_time":1.218952,"self_time":1.154623},{"funcname":"runtime_service_binding_guard","calls":"1","total_time":1.086122,"self_time":0.485925},{"funcname":"runtime_dataset_kind","calls":"5","total_time":0.84305,"self_time":0.84305},{"funcname":"native_serving_service_authority","calls":"1","total_time":0.600197,"self_time":0.503481},{"funcname":"runtime_data_resource","calls":"16","total_time":0.182734,"self_time":0.182734},{"funcname":"runtime_environment_cell_check","calls":"1","total_time":0.096716,"self_time":0.064189},{"funcname":"runtime_recovery_check","calls":"1","total_time":0.032527,"self_time":0.017973},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"1","total_time":0.014554,"self_time":0.014554}]
+    1..1
+ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 128949.501043
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129850.341451

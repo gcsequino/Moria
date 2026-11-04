@@ -1,0 +1,33 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+error[E0599]: no associated function or constant named `verify_failed_actions` found for struct `platform::NativePlatformBroker` in the current scope
+   --> src/platform.rs:453:15
+    |
+ 25 | pub struct NativePlatformBroker {
+    | ------------------------------- associated function or constant `verify_failed_actions` not found for this struct
+...
+453 |         Self::verify_failed_actions(db,client,session,execution).await?;
+    |               ^^^^^^^^^^^^^^^^^^^^^ associated function or constant not found in `platform::NativePlatformBroker`
+    |
+note: if you're trying to build a new `platform::NativePlatformBroker`, consider using `platform::NativePlatformBroker::new` which returns `platform::NativePlatformBroker`
+   --> src/platform.rs:317:5
+    |
+317 |     pub fn new(db: Database) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no associated function or constant named `record_failed_action` found for struct `platform::NativePlatformBroker` in the current scope
+   --> src/platform.rs:976:23
+    |
+ 25 | pub struct NativePlatformBroker {
+    | ------------------------------- associated function or constant `record_failed_action` not found for this struct
+...
+976 |                 Self::record_failed_action(client,context,&call.id,&evidence).await?;
+    |                       ^^^^^^^^^^^^^^^^^^^^ associated function or constant not found in `platform::NativePlatformBroker`
+    |
+note: if you're trying to build a new `platform::NativePlatformBroker`, consider using `platform::NativePlatformBroker::new` which returns `platform::NativePlatformBroker`
+   --> src/platform.rs:317:5
+    |
+317 |     pub fn new(db: Database) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `moria-runtime` (lib test) due to 2 previous errors

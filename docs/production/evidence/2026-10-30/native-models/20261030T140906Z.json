@@ -1,0 +1,33 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--user",
+    "1000:1000",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-model-proof-bin-20261030T140906Z,dst=/usr/local/bin/moria-runtime,readonly",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-models.integration.test.ts"
+  ],
+  "exit": 0,
+  "binarySha256": "2ad13c269edd407d715e65f367ecb3c541b4cf0b3c557bf4ffa6e454dc20976e",
+  "compiledSchema": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "349a23e50f721bca77bba0271359cae0e76b31abf2b4ebf1a9ff6b751cc19611",
+      "version": 5
+    },
+    "sourceDigest": "f81f0d934c2f405d4e4f28b92bf4ff6775c149d9f4d9f0460c8e9303c95956b9"
+  },
+  "log": "20261030T140906Z.tap.txt"
+}

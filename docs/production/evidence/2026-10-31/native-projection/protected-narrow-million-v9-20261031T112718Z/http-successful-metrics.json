@@ -1,0 +1,738 @@
+{
+  "classification": "postprocessed-unchanged-arrival-records",
+  "deadlineMs": 10000,
+  "percentileMethod": "nearest rank: ceil(n*p)-1, null on empty; original driver summaries remain unchanged",
+  "sourceFiles": {
+    "http-20-arrivals.json": "b7b01b28a6f54e2ed9861f522b1353b9b922667c7d3f30d5732ec4361dc8f5a7",
+    "http-50-arrivals.json": "85757bc15e0df591ee2cbf2d10557228a3ac809af3c380661f6231f75f19d628",
+    "http-100-arrivals.json": "d63652b1b50de481cb398527a6869ce97157a56d30c4045286ddddf24e3785cd"
+  },
+  "windows": [
+    {
+      "rate": 20,
+      "startedAt": "2026-10-31T12:15:12.413Z",
+      "total": {
+        "scheduled": 600,
+        "successful": 600,
+        "unsuccessfulFraction": 0.0,
+        "latencyBasis": "all-scheduled-arrivals",
+        "allLatency": {
+          "count": 600,
+          "p50Ms": 24.46802100003697,
+          "p95Ms": 127.38613100000657,
+          "p99Ms": 161.99547299998812,
+          "maxMs": 250.92913400009274
+        },
+        "successfulLatency": {
+          "count": 600,
+          "p50Ms": 24.46802100003697,
+          "p95Ms": 127.38613100000657,
+          "p99Ms": 161.99547299998812,
+          "maxMs": 250.92913400009274
+        },
+        "dispatchDelay": {
+          "count": 600,
+          "p50Ms": -0.3545309999026358,
+          "p95Ms": 0.1412569999229163,
+          "p99Ms": 0.20001300005242229,
+          "maxMs": 14.462498999899253
+        },
+        "notDispatched": 0,
+        "statuses": {
+          "200": 600
+        },
+        "errors": {}
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 192,
+          "successful": 192,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 192,
+            "p50Ms": 18.612987000029534,
+            "p95Ms": 22.52975600003265,
+            "p99Ms": 80.76035399991088,
+            "maxMs": 84.74073299998417
+          },
+          "successfulLatency": {
+            "count": 192,
+            "p50Ms": 18.612987000029534,
+            "p95Ms": 22.52975600003265,
+            "p99Ms": 80.76035399991088,
+            "maxMs": 84.74073299998417
+          },
+          "dispatchDelay": {
+            "count": 192,
+            "p50Ms": -0.4044709999579936,
+            "p95Ms": 0.15220899996347725,
+            "p99Ms": 0.4899860001169145,
+            "maxMs": 14.462498999899253
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 192
+          },
+          "errors": {}
+        },
+        "page": {
+          "scheduled": 188,
+          "successful": 188,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 188,
+            "p50Ms": 81.41737199993804,
+            "p95Ms": 144.99417400010861,
+            "p99Ms": 166.6115910001099,
+            "maxMs": 250.92913400009274
+          },
+          "successfulLatency": {
+            "count": 188,
+            "p50Ms": 81.41737199993804,
+            "p95Ms": 144.99417400010861,
+            "p99Ms": 166.6115910001099,
+            "maxMs": 250.92913400009274
+          },
+          "dispatchDelay": {
+            "count": 188,
+            "p50Ms": -0.3589560000691563,
+            "p95Ms": 0.12927699997089803,
+            "p99Ms": 0.19372300012037158,
+            "maxMs": 0.20469800010323524
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 188
+          },
+          "errors": {}
+        },
+        "filterSort": {
+          "scheduled": 97,
+          "successful": 97,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 97,
+            "p50Ms": 22.318071000045165,
+            "p95Ms": 28.338781000114977,
+            "p99Ms": 77.5112819999922,
+            "maxMs": 77.5112819999922
+          },
+          "successfulLatency": {
+            "count": 97,
+            "p50Ms": 22.318071000045165,
+            "p95Ms": 28.338781000114977,
+            "p99Ms": 77.5112819999922,
+            "maxMs": 77.5112819999922
+          },
+          "dispatchDelay": {
+            "count": 97,
+            "p50Ms": -0.3479659999720752,
+            "p95Ms": 0.12487199995666742,
+            "p99Ms": 0.22691199998371303,
+            "maxMs": 0.22691199998371303
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 97
+          },
+          "errors": {}
+        },
+        "action": {
+          "scheduled": 62,
+          "successful": 62,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 62,
+            "p50Ms": 40.79450700012967,
+            "p95Ms": 92.35505699994974,
+            "p99Ms": 194.45397899998352,
+            "maxMs": 194.45397899998352
+          },
+          "successfulLatency": {
+            "count": 62,
+            "p50Ms": 40.79450700012967,
+            "p95Ms": 92.35505699994974,
+            "p99Ms": 194.45397899998352,
+            "maxMs": 194.45397899998352
+          },
+          "dispatchDelay": {
+            "count": 62,
+            "p50Ms": -0.25830499990843236,
+            "p95Ms": 0.1818540000822395,
+            "p99Ms": 0.19748400012031198,
+            "maxMs": 0.19748400012031198
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 62
+          },
+          "errors": {}
+        },
+        "multiAction": {
+          "scheduled": 31,
+          "successful": 31,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 31,
+            "p50Ms": 57.14819000009447,
+            "p95Ms": 171.34291499992833,
+            "p99Ms": 172.03431600006297,
+            "maxMs": 172.03431600006297
+          },
+          "successfulLatency": {
+            "count": 31,
+            "p50Ms": 57.14819000009447,
+            "p95Ms": 171.34291499992833,
+            "p99Ms": 172.03431600006297,
+            "maxMs": 172.03431600006297
+          },
+          "dispatchDelay": {
+            "count": 31,
+            "p50Ms": -0.37406200007535517,
+            "p95Ms": -0.0303700000513345,
+            "p99Ms": 0.4576139999553561,
+            "maxMs": 0.4576139999553561
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 31
+          },
+          "errors": {}
+        },
+        "aggregate": {
+          "scheduled": 30,
+          "successful": 30,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 30,
+            "p50Ms": 22.007082999916747,
+            "p95Ms": 44.26421399996616,
+            "p99Ms": 206.4821369999554,
+            "maxMs": 206.4821369999554
+          },
+          "successfulLatency": {
+            "count": 30,
+            "p50Ms": 22.007082999916747,
+            "p95Ms": 44.26421399996616,
+            "p99Ms": 206.4821369999554,
+            "maxMs": 206.4821369999554
+          },
+          "dispatchDelay": {
+            "count": 30,
+            "p50Ms": -0.2926529999822378,
+            "p95Ms": 0.14042700012214482,
+            "p99Ms": 0.17058899998664856,
+            "maxMs": 0.17058899998664856
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 30
+          },
+          "errors": {}
+        }
+      }
+    },
+    {
+      "rate": 50,
+      "startedAt": "2026-10-31T12:15:44.819Z",
+      "total": {
+        "scheduled": 1500,
+        "successful": 1492,
+        "unsuccessfulFraction": 0.005333333333333333,
+        "latencyBasis": "all-scheduled-arrivals",
+        "allLatency": {
+          "count": 1500,
+          "p50Ms": 474.7450289998669,
+          "p95Ms": 1274.5613969999831,
+          "p99Ms": 1443.7748910000082,
+          "maxMs": 1721.5105939998757
+        },
+        "successfulLatency": {
+          "count": 1492,
+          "p50Ms": 481.51519800000824,
+          "p95Ms": 1275.1589649999514,
+          "p99Ms": 1461.1084269999992,
+          "maxMs": 1721.5105939998757
+        },
+        "dispatchDelay": {
+          "count": 1500,
+          "p50Ms": -0.3866789999883622,
+          "p95Ms": 0.0966389998793602,
+          "p99Ms": 0.1497329999692738,
+          "maxMs": 1.7820729999803007
+        },
+        "notDispatched": 0,
+        "statuses": {
+          "200": 1492,
+          "429": 8
+        },
+        "errors": {
+          "RESOURCE_LIMIT\n\n429 !== 200\n": 8
+        }
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 520,
+          "successful": 518,
+          "unsuccessfulFraction": 0.0038461538461538464,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 520,
+            "p50Ms": 395.9580639998894,
+            "p95Ms": 1156.0755159999244,
+            "p99Ms": 1343.3276970000006,
+            "maxMs": 1373.0409919999074
+          },
+          "successfulLatency": {
+            "count": 518,
+            "p50Ms": 398.34580500004813,
+            "p95Ms": 1156.668800999876,
+            "p99Ms": 1343.3276970000006,
+            "maxMs": 1373.0409919999074
+          },
+          "dispatchDelay": {
+            "count": 520,
+            "p50Ms": -0.3681119999382645,
+            "p95Ms": 0.0966389998793602,
+            "p99Ms": 0.14588500000536442,
+            "maxMs": 0.4192089999560267
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 518,
+            "429": 2
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 2
+          }
+        },
+        "page": {
+          "scheduled": 463,
+          "successful": 461,
+          "unsuccessfulFraction": 0.004319654427645789,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 463,
+            "p50Ms": 457.43735500006005,
+            "p95Ms": 1185.3456830000505,
+            "p99Ms": 1436.8353959999513,
+            "maxMs": 1478.7654110000003
+          },
+          "successfulLatency": {
+            "count": 461,
+            "p50Ms": 457.55303799989633,
+            "p95Ms": 1185.3456830000505,
+            "p99Ms": 1436.8353959999513,
+            "maxMs": 1478.7654110000003
+          },
+          "dispatchDelay": {
+            "count": 463,
+            "p50Ms": -0.3866789999883622,
+            "p95Ms": 0.1058259999845177,
+            "p99Ms": 0.22015900001861155,
+            "maxMs": 1.7820729999803007
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 461,
+            "429": 2
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 2
+          }
+        },
+        "filterSort": {
+          "scheduled": 204,
+          "successful": 203,
+          "unsuccessfulFraction": 0.004901960784313725,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 204,
+            "p50Ms": 414.9643780000042,
+            "p95Ms": 1096.4950069999322,
+            "p99Ms": 1335.406200000085,
+            "maxMs": 1383.088667999953
+          },
+          "successfulLatency": {
+            "count": 203,
+            "p50Ms": 416.77378299995326,
+            "p95Ms": 1096.4950069999322,
+            "p99Ms": 1335.406200000085,
+            "maxMs": 1383.088667999953
+          },
+          "dispatchDelay": {
+            "count": 204,
+            "p50Ms": -0.38354500010609627,
+            "p95Ms": 0.10533900000154972,
+            "p99Ms": 0.12363799987360835,
+            "maxMs": 0.14702700008638203
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 203,
+            "429": 1
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 1
+          }
+        },
+        "action": {
+          "scheduled": 155,
+          "successful": 152,
+          "unsuccessfulFraction": 0.01935483870967742,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 155,
+            "p50Ms": 628.4614750000183,
+            "p95Ms": 1542.864343999885,
+            "p99Ms": 1694.3091909999494,
+            "maxMs": 1721.5105939998757
+          },
+          "successfulLatency": {
+            "count": 152,
+            "p50Ms": 686.306717999978,
+            "p95Ms": 1542.864343999885,
+            "p99Ms": 1694.3091909999494,
+            "maxMs": 1721.5105939998757
+          },
+          "dispatchDelay": {
+            "count": 155,
+            "p50Ms": -0.40839100000448525,
+            "p95Ms": 0.06507200002670288,
+            "p99Ms": 0.14782699989154935,
+            "maxMs": 0.17227300000377
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 152,
+            "429": 3
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 3
+          }
+        },
+        "multiAction": {
+          "scheduled": 80,
+          "successful": 80,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 80,
+            "p50Ms": 813.7613279998768,
+            "p95Ms": 1426.4327459998894,
+            "p99Ms": 1623.918488000054,
+            "maxMs": 1623.918488000054
+          },
+          "successfulLatency": {
+            "count": 80,
+            "p50Ms": 813.7613279998768,
+            "p95Ms": 1426.4327459998894,
+            "p99Ms": 1623.918488000054,
+            "maxMs": 1623.918488000054
+          },
+          "dispatchDelay": {
+            "count": 80,
+            "p50Ms": -0.43536200001835823,
+            "p95Ms": 0.11065899999812245,
+            "p99Ms": 0.13041800004430115,
+            "maxMs": 0.13041800004430115
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 80
+          },
+          "errors": {}
+        },
+        "aggregate": {
+          "scheduled": 78,
+          "successful": 78,
+          "unsuccessfulFraction": 0.0,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 78,
+            "p50Ms": 477.7041559999343,
+            "p95Ms": 1119.9878420000896,
+            "p99Ms": 1352.1202199999243,
+            "maxMs": 1352.1202199999243
+          },
+          "successfulLatency": {
+            "count": 78,
+            "p50Ms": 477.7041559999343,
+            "p95Ms": 1119.9878420000896,
+            "p99Ms": 1352.1202199999243,
+            "maxMs": 1352.1202199999243
+          },
+          "dispatchDelay": {
+            "count": 78,
+            "p50Ms": -0.42081500007770956,
+            "p95Ms": 0.12747499998658895,
+            "p99Ms": 0.16317999991588295,
+            "maxMs": 0.16317999991588295
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 78
+          },
+          "errors": {}
+        }
+      }
+    },
+    {
+      "rate": 100,
+      "startedAt": "2026-10-31T12:16:18.600Z",
+      "total": {
+        "scheduled": 3000,
+        "successful": 1583,
+        "unsuccessfulFraction": 0.4723333333333333,
+        "latencyBasis": "all-scheduled-arrivals",
+        "allLatency": {
+          "count": 3000,
+          "p50Ms": 785.7548630000092,
+          "p95Ms": 1539.8153299998958,
+          "p99Ms": 1769.1357829999179,
+          "maxMs": 1988.1870780000463
+        },
+        "successfulLatency": {
+          "count": 1583,
+          "p50Ms": 1197.9381309999153,
+          "p95Ms": 1667.7010870000813,
+          "p99Ms": 1809.754976999946,
+          "maxMs": 1988.1870780000463
+        },
+        "dispatchDelay": {
+          "count": 3000,
+          "p50Ms": -0.32101000007241964,
+          "p95Ms": 0.41243700007908046,
+          "p99Ms": 0.5156239999923855,
+          "maxMs": 1.9649259999860078
+        },
+        "notDispatched": 0,
+        "statuses": {
+          "200": 1583,
+          "429": 1417
+        },
+        "errors": {
+          "RESOURCE_LIMIT\n\n429 !== 200\n": 1417
+        }
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 1036,
+          "successful": 538,
+          "unsuccessfulFraction": 0.4806949806949807,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 1036,
+            "p50Ms": 751.6584409999195,
+            "p95Ms": 1363.3626929998863,
+            "p99Ms": 1491.941753000021,
+            "maxMs": 1557.4369069999084
+          },
+          "successfulLatency": {
+            "count": 538,
+            "p50Ms": 1152.0093050000723,
+            "p95Ms": 1431.661155999871,
+            "p99Ms": 1510.344352999935,
+            "maxMs": 1557.4369069999084
+          },
+          "dispatchDelay": {
+            "count": 1036,
+            "p50Ms": -0.28506499994546175,
+            "p95Ms": 0.4241969999857247,
+            "p99Ms": 0.52802799991332,
+            "maxMs": 1.007581999991089
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 538,
+            "429": 498
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 498
+          }
+        },
+        "page": {
+          "scheduled": 909,
+          "successful": 483,
+          "unsuccessfulFraction": 0.46864686468646866,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 909,
+            "p50Ms": 805.6000359999016,
+            "p95Ms": 1428.4528850000352,
+            "p99Ms": 1523.4361459999345,
+            "maxMs": 1674.130821999861
+          },
+          "successfulLatency": {
+            "count": 483,
+            "p50Ms": 1218.3842410000507,
+            "p95Ms": 1477.5950650000013,
+            "p99Ms": 1575.007132000057,
+            "maxMs": 1674.130821999861
+          },
+          "dispatchDelay": {
+            "count": 909,
+            "p50Ms": -0.31657600007019937,
+            "p95Ms": 0.38656300003640354,
+            "p99Ms": 0.5104370000772178,
+            "maxMs": 1.9649259999860078
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 483,
+            "429": 426
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 426
+          }
+        },
+        "filterSort": {
+          "scheduled": 468,
+          "successful": 247,
+          "unsuccessfulFraction": 0.4722222222222222,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 468,
+            "p50Ms": 779.0813629999757,
+            "p95Ms": 1352.9217349998653,
+            "p99Ms": 1503.648380999919,
+            "maxMs": 1567.1496279998682
+          },
+          "successfulLatency": {
+            "count": 247,
+            "p50Ms": 1150.2756350000855,
+            "p95Ms": 1396.4185889998917,
+            "p99Ms": 1551.5391500000842,
+            "maxMs": 1567.1496279998682
+          },
+          "dispatchDelay": {
+            "count": 468,
+            "p50Ms": -0.3154249999206513,
+            "p95Ms": 0.4183640000410378,
+            "p99Ms": 0.4911390000488609,
+            "maxMs": 0.5602680000010878
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 247,
+            "429": 221
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 221
+          }
+        },
+        "action": {
+          "scheduled": 290,
+          "successful": 140,
+          "unsuccessfulFraction": 0.5172413793103449,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 290,
+            "p50Ms": 0.8238099999725819,
+            "p95Ms": 1796.2344760000706,
+            "p99Ms": 1935.5679230000824,
+            "maxMs": 1988.1870780000463
+          },
+          "successfulLatency": {
+            "count": 140,
+            "p50Ms": 1563.17718099989,
+            "p95Ms": 1863.9980619999114,
+            "p99Ms": 1958.5545689999126,
+            "maxMs": 1988.1870780000463
+          },
+          "dispatchDelay": {
+            "count": 290,
+            "p50Ms": -0.36824400001205504,
+            "p95Ms": 0.3847379998769611,
+            "p99Ms": 0.5197610000614077,
+            "maxMs": 0.5730489999987185
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 140,
+            "429": 150
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 150
+          }
+        },
+        "multiAction": {
+          "scheduled": 149,
+          "successful": 80,
+          "unsuccessfulFraction": 0.46308724832214765,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 149,
+            "p50Ms": 1076.503636999987,
+            "p95Ms": 1786.0250130000059,
+            "p99Ms": 1878.8402619999833,
+            "maxMs": 1986.4293160000816
+          },
+          "successfulLatency": {
+            "count": 80,
+            "p50Ms": 1628.1678029999603,
+            "p95Ms": 1827.343528999947,
+            "p99Ms": 1986.4293160000816,
+            "maxMs": 1986.4293160000816
+          },
+          "dispatchDelay": {
+            "count": 149,
+            "p50Ms": -0.48768400005064905,
+            "p95Ms": 0.4489559999201447,
+            "p99Ms": 0.561219000024721,
+            "maxMs": 0.5649679999332875
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 80,
+            "429": 69
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 69
+          }
+        },
+        "aggregate": {
+          "scheduled": 148,
+          "successful": 95,
+          "unsuccessfulFraction": 0.3581081081081081,
+          "latencyBasis": "all-scheduled-arrivals",
+          "allLatency": {
+            "count": 148,
+            "p50Ms": 1076.4426789998543,
+            "p95Ms": 1398.3990149998572,
+            "p99Ms": 1471.4153100000694,
+            "maxMs": 1490.0708119999617
+          },
+          "successfulLatency": {
+            "count": 95,
+            "p50Ms": 1182.9333599999081,
+            "p95Ms": 1435.076395999873,
+            "p99Ms": 1490.0708119999617,
+            "maxMs": 1490.0708119999617
+          },
+          "dispatchDelay": {
+            "count": 148,
+            "p50Ms": -0.45467999996617436,
+            "p95Ms": 0.4488009999040514,
+            "p99Ms": 0.5156239999923855,
+            "maxMs": 0.5653500000480562
+          },
+          "notDispatched": 0,
+          "statuses": {
+            "200": 95,
+            "429": 53
+          },
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 53
+          }
+        }
+      }
+    }
+  ]
+}

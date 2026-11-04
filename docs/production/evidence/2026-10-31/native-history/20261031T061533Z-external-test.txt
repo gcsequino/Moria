@@ -1,0 +1,59 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 349.940772
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 406.505127
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 685.722145
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 673.334109
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 4830.914919
+  type: 'test'
+  ...
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+ok 2 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 3886.868675
+  type: 'test'
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+ok 3 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 19172.006087
+  type: 'test'
+  ...
+# Subtest: operational history normalizes bounded read pins against actual execution and cursor authority
+ok 4 - operational history normalizes bounded read pins against actual execution and cursor authority
+  ---
+  duration_ms: 5054.40568
+  type: 'test'
+  ...
+1..4
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33949.363891

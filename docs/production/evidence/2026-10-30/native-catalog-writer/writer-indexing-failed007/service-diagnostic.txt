@@ -1,0 +1,19 @@
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (3670.451985ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4099.518239
+
+✖ failing tests:
+
+test at tests/native-indexing-service.integration.test.ts:18:1
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (3670.451985ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'id')
+      at TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:132:7)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

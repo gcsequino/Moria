@@ -1,0 +1,51 @@
+TAP version 13
+# Subtest: native capacity preparation uses permanent UID allocation, bounded real source production and complete native checksums
+not ok 1 - native capacity preparation uses permanent UID allocation, bounded real source production and complete native checksums
+  ---
+  duration_ms: 3533.096416
+  type: 'test'
+  location: '/work/tests/native-projection-capacity.integration.test.ts:8:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    publication: 
+    thread 'catalog_publication' (96) panicked at ../../tests/fixtures/native-catalog/harness.rs:71:10:
+    called `Result::unwrap()` on an `Err` value: Invalid execution version or deadline
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+    
+    running 1 test
+    test catalog_publication ... FAILED
+    
+    failures:
+    
+    failures:
+        catalog_publication
+    
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.07s
+    
+    
+    
+    101 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 101
+  operator: 'strictEqual'
+  stack: |-
+    run (/work/benchmarks/native-projection.ts:189:14)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:306:5)
+    async TestContext.<anonymous> (/work/tests/native-projection-capacity.integration.test.ts:14:20)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3896.702802

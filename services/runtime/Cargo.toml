@@ -1,0 +1,93 @@
+[package]
+name = "moria-runtime"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "Apache-2.0"
+
+[dependencies]
+anyhow = "1"
+apache-avro = "0.21"
+axum = "0.8"
+async-trait = "0.1"
+aws-credential-types = "1"
+aws-sigv4 = "1"
+arrow-array = "58"
+arrow-ipc = "58"
+arrow-schema = "58"
+arrow-select = "58"
+bytes = "1"
+base64 = "0.22"
+chrono = "0.4"
+deadpool-postgres = "0.14"
+futures = "0.3"
+getrandom = "0.4"
+iceberg = { version = "=0.10.1", default-features = false }
+http = "1"
+jsonschema = { version = "0.60", default-features = false }
+native-tls = "0.2"
+parquet = { version = "58", features = ["async", "arrow_canonical_extension_types"] }
+postgres-native-tls = "0.5"
+prost = "0.14"
+rustix = { version = "1", features = ["fs"] }
+regex = "1"
+reqwest = { version = "0.12", default-features = false, features = ["native-tls", "stream"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+roxmltree = "0.21"
+ryu-js = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+sha2 = "0.10"
+
+tokio = { version = "1", features = ["full"] }
+tokio-postgres = { version = "0.7", features = ["with-serde_json-1", "with-uuid-1"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+tonic = { version = "0.14", features = ["tls-ring"] }
+tonic-prost = "0.14"
+uuid = { version = "1", features = ["v4", "serde"] }
+typetag = "0.2"
+unicode-normalization = "0.1"
+
+[build-dependencies]
+prost-build = "0.14"
+tonic-prost-build = "0.14"
+protoc-bin-vendored = "3"
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.dev]
+debug = 0
+
+[profile.release]
+strip = true
+lto = "thin"
+
+[[bin]]
+name = "moria-indexing"
+path = "src/main.rs"
+
+[[test]]
+name = "native_policy"
+path = "../../tests/fixtures/native-policy/harness.rs"
+
+[[test]]
+name = "native_storage"
+path = "../../tests/fixtures/native-storage/harness.rs"
+
+[[test]]
+name = "native_transport"
+path = "../../tests/fixtures/native-transport/harness.rs"
+
+[[test]]
+name = "native_catalog"
+path = "../../tests/fixtures/native-catalog/harness.rs"
+
+[[test]]
+name = "native_sandbox"
+path = "../../tests/fixtures/native-sandbox/harness.rs"
+
+[[test]]
+name = "native_retention"
+path = "../../tests/fixtures/native-retention/harness.rs"

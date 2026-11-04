@@ -1,0 +1,150 @@
+TAP version 13
+# Subtest: native model gateway protects real HTTP chat, embeddings, schemas and streams
+    # Subtest: configured capabilities remain unavailable until actual probes pass
+    ok 1 - configured capabilities remain unavailable until actual probes pass
+      ---
+      duration_ms: 710.165656
+      type: 'test'
+      ...
+    # Subtest: stable calls replay exactly without another provider request; conflicts fail
+    ok 2 - stable calls replay exactly without another provider request; conflicts fail
+      ---
+      duration_ms: 578.762989
+      type: 'test'
+      ...
+    # Subtest: structured output and tool arguments use a real bounded JSON Schema validator
+    ok 3 - structured output and tool arguments use a real bounded JSON Schema validator
+      ---
+      duration_ms: 821.865142
+      type: 'test'
+      ...
+    # Subtest: embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+    ok 4 - embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+      ---
+      duration_ms: 517.095711
+      type: 'test'
+      ...
+    # Subtest: streams retain ordered text and terminal result; broken streams never restart
+    ok 5 - streams retain ordered text and terminal result; broken streams never restart
+      ---
+      duration_ms: 352.577187
+      type: 'test'
+      ...
+    # Subtest: stream combinations require their own probe and preserve provider extensions
+    ok 6 - stream combinations require their own probe and preserve provider extensions
+      ---
+      duration_ms: 1785.974574
+      type: 'test'
+      ...
+    # Subtest: revocation during inference blocks result release and preserves the failed attempt
+    ok 7 - revocation during inference blocks result release and preserves the failed attempt
+      ---
+      duration_ms: 177.276154
+      type: 'test'
+      ...
+    # Subtest: an unobserved binding disable and re-enable cannot revive an admitted call
+    ok 8 - an unobserved binding disable and re-enable cannot revive an admitted call
+      ---
+      duration_ms: 344.765037
+      type: 'test'
+      ...
+    # Subtest: stream revocation blocks later events and its terminal result
+    ok 9 - stream revocation blocks later events and its terminal result
+      ---
+      duration_ms: 176.797201
+      type: 'test'
+      ...
+    # Subtest: cross-process cancellation interrupts waiting inference and retains uncertain admission
+    ok 10 - cross-process cancellation interrupts waiting inference and retains uncertain admission
+      ---
+      duration_ms: 937.540669
+      type: 'test'
+      ...
+    # Subtest: provider bodies and caller-selected endpoints remain bounded and protected
+    ok 11 - provider bodies and caller-selected endpoints remain bounded and protected
+      ---
+      duration_ms: 435.476244
+      type: 'test'
+      ...
+    # Subtest: the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+    ok 12 - the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+      ---
+      duration_ms: 1110.116648
+      type: 'test'
+      ...
+    # Subtest: one shared class budget covers native execution leases and model calls in both directions
+    ok 13 - one shared class budget covers native execution leases and model calls in both directions
+      ---
+      duration_ms: 1785.88087
+      type: 'test'
+      ...
+    # Subtest: bounded embedding batches retain one vector copy and terminal validation failures are recorded
+    ok 14 - bounded embedding batches retain one vector copy and terminal validation failures are recorded
+      ---
+      duration_ms: 1528.069106
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+    ok 15 - a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+      ---
+      duration_ms: 5925.406244
+      type: 'test'
+      ...
+    # Subtest: Ollama embedding transport disables truncation and records terminal context failure
+    ok 16 - Ollama embedding transport disables truncation and records terminal context failure
+      ---
+      duration_ms: 1027.587807
+      type: 'test'
+      ...
+    # Subtest: expired capability proofs fail before contacting the provider
+    ok 17 - expired capability proofs fail before contacting the provider
+      ---
+      duration_ms: 260.790007
+      type: 'test'
+      ...
+    1..17
+ok 1 - native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ---
+  duration_ms: 22993.49845
+  type: 'test'
+  ...
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 418.016142
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 1348.851922
+      type: 'test'
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 164.280774
+      type: 'test'
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 109.337528
+      type: 'test'
+      ...
+    1..4
+ok 2 - native disabled restore fences real work and external uncertainty without losing permanent state
+  ---
+  duration_ms: 7943.351344
+  type: 'test'
+  ...
+1..2
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 24739.83174

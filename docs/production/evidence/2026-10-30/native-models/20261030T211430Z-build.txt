@@ -1,0 +1,32 @@
+   Compiling iceberg v0.10.1
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: method `metrics` is never used
+   --> src/engine_io.rs:146:19
+    |
+ 69 | impl NativeEngineIo {
+    | ------------------- method in this implementation
+...
+146 |     pub(crate) fn metrics(&self) -> serde_json::Value {
+    |                   ^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: fields `source_resource`, `source_mapping`, and `identity_domain` are never read
+   --> src/serving.rs:132:5
+    |
+122 | struct BindingDefinition {
+    |        ----------------- fields in this struct
+...
+132 |     source_resource: Option<Uuid>,
+    |     ^^^^^^^^^^^^^^^
+133 |     #[serde(default)]
+134 |     source_mapping: BTreeMap<String, String>,
+    |     ^^^^^^^^^^^^^^
+135 |     #[serde(default)]
+136 |     identity_domain: Option<String>,
+    |     ^^^^^^^^^^^^^^^
+    |
+    = note: `BindingDefinition` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: `moria-runtime` (lib) generated 2 warnings
+    Finished `dev` profile [unoptimized] target(s) in 26.91s

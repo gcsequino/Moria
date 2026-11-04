@@ -1,0 +1,107 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 131.610757
+      type: 'test'
+      ...
+    # Subtest: unobserved profile disable and restore fences accepted work before code starts
+    ok 2 - unobserved profile disable and restore fences accepted work before code starts
+      ---
+      duration_ms: 605.727801
+      type: 'test'
+      ...
+    # Subtest: actual bounded guest reads three wide sources and commits both heads with one receipt
+    not ok 3 - actual bounded guest reads three wide sources and commits both heads with one receipt
+      ---
+      duration_ms: 120673.272437
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:600:13'
+      failureType: 'testCodeFailure'
+      error: 'Actual native pipeline lifecycle barrier was not reached'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-pipelines.integration.test.ts:26:10)
+        async terminal (/work/tests/native-pipelines.integration.test.ts:590:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:605:24)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:600:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: public SDK and CLI replay one native receipt without running code again
+    not ok 4 - public SDK and CLI replay one native receipt without running code again
+      ---
+      duration_ms: 87.930534
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:658:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'running'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'running'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:671:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:658:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a second actual guest verifies published Parquet values beyond JS precision through native grants
+    not ok 5 - a second actual guest verifies published Parquet values beyond JS precision through native grants
+      ---
+      duration_ms: 198.07805
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:694:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"INTERNAL","correlationId":"97d765ab-c732-4256-ad73-a78cd72c6cf7","details":null,"message":"INTERNAL","requestId":"97d765ab-c732-4256-ad73-a78cd72c6cf7","retryable":false}}
+        
+        500 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 500
+      operator: 'strictEqual'
+      stack: |-
+        invoke (/work/tests/native-pipelines.integration.test.ts:463:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:697:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:694:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..5
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 158405.931116
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:31:1'
+  failureType: 'hookFailed'
+  error: |-
+    Command failed: docker exec --user 0 moria-pipeline-proof-c5ae12a9-e516-41f4-b3bc-efeac73b781e kill -TERM 335
+    
+  code: 127
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+# Interrupted while running: tests/native-pipelines.integration.test.ts at /work/tests/native-pipelines.integration.test.ts:1:1

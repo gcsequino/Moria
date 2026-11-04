@@ -1,0 +1,17 @@
+{
+  "samples": 225,
+  "first": "2026-10-31T05:29:11.965Z",
+  "last": "2026-10-31T06:27:10.797Z",
+  "maximumCgroupMemoryCurrentBytes": 11441086464,
+  "maximumCgroupMemoryPeakBytes": 11470499840,
+  "maximumPerProcessRssBytesByComm": {
+    "MainThread": 211419136,
+    "esbuild": 17883136,
+    "postgres": 218144768,
+    "native_catalog": 37154816,
+    "python": 193142784,
+    "moria-runtime": 97144832
+  },
+  "finalMemoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+  "measurementLimits": "Shared host functional trial; process RSS includes shared PostgreSQL mappings and is not summed. Raw memory.stat separates page cache. No CPU/IO causality or sustained SLO certification is inferred."
+}

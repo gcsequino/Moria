@@ -1,0 +1,17 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `verify_preloaded_artifact` is never used
+  --> src/sandbox.rs:62:21
+   |
+62 | pub(crate) async fn verify_preloaded_artifact(
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `preloaded_artifact_available` is never used
+  --> src/sandbox.rs:78:21
+   |
+78 | pub(crate) async fn preloaded_artifact_available(artifact:&Value,adapter:Option<&Value>)->Result<bool> {
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `moria-runtime` (lib) generated 2 warnings
+    Finished `dev` profile [unoptimized] target(s) in 20.41s

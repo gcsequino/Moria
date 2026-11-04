@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 342.229628
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 388.460979
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 678.847539
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 579.246715
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 4133.513127
+  type: 'test'
+  ...
+# Subtest: managed Dataset native writers journal exact versioned objects and real execution pins
+not ok 2 - managed Dataset native writers journal exact versioned objects and real execution pins
+  ---
+  duration_ms: 5069.027906
+  type: 'test'
+  location: '/work/tests/native-dataset-retention.integration.test.ts:7:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+    
+    thread 'catalog_publication' (336) panicked at ../../tests/fixtures/native-catalog/harness.rs:149:10:
+    called `Result::unwrap()` on an `Err` value: FIXTURE_TYPE_INVALID
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+  code: 101
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+ok 3 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 2693.717928
+  type: 'test'
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+ok 4 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 10535.49711
+  type: 'test'
+  ...
+# Subtest: operational history normalizes bounded read pins against actual execution and cursor authority
+ok 5 - operational history normalizes bounded read pins against actual execution and cursor authority
+  ---
+  duration_ms: 2823.219653
+  type: 'test'
+  ...
+1..5
+# tests 9
+# suites 0
+# pass 8
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26669.459497

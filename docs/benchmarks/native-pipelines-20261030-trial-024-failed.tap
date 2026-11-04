@@ -1,0 +1,121 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 98.982733
+      type: 'test'
+      ...
+    # Subtest: private batched authority retains per-request parity and current revocation
+    ok 2 - private batched authority retains per-request parity and current revocation
+      ---
+      duration_ms: 1097.922675
+      type: 'test'
+      ...
+# PIPELINE_AUTHORITY_GUARD_PROBE={"jit":{"setting":"on","available":false},"timingsMillis":{"on":["152.406","131.010","129.083"],"off":["130.597","131.766","131.288"]},"scope":"one dedicated probe connection; worker settings unchanged"}
+# PIPELINE_AUTHORITY_FUNCTION_PROFILE=[{"funcname":"runtime_pipeline_current","calls":"1","total_time":104.925024,"self_time":0.461001},{"funcname":"native_serving_resource_access_batch_state","calls":"1","total_time":103.131987,"self_time":0.70108},{"funcname":"native_serving_filesystem_resource_access_state","calls":"8","total_time":100.260877,"self_time":100.260877},{"funcname":"runtime_data_operational","calls":"20","total_time":1.776875,"self_time":1.776875},{"funcname":"runtime_service_binding_guard","calls":"1","total_time":1.069955,"self_time":0.48671},{"funcname":"native_serving_service_authority","calls":"1","total_time":0.583245,"self_time":0.455356},{"funcname":"runtime_data_origins","calls":"8","total_time":0.330264,"self_time":0.292312},{"funcname":"runtime_dataset_kind","calls":"5","total_time":0.262081,"self_time":0.262081},{"funcname":"runtime_environment_cell_check","calls":"1","total_time":0.127889,"self_time":0.078456},{"funcname":"runtime_data_resource","calls":"16","total_time":0.100843,"self_time":0.100843},{"funcname":"runtime_recovery_check","calls":"1","total_time":0.049433,"self_time":0.036705},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"1","total_time":0.012728,"self_time":0.012728}]
+    # Subtest: unobserved profile disable and restore fences accepted work before code starts
+    ok 3 - unobserved profile disable and restore fences accepted work before code starts
+      ---
+      duration_ms: 610.073111
+      type: 'test'
+      ...
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"queued","hostCpu":{"workerCpuTicks":"65","postgresCpuTicks":"252"},"events":[]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"running","hostCpu":{"workerCpuTicks":"520","postgresCpuTicks":"1204"},"events":[{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"4586"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"running","hostCpu":{"workerCpuTicks":"1015","postgresCpuTicks":"2282"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"started","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"4586"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"running","hostCpu":{"workerCpuTicks":"1505","postgresCpuTicks":"3368"},"events":[{"sequence":"8","kind":"enginePhase","payload":{"calls":"82","phase":"inputOpen","state":"started","metrics":{"inputBytes":"24933520","outputBytes":"0","inputRowsEncoded":"12000","outputRowsAppended":"0"}}},{"sequence":"7","kind":"engineProgress","payload":{"calls":"64","methods":{"metadata":"1","inputOpen":"2","inputBatch":"61"},"metrics":{"inputBytes":"19535368","outputBytes":"0","inputRowsEncoded":"9402","outputRowsAppended":"0"},"authority":{"checks":"295","elapsedMicros":"15236106"},"methodMillis":{"metadata":"0","inputOpen":"9006","inputBatch":"2740"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"4420"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"started","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"running","hostCpu":{"workerCpuTicks":"1983","postgresCpuTicks":"4468"},"events":[{"sequence":"9","kind":"enginePhase","payload":{"calls":"82","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"24933520","outputBytes":"0","inputRowsEncoded":"12000","outputRowsAppended":"0"},"elapsedMillis":"4486"}},{"sequence":"8","kind":"enginePhase","payload":{"calls":"82","phase":"inputOpen","state":"started","metrics":{"inputBytes":"24933520","outputBytes":"0","inputRowsEncoded":"12000","outputRowsAppended":"0"}}},{"sequence":"7","kind":"engineProgress","payload":{"calls":"64","methods":{"metadata":"1","inputOpen":"2","inputBatch":"61"},"metrics":{"inputBytes":"19535368","outputBytes":"0","inputRowsEncoded":"9402","outputRowsAppended":"0"},"authority":{"checks":"295","elapsedMicros":"15236106"},"methodMillis":{"metadata":"0","inputOpen":"9006","inputBatch":"2740"}}},{"sequence":"6","kind":"enginePhase","payload":{"calls":"42","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"12466760","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"4420"}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"running","hostCpu":{"workerCpuTicks":"2412","postgresCpuTicks":"5636"},"events":[{"sequence":"13","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"},"elapsedMillis":"837"}},{"sequence":"12","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"}}},{"sequence":"11","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"},"elapsedMillis":"957"}},{"sequence":"10","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"preparing","hostCpu":{"workerCpuTicks":"2791","postgresCpuTicks":"6889"},"events":[{"sequence":"13","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"},"elapsedMillis":"837"}},{"sequence":"12","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"}}},{"sequence":"11","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"},"elapsedMillis":"957"}},{"sequence":"10","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"1e26e76d-7705-4a9b-b73c-1244d525ac6f","status":"preparing","hostCpu":{"workerCpuTicks":"3157","postgresCpuTicks":"8121"},"events":[{"sequence":"13","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"},"elapsedMillis":"837"}},{"sequence":"12","kind":"enginePhase","payload":{"calls":"127","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"98384","inputRowsEncoded":"18000","outputRowsAppended":"6010"}}},{"sequence":"11","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"finished","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"},"elapsedMillis":"957"}},{"sequence":"10","kind":"enginePhase","payload":{"calls":"124","phase":"outputFinish","state":"started","metrics":{"inputBytes":"37400280","outputBytes":"97472","inputRowsEncoded":"18000","outputRowsAppended":"6000"}}}]}
+    # Subtest: actual bounded guest reads three wide sources and commits both heads with one receipt
+    ok 4 - actual bounded guest reads three wide sources and commits both heads with one receipt
+      ---
+      duration_ms: 74348.130792
+      type: 'test'
+      ...
+    # Subtest: public SDK and CLI replay one native receipt without running code again
+    ok 5 - public SDK and CLI replay one native receipt without running code again
+      ---
+      duration_ms: 542.756574
+      type: 'test'
+      ...
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"queued","hostCpu":{"workerCpuTicks":"3336","postgresCpuTicks":"8506"},"events":[]}
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"running","hostCpu":{"workerCpuTicks":"3691","postgresCpuTicks":"9768"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"running","hostCpu":{"workerCpuTicks":"4036","postgresCpuTicks":"11085"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"running","hostCpu":{"workerCpuTicks":"4387","postgresCpuTicks":"12410"},"events":[{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"running","hostCpu":{"workerCpuTicks":"4769","postgresCpuTicks":"13685"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"29419"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"running","hostCpu":{"workerCpuTicks":"5120","postgresCpuTicks":"15005"},"events":[{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"29419"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+# PIPELINE_LIVE_CONTROL={"id":"33816200-1e27-4eb6-be17-94ce62714e60","status":"running","hostCpu":{"workerCpuTicks":"5452","postgresCpuTicks":"16302"},"events":[{"sequence":"6","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"},"elapsedMillis":"19192"}},{"sequence":"5","kind":"enginePhase","payload":{"calls":"11","phase":"inputOpen","state":"started","metrics":{"inputBytes":"98440","outputBytes":"0","inputRowsEncoded":"6000","outputRowsAppended":"0"}}},{"sequence":"4","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"finished","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"},"elapsedMillis":"29419"}},{"sequence":"3","kind":"enginePhase","payload":{"calls":"2","phase":"inputOpen","state":"started","metrics":{"inputBytes":"0","outputBytes":"0","inputRowsEncoded":"0","outputRowsAppended":"0"}}}]}
+    # Subtest: a second actual guest verifies published Parquet values beyond JS precision through native grants
+    not ok 6 - a second actual guest verifies published Parquet values beyond JS precision through native grants
+      ---
+      duration_ms: 64297.347693
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:1023:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"result":{"error":"FUNCTION_FAILED","id":"33816200-1e27-4eb6-be17-94ce62714e60","markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"release":"sha256:9f52536d1b368db353ea841efa34349a6bb232ebf2a54d3130e0711dbd951c12","resourceId":"93a72d96-a157-451c-b300-cff1c4af0911","result":null,"status":"failed","valueVersion":1},"events":{"after":"9","events":[{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"tasks":1},"sequence":"1","type":"accepted"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"fence":"1","owner":"8c0f2210-40b2-4318-96c1-35bb6f57f517","task":"7ae9f28d-ba0a-485b-8a80-19fb22ef1fff"},"sequence":"2","type":"claimed"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"calls":"2","metrics":{"inputBytes":"0","inputRowsEncoded":"0","outputBytes":"0","outputRowsAppended":"0"},"phase":"inputOpen","state":"started"},"sequence":"3","type":"enginePhase"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"calls":"2","elapsedMillis":"29419","metrics":{"inputBytes":"0","inputRowsEncoded":"0","outputBytes":"0","outputRowsAppended":"0"},"phase":"inputOpen","state":"finished"},"sequence":"4","type":"enginePhase"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"calls":"11","metrics":{"inputBytes":"98440","inputRowsEncoded":"6000","outputBytes":"0","outputRowsAppended":"0"},"phase":"inputOpen","state":"started"},"sequence":"5","type":"enginePhase"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"calls":"11","elapsedMillis":"19192","metrics":{"inputBytes":"98440","inputRowsEncoded":"6000","outputBytes":"0","outputRowsAppended":"0"},"phase":"inputOpen","state":"finished"},"sequence":"6","type":"enginePhase"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"call":"15","code":"SCHEMA_CHANGED","sqlState":null},"sequence":"7","type":"brokerFailed"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"message":"{\"engineFailure\": {\"type\": \"ValueError\", \"lines\": [30, 19, 306, 191, 95]}}"},"sequence":"8","type":"log"},{"markings":[{"environment":"946ad30d-881c-4d13-84ae-7b22b03df6f1","marking":"private"}],"payload":{"error":"FUNCTION_FAILED"},"sequence":"9","type":"failed"}]}}
+        + actual - expected
+        
+        + 'failed'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:1028:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:1023:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: canonical UUID and scalar arrays survive DuckDB and Parquet; hard spill exhaustion cleans mode000 files before slot reuse
+    not ok 7 - canonical UUID and scalar arrays survive DuckDB and Parquet; hard spill exhaustion cleans mode000 files before slot reuse
+      ---
+      duration_ms: 123.460457
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:1055:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"INTERNAL","correlationId":"5e9ba554-469b-41b5-9c16-8c57132af6a6","details":null,"message":"INTERNAL","requestId":"5e9ba554-469b-41b5-9c16-8c57132af6a6","retryable":false}}
+        
+        500 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 500
+      operator: 'strictEqual'
+      stack: |-
+        invoke (/work/tests/native-pipelines.integration.test.ts:571:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:1058:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:1055:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..7
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 209327.069061
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:69:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 5
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 209888.443288

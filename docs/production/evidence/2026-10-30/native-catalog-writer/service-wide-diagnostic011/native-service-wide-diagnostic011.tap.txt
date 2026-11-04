@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    not ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 6247.035663
+      type: 'test'
+      location: '/work/tests/native-indexing-service.integration.test.ts:448:15'
+      failureType: 'testCodeFailure'
+      error: |-
+        Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+        {"build":"66d4a0bb-fd83-479e-aae7-cedc1700987f","error":"INDEXING_FAILED"}
+        
+        thread 'catalog_publication' (160) panicked at ../../tests/fixtures/native-catalog/harness.rs:77:10:
+        called `Result::unwrap()` on an `Err` value: INDEXING_INCOMPLETE ["failed"]
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 101
+      stack: |-
+        genericNodeError (node:internal/errors:986:15)
+        wrappedFn (node:internal/errors:540:14)
+        ChildProcess.exithandler (node:child_process:417:12)
+        ChildProcess.emit (node:events:514:28)
+        maybeClose (node:internal/child_process:1172:16)
+        ChildProcess._handle.onexit (node:internal/child_process:335:5)
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    not ok 2 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 2.880025
+      type: 'test'
+      location: '/work/tests/native-indexing-service.integration.test.ts:535:15'
+      failureType: 'testCodeFailure'
+      error: 'invalid input syntax for type uuid: ""'
+      code: '22P02'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:545:15)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:535:7)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 3 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 7506.81117
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    not ok 4 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 23.877478
+      type: 'test'
+      location: '/work/tests/native-indexing-service.integration.test.ts:631:15'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        0 !== 1
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 1
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:639:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:631:7)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 5 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 7397.950758
+      type: 'test'
+      ...
+    1..5
+not ok 1 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ---
+  duration_ms: 27012.283186
+  type: 'test'
+  location: '/work/tests/native-indexing-service.integration.test.ts:20:3'
+  failureType: 'subtestsFailed'
+  error: '3 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 6
+# suites 0
+# pass 2
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27468.70952

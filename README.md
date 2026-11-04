@@ -15,8 +15,11 @@ Default startup hosts management only. The bundled Snow/weather POC is retired; 
 The [platform filesystem](docs/FILESYSTEM.md) organizes human and agent homes,
 group projects, ontologies and code repositories with inherited access, verified
 versioned files and checkout/push/publication. Open **Files** in the management
-console or run `pnpm moria fs home`. This requires a fresh schema version 4 database.
+console or run `pnpm moria fs home`. This branch requires a fresh schema version 5 database.
 
+The [Rust runtime program](docs/production/RUST-PLATFORM-PROGRAM.md) records the
+component inventory, contracts, verification evidence and remaining integration.
+The shared crate is in `services/runtime`; runtime roles execute independently.
 The [Rust indexing service](services/indexing/README.md) captures durable
 dataset-to-object work and runs concurrent, fenced executors independently of
 the API. Its first supported input is copy-on-write Iceberg on shared POSIX storage.
@@ -50,9 +53,14 @@ pnpm moria validate examples/maintenance.json --attributes examples/principal-at
 
 Use the commands in the [Linux quality workflow](.github/workflows/quality.yml)
 to build the test image, preload pinned function images and run the offline gate.
-The quality container needs the test daemon socket and its host group; bootstrap
-and function sandboxes receive no socket. Use a disposable test host. This is test
-packaging, not a production deployment.
+On the disposable Docker host, run `sudo python3 deploy/test/run-quality.py moria-test:ci`
+after building the image and preloading its pinned prerequisites. This provisions
+two separate two-slot ext4 scratch pools, passes their exact devices and host paths
+to the non-root quality container, and removes only those owned resources after
+the controller stops. Pipeline and composed-instance databases receive different
+pools, preserving permanent incarnation markers. The quality container receives
+the daemon socket; bootstrap and function sandboxes receive no socket. This is
+test packaging, not a production deployment.
 
 `pnpm check` runs formatting, architecture ownership, SDK drift and TypeScript checks, runtime tests,
 Python formatting, specification/workload validation, both bundled application
@@ -98,7 +106,7 @@ Raw benchmark evidence under `docs/benchmarks` is excluded.
 
 For Python, install the development formatter with
 `python -m pip install -r requirements-dev.txt`, then run
-`python -m black workers benchmarks docs/spec/schemas` (or add `--check`).
+`python -m black workers benchmarks docs/spec/schemas scripts deploy/test` (or add `--check`).
 Use the virtual environment's Python executable. The Go and Rust benchmark
 sources use `gofmt` and `cargo fmt --manifest-path benchmarks/ontology/rust/Cargo.toml`.
 

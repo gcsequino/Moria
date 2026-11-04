@@ -1,0 +1,100 @@
+{
+  "scope": "exploratory",
+  "profile": "capacity",
+  "fullProfileCertified": false,
+  "population": 1000000,
+  "rowBytes": 4096,
+  "source": {
+    "profile": "capacity",
+    "metadata": "moria://warehouse/table/metadata/00001-1e32efa6-44b0-4796-b6e4-2d1904ffa7c1.metadata.json",
+    "snapshotId": "2739706823540891855",
+    "tableUuid": "33a4495c-4520-4966-ae7d-169919f074a0",
+    "objectsFile": "/tmp/catalog-storage-YxCDsC/source/objects.jsonl",
+    "rows": "1000000",
+    "rowBytes": 4096,
+    "logicalBytes": "4096000000",
+    "physicalDataBytes": "4019642204",
+    "objects": 249,
+    "sourceDigest": "093e0de3767ba7ffc0eb0010772a9afc783f2e518104f3cce4cd4645fb2d8cb4",
+    "sourceSum": "e5791ccd94095332e73804b3fd4994f9065011867c6ca53ba4509e9d444e647e",
+    "sourceXor": "4f7f24ee95a42bb4ee859c2dd9199b731d0a88371e5b70359d56b1708d571ed0",
+    "elapsedSeconds": 22.38734974595718,
+    "seed": "moria-capacity-v1",
+    "rowsPerFile": 4096
+  },
+  "verification": {
+    "count": "1000000",
+    "event": "capacity_verified",
+    "projection": "5103fb30-54a5-4050-b087-26dd6e334eba",
+    "projectionBytes": "11666636800",
+    "revision": "2",
+    "sourceSum": "e5791ccd94095332e73804b3fd4994f9065011867c6ca53ba4509e9d444e647e",
+    "sourceXor": "4f7f24ee95a42bb4ee859c2dd9199b731d0a88371e5b70359d56b1708d571ed0"
+  },
+  "timings": {
+    "identityMs": 72566.242399,
+    "producerMs": 22743.47537300001,
+    "publicationMs": 847492.2188619999,
+    "indexingMs": 642775.8816639999,
+    "oracleMs": 84881.04741099989
+  },
+  "runs": {
+    "identity": {
+      "elapsedMs": 72565.692969,
+      "exitCode": 0
+    },
+    "publication": {
+      "elapsedMs": 847456.89841,
+      "exitCode": 0
+    },
+    "index-1": {
+      "elapsedMs": 642667.5180159999,
+      "exitCode": 0
+    },
+    "index-2": {
+      "elapsedMs": 642705.012299,
+      "exitCode": 0
+    },
+    "oracle": {
+      "elapsedMs": 84868.04099999997,
+      "exitCode": 0
+    }
+  },
+  "timeline": [
+    {
+      "phase": "setup",
+      "elapsedMs": 150.34519
+    },
+    {
+      "phase": "identity",
+      "elapsedMs": 72566.208511
+    },
+    {
+      "phase": "source-production",
+      "elapsedMs": 22743.477677999996
+    },
+    {
+      "phase": "source-publication",
+      "elapsedMs": 847492.2397840001
+    },
+    {
+      "phase": "native-indexing-projection",
+      "elapsedMs": 642775.8680889999
+    },
+    {
+      "phase": "native-streaming-oracle",
+      "elapsedMs": 84881.05404500011
+    },
+    {
+      "phase": "operator-plan-samples",
+      "elapsedMs": 873.9604990000371
+    }
+  ],
+  "elapsedMs": 1671483.681725,
+  "remaining": [
+    "protected HTTP mixed load",
+    "two retained source generations and 20% overlays with ten historical edits",
+    "identity/visibility/width/fanout trials",
+    "full repetitions, peak, recovery, soak, wider-than-memory and failure-domain proofs"
+  ]
+}

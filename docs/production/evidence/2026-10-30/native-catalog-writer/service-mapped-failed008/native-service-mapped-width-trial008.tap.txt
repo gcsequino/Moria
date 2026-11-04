@@ -1,0 +1,135 @@
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ✖ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (9286.692057ms)
+  ✖ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (2.492231ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (14846.886426ms)
+  ✖ broader current policy retains the old generation restriction until a newly captured native build activates (24.626447ms)
+  ✔ disabled registered purpose remains blocked even after further unrelated epoch changes (14625.325398ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows) (44773.217741ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width) (4477.263345ms)
+▶ native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ✔ off-lock paged build replays an actual concurrent native action before atomic activation (2411.223137ms)
+  ✔ strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64 (272.763639ms)
+  ✔ current actions maintain typed history atomically and exact overflow remains present (89.203012ms)
+  ✔ layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins (839.949213ms)
+  ✔ expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation (2488.627793ms)
+  ✔ a publication tail beyond the barrier budget releases the environment lock and resumes off-lock (1172.860846ms)
+  ✔ a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding (1599.805796ms)
+  ✔ protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback (347.480528ms)
+  ✔ protected typed projection aggregation includes overflow and current overlays with exact authorized groups (123.663929ms)
+  ✔ a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays (1337.960756ms)
+✔ native effective projections build off-lock, replay concurrent edits and activate with source generations (19793.075843ms)
+ℹ 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.013,"Actual Total Time":0.017,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_7bd949725710412d8381f9e2aad3b566_1_c","Relation Name":"runtime_projection_7bd949725710412d8381f9e2aad3b566","Alias":"runtime_projection_7bd949725710412d8381f9e2aad3b566","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.013,"Actual Total Time":0.016,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.08,"Triggers":[],"Execution Time":0.023}]
+▶ resource data provenance retains classification, bounds cycles and pre-admits publication authority
+  ✔ permanent indexing revisions use exact canonical strings for large epochs (1.843706ms)
+  ✔ authorized dependency is admitted before its immutable binding captures the resulting epoch (19.904629ms)
+  ✔ a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head (2151.56501ms)
+  ✔ new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs (46.71032ms)
+  ✔ duplicate admission is epoch-stable and cyclic provenance terminates with retained union (30.205853ms)
+  ✔ registered producer metadata admits exact declared provenance and rejects authority or output-floor substitution atomically (95.740721ms)
+✔ resource data provenance retains classification, bounds cycles and pre-admits publication authority (5429.41879ms)
+▶ native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ✔ POSIX publication indexes 300 canonical objects using current namespace read authority (3157.458652ms)
+  ✔ MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials (5608.62443ms)
+  ✔ an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt (5862.821522ms)
+  ✔ stale and ambiguous provider bindings cannot activate an object generation (5115.874243ms)
+  ✔ a pinned physical object with changed bytes fails semantic verification before activation (3480.728518ms)
+  ✔ cached verification is immutable and physical file versions are still checked by concurrent task reads (5799.223553ms)
+  ✔ a ready verification never caches permission across current authority revocation (5747.88441ms)
+  ✔ an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards (9459.573204ms)
+  ✔ a published native index retains every enabled Dataset namespace classification after later disable (48.834982ms)
+✔ native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants (49584.819248ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 30
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 125258.780565
+
+✖ failing tests:
+
+test at tests/native-indexing-service.integration.test.ts:448:15
+✖ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (9286.692057ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  {"build":"e5b84612-0456-4156-aa91-599a73bd6956","error":"DATASET_BINDING_INVALID"}
+  
+  thread 'catalog_publication' (161) panicked at ../../tests/fixtures/native-catalog/harness.rs:77:10:
+  called `Result::unwrap()` on an `Err` value: INDEXING_INCOMPLETE ["failed"]
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"e5b84612-0456-4156-aa91-599a73bd6956","event":"planning","fence":"1","worker":"e68853e8-83ee-4208-965d-38de9b6c54d6"}\n{"event":"snapshot_verification_claimed","fence":"1","key":"sha256:f2b178c7e009ac5ec40a3c3886c3815e7c5fdc2f682a7b14b22c0a84b6b46949","owner":"35bcfd41-1157-4a41-b00c-49d0814590fd"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 3.66s\n\n',
+    stderr: '{"build":"e5b84612-0456-4156-aa91-599a73bd6956","error":"DATASET_BINDING_INVALID"}\n\nthread \'catalog_publication\' (161) panicked at ../../tests/fixtures/native-catalog/harness.rs:77:10:\ncalled `Result::unwrap()` on an `Err` value: INDEXING_INCOMPLETE ["failed"]\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }
+
+test at tests/native-indexing-service.integration.test.ts:515:15
+✖ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (2.492231ms)
+  error: invalid input syntax for type uuid: ""
+      at /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:525:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:515:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    length: 129,
+    severity: 'ERROR',
+    code: '22P02',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: "unnamed portal parameter $1 = ''",
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'uuid.c',
+    line: '177',
+    routine: 'string_to_uuid'
+  }
+
+test at tests/native-indexing-service.integration.test.ts:611:15
+✖ broader current policy retains the old generation restriction until a newly captured native build activates (24.626447ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 150
+  
+      at TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:619:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:611:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 150,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/native-indexing-service.integration.test.ts:20:3
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width) (4477.263345ms)
+  Error [MoriaError]: Manifest validation failed
+      at compileManifest (/work/packages/compiler/src/index.ts:41:11)
+      at compileSource (/work/packages/compiler/src/source.ts:11:34)
+      at SourceService.publish (/work/services/filesystem/src/source.ts:299:23)
+      at async TestContext.<anonymous> (/work/tests/native-indexing-service.integration.test.ts:140:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'VALIDATION_FAILED',
+    details: [ { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec/columns', message: 'maxLength: must NOT have more than 100 characters' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec/columns', message: 'propertyNames: property name must be valid' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'inputs'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'outputs'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'artifact'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'runtime'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'limits'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'artifact'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'abiVersion'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'capabilities'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'configurationSchema'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'implementation'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'configuration'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'secrets'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'output'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'mode'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'coverage'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'stream'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' } ]
+  }

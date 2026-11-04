@@ -10,6 +10,70 @@ export class Catalog {
     readonly pool: Pool,
     readonly schemaMode: 'apply' | 'verify' = 'apply',
   ) {}
+  async dataProvenance(
+    client: PoolClient,
+    environment: string,
+    resource: string,
+    operation = 'read',
+  ) {
+    try {
+      const row = (
+        await client.query(
+          `SELECT moria.runtime_data_origins($1,$2) AS origins,
+        moria.runtime_data_labels($1,$2) AS markings,moria.runtime_data_resource($1,$2) AS resource`,
+          [environment, resource],
+        )
+      ).rows[0] as { origins: string[]; markings: string[]; resource: string };
+      await client.query(
+        'SELECT moria.runtime_data_operational($1,origin,$3) FROM unnest($2::text[]) origin',
+        [environment, row.origins, operation],
+      );
+      return row;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND')
+        throw new MoriaError('NOT_FOUND', 'Published resource is unavailable');
+      if (error instanceof Error && error.message === 'AMBIGUOUS_RESOURCE')
+        throw new MoriaError(
+          'FORBIDDEN',
+          'Runtime bindings must identify ambiguous resources by UUID',
+        );
+      if (error instanceof Error && error.message === 'RESOURCE_LIMIT')
+        throw new MoriaError(
+          'RESOURCE_LIMIT',
+          'Resource provenance exceeds the admitted control budget',
+        );
+      throw error;
+    }
+  }
+  async datasetClassification(
+    client: PoolClient,
+    sessionHash: string,
+    resource: string,
+  ): Promise<string[]> {
+    return (
+      await client.query('SELECT moria.runtime_dataset_labels($1,$2) AS markings', [
+        sessionHash,
+        resource,
+      ])
+    ).rows[0].markings;
+  }
+  /** Admission changes policy before the caller captures its immutable work authority. */
+  async admitDataProvenance(
+    client: PoolClient,
+    sessionHash: string,
+    targets: string[],
+    sources: string[],
+    operation: 'write' | 'index',
+  ) {
+    return (
+      await client.query('SELECT moria.runtime_data_admit($1,$2,$3,$4)::text AS epoch', [
+        sessionHash,
+        targets,
+        sources,
+        operation,
+      ])
+    ).rows[0].epoch as string;
+  }
   async migrate(): Promise<void> {
     await schema(this.pool, this.schemaMode);
   }
@@ -105,21 +169,20 @@ export class Catalog {
     );
   }
   async resolveIdentity(domain: string, canonicalKey: string): Promise<string> {
-    // Never delete or reassign rows; caller authorization to identityDomain belongs upstream.
-    for (let attempt = 0; attempt < 5; attempt++) {
-      try {
-        const result = await this.pool.query(
-          `INSERT INTO moria.identities(domain,canonical_key,uid) VALUES($1,$2,$3)
-          ON CONFLICT(domain,canonical_key) DO UPDATE SET canonical_key=EXCLUDED.canonical_key RETURNING uid`,
-          [domain, canonicalKey, randomUUID()],
-        );
-        return result.rows[0].uid;
-      } catch (error) {
-        if ((error as any).code !== '23505' || (error as any).constraint !== 'identities_uid_key')
-          throw error;
-      }
+    // Managed domains require their native owner/fence; legacy fixtures cannot bypass a transfer.
+    try {
+      return (
+        await this.pool.query('SELECT moria.runtime_identity_resolve_legacy($1,$2) AS uid', [
+          domain,
+          canonicalKey,
+        ])
+      ).rows[0].uid;
+    } catch (error) {
+      const code = (error as Error).message;
+      if (['OWNERSHIP_REQUIRED', 'IDENTITY_ALLOCATION_FAILED'].includes(code))
+        throw new MoriaError(code, 'Identity allocation requires its current domain owner.');
+      throw error;
     }
-    throw new MoriaError('IDENTITY_ALLOCATION_FAILED', 'Unique identity allocation exhausted');
   }
   /** One MVCC statement pins a coherent head map across an atomic publication. */
   async heads(

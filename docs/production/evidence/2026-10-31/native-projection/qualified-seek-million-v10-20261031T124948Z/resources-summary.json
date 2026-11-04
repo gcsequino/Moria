@@ -1,0 +1,16 @@
+{
+  "samples": 127,
+  "first": "2026-10-31T14:48:47.253Z",
+  "last": "2026-10-31T15:22:17.897Z",
+  "maxMemoryCurrentBytes": 12884918272,
+  "memoryPeakBytes": 12885667840,
+  "maxIndividualProcessRssBytes": 215314432,
+  "maxMemoryEvents": {
+    "low": 0,
+    "high": 0,
+    "max": 135414,
+    "oom": 0,
+    "oom_kill": 0,
+    "oom_group_kill": 0
+  }
+}

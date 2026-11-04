@@ -1,0 +1,53 @@
+TAP version 13
+# Subtest: caught secondary link-cardinality failure retains its complete native outcome and rolls replay effects back
+ok 1 - caught secondary link-cardinality failure retains its complete native outcome and rolls replay effects back
+  ---
+  duration_ms: 11413.80741
+  type: 'test'
+  ...
+# Subtest: native development owner drains actual Rust children before stopping qualified embedded PostgreSQL
+ok 2 - native development owner drains actual Rust children before stopping qualified embedded PostgreSQL
+  ---
+  duration_ms: 3745.628372
+  type: 'test'
+  ...
+# Subtest: default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+ok 3 - default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+  ---
+  duration_ms: 3238.429451
+  type: 'test'
+  ...
+# Subtest: bounded OIDC refresh preserves existing session/provider/CSRF semantics
+ok 4 - bounded OIDC refresh preserves existing session/provider/CSRF semantics
+  ---
+  duration_ms: 2739.816737
+  type: 'test'
+  ...
+# Subtest: split OIDC callback and accepted-human refresh use actual IdP evidence without renewing ordinary expiry
+ok 5 - split OIDC callback and accepted-human refresh use actual IdP evidence without renewing ordinary expiry
+  ---
+  duration_ms: 22969.798675
+  type: 'test'
+  ...
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 29977.893556
+      type: 'test'
+      ...
+    1..1
+ok 6 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 40332.598103
+  type: 'test'
+  ...
+1..6
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86139.478783

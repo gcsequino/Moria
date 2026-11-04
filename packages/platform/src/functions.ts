@@ -2,6 +2,7 @@ import type { Transport, RequestOptions, ActionOptions } from './transport.js';
 import { ApiError } from './transport.js';
 import { VALUE_VERSION } from '../../contracts/value-types.js';
 import type { FunctionInvocation, FunctionEvent } from '../../contracts/functions.js';
+import { checkedCancellation } from './execution.js';
 
 export function functionsClient(transport: Transport) {
   const checked = (value: FunctionInvocation) => {
@@ -33,7 +34,7 @@ export function functionsClient(transport: Transport) {
       ),
     cancel: (id: string, settings?: RequestOptions) =>
       transport
-        .request<FunctionInvocation>(`${invocation(id)}/cancel`, 'POST', {}, settings)
-        .then(checked),
+        .request<unknown>(`${invocation(id)}/cancel`, 'POST', {}, settings)
+        .then((value) => checkedCancellation(id, value)),
   };
 }

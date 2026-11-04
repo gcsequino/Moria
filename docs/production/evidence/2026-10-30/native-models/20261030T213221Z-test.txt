@@ -1,0 +1,51 @@
+TAP version 13
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 384.066224
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 1326.740652
+      type: 'test'
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 150.670718
+      type: 'test'
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 98.225392
+      type: 'test'
+      ...
+    1..4
+not ok 1 - native disabled restore fences real work and external uncertainty without losing permanent state
+  ---
+  duration_ms: 4853.933765
+  type: 'test'
+  location: '/work/tests/native-recovery.integration.test.ts:14:1'
+  failureType: 'hookFailed'
+  error: 'Server is not running.'
+  code: 'ERR_SERVER_NOT_RUNNING'
+  stack: |-
+    Server.close (node:net:2881:12)
+    Server.wrapper (node:events:639:12)
+    Server.emit (node:events:514:28)
+    emitCloseNT (node:net:2941:8)
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+1..1
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5220.579507

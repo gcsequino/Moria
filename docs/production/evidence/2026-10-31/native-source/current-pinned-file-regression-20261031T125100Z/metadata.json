@@ -1,0 +1,15 @@
+{
+  "classification": "actual-PostgreSQL-live-source-regression; no native artifact modified or used",
+  "result": {
+    "tests": 17,
+    "pass": 17,
+    "fail": 0,
+    "skipped": 0
+  },
+  "sourceHashesAfterRun": {
+    "tests/filesystem-source.integration.test.ts": "2bbd982574037ba2d9e9b417123d201ed21020c832b54a368fc715a24ffdab19",
+    "services/database/src/serving-runtime-schema.ts": "e2e7eef62fb10bbec7997f134ff1c95248ec5f79afd74e25d7ca3153ce2924db",
+    "services/database/src/source-declaration-schema.ts": "6d3d23117d8c319da0c44f40f5a9f443a795515bc4e25479e82c777acb4ae3d5",
+    "services/database/src/provenance-runtime-schema.ts": "0741381d0cfc48b696cdf4ec40031503b0bd46f44d31810d367a3637d83349a5"
+  }
+}

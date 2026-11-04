@@ -1,0 +1,35 @@
+✖ native effective projections build off-lock, replay concurrent edits and activate with source generations (5659.686114ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5990.985217
+
+✖ failing tests:
+
+test at tests/native-projection.integration.test.ts:19:1
+✖ native effective projections build off-lock, replay concurrent edits and activate with source generations (5659.686114ms)
+  Error: Command failed: /work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (94) panicked at src/worker.rs:205:291:
+  error retrieving column 0: error deserializing column 0
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at Socket.<anonymous> (node:internal/child_process:527:11)
+      at Socket.emit (node:events:514:28)
+      at Pipe.<anonymous> (node:net:362:12) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/work/.proof-artifacts/native_catalog --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"2bfc538c-9782-4171-971c-d3a24cf762fa","event":"planning","fence":"1","worker":"445e38e4-c675-48d0-96a6-6aa35aa9ee48"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.09s\n\n',
+    stderr: "\nthread 'catalog_publication' (94) panicked at src/worker.rs:205:291:\nerror retrieving column 0: error deserializing column 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }

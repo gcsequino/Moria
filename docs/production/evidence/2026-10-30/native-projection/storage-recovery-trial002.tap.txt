@@ -1,0 +1,163 @@
+TAP version 13
+# Subtest: native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+    # Subtest: real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+        # Subtest: native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+            # Subtest: valid
+            ok 1 - valid
+              ---
+              duration_ms: 764.329015
+              type: 'test'
+              ...
+            # Subtest: wrong-table
+            ok 2 - wrong-table
+              ---
+              duration_ms: 358.135143
+              type: 'test'
+              ...
+            # Subtest: wrong-snapshot
+            ok 3 - wrong-snapshot
+              ---
+              duration_ms: 359.434341
+              type: 'test'
+              ...
+            # Subtest: missing
+            ok 4 - missing
+              ---
+              duration_ms: 543.319787
+              type: 'test'
+              ...
+            # Subtest: extra
+            ok 5 - extra
+              ---
+              duration_ms: 845.784023
+              type: 'test'
+              ...
+            # Subtest: malformed-manifest
+            ok 6 - malformed-manifest
+              ---
+              duration_ms: 566.648509
+              type: 'test'
+              ...
+            # Subtest: malformed-parquet
+            ok 7 - malformed-parquet
+              ---
+              duration_ms: 582.010808
+              type: 'test'
+              ...
+            # Subtest: nullable-array
+            ok 8 - nullable-array
+              ---
+              duration_ms: 350.82467
+              type: 'test'
+              ...
+            # Subtest: historical-schema
+            ok 9 - historical-schema
+              ---
+              duration_ms: 733.548973
+              type: 'test'
+              ...
+            # Subtest: cycle
+            ok 10 - cycle
+              ---
+              duration_ms: 786.649593
+              type: 'test'
+              ...
+            # Subtest: duplicate-schema
+            ok 11 - duplicate-schema
+              ---
+              duration_ms: 356.836174
+              type: 'test'
+              ...
+            # Subtest: current-projection
+            ok 12 - current-projection
+              ---
+              duration_ms: 646.623943
+              type: 'test'
+              ...
+            # Subtest: missing-sort-orders
+            ok 13 - missing-sort-orders
+              ---
+              duration_ms: 359.80583
+              type: 'test'
+              ...
+            # Subtest: foreign-reference
+            ok 14 - foreign-reference
+              ---
+              duration_ms: 382.084693
+              type: 'test'
+              ...
+            # Subtest: deleted-valid
+            ok 15 - deleted-valid
+              ---
+              duration_ms: 1199.754772
+              type: 'test'
+              ...
+            # Subtest: deleted-corrupt
+            ok 16 - deleted-corrupt
+              ---
+              duration_ms: 568.457435
+              type: 'test'
+              ...
+            1..16
+        ok 1 - native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+          ---
+          duration_ms: 9407.877981
+          type: 'test'
+          ...
+        1..1
+    ok 1 - real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+      ---
+      duration_ms: 22272.683375
+      type: 'test'
+      ...
+    # Subtest: SIGKILL after a durable page commit reopens exact bounded closure state
+    ok 2 - SIGKILL after a durable page commit reopens exact bounded closure state
+      ---
+      duration_ms: 3441.028107
+      type: 'test'
+      ...
+    # Subtest: a provider version change between chunks denies subsequent range release
+    ok 3 - a provider version change between chunks denies subsequent range release
+      ---
+      duration_ms: 205.310911
+      type: 'test'
+      ...
+    # Subtest: an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks
+    ok 4 - an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks
+      ---
+      duration_ms: 1040.046288
+      type: 'test'
+      ...
+    # Subtest: expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools
+    ok 5 - expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools
+      ---
+      duration_ms: 279.804992
+      type: 'test'
+      ...
+    # Subtest: disabled namespace bindings deny both source reads and artifact writes
+    ok 6 - disabled namespace bindings deny both source reads and artifact writes
+      ---
+      duration_ms: 414.128136
+      type: 'test'
+      ...
+    # Subtest: current authority revocation denies native I/O without publishing any object generation
+    ok 7 - current authority revocation denies native I/O without publishing any object generation
+      ---
+      duration_ms: 1198.883545
+      type: 'test'
+      ...
+    1..7
+ok 1 - native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+  ---
+  duration_ms: 32906.20752
+  type: 'test'
+  ...
+1..1
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33355.581

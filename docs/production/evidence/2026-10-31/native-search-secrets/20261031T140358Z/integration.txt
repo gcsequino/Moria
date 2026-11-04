@@ -1,0 +1,56 @@
+TAP version 13
+# Subtest: registered native search projects full Dataset objects and replays a complete action frame
+    # Subtest: accepted Search pins exact credential authority and never revives after an approval pulse
+    not ok 1 - accepted Search pins exact credential authority and never revives after an approval pulse
+      ---
+      duration_ms: 736.91015
+      type: 'test'
+      location: '/work/tests/native-search-projector.integration.test.ts:508:17'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native execution cancel failed: {"error":"AUTHORIZATION_CHANGED"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-search-projector.integration.test.ts:331:26)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    1..1
+not ok 1 - registered native search projects full Dataset objects and replays a complete action frame
+  ---
+  duration_ms: 29525.361021
+  type: 'test'
+  location: '/work/tests/native-search-projector.integration.test.ts:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"status":"failed","error":"MODEL_CALL_UNAVAILABLE","result":null}
+    + actual - expected
+    
+    + 'failed'
+    - 'succeeded'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'succeeded'
+  actual: 'failed'
+  operator: 'strictEqual'
+  stack: |-
+    Object.onVerified (/work/tests/native-search-projector.integration.test.ts:629:16)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:497:7)
+    async TestContext.<anonymous> (/work/tests/native-search-projector.integration.test.ts:23:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30029.729066

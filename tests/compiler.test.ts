@@ -143,3 +143,68 @@ test('function declarations accept ontology identities in nested and list envelo
   customer.objectType = 'Customer';
   assert(validateManifest(manifest).some((item) => item.code === 'SCHEMA_INVALID'));
 });
+
+test('Dataset keys require non-null declarations without changing nullable non-key columns', () => {
+  const manifest = structuredClone(fixture),
+    dataset = manifest.resources.find(
+      (r) => r.kind === 'Dataset' && r.metadata.name === 'source_a',
+    )!;
+  dataset.spec.primaryKey = ['sourceKey'];
+  dataset.spec.columns.sourceKey.nullable = true;
+  assert(validateManifest(manifest).some((d) => d.code === 'PRIMARY_KEY_INVALID'));
+  dataset.spec.columns.sourceKey.nullable = false;
+  dataset.spec.columns.region.nullable = true;
+  assert.deepEqual(validateManifest(manifest), []);
+  const compiled = compileManifest(manifest).manifest.resources.find(
+    (r) => r.kind === 'Dataset' && r.metadata.name === 'source_a',
+  )!;
+  assert.equal(compiled.spec.columns.sourceKey.nullable, false);
+  assert.equal(compiled.spec.columns.region.nullable, true);
+  dataset.spec.primaryKey = ['missing'];
+  assert(validateManifest(manifest).some((d) => d.code === 'PRIMARY_KEY_INVALID'));
+  for (const mode of ['upsert', 'delete']) {
+    const manifest = change('Dataset', (r) => {
+      delete r.spec.primaryKey;
+      r.spec.writeModes = [mode];
+    });
+    assert(validateManifest(manifest).some((d) => d.code === 'PRIMARY_KEY_REQUIRED'));
+  }
+  for (const mode of ['replace', 'append']) {
+    const manifest = change('Dataset', (r) => {
+      delete r.spec.primaryKey;
+      r.spec.writeModes = [mode];
+    });
+    assert(!validateManifest(manifest).some((d) => d.code === 'PRIMARY_KEY_REQUIRED'));
+  }
+});
+
+test('Connection modes enforce the declared output key and independent coverage matrix', () => {
+  for (const coverage of ['full', 'incremental', 'appendOnly'])
+    for (const mode of ['replace', 'append', 'upsert', 'delete']) {
+      const manifest = structuredClone(fixture),
+        connection = manifest.resources.find((r) => r.kind === 'Connection')!,
+        dataset = manifest.resources.find(
+          (r) => r.kind === 'Dataset' && r.metadata.name === 'source_a',
+        )!;
+      dataset.spec.primaryKey = ['sourceKey'];
+      dataset.spec.writeModes = ['replace', 'append', 'upsert', 'delete'];
+      connection.spec.mode = mode;
+      connection.spec.coverage = coverage;
+      const diagnostics = validateManifest(manifest),
+        allowed =
+          coverage === 'full' ||
+          (coverage === 'incremental' && mode !== 'replace') ||
+          (coverage === 'appendOnly' && mode === 'append');
+      assert.equal(
+        diagnostics.some((d) => d.code === 'WRITE_COVERAGE'),
+        !allowed,
+        `${coverage}/${mode}`,
+      );
+    }
+  for (const mode of ['upsert', 'delete']) {
+    const manifest = change('Connection', (r) => {
+      r.spec.mode = mode;
+    });
+    assert(validateManifest(manifest).some((d) => d.code === 'PRIMARY_KEY_REQUIRED'));
+  }
+});

@@ -1,0 +1,51 @@
+▶ native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ✔ typed identities, canonical restrictions and forbidden projections are enforced before data release (323.024248ms)
+  ✔ global engine fallback preserves complete typed ordering and pinned pagination without a layout (152.825619ms)
+  ✔ bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow (362.238084ms)
+  ✔ bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets (222.714289ms)
+  ✔ whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes (488.167837ms)
+  ✔ trusted UID-reference links enforce both endpoint policies and complete bounded fanout (209.415807ms)
+  ✔ cursor continuations work concurrently across native replicas and retain the original deadline (79.397364ms)
+  ✔ typed multi-type edits retain canonical policy rows, atomicity and original input receipts (381.298457ms)
+  ✔ same-key actions across replicas have one durable effect and Node reads native overlays (388.212789ms)
+  ✔ accepted action input schemas stay pinned through redeployment and expiry never permits key reuse (116.380319ms)
+  ✔ multi-target actions roll back earlier edits on a later condition failure and commit successful batches once (111.829396ms)
+  ✔ source refresh retains overlays and explicit tombstones survive until an authorized restore (170.141385ms)
+  ✔ a committed action survives loss of its HTTP acknowledgment and death of the native replica (64.823246ms)
+  ✔ a session expiring during blocked native evaluation cannot release buffered results (1022.332946ms)
+  ✔ queued native reads see committed grant revocation before their snapshot (25.343343ms)
+  ✔ filesystem resource inheritance and provenance remain required by native domain reads (2463.401471ms)
+✔ native serving replicas preserve protected reads, cursors and atomic action outcomes (10416.687047ms)
+▶ native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ✖ action creation allocates once and enforces source attachment and required overrides (3501.520775ms)
+✖ native source composition requires explicit current Dataset/index authority and installs all bindings atomically (14908.898123ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 17
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26643.641479
+
+✖ failing tests:
+
+test at tests/native-source-runtime.integration.test.ts:454:13
+✖ action creation allocates once and enforces source attachment and required overrides (3501.520775ms)
+  AssertionError [ERR_ASSERTION]: {"error":{"code":"RESOURCE_LIMIT","correlationId":"1b5c291a-a4b7-41d2-9900-703772cd5b6b","details":null,"message":"RESOURCE_LIMIT","requestId":"1b5c291a-a4b7-41d2-9900-703772cd5b6b","retryable":false}}
+  
+  429 !== 422
+  
+      at TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:621:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:454:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 429,
+    expected: 422,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

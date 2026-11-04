@@ -11,15 +11,32 @@ export const secret = () => randomBytes(32).toString('base64url');
 const denied = () =>
   new MoriaError('UNAUTHENTICATED', 'Sign in again. Your session is unavailable or expired.');
 
+type BrowserIdentityRow = {
+  token_hash: string;
+  environment: string;
+  application: string;
+  principal: string;
+  provider: string;
+  revision: string;
+  subject: string;
+  email: string;
+  access_token: string;
+  verified_at: Date;
+  verified_anchor: string;
+  expires_at: Date;
+};
+
 /** Persistent, app-bound sessions; this service is trusted and is never shipped to React. */
 export class BrowserSessions {
   readonly providers: Map<string, OidcAdapter>;
+  private readonly admittedOrigins = new Set<string>();
   constructor(
     readonly authority: Authority,
     readonly binding: {
       environment: string;
       application: string;
       origin: string;
+      authenticationOrigin?: string;
       entryPath: string;
       initialOperations: string[];
       recoveryPrincipal: string;
@@ -29,7 +46,84 @@ export class BrowserSessions {
     private readonly encryptionKey: Buffer,
     testHttp = false,
   ) {
+    for (const key of ['origin', 'authenticationOrigin'] as const) {
+      const value = binding[key];
+      if (value === undefined) continue;
+      const origin = new URL(value);
+      if (
+        !['http:', 'https:'].includes(origin.protocol) ||
+        origin.username ||
+        origin.password ||
+        origin.search ||
+        origin.hash ||
+        origin.pathname !== '/'
+      )
+        throw new MoriaError(
+          'AUTH_CONFIG_INVALID',
+          'Use a browser origin without credentials, a path or query.',
+        );
+      binding[key] = origin.origin;
+    }
+    if (binding.authenticationOrigin) {
+      const target = new URL(binding.origin),
+        issuer = new URL(binding.authenticationOrigin);
+      if (
+        issuer.origin !== binding.authenticationOrigin ||
+        target.origin !== binding.origin ||
+        issuer.hostname !== target.hostname ||
+        issuer.protocol !== target.protocol ||
+        !['http:', 'https:'].includes(issuer.protocol) ||
+        issuer.username ||
+        issuer.password
+      )
+        throw new MoriaError(
+          'AUTH_CONFIG_INVALID',
+          'Authentication and application origins must use the same exact host and scheme.',
+        );
+    }
     this.providers = new Map(providers.map((p) => [p.id, new OidcAdapter(p, testHttp)]));
+  }
+  async admitOrigin() {
+    for (const configured of [this.binding.origin, this.binding.authenticationOrigin]) {
+      if (!configured) continue;
+      const origin = new URL(configured);
+      if (origin.port === '0') continue;
+      if (
+        !['http:', 'https:'].includes(origin.protocol) ||
+        origin.username ||
+        origin.password ||
+        origin.search ||
+        origin.hash ||
+        origin.pathname !== '/'
+      )
+        throw new MoriaError('AUTH_CONFIG_INVALID', 'Invalid browser origin.');
+      const key = JSON.stringify([
+        origin.origin,
+        this.binding.environment,
+        this.binding.application,
+      ]);
+      if (this.admittedOrigins.has(key)) continue;
+      if (this.admittedOrigins.size >= 16)
+        throw new MoriaError('AUTH_CONFIG_INVALID', 'Too many configured browser origins.');
+      try {
+        await this.authority.catalog.pool.query(
+          'SELECT moria.native_browser_origin_admit($1,$2,$3)',
+          [origin.origin, this.binding.environment, this.binding.application],
+        );
+      } catch (error) {
+        if (
+          ['BROWSER_ORIGIN_INVALID', 'BROWSER_ORIGIN_RESERVED'].includes(
+            (error as { message?: string }).message ?? '',
+          )
+        )
+          throw new MoriaError(
+            'AUTH_CONFIG_INVALID',
+            'The browser origin is unavailable for this application.',
+          );
+        throw error;
+      }
+      this.admittedOrigins.add(key);
+    }
   }
   private revision(adapter: OidcAdapter) {
     return digest(JSON.stringify(adapter.provider));
@@ -61,6 +155,7 @@ export class BrowserSessions {
   }
   async initialize() {
     await this.authority.migrate();
+    await this.admitOrigin();
     const { environment, application } = this.binding;
     await this.authority.catalog.transaction(async (c) => {
       const previous = (
@@ -73,34 +168,47 @@ export class BrowserSessions {
       for (const old of previous) {
         const adapter = this.providers.get(old.provider);
         if (old.enabled && (!adapter || old.revision !== this.revision(adapter))) {
-          changed = true;
           await c.query(
-            'UPDATE moria.browser_sessions SET disabled=true,access_token=NULL WHERE environment=$1 AND application=$2 AND provider=$3',
+            'UPDATE moria.auth_providers SET enabled=false WHERE environment=$1 AND application=$2 AND provider=$3',
             [environment, application, old.provider],
           );
+          changed = true;
         }
       }
-      await c.query(
-        'UPDATE moria.auth_providers SET enabled=false WHERE environment=$1 AND application=$2',
-        [environment, application],
-      );
       for (const [id, adapter] of this.providers) {
-        if (
-          !previous.some(
-            (p) => p.provider === id && p.enabled && p.revision === this.revision(adapter),
-          )
-        )
-          changed = true;
+        const revision = this.revision(adapter),
+          old = previous.find((provider) => provider.provider === id);
+        // Same-revision startup preserves an explicit disable. A changed trusted
+        // configuration is a new registration; the SQL trigger revokes old credentials.
+        if (old?.revision === revision) continue;
         await c.query(
           `INSERT INTO moria.auth_providers VALUES($1,$2,$3,$4,true)
           ON CONFLICT(environment,application,provider) DO UPDATE SET revision=EXCLUDED.revision,enabled=true`,
-          [environment, application, id, this.revision(adapter)],
+          [environment, application, id, revision],
         );
+        changed = true;
       }
       if (changed) await this.audit(c, 'configureAuthProviders', 'local-operator');
       await c.query('DELETE FROM moria.auth_flows WHERE expires_at<clock_timestamp()');
-      await c.query('DELETE FROM moria.browser_sessions WHERE expires_at<clock_timestamp()');
+      await c.query(
+        "DELETE FROM moria.browser_sessions s WHERE expires_at<clock_timestamp() AND NOT EXISTS(SELECT 1 FROM moria.runtime_job_delegations d WHERE d.origin_kind='session' AND d.origin_session_hash=s.token_hash)",
+      );
     }, environment);
+  }
+  async providerOptions() {
+    const enabled = (
+      await this.authority.catalog.pool.query(
+        'SELECT p.provider,p.revision FROM moria.auth_providers p JOIN moria.application_scopes a USING(environment,application) WHERE p.environment=$1 AND p.application=$2 AND p.enabled AND a.enabled',
+        [this.binding.environment, this.binding.application],
+      )
+    ).rows;
+    return [...this.providers.values()]
+      .filter((adapter) =>
+        enabled.some(
+          (row) => row.provider === adapter.provider.id && row.revision === this.revision(adapter),
+        ),
+      )
+      .map(({ provider }) => ({ id: provider.id, label: provider.label }));
   }
   private async provider(id: string) {
     const adapter = this.providers.get(id);
@@ -112,6 +220,152 @@ export class BrowserSessions {
     if (!result.rowCount) throw denied();
     return adapter;
   }
+  private async refreshIdentity(row: BrowserIdentityRow, acceptedExecution?: string) {
+    const adapter = await this.provider(row.provider);
+    if (row.revision !== this.revision(adapter) || !adapter.provider.emails.includes(row.email))
+      throw denied();
+    const client = await this.authority.catalog.pool.connect(),
+      key = `moria/oidc-verify/${row.token_hash}`;
+    const locks: string[] = [];
+    let locked = false,
+      began = false;
+    const valid = async () => {
+      const found = await client.query(
+        `SELECT 1 FROM moria.browser_sessions s
+        JOIN moria.principals p USING(environment,principal)
+        JOIN moria.application_scopes a USING(environment,application)
+        JOIN moria.auth_providers provider ON provider.environment=s.environment AND provider.application=s.application AND provider.provider=s.provider
+        LEFT JOIN moria.instance_principal_bindings b ON b.environment=p.environment AND b.principal=p.principal
+        LEFT JOIN moria.instance_principals i ON i.id=b.instance_id
+        WHERE s.token_hash=$1 AND s.environment=$2 AND s.application=$3 AND s.principal=$4
+          AND s.provider=$5 AND s.revision=$6 AND s.subject=$7 AND s.email=$8 AND s.access_token=$9
+          AND NOT s.disabled AND p.enabled AND p.kind='human' AND a.enabled
+          AND (b.instance_id IS NULL OR (i.enabled AND i.kind=p.kind))
+          AND provider.enabled AND provider.revision=s.revision
+          AND ($10::boolean OR s.expires_at>clock_timestamp())`,
+        [
+          row.token_hash,
+          this.binding.environment,
+          this.binding.application,
+          row.principal,
+          row.provider,
+          row.revision,
+          row.subject,
+          row.email,
+          row.access_token,
+          acceptedExecution !== undefined,
+        ],
+      );
+      if (!found.rowCount) throw denied();
+      await client.query('SELECT moria.runtime_environment_cell_check($1)', [
+        this.binding.environment,
+      ]);
+      if (acceptedExecution) {
+        const proof = (
+          await client.query(
+            "SELECT moria.runtime_job_delegation_guard(e.id) AS proof FROM moria.runtime_executions e WHERE e.id=$1 AND e.status IN('queued','running','preparing') AND e.deadline>clock_timestamp()",
+            [acceptedExecution],
+          )
+        ).rows[0]?.proof;
+        if (
+          !proof ||
+          proof.originSessionHash !== row.token_hash ||
+          proof.environment !== row.environment ||
+          proof.principal !== row.principal ||
+          proof.application !== row.application
+        )
+          throw denied();
+      }
+    };
+    try {
+      locked = (
+        await client.query('SELECT pg_try_advisory_lock(hashtextextended($1,0)) AS locked', [key])
+      ).rows[0].locked;
+      if (!locked) throw denied();
+      await valid();
+      const profile = await adapter.profile(this.unseal(row.access_token), row.subject);
+      if (profile.email !== row.email || !adapter.provider.emails.includes(profile.email))
+        throw denied();
+      await client.query("SET lock_timeout='5s'");
+      for (const resource of [
+        `moria/environment/${this.binding.environment}`,
+        'moria/filesystem',
+      ]) {
+        await client.query('SELECT pg_advisory_lock(hashtextextended($1,0))', [resource]);
+        locks.push(resource);
+      }
+      await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+      began = true;
+      await valid();
+      const updated = await client.query(
+        'UPDATE moria.browser_sessions SET verified_at=clock_timestamp() WHERE token_hash=$1 AND verified_at::text=$2 RETURNING principal',
+        [row.token_hash, row.verified_anchor],
+      );
+      if (!updated.rowCount) throw denied();
+      const principal = await client.query(
+        "UPDATE moria.principals SET synced_at=clock_timestamp() WHERE environment=$1 AND principal=$2 AND enabled AND kind='human' RETURNING principal",
+        [row.environment, row.principal],
+      );
+      if (!principal.rowCount) throw denied();
+      await client.query('COMMIT');
+      began = false;
+    } finally {
+      let discard: Error | undefined;
+      try {
+        if (began) await client.query('ROLLBACK');
+        for (const resource of locks.reverse())
+          await client.query('SELECT pg_advisory_unlock(hashtextextended($1,0))', [resource]);
+        if (locked) await client.query('SELECT pg_advisory_unlock(hashtextextended($1,0))', [key]);
+        await client.query('RESET lock_timeout');
+      } catch (error) {
+        discard = error instanceof Error ? error : new Error('Identity verifier cleanup failed');
+        throw discard;
+      } finally {
+        client.release(discard);
+      }
+    }
+  }
+  /** Bounded IdP evidence refresh for actual accepted human jobs; never renews session TTL. */
+  startAcceptedRefresh() {
+    let stopping = false,
+      active: Promise<void> | undefined;
+    const tick = async () => {
+      const rows = (
+        await this.authority.catalog.pool.query<BrowserIdentityRow & { execution: string }>(
+          `SELECT s.*,s.verified_at::text AS verified_anchor,e.id AS execution FROM moria.browser_sessions s
+        JOIN LATERAL (SELECT d.execution FROM moria.runtime_job_delegations d JOIN moria.runtime_executions e ON e.id=d.execution
+          WHERE d.origin_kind='session' AND d.origin_session_hash=s.token_hash AND e.status IN('queued','running','preparing') AND e.deadline>clock_timestamp()
+          ORDER BY e.created_at LIMIT 1) accepted ON true JOIN moria.runtime_executions e ON e.id=accepted.execution
+        WHERE s.environment=$1 AND s.application=$2 AND NOT s.disabled AND s.provider IS NOT NULL AND s.verified_at<clock_timestamp()-interval '30 seconds'
+        ORDER BY s.verified_at,s.token_hash LIMIT 16`,
+          [this.binding.environment, this.binding.application],
+        )
+      ).rows;
+      for (const row of rows) {
+        if (stopping) break;
+        try {
+          await this.refreshIdentity(row, row.execution);
+        } catch {
+          /* Failed verification leaves freshness unchanged. */
+        }
+      }
+    };
+    const timer = setInterval(() => {
+      if (!active && !stopping) {
+        active = tick()
+          .catch(() => {})
+          .finally(() => {
+            active = undefined;
+          });
+      }
+    }, 10000);
+    timer.unref();
+    return async () => {
+      stopping = true;
+      clearInterval(timer);
+      await active;
+    };
+  }
   async start(provider: string) {
     const adapter = await this.provider(provider);
     const state = secret(),
@@ -119,7 +373,7 @@ export class BrowserSessions {
       nonce = secret(),
       verifier = secret();
     const location = await adapter.start(
-      `${this.binding.origin}/api/auth/callback`,
+      `${this.binding.authenticationOrigin ?? this.binding.origin}/api/auth/callback`,
       state,
       nonce,
       verifier,
@@ -145,7 +399,8 @@ export class BrowserSessions {
     const flow = (
       await this.authority.catalog.pool.query(
         `DELETE FROM moria.auth_flows WHERE state_hash=$1 AND browser_hash=$2
-      AND environment=$3 AND application=$4 AND expires_at>clock_timestamp() AND provider IS NOT NULL RETURNING *`,
+      AND environment=$3 AND application=$4 AND expires_at>clock_timestamp() AND provider IS NOT NULL
+      AND moria.native_browser_auth_flow_current(environment,auth_generation) RETURNING *`,
         [digest(url.searchParams.get('state') ?? ''), digest(browser), environment, application],
       )
     ).rows[0];
@@ -165,6 +420,15 @@ export class BrowserSessions {
       throw new MoriaError('FORBIDDEN', 'This account has not been invited to this application.');
     const token = secret();
     await this.authority.catalog.transaction(async (c) => {
+      if (
+        !(
+          await c.query('SELECT moria.native_browser_auth_flow_current($1,$2) AS current', [
+            environment,
+            flow.auth_generation,
+          ])
+        ).rows[0].current
+      )
+        throw denied();
       const enabled = await c.query(
         'SELECT 1 FROM moria.auth_providers WHERE environment=$1 AND application=$2 AND provider=$3 AND revision=$4 AND enabled',
         [environment, application, flow.provider, flow.revision],
@@ -252,7 +516,7 @@ export class BrowserSessions {
       { environment, application } = this.binding;
     const row = (
       await this.authority.catalog.pool.query(
-        `SELECT s.* FROM moria.browser_sessions s JOIN moria.principals p USING(environment,principal)
+        `SELECT s.*,s.verified_at::text AS verified_anchor FROM moria.browser_sessions s JOIN moria.principals p USING(environment,principal)
       WHERE s.token_hash=$1 AND s.environment=$2 AND s.application=$3 AND NOT s.disabled AND p.enabled AND s.expires_at>clock_timestamp()`,
         [sessionHash, environment, application],
       )
@@ -264,25 +528,13 @@ export class BrowserSessions {
         throw denied();
       if (Date.now() - row.verified_at.getTime() > 30000) {
         try {
-          const profile = await adapter.profile(this.unseal(row.access_token), row.subject);
-          if (profile.email !== row.email) throw denied();
+          await this.refreshIdentity(row);
         } catch {
           throw new MoriaError(
             'UNAUTHENTICATED',
             'Identity refresh failed. Sign in again when your provider is available.',
           );
         }
-        await this.authority.catalog.transaction(async (c) => {
-          const session = await c.query(
-            `UPDATE moria.browser_sessions SET verified_at=clock_timestamp() WHERE token_hash=$1 AND NOT disabled AND expires_at>clock_timestamp() RETURNING principal`,
-            [sessionHash],
-          );
-          if (!session.rowCount) throw denied();
-          await c.query(
-            'UPDATE moria.principals SET synced_at=clock_timestamp() WHERE environment=$1 AND principal=$2 AND enabled',
-            [environment, row.principal],
-          );
-        }, environment);
       }
     }
     const state = await this.authority.current(environment, row.principal, application);
@@ -338,7 +590,7 @@ export class BrowserSessions {
     const state = await this.authority.current(environment, recoveryPrincipal, application);
     await this.authority.catalog.transaction(async (c) => {
       const result = await c.query(
-        `DELETE FROM moria.auth_flows WHERE state_hash=$1 AND environment=$2 AND application=$3 AND provider IS NULL AND expires_at>clock_timestamp() RETURNING state_hash`,
+        `DELETE FROM moria.auth_flows WHERE state_hash=$1 AND environment=$2 AND application=$3 AND provider IS NULL AND expires_at>clock_timestamp() AND moria.native_browser_auth_flow_current(environment,auth_generation) RETURNING state_hash`,
         [digest(ticket), environment, application],
       );
       if (!result.rowCount) throw denied();

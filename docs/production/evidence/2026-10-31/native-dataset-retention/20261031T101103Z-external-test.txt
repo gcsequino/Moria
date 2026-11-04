@@ -1,0 +1,27 @@
+TAP version 13
+# Subtest: managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+not ok 1 - managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+  ---
+  duration_ms: 40529.911149
+  type: 'test'
+  location: '/work/tests/native-dataset-retention.integration.test.ts:13:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    identity/register-cell: {"error":"INDEXING_FAILED"}
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/fixtures/native-retention/dataset.ts:186:39)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 41042.911613

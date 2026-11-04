@@ -1,0 +1,59 @@
+TAP version 13
+# Subtest: native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+    # Subtest: POSIX publication indexes 300 canonical objects using current namespace read authority
+    ok 1 - POSIX publication indexes 300 canonical objects using current namespace read authority
+      ---
+      duration_ms: 2402.802255
+      type: 'test'
+      ...
+    # Subtest: MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+    ok 2 - MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+      ---
+      duration_ms: 3785.446094
+      type: 'test'
+      ...
+    # Subtest: an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+    ok 3 - an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+      ---
+      duration_ms: 4063.448401
+      type: 'test'
+      ...
+    # Subtest: stale and ambiguous provider bindings cannot activate an object generation
+    ok 4 - stale and ambiguous provider bindings cannot activate an object generation
+      ---
+      duration_ms: 2953.519034
+      type: 'test'
+      ...
+    # Subtest: a pinned physical object with changed bytes fails semantic verification before activation
+    ok 5 - a pinned physical object with changed bytes fails semantic verification before activation
+      ---
+      duration_ms: 2108.301446
+      type: 'test'
+      ...
+    # Subtest: cached verification is immutable and physical file versions are still checked by concurrent task reads
+    ok 6 - cached verification is immutable and physical file versions are still checked by concurrent task reads
+      ---
+      duration_ms: 3977.207771
+      type: 'test'
+      ...
+    # Subtest: a ready verification never caches permission across current authority revocation
+    ok 7 - a ready verification never caches permission across current authority revocation
+      ---
+      duration_ms: 3864.436685
+      type: 'test'
+      ...
+    1..7
+ok 1 - native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ---
+  duration_ms: 27521.945336
+  type: 'test'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27929.375155

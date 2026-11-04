@@ -1,0 +1,48 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T233743073561Z-recovery-clean-host-v5",
+  "sourceManifestSha256": "a805eb67b01ed1b1c18465144911a6b9e47a5225cfac2ead84c81bc3800ad255",
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233743073561Z-recovery-clean-host-v5,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "typescript",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261030T233743073561Z-recovery-clean-host-v5,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ]
+    }
+  ],
+  "outcome": "typescript failed",
+  "compiled": null,
+  "binarySha256": null
+}

@@ -10,7 +10,7 @@ import {
 } from '../apps/snotel/src/generated/index.js';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createServer } from 'node:net';
@@ -275,13 +275,33 @@ async function publication(environment: string): Promise<Publication> {
   await catalog.ensureEnvironment(environment);
   await catalog.ensureDataset(environment, 'a');
   await catalog.ensureDataset(environment, 'b');
+  await catalog.ensureDataset(environment, 'input');
+  const authority = new Authority(catalog);
+  const operations = ['a:write', 'b:write', 'input:read'];
+  await authority.syncPrincipal(environment, 'fixture', 'publisher', {
+    enabled: true,
+    kind: 'workload',
+    attributes: {},
+    markings: [],
+  });
+  await authority.setApplication(environment, 'fixture', 'publication', operations);
+  await authority.setGrants(environment, 'fixture', 'publisher', 'publication', operations);
+  const credential = await new WorkloadSessions(authority).mint(
+    { environment, principal: 'publisher', application: 'publication' },
+    'fixture',
+  );
+  const sessionHash = createHash('sha256').update(credential.token).digest('hex');
+  const securityEpoch = await catalog.transaction(
+    (c) => catalog.admitDataProvenance(c, sessionHash, ['a', 'b'], ['input'], 'write'),
+    environment,
+  );
   const fence = await catalog.claim(environment, 'build', 'worker');
   return {
     environment,
     execution: 'build',
     worker: 'worker',
     fence,
-    securityEpoch: '0',
+    securityEpoch,
     lineage: { input: 'snapshot-1' },
     outputs: [
       {
@@ -1025,6 +1045,7 @@ test('additive stage migration preserves legacy generations and retained edit va
   await catalog.ensureEnvironment('legacy-stage');
   const uid = await catalog.resolveIdentity('legacy-stage', 'one');
   await pool.query("INSERT INTO moria.object_homes VALUES($1,'orders')", [uid]);
+  await pool.query("UPDATE moria.environments SET revision=1 WHERE id='legacy-stage'");
   await pool.query(
     "INSERT INTO moria.source_generations(environment,object_type,revision) VALUES('legacy-stage','orders',1)",
   );
@@ -1032,7 +1053,6 @@ test('additive stage migration preserves legacy generations and retained edit va
     uid,
     JSON.stringify({ uid, note: 'legacy' }),
   ]);
-  await pool.query("UPDATE moria.environments SET revision=1 WHERE id='legacy-stage'");
   const schema: ObjectSchema = {
     primaryKey: 'uid',
     properties: { uid: { type: 'uid', nullable: false }, note: { type: 'string', nullable: true } },
@@ -1991,7 +2011,12 @@ test(
     );
     const indexer = new IcebergIndexer(store, authority, binding);
     await indexer.migrate();
-    const session = { environment, principal: 'worker', application: 'indexer' };
+    const context = { environment, principal: 'worker', application: 'indexer' };
+    const credential = await new WorkloadSessions(authority).mint(context, 'fixture');
+    const session = {
+      ...context,
+      sessionHash: createHash('sha256').update(credential.token).digest('hex'),
+    };
     const lease = {
       execution: 'index',
       worker: 'worker',

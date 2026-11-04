@@ -1,0 +1,74 @@
+{
+  "trials": [
+    {
+      "id": "001",
+      "outcome": "failed",
+      "tap": "native-agents-20261030-trial-001-failed.tap",
+      "sourceManifest": "native-agents-20261030-trial-001-source.json",
+      "compiledRuntime": "native-agents-20261030-trial-001-runtime.json",
+      "schema": "native-agents-20261030-trial-001-schema.json",
+      "tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "failure": "Fixture incorrectly supplied Application, Policy and Model declarations as repository code exports. The real source compiler rejected this before agent admission.",
+      "correction": "Write non-code declarations as actual .resource.json repository files; pass only Agent and AgentAdapter code exports. Keep the compiler restriction and all runtime assertions."
+    },
+    {
+      "id": "002",
+      "outcome": "failed",
+      "tap": "native-agents-20261030-trial-002-failed.tap",
+      "sourceManifest": "native-agents-20261030-trial-002-source.json",
+      "compiledRuntime": "native-agents-20261030-trial-002-runtime.json",
+      "schema": "native-agents-20261030-trial-002-schema.json",
+      "tests": 8,
+      "passed": 4,
+      "failed": 4,
+      "skipped": 0,
+      "failure": "Model callbacks failed before their durable trace; the dependent provider-revocation case never reached the provider. The completed replay fixture also incorrectly expected HTTP 202 instead of 200.",
+      "correction": "Add protected structural broker diagnostics and correct the terminal replay assertion to HTTP 200."
+    },
+    {
+      "id": "003",
+      "outcome": "failed",
+      "tap": "native-agents-20261030-trial-003-failed.tap",
+      "sourceManifest": "native-agents-20261030-trial-003-source.json",
+      "compiledRuntime": "native-agents-20261030-trial-003-runtime.json",
+      "schema": "native-agents-20261030-trial-003-schema.json",
+      "tests": 8,
+      "passed": 5,
+      "failed": 3,
+      "skipped": 0,
+      "failure": "The protected broker trace identified SQLSTATE 23514: a sha256-prefixed canonical digest was inserted into the Agent request-hash column requiring 64 hexadecimal digits. Both model-dependent cases failed; normal execution, lease renewal, cancellation, SIGKILL, lost COMMIT acknowledgement and pinned redeployment passed.",
+      "correction": "Strip the canonical sha256 prefix before inserting the immutable model request hash. Preserve the database check and model assertions."
+    },
+    {
+      "id": "004",
+      "outcome": "failed",
+      "tap": "native-agents-20261030-trial-004-failed.tap",
+      "sourceManifest": "native-agents-20261030-trial-004-source.json",
+      "compiledRuntime": "native-agents-20261030-trial-004-runtime.json",
+      "schema": "native-agents-20261030-trial-004-schema.json",
+      "tests": 8,
+      "passed": 6,
+      "failed": 2,
+      "skipped": 0,
+      "failure": "The real model callback succeeded, but its fixture expected a numeric usage counter instead of the shared int64 wire string. The leaf stopped before its action assertions.",
+      "correction": "Assert the exact string counter '7'; also require the held provider socket to close on worker revocation."
+    },
+    {
+      "id": "005",
+      "outcome": "passed",
+      "tap": "native-agents-20261030-trial-005-green.tap",
+      "sourceManifest": "native-agents-20261030-trial-005-source.json",
+      "compiledRuntime": "native-agents-20261030-trial-005-runtime.json",
+      "schema": "native-agents-20261030-trial-005-schema.json",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 54513.837835,
+      "coverage": "Actual locked LangGraph OCI adapter, generated ontology SDK and native model broker; authenticated admission/replay, read taint and usage, committed action after graph failure, retained content checks, ten-second healthy lease renewal, held provider socket cancellation on live worker-class revocation, caller cancellation, SIGKILL without retry, actual PostgreSQL COMMIT acknowledgement loss, pinned redeployment and revoked grants."
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+TAP version 13
+# Subtest: native HTTP admission bounds pending bodies across shared and component routes
+    # Subtest: local CLI profiles use real revocable workload sessions
+    ok 1 - local CLI profiles use real revocable workload sessions
+      ---
+      duration_ms: 71.508179
+      type: 'test'
+      ...
+    # Subtest: app-bound browser cookies enforce exact origin and current session
+    ok 2 - app-bound browser cookies enforce exact origin and current session
+      ---
+      duration_ms: 31.063466
+      type: 'test'
+      ...
+    # Subtest: managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+    ok 3 - managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+      ---
+      duration_ms: 4453.870113
+      type: 'test'
+      ...
+    # Subtest: four compiler requests hold their slots through an incomplete body
+    ok 4 - four compiler requests hold their slots through an incomplete body
+      ---
+      duration_ms: 78.315207
+      type: 'test'
+      ...
+    # Subtest: model admission retains its separate32 request budget
+    ok 5 - model admission retains its separate32 request budget
+      ---
+      duration_ms: 168.175973
+      type: 'test'
+      ...
+    # Subtest: the shared64 request budget rejects additional work before buffering
+    ok 6 - the shared64 request budget rejects additional work before buffering
+      ---
+      duration_ms: 296.01908
+      type: 'test'
+      ...
+    1..6
+ok 1 - native HTTP admission bounds pending bodies across shared and component routes
+  ---
+  duration_ms: 6824.992865
+  type: 'test'
+  ...
+# Subtest: native model gateway protects real HTTP chat, embeddings, schemas and streams
+    # Subtest: configured capabilities remain unavailable until actual probes pass
+    ok 1 - configured capabilities remain unavailable until actual probes pass
+      ---
+      duration_ms: 579.632623
+      type: 'test'
+      ...
+    # Subtest: stable calls replay exactly without another provider request; conflicts fail
+    ok 2 - stable calls replay exactly without another provider request; conflicts fail
+      ---
+      duration_ms: 509.575209
+      type: 'test'
+      ...
+    # Subtest: structured output and tool arguments use a real bounded JSON Schema validator
+    ok 3 - structured output and tool arguments use a real bounded JSON Schema validator
+      ---
+      duration_ms: 706.306951
+      type: 'test'
+      ...
+    # Subtest: embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+    ok 4 - embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+      ---
+      duration_ms: 415.90414
+      type: 'test'
+      ...
+    # Subtest: streams retain ordered text and terminal result; broken streams never restart
+    ok 5 - streams retain ordered text and terminal result; broken streams never restart
+      ---
+      duration_ms: 288.942064
+      type: 'test'
+      ...
+    # Subtest: stream combinations require their own probe and preserve provider extensions
+    ok 6 - stream combinations require their own probe and preserve provider extensions
+      ---
+      duration_ms: 1563.990455
+      type: 'test'
+      ...
+    # Subtest: revocation during inference blocks result release and preserves the failed attempt
+    ok 7 - revocation during inference blocks result release and preserves the failed attempt
+      ---
+      duration_ms: 154.355346
+      type: 'test'
+      ...
+    # Subtest: stream revocation blocks later events and its terminal result
+    ok 8 - stream revocation blocks later events and its terminal result
+      ---
+      duration_ms: 153.591359
+      type: 'test'
+      ...
+    # Subtest: cross-process cancellation interrupts waiting inference and retains uncertain admission
+    ok 9 - cross-process cancellation interrupts waiting inference and retains uncertain admission
+      ---
+      duration_ms: 883.731074
+      type: 'test'
+      ...
+    # Subtest: provider bodies and caller-selected endpoints remain bounded and protected
+    ok 10 - provider bodies and caller-selected endpoints remain bounded and protected
+      ---
+      duration_ms: 405.268312
+      type: 'test'
+      ...
+    # Subtest: the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+    ok 11 - the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+      ---
+      duration_ms: 925.363264
+      type: 'test'
+      ...
+    # Subtest: one shared class budget covers native execution leases and model calls in both directions
+    ok 12 - one shared class budget covers native execution leases and model calls in both directions
+      ---
+      duration_ms: 1360.153952
+      type: 'test'
+      ...
+    # Subtest: bounded embedding batches retain one vector copy and terminal validation failures are recorded
+    ok 13 - bounded embedding batches retain one vector copy and terminal validation failures are recorded
+      ---
+      duration_ms: 1322.403004
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+    ok 14 - a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+      ---
+      duration_ms: 5822.062343
+      type: 'test'
+      ...
+    # Subtest: Ollama embedding transport disables truncation and records terminal context failure
+    ok 15 - Ollama embedding transport disables truncation and records terminal context failure
+      ---
+      duration_ms: 966.034211
+      type: 'test'
+      ...
+    # Subtest: expired capability proofs fail before contacting the provider
+    ok 16 - expired capability proofs fail before contacting the provider
+      ---
+      duration_ms: 245.534632
+      type: 'test'
+      ...
+    1..16
+ok 2 - native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ---
+  duration_ms: 18000.291516
+  type: 'test'
+  ...
+1..2
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18356.857803

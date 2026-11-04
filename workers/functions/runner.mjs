@@ -98,7 +98,8 @@ lines.on('line', (line) => {
         completed = true;
         send({ type: 'result', value: validateRow(value, message.outputs, 'value') });
       } catch {
-        send({ type: 'error' }, () => process.exit(1));
+        // The supervisor drains protected callbacks before owning failure cleanup.
+        send({ type: 'error' });
       }
     })();
   } else if (message.type === 'complete' && completed) process.exit(0);

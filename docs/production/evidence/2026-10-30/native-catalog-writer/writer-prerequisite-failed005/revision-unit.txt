@@ -1,0 +1,24 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `admit_in` is never used
+  --> src/indexing_service.rs:82:21
+   |
+82 | pub(crate) async fn admit_in(
+   |                     ^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `install_in` is never used
+  --> src/pipelines.rs:90:21
+   |
+90 | pub(crate) async fn install_in(
+   |                     ^^^^^^^^^^
+
+warning: `moria-runtime` (lib test) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 19.30s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-caa1227c937bb40e)
+
+running 1 test
+test indexing_service::tests::service_revision_is_exact_ascii_canonical_and_binds_all_authority_parts ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 35 filtered out; finished in 0.00s
+

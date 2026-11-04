@@ -1,0 +1,29 @@
+TAP version 13
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+ok 1 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 3234.37435
+  type: 'test'
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+    # Subtest: retired native tables obey current, latest-two, floor and structural Search pins, including backup admission
+    ok 1 - retired native tables obey current, latest-two, floor and structural Search pins, including backup admission
+      ---
+      duration_ms: 5001.45205
+      type: 'test'
+      ...
+    1..1
+ok 2 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 14920.63874
+  type: 'test'
+  ...
+1..2
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18722.805077

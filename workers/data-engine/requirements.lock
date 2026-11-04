@@ -1,0 +1,3 @@
+# CPython 3.11, Linux x86-64 OCI profile. Wheels are immutable release inputs.
+duckdb==2.0.0 --hash=sha256:5a3601121c7cc50d0b70412995634682fafcb58a0156d5d663dfd0b3bbe30a33
+pyarrow==26.0.0 --hash=sha256:6e89dee53aaeb50505ed6152ea55bc7ddfd4f4df264f5427ea255288d8f0e580

@@ -1,0 +1,40 @@
+{
+  "sourceSnapshot": "/tmp/moria-proof-snapshots/20261030T234506049190Z-recovery-clean-host-v7",
+  "sourceManifestSha256": "aa902b65cead15993382d2554cc64b9c5391eb87197c6fdb4823f2c00c686e9f",
+  "binarySha256": "d5bd93f8cda77e84e5e119172df70356c7e8935bdaa5c0769d5c22a66715bcf8",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "ba00ae161845f0f3a352f66a0b69d9e322eb9946af057064374d7e6aafc97814",
+      "version": 5
+    },
+    "sourceDigest": "00a3e84ea355f05554645c73fdb925bf828511d99bf2fa9411b78e26a06e8175"
+  },
+  "externalHarnessSha256": "fc508d9abfe1dd6350b12482523682d17f0c5dc3f5fcd40479417a25e1170a91",
+  "externalHarness": "/tmp/moria-recovery-external-20261030T234842Z/native-recovery.integration.test.ts",
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261030T234506049190Z-recovery-clean-host-v7,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-recovery-external-20261030T234842Z/native-recovery.integration.test.ts,dst=/work/tests/native-recovery.integration.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261030T234506049190Z-recovery-clean-host-v7/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-recovery.integration.test.ts",
+    "tests/native-http-admission.integration.test.ts",
+    "tests/native-changes.integration.test.ts"
+  ],
+  "exit": 1
+}

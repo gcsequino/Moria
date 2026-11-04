@@ -25,12 +25,15 @@ export async function functionImage() {
     await rm(directory, { recursive: true, force: true });
   };
   try {
+    const proof = process.env.MORIA_TEST_PROOF_ID;
+    if (proof && !/^[a-z0-9-]{1,128}$/.test(proof)) throw new Error('Invalid proof identity');
     await docker([
       'run',
       '--detach',
       '--rm',
       '--name',
       registry,
+      ...(proof ? ['--label', `moria.test.proof=${proof}`] : []),
       '--publish',
       '127.0.0.1::5000',
       registryImage,

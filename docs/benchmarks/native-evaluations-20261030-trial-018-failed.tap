@@ -1,0 +1,151 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+    # Subtest: admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+    not ok 1 - admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+      ---
+      duration_ms: 42327.853704
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:674:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"diagnostics":{"states":[{"id":"bd642709-ba11-49e7-a69c-e2d2c553408a","domain":"evaluation","status":"succeeded","error":null},{"id":"0463d1f1-4289-4f9f-815c-6f2d25446262","domain":"evaluation","status":"succeeded","error":null},{"id":"44fccbf5-1c8b-4723-89a9-07c0dc9d2060","domain":"evaluation","status":"succeeded","error":null},{"id":"e32782e8-ac5c-44e9-9bc9-517a3c84150a","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"ad9820a8-edc2-4e5b-9589-711c44ef6b43","domain":"evaluation","status":"succeeded","error":null},{"id":"580ea12f-9ed0-4deb-a7b2-2907665dacbf","domain":"evaluation","status":"succeeded","error":null},{"id":"9c095166-9b96-47b1-b7d4-873369bfa9cc","domain":"evaluation","status":"succeeded","error":null},{"id":"823b8332-0d4e-4b24-aa1d-57dfe9a6d2bc","domain":"evaluation","status":"succeeded","error":null},{"id":"deb1673b-595a-4183-abd0-4bc3a5d86a11","domain":"evaluation","status":"succeeded","error":null},{"id":"5b0d86d6-d678-4b62-baff-854c3de186aa","domain":"evaluation","status":"succeeded","error":null},{"id":"48a9ffb9-2378-4c0e-b4b0-a89c669b86ab","domain":"evaluation","status":"succeeded","error":null},{"id":"425a61aa-c095-4b30-94bb-10ba99546a13","domain":"agent","status":"succeeded","error":null},{"id":"0679a191-f38b-4238-ac46-56d9121f21ab","domain":"agent","status":"succeeded","error":null},{"id":"10510b47-3f14-4e92-856d-acf80692f0c5","domain":"evaluator","status":"succeeded","error":null},{"id":"774ab946-4201-46a2-b6a8-23b51bbd34a8","domain":"evaluator","status":"succeeded","error":null},{"id":"37cb4a4c-8789-40ed-9b29-2ece20be6d03","domain":"agent","status":"succeeded","error":null},{"id":"bedda0d0-3de5-41de-a2d9-26b27fd569af","domain":"agent","status":"succeeded","error":null},{"id":"d453c3ee-42c4-4ab0-a75e-214592a69d14","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"743ec4a5-5f40-4925-baee-cce415ec2d69","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"5a337681-ede8-4647-ad8a-296e2f921341","domain":"agent","status":"succeeded","error":null},{"id":"bdbfd19a-28a5-48b1-b392-86ff75f1ed1c","domain":"evaluator","status":"succeeded","error":null},{"id":"a3f2f889-36e6-46bb-bdf9-dc76394b4399","domain":"evaluator","status":"succeeded","error":null},{"id":"94231e3f-07bc-451e-9e16-789de22473d7","domain":"evaluator","status":"succeeded","error":null},{"id":"f87b674b-6089-4927-8863-1f146f4887a0","domain":"agent","status":"succeeded","error":null},{"id":"21fde94b-cdd9-42fb-89c7-129e132db416","domain":"agent","status":"succeeded","error":null},{"id":"74ae6fb9-fa77-4bb3-b2e4-18decfb3a6ce","domain":"evaluator","status":"failed","error":"FUNCTION_FAILED"},{"id":"288404f9-d272-4748-9f69-19f006fc5fc9","domain":"agent","status":"succeeded","error":null},{"id":"007c6d87-d0a2-45c3-a9bc-67c01fd58997","domain":"evaluator","status":"failed","error":"FUNCTION_FAILED"}],"failures":[{"id":"e32782e8-ac5c-44e9-9bc9-517a3c84150a","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"CONCURRENT_MODIFICATION","sqlstate":"40001"}},{"id":"d453c3ee-42c4-4ab0-a75e-214592a69d14","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"007c6d87-d0a2-45c3-a9bc-67c01fd58997","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"743ec4a5-5f40-4925-baee-cce415ec2d69","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"74ae6fb9-fa77-4bb3-b2e4-18decfb3a6ce","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}}],"agentModelCalls":[{"logical_id":"decision","status":200,"error":null},{"logical_id":"decision","status":200,"error":null}],"gatewayCalls":[{"state":"succeeded","error":null},{"state":"succeeded","error":null},{"state":"succeeded","error":null}]},"cases":[{"case_id":"denied-evaluator","repeat":0,"outcome":"error","error":"EVALUATOR_FAILED","agent_execution":"21fde94b-cdd9-42fb-89c7-129e132db416","evaluator_execution":"74ae6fb9-fa77-4bb3-b2e4-18decfb3a6ce"},{"case_id":"denied-evaluator","repeat":1,"outcome":"error","error":"EVALUATOR_FAILED","agent_execution":"288404f9-d272-4748-9f69-19f006fc5fc9","evaluator_execution":"007c6d87-d0a2-45c3-a9bc-67c01fd58997"},{"case_id":"error","repeat":0,"outcome":"error","error":"AGENT_FAILED","agent_execution":"d453c3ee-42c4-4ab0-a75e-214592a69d14","evaluator_execution":null},{"case_id":"error","repeat":1,"outcome":"error","error":"AGENT_FAILED","agent_execution":"743ec4a5-5f40-4925-baee-cce415ec2d69","evaluator_execution":null},{"case_id":"fail","repeat":0,"outcome":"error","error":"CASE_WORKER_LOST","agent_execution":"37cb4a4c-8789-40ed-9b29-2ece20be6d03","evaluator_execution":null},{"case_id":"fail","repeat":1,"outcome":"fail","error":null,"agent_execution":"bedda0d0-3de5-41de-a2d9-26b27fd569af","evaluator_execution":"94231e3f-07bc-451e-9e16-789de22473d7"},{"case_id":"model","repeat":0,"outcome":"pass","error":null,"agent_execution":"f87b674b-6089-4927-8863-1f146f4887a0","evaluator_execution":"bdbfd19a-28a5-48b1-b392-86ff75f1ed1c"},{"case_id":"model","repeat":1,"outcome":"pass","error":null,"agent_execution":"5a337681-ede8-4647-ad8a-296e2f921341","evaluator_execution":"a3f2f889-36e6-46bb-bdf9-dc76394b4399"},{"case_id":"pass","repeat":0,"outcome":"pass","error":null,"agent_execution":"425a61aa-c095-4b30-94bb-10ba99546a13","evaluator_execution":"774ab946-4201-46a2-b6a8-23b51bbd34a8"},{"case_id":"pass","repeat":1,"outcome":"pass","error":null,"agent_execution":"0679a191-f38b-4238-ac46-56d9121f21ab","evaluator_execution":"10510b47-3f14-4e92-856d-acf80692f0c5"}]}
+        + actual - expected
+        
+          {
+        +   errors: '5',
+        +   failed: '1',
+        +   meanScore: 0.8,
+        -   errors: '4',
+        -   failed: '2',
+        -   meanScore: 0.6666666666666666,
+            passed: '4',
+            total: '10'
+          }
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        total: '10'
+        passed: '4'
+        failed: '2'
+        errors: '4'
+        meanScore: 0.6666666666666666
+      actual:
+        errors: '5'
+        failed: '1'
+        meanScore: 0.8
+        passed: '4'
+        total: '10'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:736:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:674:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: repeats stay separate and comparison rejects a different evaluator version
+    not ok 2 - repeats stay separate and comparison rejects a different evaluator version
+      ---
+      duration_ms: 54209.881563
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:812:13'
+      failureType: 'testCodeFailure'
+      error: '{"error":"{\\"status\\":409,\\"error\\":{\\"code\\":\\"FUNCTION_OBSERVATION_INCOMPLETE\\",\\"correlationId\\":\\"1c737c21-9b19-432a-b75e-4eaf49a610dd\\",\\"details\\":null,\\"message\\":\\"FUNCTION_OBSERVATION_INCOMPLETE\\",\\"requestId\\":\\"1c737c21-9b19-432a-b75e-4eaf49a610dd\\",\\"retryable\\":false}}","states":[{"id":"4e10db19-88cf-4a2b-86c1-3dd0cebb5631","domain":"evaluation","status":"preparing","error":null},{"id":"ae4ba7aa-326a-4dff-9a59-133fb388924f","domain":"evaluation","status":"succeeded","error":null},{"id":"55c54efc-4d1a-4a7c-b8a1-63c84cc3aad7","domain":"evaluation","status":"succeeded","error":null},{"id":"709f5c3f-f748-46f0-bee2-7f7e0373c53d","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"a87ebf3b-fcfc-4f28-af68-67066ad927bf","domain":"evaluation","status":"running","error":null},{"id":"261cb6a7-400d-4c19-8950-eb97a6ae3a89","domain":"evaluation","status":"running","error":null},{"id":"b2b14a3a-14f6-45ff-9a45-190a6c153886","domain":"evaluation","status":"queued","error":null},{"id":"cbbb20f1-f882-4c29-bbde-b4fdca54b089","domain":"evaluation","status":"queued","error":null},{"id":"e48b3d4e-4a29-4e20-bc93-335af0e7329d","domain":"evaluation","status":"queued","error":null},{"id":"98bd99d2-b6e2-4a9c-bca3-63d7851afa46","domain":"evaluation","status":"queued","error":null},{"id":"c749003d-fdab-4497-bf11-b46a14edbbf2","domain":"evaluation","status":"queued","error":null},{"id":"2bbdf481-41f1-4aab-983c-d8b86921a98e","domain":"agent","status":"succeeded","error":null},{"id":"36025940-0633-4ef4-9293-9d6d700d6e56","domain":"agent","status":"succeeded","error":null},{"id":"0fcf564c-8fe6-4494-b556-2c565797a13e","domain":"evaluator","status":"succeeded","error":null},{"id":"ca32af8f-2ec7-46d0-a761-9b67c639c5f7","domain":"evaluator","status":"succeeded","error":null},{"id":"7c367375-9514-4e64-a0d2-dbc85db04a62","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"a50a4f98-548f-4691-9b65-9dfe1a8e7856","domain":"agent","status":"running","error":null},{"id":"87929428-6347-443f-8375-eb2432c17d93","domain":"agent","status":"running","error":null}],"failures":[{"id":"e32782e8-ac5c-44e9-9bc9-517a3c84150a","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"CONCURRENT_MODIFICATION","sqlstate":"40001"}},{"id":"e05e2543-2c35-4c9c-9023-1deef643501f","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"14b2d575-3300-42c1-be76-96f2d6942810","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"d453c3ee-42c4-4ab0-a75e-214592a69d14","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"007c6d87-d0a2-45c3-a9bc-67c01fd58997","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"743ec4a5-5f40-4925-baee-cce415ec2d69","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"06f8decd-34cd-47c5-aeb5-b2fffa54eb23","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"74ae6fb9-fa77-4bb3-b2e4-18decfb3a6ce","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"713be0da-c8e9-42e7-951c-75af5bec9fc4","domain":"evaluator","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"7c367375-9514-4e64-a0d2-dbc85db04a62","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"709f5c3f-f748-46f0-bee2-7f7e0373c53d","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"CONCURRENT_MODIFICATION","sqlstate":"40001"}}],"agentModelCalls":[{"logical_id":"decision","status":200,"error":null},{"logical_id":"decision","status":200,"error":null},{"logical_id":"decision","status":200,"error":null},{"logical_id":"decision","status":200,"error":null}],"gatewayCalls":[{"state":"succeeded","error":null},{"state":"succeeded","error":null},{"state":"succeeded","error":null},{"state":"succeeded","error":null},{"state":"succeeded","error":null}]}'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        <anonymous> (/work/tests/native-evaluations.integration.test.ts:662:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async <anonymous> (/work/tests/native-evaluations.integration.test.ts:661:18)
+        async until (/work/tests/native-evaluations.integration.test.ts:26:9)
+        async terminal (/work/tests/native-evaluations.integration.test.ts:654:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:856:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:812:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: public SDK and CLI inspect the same native receipt and preserve logical replay
+    ok 3 - public SDK and CLI inspect the same native receipt and preserve logical replay
+      ---
+      duration_ms: 4175.762799
+      type: 'test'
+      ...
+    # Subtest: cancelling a run fences every accepted descendant and stops live model and OCI work
+    not ok 4 - cancelling a run fences every accepted descendant and stops live model and OCI work
+      ---
+      duration_ms: 3980.905604
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:907:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The expression evaluated to a falsy value:
+        
+          assert.ok(acceptedChildren.length > 0)
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:921:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:907:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+    not ok 5 - a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+      ---
+      duration_ms: 54377.845366
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:962:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        '0' !== '1'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: '1'
+      actual: '0'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:996:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:962:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current clearance and registration protect retained case scores, summaries and events
+    ok 6 - current clearance and registration protect retained case scores, summaries and events
+      ---
+      duration_ms: 511.542976
+      type: 'test'
+      ...
+    1..6
+not ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 195492.712077
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:32:1'
+  failureType: 'subtestsFailed'
+  error: '4 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 7
+# suites 0
+# pass 2
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 230382.918691

@@ -1,0 +1,749 @@
+{
+  "rate": 20,
+  "windowMs": 2000,
+  "startedAt": "2026-10-31T07:47:09.815Z",
+  "arrivals": [
+    {
+      "sequence": 0,
+      "kind": "multiAction",
+      "offsetMs": 0,
+      "uids": [
+        "3a10a6f9-db16-4818-9d92-eeb156b60874",
+        "660bd6fd-34f7-409f-9392-16643ddba828",
+        "d832a367-bc02-471c-820f-1b0132652d74",
+        "920638d9-0382-41b0-bc22-5e5857d4e55e",
+        "64cf658a-2f0c-4d8b-81a6-b6e1bb64206e"
+      ]
+    },
+    {
+      "sequence": 1,
+      "kind": "detail",
+      "offsetMs": 50,
+      "uids": [
+        "1fa0d756-b475-427c-b027-3e3fe953c8bf"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "detail",
+      "offsetMs": 100,
+      "uids": [
+        "564744ba-5e09-4ef0-8d25-392ee47ed4e4"
+      ]
+    },
+    {
+      "sequence": 3,
+      "kind": "aggregate",
+      "offsetMs": 150,
+      "uids": [
+        "dcc43ef8-4c69-4f0f-aef2-29499a01575a"
+      ]
+    },
+    {
+      "sequence": 4,
+      "kind": "filterSort",
+      "offsetMs": 200,
+      "uids": [
+        "28e41560-1984-4c61-87a4-41f39bbd64a9"
+      ]
+    },
+    {
+      "sequence": 5,
+      "kind": "detail",
+      "offsetMs": 250,
+      "uids": [
+        "d56d732f-fb4c-426a-90d0-0947d9a1bd44"
+      ]
+    },
+    {
+      "sequence": 6,
+      "kind": "multiAction",
+      "offsetMs": 300,
+      "uids": [
+        "d56d732f-fb4c-426a-90d0-0947d9a1bd44",
+        "0d4ec3d8-f595-4d45-bf61-1e2258cc832d",
+        "8a624636-8b6b-42b3-859f-1eb5315448ea",
+        "0dff9fe6-8c65-48cc-85f6-f082c80fb1ac",
+        "ff0ead3c-97be-41b3-8603-a164a48ea39d"
+      ]
+    },
+    {
+      "sequence": 7,
+      "kind": "aggregate",
+      "offsetMs": 350,
+      "uids": [
+        "6ba09c73-b57f-4e63-a841-7e5ce7278722"
+      ]
+    },
+    {
+      "sequence": 8,
+      "kind": "detail",
+      "offsetMs": 400,
+      "uids": [
+        "63208fbd-89a5-4aba-b01d-0d90cb38463a"
+      ]
+    },
+    {
+      "sequence": 9,
+      "kind": "detail",
+      "offsetMs": 450,
+      "uids": [
+        "b14a4871-2a62-40ca-8c87-df2a09480280"
+      ]
+    },
+    {
+      "sequence": 10,
+      "kind": "page",
+      "offsetMs": 500,
+      "uids": [
+        "d6532997-daa6-46d3-b280-81df93c58782"
+      ]
+    },
+    {
+      "sequence": 11,
+      "kind": "action",
+      "offsetMs": 550,
+      "uids": [
+        "fd1dff49-cd90-4a36-aa7d-3eedca7bbfec"
+      ]
+    },
+    {
+      "sequence": 12,
+      "kind": "aggregate",
+      "offsetMs": 600,
+      "uids": [
+        "6c3f6141-1986-4f75-a3f9-6dec459155d1"
+      ]
+    },
+    {
+      "sequence": 13,
+      "kind": "page",
+      "offsetMs": 650,
+      "uids": [
+        "232339a8-268d-4384-a291-191a64f33c1c"
+      ]
+    },
+    {
+      "sequence": 14,
+      "kind": "multiAction",
+      "offsetMs": 700,
+      "uids": [
+        "5ba5a07c-6b1a-4933-8646-c62045086820",
+        "214a3d70-ddc1-4997-85d8-4b5099afecd5",
+        "bbfce081-742f-4bae-8b56-48a0f0d386b7",
+        "44ee495c-2dc6-4c47-8cc0-700811466f67",
+        "63208fbd-89a5-4aba-b01d-0d90cb38463a"
+      ]
+    },
+    {
+      "sequence": 15,
+      "kind": "page",
+      "offsetMs": 750,
+      "uids": [
+        "d5572d36-a112-41d4-be3e-f6fbd4457a51"
+      ]
+    },
+    {
+      "sequence": 16,
+      "kind": "page",
+      "offsetMs": 800,
+      "uids": [
+        "64cf658a-2f0c-4d8b-81a6-b6e1bb64206e"
+      ]
+    },
+    {
+      "sequence": 17,
+      "kind": "detail",
+      "offsetMs": 850,
+      "uids": [
+        "4938b0d8-6994-42b5-a6dd-5051926b7b12"
+      ]
+    },
+    {
+      "sequence": 18,
+      "kind": "action",
+      "offsetMs": 900,
+      "uids": [
+        "0a2e0120-3b87-41ca-88cc-4ee982871110"
+      ]
+    },
+    {
+      "sequence": 19,
+      "kind": "detail",
+      "offsetMs": 950,
+      "uids": [
+        "7b4f5d2c-372b-4b62-a2fe-bb5c4e127620"
+      ]
+    },
+    {
+      "sequence": 20,
+      "kind": "detail",
+      "offsetMs": 1000,
+      "uids": [
+        "af34ed5f-3d37-440a-82c0-0c9311577ba5"
+      ]
+    },
+    {
+      "sequence": 21,
+      "kind": "action",
+      "offsetMs": 1050,
+      "uids": [
+        "16b888b6-7aa1-4cc0-85f9-13240633d3ca"
+      ]
+    },
+    {
+      "sequence": 22,
+      "kind": "detail",
+      "offsetMs": 1100,
+      "uids": [
+        "b0644e0c-f180-4d51-8b04-e31ef9608eca"
+      ]
+    },
+    {
+      "sequence": 23,
+      "kind": "detail",
+      "offsetMs": 1150,
+      "uids": [
+        "075f0b36-846b-4f4d-a5b3-c26fffff1ab5"
+      ]
+    },
+    {
+      "sequence": 24,
+      "kind": "filterSort",
+      "offsetMs": 1200,
+      "uids": [
+        "6a1e649e-7beb-4897-bb02-736ad64d33fc"
+      ]
+    },
+    {
+      "sequence": 25,
+      "kind": "page",
+      "offsetMs": 1250,
+      "uids": [
+        "d22163a6-9851-4174-9893-d8bb46c7f187"
+      ]
+    },
+    {
+      "sequence": 26,
+      "kind": "page",
+      "offsetMs": 1300,
+      "uids": [
+        "16b888b6-7aa1-4cc0-85f9-13240633d3ca"
+      ]
+    },
+    {
+      "sequence": 27,
+      "kind": "multiAction",
+      "offsetMs": 1350,
+      "uids": [
+        "11c78324-dd30-42c8-816a-a0aac8c93936",
+        "6aece0ec-67dc-4c2e-a45d-a664ba10d8a3",
+        "b0f59b17-3f20-4191-a812-21a9fe83d33d",
+        "8e39b602-4e70-4c79-bc7a-e961d570bad1",
+        "6a1e649e-7beb-4897-bb02-736ad64d33fc"
+      ]
+    },
+    {
+      "sequence": 28,
+      "kind": "page",
+      "offsetMs": 1400,
+      "uids": [
+        "60786b21-5ea1-45d0-bc73-7de3db3600e7"
+      ]
+    },
+    {
+      "sequence": 29,
+      "kind": "action",
+      "offsetMs": 1450,
+      "uids": [
+        "96ad9e35-5e62-47b8-a566-9c82ad5adaff"
+      ]
+    },
+    {
+      "sequence": 30,
+      "kind": "page",
+      "offsetMs": 1500,
+      "uids": [
+        "0766f3fa-67c9-4242-acaa-c77aca1ecc02"
+      ]
+    },
+    {
+      "sequence": 31,
+      "kind": "detail",
+      "offsetMs": 1550,
+      "uids": [
+        "68748f09-c0df-4e68-a526-d7216d9d5b72"
+      ]
+    },
+    {
+      "sequence": 32,
+      "kind": "detail",
+      "offsetMs": 1600,
+      "uids": [
+        "891da687-aafd-4ecc-a606-da01ff274847"
+      ]
+    },
+    {
+      "sequence": 33,
+      "kind": "multiAction",
+      "offsetMs": 1650,
+      "uids": [
+        "b14a4871-2a62-40ca-8c87-df2a09480280",
+        "1441aa5c-b256-4b9d-9c8e-a9f109eaeb3d",
+        "7b75bedc-6724-49ac-96c9-974f7adb3616",
+        "cf93b08d-1277-41cc-88be-f6736621bb38",
+        "f3b4be34-425f-499d-bfec-d007cd55b7d3"
+      ]
+    },
+    {
+      "sequence": 34,
+      "kind": "action",
+      "offsetMs": 1700,
+      "uids": [
+        "790adfa2-98da-450a-9f4e-73548026dc04"
+      ]
+    },
+    {
+      "sequence": 35,
+      "kind": "page",
+      "offsetMs": 1750,
+      "uids": [
+        "6ba09c73-b57f-4e63-a841-7e5ce7278722"
+      ]
+    },
+    {
+      "sequence": 36,
+      "kind": "page",
+      "offsetMs": 1800,
+      "uids": [
+        "c0f37629-dbae-4265-9b72-7f47689875d9"
+      ]
+    },
+    {
+      "sequence": 37,
+      "kind": "filterSort",
+      "offsetMs": 1850,
+      "uids": [
+        "18532ca7-ac1f-464e-9c07-a8a1ea3d9c5d"
+      ]
+    },
+    {
+      "sequence": 38,
+      "kind": "action",
+      "offsetMs": 1900,
+      "uids": [
+        "fd1dff49-cd90-4a36-aa7d-3eedca7bbfec"
+      ]
+    },
+    {
+      "sequence": 39,
+      "kind": "detail",
+      "offsetMs": 1950,
+      "uids": [
+        "8acf5b57-8cec-407b-8d14-918bdc3825bb"
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "sequence": 0,
+      "kind": "multiAction",
+      "scheduledMs": 0,
+      "dispatchMs": 0.14233299999978044,
+      "completedMs": 70.43909600000006,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 1,
+      "kind": "detail",
+      "scheduledMs": 50,
+      "dispatchMs": 50.06710600000042,
+      "completedMs": 80.47767000000022,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 2,
+      "kind": "detail",
+      "scheduledMs": 100,
+      "dispatchMs": 99.64152700000068,
+      "completedMs": 112.14857100000063,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 3,
+      "kind": "aggregate",
+      "scheduledMs": 150,
+      "dispatchMs": 150.34038899999996,
+      "completedMs": 168.17807600000106,
+      "successful": true,
+      "status": 200,
+      "bytes": 113
+    },
+    {
+      "sequence": 4,
+      "kind": "filterSort",
+      "scheduledMs": 200,
+      "dispatchMs": 199.2845750000006,
+      "completedMs": 220.26861999999983,
+      "successful": true,
+      "status": 200,
+      "bytes": 7662
+    },
+    {
+      "sequence": 5,
+      "kind": "detail",
+      "scheduledMs": 250,
+      "dispatchMs": 249.41104300000097,
+      "completedMs": 263.67422800000077,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 6,
+      "kind": "multiAction",
+      "scheduledMs": 300,
+      "dispatchMs": 299.789240000001,
+      "completedMs": 327.66509700000006,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 7,
+      "kind": "aggregate",
+      "scheduledMs": 350,
+      "dispatchMs": 348.89833500000077,
+      "completedMs": 363.6372590000001,
+      "successful": true,
+      "status": 200,
+      "bytes": 113
+    },
+    {
+      "sequence": 8,
+      "kind": "detail",
+      "scheduledMs": 400,
+      "dispatchMs": 398.81808700000056,
+      "completedMs": 411.71447100000023,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 9,
+      "kind": "detail",
+      "scheduledMs": 450,
+      "dispatchMs": 448.8923390000009,
+      "completedMs": 461.85846200000105,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 10,
+      "kind": "page",
+      "scheduledMs": 500,
+      "dispatchMs": 498.97563999999966,
+      "completedMs": 518.7630629999994,
+      "successful": true,
+      "status": 200,
+      "bytes": 7650
+    },
+    {
+      "sequence": 11,
+      "kind": "action",
+      "scheduledMs": 550,
+      "dispatchMs": 548.8898039999995,
+      "completedMs": 573.9358820000007,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 12,
+      "kind": "aggregate",
+      "scheduledMs": 600,
+      "dispatchMs": 599.0429009999998,
+      "completedMs": 614.8330770000002,
+      "successful": true,
+      "status": 200,
+      "bytes": 113
+    },
+    {
+      "sequence": 13,
+      "kind": "page",
+      "scheduledMs": 650,
+      "dispatchMs": 648.9553640000004,
+      "completedMs": 668.281202000001,
+      "successful": true,
+      "status": 200,
+      "bytes": 7653
+    },
+    {
+      "sequence": 14,
+      "kind": "multiAction",
+      "scheduledMs": 700,
+      "dispatchMs": 698.4050280000001,
+      "completedMs": 725.6157190000004,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 15,
+      "kind": "page",
+      "scheduledMs": 750,
+      "dispatchMs": 749.7348109999994,
+      "completedMs": 769.3219120000003,
+      "successful": true,
+      "status": 200,
+      "bytes": 7655
+    },
+    {
+      "sequence": 16,
+      "kind": "page",
+      "scheduledMs": 800,
+      "dispatchMs": 799.4234449999994,
+      "completedMs": 817.3404230000006,
+      "successful": true,
+      "status": 200,
+      "bytes": 7656
+    },
+    {
+      "sequence": 17,
+      "kind": "detail",
+      "scheduledMs": 850,
+      "dispatchMs": 849.4080750000003,
+      "completedMs": 862.0947530000003,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 18,
+      "kind": "action",
+      "scheduledMs": 900,
+      "dispatchMs": 900.2526659999994,
+      "completedMs": 918.4604630000003,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 19,
+      "kind": "detail",
+      "scheduledMs": 950,
+      "dispatchMs": 949.5262499999999,
+      "completedMs": 962.072201,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 20,
+      "kind": "detail",
+      "scheduledMs": 1000,
+      "dispatchMs": 1000.1336610000008,
+      "completedMs": 1012.6914270000007,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 21,
+      "kind": "action",
+      "scheduledMs": 1050,
+      "dispatchMs": 1049.8656139999994,
+      "completedMs": 1068.1896740000002,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 22,
+      "kind": "detail",
+      "scheduledMs": 1100,
+      "dispatchMs": 1099.4438639999998,
+      "completedMs": 1112.0402459999996,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 23,
+      "kind": "detail",
+      "scheduledMs": 1150,
+      "dispatchMs": 1150.1564669999998,
+      "completedMs": 1163.104085,
+      "successful": true,
+      "status": 200,
+      "bytes": 4122
+    },
+    {
+      "sequence": 24,
+      "kind": "filterSort",
+      "scheduledMs": 1200,
+      "dispatchMs": 1200.223868,
+      "completedMs": 1219.740920000001,
+      "successful": true,
+      "status": 200,
+      "bytes": 7662
+    },
+    {
+      "sequence": 25,
+      "kind": "page",
+      "scheduledMs": 1250,
+      "dispatchMs": 1249.886821000001,
+      "completedMs": 1269.699463,
+      "successful": true,
+      "status": 200,
+      "bytes": 7655
+    },
+    {
+      "sequence": 26,
+      "kind": "page",
+      "scheduledMs": 1300,
+      "dispatchMs": 1298.8468270000003,
+      "completedMs": 1317.3779359999999,
+      "successful": true,
+      "status": 200,
+      "bytes": 7660
+    },
+    {
+      "sequence": 27,
+      "kind": "multiAction",
+      "scheduledMs": 1350,
+      "dispatchMs": 1348.5204139999996,
+      "completedMs": 1379.992623000001,
+      "successful": true,
+      "status": 200,
+      "bytes": 16
+    },
+    {
+      "sequence": 28,
+      "kind": "page",
+      "scheduledMs": 1400,
+      "dispatchMs": 1400.1030139999993,
+      "completedMs": 1418.4287090000007,
+      "successful": true,
+      "status": 200,
+      "bytes": 7660
+    },
+    {
+      "sequence": 29,
+      "kind": "action",
+      "scheduledMs": 1450,
+      "dispatchMs": 1450.3275230000008,
+      "completedMs": 1468.587821,
+      "successful": true,
+      "status": 200,
+      "bytes": 17
+    },
+    {
+      "sequence": 30,
+      "kind": "page",
+      "scheduledMs": 1500,
+      "dispatchMs": 1499.6706459999996,
+      "completedMs": 1517.9829650000001,
+      "successful": true,
+      "status": 200,
+      "bytes": 7663
+    },
+    {
+      "sequence": 31,
+      "kind": "detail",
+      "scheduledMs": 1550,
+      "dispatchMs": 1550.213071000001,
+      "completedMs": 1562.272129,
+      "successful": true,
+      "status": 200,
+      "bytes": 4123
+    },
+    {
+      "sequence": 32,
+      "kind": "detail",
+      "scheduledMs": 1600,
+      "dispatchMs": 1599.495914,
+      "completedMs": 1612.7381450000003,
+      "successful": true,
+      "status": 200,
+      "bytes": 4123
+    },
+    {
+      "sequence": 33,
+      "kind": "multiAction",
+      "scheduledMs": 1650,
+      "dispatchMs": 1649.8773960000008,
+      "completedMs": 1676.75104,
+      "successful": true,
+      "status": 200,
+      "bytes": 17
+    },
+    {
+      "sequence": 34,
+      "kind": "action",
+      "scheduledMs": 1700,
+      "dispatchMs": 1698.8593730000002,
+      "completedMs": 1716.9653860000008,
+      "successful": true,
+      "status": 200,
+      "bytes": 17
+    },
+    {
+      "sequence": 35,
+      "kind": "page",
+      "scheduledMs": 1750,
+      "dispatchMs": 1749.0648470000006,
+      "completedMs": 1766.997918,
+      "successful": true,
+      "status": 200,
+      "bytes": 7659
+    },
+    {
+      "sequence": 36,
+      "kind": "page",
+      "scheduledMs": 1800,
+      "dispatchMs": 1799.1209040000003,
+      "completedMs": 1818.2503370000004,
+      "successful": true,
+      "status": 200,
+      "bytes": 7659
+    },
+    {
+      "sequence": 37,
+      "kind": "filterSort",
+      "scheduledMs": 1850,
+      "dispatchMs": 1849.3934369999997,
+      "completedMs": 1868.149601,
+      "successful": true,
+      "status": 200,
+      "bytes": 7663
+    },
+    {
+      "sequence": 38,
+      "kind": "action",
+      "scheduledMs": 1900,
+      "dispatchMs": 1900.2993639999995,
+      "completedMs": 1918.6238779999994,
+      "successful": true,
+      "status": 200,
+      "bytes": 17
+    },
+    {
+      "sequence": 39,
+      "kind": "detail",
+      "scheduledMs": 1950,
+      "dispatchMs": 1949.7566460000007,
+      "completedMs": 1962.6123040000011,
+      "successful": true,
+      "status": 200,
+      "bytes": 4123
+    }
+  ]
+}

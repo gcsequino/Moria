@@ -1,0 +1,199 @@
+TAP version 13
+# Subtest: filesystem platform API client provides scoped authoring and coherent source deployment
+    # Subtest: non-browser bearer writes authenticate on a browser-enabled management host
+    ok 1 - non-browser bearer writes authenticate on a browser-enabled management host
+      ---
+      duration_ms: 36.88114
+      type: 'test'
+      ...
+    # Subtest: verified local profiles and workload sessions cannot impersonate each other
+    ok 2 - verified local profiles and workload sessions cannot impersonate each other
+      ---
+      duration_ms: 214.206788
+      type: 'test'
+      ...
+    # Subtest: ordinary authors can create projects and versioned source files without instance administration
+    ok 3 - ordinary authors can create projects and versioned source files without instance administration
+      ---
+      duration_ms: 1681.381288
+      type: 'test'
+      ...
+    # Subtest: disconnecting during an HTTP upload leaves no visible file and cleans private staging
+    ok 4 - disconnecting during an HTTP upload leaves no visible file and cleans private staging
+      ---
+      duration_ms: 196.962154
+      type: 'test'
+      ...
+    # Subtest: CLI round trips a local source checkout and rejects stale or escaped files
+    ok 5 - CLI round trips a local source checkout and rejects stale or escaped files
+      ---
+      duration_ms: 3687.57185
+      type: 'test'
+      ...
+    # Subtest: strict JSON, query and mutation-key boundaries reject ambiguous requests
+    ok 6 - strict JSON, query and mutation-key boundaries reject ambiguous requests
+      ---
+      duration_ms: 15.466361
+      type: 'test'
+      ...
+    1..6
+ok 1 - filesystem platform API client provides scoped authoring and coherent source deployment
+  ---
+  duration_ms: 7811.357594
+  type: 'test'
+  ...
+# Subtest: native filesystem replicas enforce current namespace authority and atomic receipts (posix)
+    # Subtest: permission filtering precedes directory limits and direct hidden reads remain concealed
+    ok 1 - permission filtering precedes directory limits and direct hidden reads remain concealed
+      ---
+      duration_ms: 374.817717
+      type: 'test'
+      ...
+    # Subtest: opaque directory cursors resume concurrently across replicas with one original expiry
+    ok 2 - opaque directory cursors resume concurrently across replicas with one original expiry
+      ---
+      duration_ms: 174.930127
+      type: 'test'
+      ...
+    # Subtest: same-key races commit one namespace mutation and conflict on different input
+    ok 3 - same-key races commit one namespace mutation and conflict on different input
+      ---
+      duration_ms: 572.625378
+      type: 'test'
+      ...
+    # Subtest: a later failed change rolls back earlier entries, versions and parent touches
+    ok 4 - a later failed change rolls back earlier entries, versions and parent touches
+      ---
+      duration_ms: 41.409165
+      type: 'test'
+      ...
+    # Subtest: moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations
+    ok 5 - moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations
+      ---
+      duration_ms: 255.707676
+      type: 'test'
+      ...
+    # Subtest: native home provisioning binds only the verified principal and administrative group/enable operations retain current authority
+    ok 6 - native home provisioning binds only the verified principal and administrative group/enable operations retain current authority
+      ---
+      duration_ms: 132.677118
+      type: 'test'
+      ...
+    # Subtest: native source publication verifies qualified compiler artifacts and atomically activates permanent resource identities
+    ok 7 - native source publication verifies qualified compiler artifacts and atomically activates permanent resource identities
+      ---
+      duration_ms: 5276.946785
+      type: 'test'
+      ...
+    # Subtest: qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas
+    ok 8 - qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas
+      ---
+      duration_ms: 1648.388161
+      type: 'test'
+      ...
+    # Subtest: native file copy preserves source provenance and policy writes enforce CAS, deny precedence and marking monotonicity
+    ok 9 - native file copy preserves source provenance and policy writes enforce CAS, deny precedence and marking monotonicity
+      ---
+      duration_ms: 209.635551
+      type: 'test'
+      ...
+    # Subtest: managed/cyclic placements, untrusted content and malformed names fail atomically
+    ok 10 - managed/cyclic placements, untrusted content and malformed names fail atomically
+      ---
+      duration_ms: 75.493543
+      type: 'test'
+      ...
+    # Subtest: a sealed upload survives uploader suspension and database loss, then recovers under the next fence
+    ok 11 - a sealed upload survives uploader suspension and database loss, then recovers under the next fence
+      ---
+      duration_ms: 28605.918668
+      type: 'test'
+      ...
+    1..11
+ok 2 - native filesystem replicas enforce current namespace authority and atomic receipts (posix)
+  ---
+  duration_ms: 41984.817894
+  type: 'test'
+  ...
+# Subtest: native filesystem replicas enforce current namespace authority and atomic receipts (s3)
+    # Subtest: permission filtering precedes directory limits and direct hidden reads remain concealed
+    ok 1 - permission filtering precedes directory limits and direct hidden reads remain concealed
+      ---
+      duration_ms: 428.110611
+      type: 'test'
+      ...
+    # Subtest: opaque directory cursors resume concurrently across replicas with one original expiry
+    ok 2 - opaque directory cursors resume concurrently across replicas with one original expiry
+      ---
+      duration_ms: 201.58309
+      type: 'test'
+      ...
+    # Subtest: same-key races commit one namespace mutation and conflict on different input
+    ok 3 - same-key races commit one namespace mutation and conflict on different input
+      ---
+      duration_ms: 554.663605
+      type: 'test'
+      ...
+    # Subtest: a later failed change rolls back earlier entries, versions and parent touches
+    ok 4 - a later failed change rolls back earlier entries, versions and parent touches
+      ---
+      duration_ms: 35.448123
+      type: 'test'
+      ...
+    # Subtest: moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations
+    ok 5 - moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations
+      ---
+      duration_ms: 243.545177
+      type: 'test'
+      ...
+    # Subtest: native home provisioning binds only the verified principal and administrative group/enable operations retain current authority
+    ok 6 - native home provisioning binds only the verified principal and administrative group/enable operations retain current authority
+      ---
+      duration_ms: 121.566495
+      type: 'test'
+      ...
+    # Subtest: native source publication verifies qualified compiler artifacts and atomically activates permanent resource identities
+    ok 7 - native source publication verifies qualified compiler artifacts and atomically activates permanent resource identities
+      ---
+      duration_ms: 5903.513723
+      type: 'test'
+      ...
+    # Subtest: qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas
+    ok 8 - qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas
+      ---
+      duration_ms: 2214.022278
+      type: 'test'
+      ...
+    # Subtest: native file copy preserves source provenance and policy writes enforce CAS, deny precedence and marking monotonicity
+    ok 9 - native file copy preserves source provenance and policy writes enforce CAS, deny precedence and marking monotonicity
+      ---
+      duration_ms: 125.389437
+      type: 'test'
+      ...
+    # Subtest: managed/cyclic placements, untrusted content and malformed names fail atomically
+    ok 10 - managed/cyclic placements, untrusted content and malformed names fail atomically
+      ---
+      duration_ms: 60.65555
+      type: 'test'
+      ...
+    # Subtest: a sealed upload survives uploader suspension and database loss, then recovers under the next fence
+    ok 11 - a sealed upload survives uploader suspension and database loss, then recovers under the next fence
+      ---
+      duration_ms: 28743.159061
+      type: 'test'
+      ...
+    1..11
+ok 3 - native filesystem replicas enforce current namespace authority and atomic receipts (s3)
+  ---
+  duration_ms: 44319.232264
+  type: 'test'
+  ...
+1..3
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 95161.625909

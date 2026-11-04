@@ -1,0 +1,261 @@
+TAP version 13
+# Subtest: native effective projections build off-lock, replay concurrent edits and activate with source generations
+    # Subtest: off-lock paged build replays an actual concurrent native action before atomic activation
+    ok 1 - off-lock paged build replays an actual concurrent native action before atomic activation
+      ---
+      duration_ms: 3048.040755
+      type: 'test'
+      ...
+    # Subtest: physical primary UID checks reject missing or different values and protected UID queries seek canonical UID
+    ok 2 - physical primary UID checks reject missing or different values and protected UID queries seek canonical UID
+      ---
+      duration_ms: 102.964764
+      type: 'test'
+      ...
+    # Subtest: strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+    ok 3 - strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+      ---
+      duration_ms: 295.834413
+      type: 'test'
+      ...
+    # Subtest: current actions maintain typed history atomically and exact overflow remains present
+    ok 4 - current actions maintain typed history atomically and exact overflow remains present
+      ---
+      duration_ms: 178.141152
+      type: 'test'
+      ...
+    # Subtest: layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+    ok 5 - layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+      ---
+      duration_ms: 1010.027209
+      type: 'test'
+      ...
+    # Subtest: expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+    ok 6 - expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+      ---
+      duration_ms: 3256.655438
+      type: 'test'
+      ...
+    # Subtest: a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+    ok 7 - a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+      ---
+      duration_ms: 1588.282865
+      type: 'test'
+      ...
+    # Subtest: a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+    ok 8 - a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+      ---
+      duration_ms: 2140.694569
+      type: 'test'
+      ...
+    # Subtest: protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+    ok 9 - protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+      ---
+      duration_ms: 381.015402
+      type: 'test'
+      ...
+    # Subtest: protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+    ok 10 - protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+      ---
+      duration_ms: 184.512731
+      type: 'test'
+      ...
+    # Subtest: a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+    ok 11 - a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+      ---
+      duration_ms: 1695.452707
+      type: 'test'
+      ...
+    1..11
+ok 1 - native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ---
+  duration_ms: 24416.676054
+  type: 'test'
+  ...
+# canonical UID seek plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":3.55,"Plan Rows":2,"Plan Width":16,"Actual Startup Time":0.008,"Actual Total Time":0.009,"Actual Rows":2,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_599744d83c3447139f003a8191dd9a9c_uid","Relation Name":"runtime_projection_599744d83c3447139f003a8191dd9a9c","Alias":"p","Startup Cost":0.27,"Total Cost":8.47,"Plan Rows":5,"Plan Width":16,"Actual Startup Time":0.008,"Actual Total Time":0.008,"Actual Rows":2,"Actual Loops":1,"Disabled":false,"Index Cond":"(uid >= '00000127-0000-4000-8000-000000000000'::uuid)","Rows Removed by Index Recheck":0,"Filter":"(NOT deleted)","Rows Removed by Filter":0,"Index Searches":1,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":722,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.839,"Triggers":[],"Execution Time":0.019}]
+# 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.012,"Actual Total Time":0.015,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_599744d83c3447139f003a8191dd9a9c_1_c","Relation Name":"runtime_projection_599744d83c3447139f003a8191dd9a9c","Alias":"runtime_projection_599744d83c3447139f003a8191dd9a9c","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.012,"Actual Total Time":0.014,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.079,"Triggers":[],"Execution Time":0.021}]
+# {"event":"protected_page_plans","scope":"300-row functional diagnostic; no capacity qualification","rows":300,"rowBytes":4096,"projection":["uid","id","name","region","enabled","rank","amount"],"plans":[{"class":"projection-layout-with-overflow","event":"serving_plan","plan":[{"Execution Time":1.209,"Plan":{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":1.173,"Actual Total Time":1.185,"Async Capable":false,"Disabled":false,"Inner Unique":false,"Join Type":"Inner","Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Nested Loop","Parallel Aware":false,"Plan Rows":51,"Plan Width":144,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.02,"Actual Total Time":0.042,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Limit","Parallel Aware":false,"Parent Relationship":"InitPlan","Plan Rows":51,"Plan Width":89,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.02,"Actual Total Time":0.039,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Merge Append","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":52,"Plan Width":89,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.019,"Actual Total Time":0.035,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Limit","Parallel Aware":false,"Parent Relationship":"Member","Plan Rows":51,"Plan Width":89,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.018,"Actual Total Time":0.033,"Alias":"p","Async Capable":false,"Disabled":false,"Index Name":"runtime_pi_0c83028145084fcf9900a1b081834b54_0_c","Index Searches":1,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Index Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":200,"Plan Width":89,"Relation Name":"runtime_projection_0c83028145084fcf9900a1b081834b54","Rows Removed by Filter":100,"Scan Direction":"Forward","Shared Dirtied Blocks":0,"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.27,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":33.52}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.27,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":8.75},{"Actual Loops":1,"Actual Rows":0,"Actual Startup Time":0.001,"Actual Total Time":0.001,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Limit","Parallel Aware":false,"Parent Relationship":"Member","Plan Rows":1,"Plan Width":89,"Plans":[{"Actual Loops":1,"Actual Rows":0,"Actual Startup Time":0.001,"Actual Total Time":0.001,"Alias":"p_1","Async Capable":false,"Disabled":false,"Index Name":"runtime_pi_0c83028145084fcf9900a1b081834b54_0_o","Index Searches":1,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Index Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":1,"Plan Width":89,"Relation Name":"runtime_projection_0c83028145084fcf9900a1b081834b54","Rows Removed by Filter":0,"Scan Direction":"Forward","Shared Dirtied Blocks":0,"Shared Hit Blocks":1,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.12,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":5.89}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":1,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.12,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":5.89}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":8,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.41,"Subplans Removed":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":15.17}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":8,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.41,"Subplan Name":"CTE page","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":14.89},{"Actual Loops":1,"Actual Rows":1,"Actual Startup Time":1.151,"Actual Total Time":1.151,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Aggregate","Parallel Aware":false,"Parent Relationship":"InitPlan","Partial Mode":"Simple","Plan Rows":1,"Plan Width":1,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0,"Actual Total Time":0.032,"Alias":"page_1","Async Capable":false,"CTE Name":"page","Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Maximum Storage":22,"Node Type":"CTE Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":51,"Plan Width":128,"Shared Dirtied Blocks":0,"Shared Hit Blocks":2,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0,"Storage":"Memory","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":1.02}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":730,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":3.19,"Strategy":"Plain","Subplan Name":"CTE byte_guard","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":3.45},{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.021,"Actual Total Time":0.023,"Alias":"page","Async Capable":false,"CTE Name":"page","Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Maximum Storage":22,"Node Type":"CTE Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":51,"Plan Width":144,"Shared Dirtied Blocks":0,"Shared Hit Blocks":6,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0,"Storage":"Memory","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":1.02},{"Actual Loops":51,"Actual Rows":1,"Actual Startup Time":0.023,"Actual Total Time":0.023,"Alias":"byte_guard","Async Capable":false,"CTE Name":"byte_guard","Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Maximum Storage":17,"Node Type":"CTE Scan","Parallel Aware":false,"Parent Relationship":"Inner","Plan Rows":1,"Plan Width":0,"Rows Removed by Filter":0,"Shared Dirtied Blocks":0,"Shared Hit Blocks":730,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0,"Storage":"Memory","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":0.02}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":736,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":18.34,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":20.39},"Planning":{"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Shared Dirtied Blocks":0,"Shared Hit Blocks":286,"Shared Read Blocks":0,"Shared Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.444,"Triggers":[]}]},{"class":"projection-layout-with-overflow","event":"serving_plan","plan":[{"Execution Time":1.136,"Plan":{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":1.097,"Actual Total Time":1.109,"Async Capable":false,"Disabled":false,"Inner Unique":false,"Join Type":"Inner","Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Nested Loop","Parallel Aware":false,"Plan Rows":51,"Plan Width":152,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.013,"Actual Total Time":0.043,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Limit","Parallel Aware":false,"Parent Relationship":"InitPlan","Plan Rows":51,"Plan Width":97,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.012,"Actual Total Time":0.04,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Merge Append","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":52,"Plan Width":97,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.01,"Actual Total Time":0.035,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Limit","Parallel Aware":false,"Parent Relationship":"Member","Plan Rows":51,"Plan Width":97,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.01,"Actual Total Time":0.033,"Alias":"p","Async Capable":false,"Disabled":false,"Index Name":"runtime_pi_0c83028145084fcf9900a1b081834b54_2_c","Index Searches":1,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Index Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":300,"Plan Width":97,"Relation Name":"runtime_projection_0c83028145084fcf9900a1b081834b54","Rows Removed by Filter":0,"Scan Direction":"Forward","Shared Dirtied Blocks":0,"Shared Hit Blocks":48,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.27,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":57.51}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":48,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.27,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":10},{"Actual Loops":1,"Actual Rows":0,"Actual Startup Time":0.002,"Actual Total Time":0.002,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Limit","Parallel Aware":false,"Parent Relationship":"Member","Plan Rows":1,"Plan Width":97,"Plans":[{"Actual Loops":1,"Actual Rows":0,"Actual Startup Time":0.002,"Actual Total Time":0.002,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Sort","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":1,"Plan Width":97,"Plans":[{"Actual Loops":1,"Actual Rows":0,"Actual Startup Time":0.001,"Actual Total Time":0.001,"Alias":"p_1","Async Capable":false,"Disabled":false,"Index Name":"runtime_pi_0c83028145084fcf9900a1b081834b54_2_o","Index Searches":1,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Index Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":1,"Plan Width":97,"Relation Name":"runtime_projection_0c83028145084fcf9900a1b081834b54","Rows Removed by Filter":0,"Scan Direction":"Forward","Shared Dirtied Blocks":0,"Shared Hit Blocks":1,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0.12,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":5.89}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":1,"Shared Read Blocks":0,"Shared Written Blocks":0,"Sort Method":"quicksort","Sort Space Type":"Memory","Sort Space Used":25,"Startup Cost":5.9,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":5.91}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":1,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":5.9,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":5.91}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":49,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":6.18,"Subplans Removed":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":16.44}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":49,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":6.18,"Subplan Name":"CTE page","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":16.24},{"Actual Loops":1,"Actual Rows":1,"Actual Startup Time":1.081,"Actual Total Time":1.082,"Async Capable":false,"Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Node Type":"Aggregate","Parallel Aware":false,"Parent Relationship":"InitPlan","Partial Mode":"Simple","Plan Rows":1,"Plan Width":1,"Plans":[{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0,"Actual Total Time":0.04,"Alias":"page_1","Async Capable":false,"CTE Name":"page","Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Maximum Storage":23,"Node Type":"CTE Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":51,"Plan Width":128,"Shared Dirtied Blocks":0,"Shared Hit Blocks":45,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0,"Storage":"Memory","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":1.02}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":731,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":3.19,"Strategy":"Plain","Subplan Name":"CTE byte_guard","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":3.45},{"Actual Loops":1,"Actual Rows":51,"Actual Startup Time":0.014,"Actual Total Time":0.016,"Alias":"page","Async Capable":false,"CTE Name":"page","Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Maximum Storage":23,"Node Type":"CTE Scan","Parallel Aware":false,"Parent Relationship":"Outer","Plan Rows":51,"Plan Width":152,"Shared Dirtied Blocks":0,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0,"Storage":"Memory","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":1.02},{"Actual Loops":51,"Actual Rows":1,"Actual Startup Time":0.021,"Actual Total Time":0.021,"Alias":"byte_guard","Async Capable":false,"CTE Name":"byte_guard","Disabled":false,"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Maximum Storage":17,"Node Type":"CTE Scan","Parallel Aware":false,"Parent Relationship":"Inner","Plan Rows":1,"Plan Width":0,"Rows Removed by Filter":0,"Shared Dirtied Blocks":0,"Shared Hit Blocks":731,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":0,"Storage":"Memory","Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":0.02}],"Shared Dirtied Blocks":0,"Shared Hit Blocks":735,"Shared Read Blocks":0,"Shared Written Blocks":0,"Startup Cost":19.7,"Temp Read Blocks":0,"Temp Written Blocks":0,"Total Cost":21.75},"Planning":{"Local Dirtied Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Written Blocks":0,"Shared Dirtied Blocks":0,"Shared Hit Blocks":22,"Shared Read Blocks":0,"Shared Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.207,"Triggers":[]}]}]}
+# Subtest: exact protected seven-field page plans retain native policy and byte guards
+ok 2 - exact protected seven-field page plans retain native policy and byte guards
+  ---
+  duration_ms: 14162.162576
+  type: 'test'
+  ...
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 253.72393
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 131.264985
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 362.060799
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 190.297155
+      type: 'test'
+      ...
+    # Subtest: whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+    ok 5 - whole-population SQL aggregation authorizes before budgets and returns complete exact groups without UID scopes
+      ---
+      duration_ms: 469.319272
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 6 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 184.883464
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 7 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 77.575418
+      type: 'test'
+      ...
+    # Subtest: typed multi-type edits retain canonical policy rows, atomicity and original input receipts
+    ok 8 - typed multi-type edits retain canonical policy rows, atomicity and original input receipts
+      ---
+      duration_ms: 380.249927
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication rechecks changed target and complete multi-target footprint
+    ok 9 - ordinary Action publication rechecks changed target and complete multi-target footprint
+      ---
+      duration_ms: 380.610867
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication rechecks replacement source and current property policy
+    ok 10 - ordinary Action publication rechecks replacement source and current property policy
+      ---
+      duration_ms: 193.805834
+      type: 'test'
+      ...
+    # Subtest: ordinary Action publication checks current grants before releasing prepared effects
+    ok 11 - ordinary Action publication checks current grants before releasing prepared effects
+      ---
+      duration_ms: 69.786145
+      type: 'test'
+      ...
+    # Subtest: guarded Action batch matches scalar resource authority without caller demands
+    ok 12 - guarded Action batch matches scalar resource authority without caller demands
+      ---
+      duration_ms: 22.225088
+      type: 'test'
+      ...
+    # Subtest: typed ordinary preparation pins primary expression reads even when primary is not edited
+    ok 13 - typed ordinary preparation pins primary expression reads even when primary is not edited
+      ---
+      duration_ms: 283.737455
+      type: 'test'
+      ...
+    # Subtest: typed ordinary publication rechecks secondary property policy and rolls back all targets
+    ok 14 - typed ordinary publication rechecks secondary property policy and rolls back all targets
+      ---
+      duration_ms: 129.192917
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 15 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 357.816015
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 16 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 155.689799
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 17 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 130.599544
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 18 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 213.62826
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 19 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 80.823207
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    not ok 20 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 5492.533693
+      type: 'test'
+      location: '/work/tests/native-serving.integration.test.ts:1448:13'
+      failureType: 'testCodeFailure'
+      error: 'native operation must reach the real SQL lock barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        waitForLock (/work/tests/native-serving.integration.test.ts:296:14)
+        async TestContext.<anonymous> (/work/tests/native-serving.integration.test.ts:1462:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-serving.integration.test.ts:1448:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 21 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 37.012301
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    ok 22 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 1640.975411
+      type: 'test'
+      ...
+    1..22
+not ok 3 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 17720.633199
+  type: 'test'
+  location: '/work/tests/native-serving.integration.test.ts:17:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 40035.121017
+      type: 'test'
+      ...
+    1..1
+ok 4 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 53233.673578
+  type: 'test'
+  ...
+1..4
+# tests 38
+# suites 0
+# pass 36
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 111000.792181

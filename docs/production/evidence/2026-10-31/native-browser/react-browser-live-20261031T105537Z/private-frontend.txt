@@ -1,0 +1,6 @@
+- button "Create record"
+- text: Management origin
+- textbox "Management origin": http://127.0.0.1:39825
+- button "Test cross-app isolation" [active]
+- generic: "{\"uid\":\"1dd148f6-9ffa-4d03-ac52-97850e247026\",\"object\":{\"name\":\"browser-app-created\",\"uid\":\"1dd148f6-9ffa-4d03-ac52-97850e247026\"}}"
+- generic: Cross-app request blocked

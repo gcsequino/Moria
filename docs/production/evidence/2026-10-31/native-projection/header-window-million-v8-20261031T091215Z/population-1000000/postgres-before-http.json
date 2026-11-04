@@ -1,0 +1,11 @@
+{
+  "xact_commit": "2132105",
+  "xact_rollback": "11793",
+  "blks_read": "9748434",
+  "blks_hit": "449681856",
+  "tup_returned": "427371557",
+  "tup_fetched": "369224613",
+  "temp_files": "4657",
+  "temp_bytes": "15270289718",
+  "deadlocks": "0"
+}

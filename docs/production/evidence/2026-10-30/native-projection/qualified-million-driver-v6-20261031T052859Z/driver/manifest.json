@@ -1,0 +1,9 @@
+{
+  "runtimeSource": "/tmp/moria-proof-snapshots/20261031T051559526844Z-qualified-million-release-v5",
+  "files": {
+    "million-runner.ts": "c8249ca78afcbd68c409763f11975f635b81a0f43a275ec5274cfe594c70bf40",
+    "native-protected-baseline.ts": "4511b0a7aee996dd519420ad57f440061094913a7e19f86494fe59a6fc32ebfc",
+    "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+  },
+  "transforms": "Absolute captured-runtime imports; corrected HTTP protocol fixture only. No runtime source or native binary modification."
+}

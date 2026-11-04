@@ -1,0 +1,17 @@
+TAP version 13
+# Subtest: actual accepted verifier scopes bound encoded multi-column row-group header IO
+ok 1 - actual accepted verifier scopes bound encoded multi-column row-group header IO
+  ---
+  duration_ms: 15208.52384
+  type: 'test'
+  ...
+# {"actualBaselineGuards":{"nativeStorage":144,"verifier":144},"actualWindowGuards":{"nativeStorage":14,"verifier":14},"baseline":{"providerBytes":459291,"providerRanges":24,"providerVersions":24},"columns":8,"event":"qualified_header_counts","headers":24,"rowGroups":3,"window":{"providerBytes":2097152,"providerRanges":2,"providerVersions":3}}
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15557.720983

@@ -1,0 +1,25 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: associated function `resource_access_for_operation` is never used
+   --> src/authority.rs:144:25
+    |
+ 49 | impl Authority {
+    | -------------- associated function in this implementation
+...
+144 |     pub(crate) async fn resource_access_for_operation<C: GenericClient + Sync>(
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `moria-runtime` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 28.88s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-caa1227c937bb40e)
+
+running 5 tests
+test snapshot::parquet_bounds::tests::compact_nesting_is_bounded ... ok
+test snapshot::parquet_bounds::tests::encoded_column_walk_is_exact ... ok
+test snapshot::parquet_bounds::tests::oversized_page_rejected_before_any_decode ... ok
+test snapshot::parquet_bounds::tests::oversized_value_count_rejected_before_any_decode ... ok
+test snapshot::parquet_bounds::tests::raw_collection_claim_is_rejected_without_allocating ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 53 filtered out; finished in 0.00s
+

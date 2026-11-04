@@ -1,0 +1,30 @@
+TAP version 13
+# {"event":"whole-instance-phase","phase":"plan"}
+# {"event":"whole-instance-phase","phase":"configure"}
+# {"event":"whole-instance-phase","phase":"chat-approval"}
+# {"event":"whole-instance-phase","phase":"chat-probe"}
+# {"event":"whole-instance-phase","phase":"embedding-approval"}
+# {"event":"whole-instance-phase","phase":"embedding-probe"}
+# {"event":"whole-instance-model-preflight","scope":"Source Model/Provider/Policy/Secret configuration and actual local capability probes only","models":2,"samePublishedBrowserApplication":true}
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 173969.224651
+      type: 'test'
+      ...
+    1..1
+ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 191434.552014
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 192165.671566

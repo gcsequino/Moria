@@ -1,0 +1,140 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 312.10977
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 355.467815
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 603.552994
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 554.457462
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 4635.990562
+  type: 'test'
+  ...
+# Subtest: managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+not ok 2 - managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+  ---
+  duration_ms: 29391.672843
+  type: 'test'
+  location: '/work/tests/native-dataset-retention.integration.test.ts:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    dataset-retention/expire: {"error":"INDEXING_DATABASE_ERROR"}
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/fixtures/native-retention/dataset.ts:177:39)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  ...
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+ok 3 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 3111.490221
+  type: 'test'
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+ok 4 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 9998.501189
+  type: 'test'
+  ...
+# Subtest: operational history normalizes bounded read pins against actual execution and cursor authority
+ok 5 - operational history normalizes bounded read pins against actual execution and cursor authority
+  ---
+  duration_ms: 2525.053744
+  type: 'test'
+  ...
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 421.646869
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    not ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 5371.352359
+      type: 'test'
+      location: '/work/tests/native-recovery.integration.test.ts:262:13'
+      failureType: 'testCodeFailure'
+      error: 'restore must wait on actual admitted transaction'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:291:33)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:262:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    not ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 80.206118
+      type: 'test'
+      location: '/work/tests/native-recovery.integration.test.ts:324:13'
+      failureType: 'testCodeFailure'
+      error: 'Missing expected rejection.'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:327:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:324:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    not ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 9.638773
+      type: 'test'
+      location: '/work/tests/native-recovery.integration.test.ts:379:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'delivered'
+        - 'uncertain'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'uncertain'
+      actual: 'delivered'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:391:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-recovery.integration.test.ts:379:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+# Interrupted while running: tests/native-recovery.integration.test.ts at /work/tests/native-recovery.integration.test.ts:1:1

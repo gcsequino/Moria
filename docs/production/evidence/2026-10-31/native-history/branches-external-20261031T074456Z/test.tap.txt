@@ -1,0 +1,48 @@
+TAP version 13
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+ok 1 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 3046.629936
+  type: 'test'
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+    # Subtest: retired native tables obey current, latest-two, floor and structural Search pins, including backup admission
+    not ok 1 - retired native tables obey current, latest-two, floor and structural Search pins, including backup admission
+      ---
+      duration_ms: 5220.761538
+      type: 'test'
+      location: '/work/tests/native-history-projection.integration.test.ts:189:19'
+      failureType: 'testCodeFailure'
+      error: 'null value in column "projector_binding" of relation "native_search_rebuilds" violates not-null constraint'
+      code: '23502'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-history-projection.integration.test.ts:392:15)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async Object.onVerified (/work/tests/native-history-projection.integration.test.ts:189:11)
+        async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:478:7)
+        async TestContext.<anonymous> (/work/tests/native-history-projection.integration.test.ts:17:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..1
+not ok 2 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 14466.860648
+  type: 'test'
+  location: '/work/tests/native-history-projection.integration.test.ts:12:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 3
+# suites 0
+# pass 1
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18074.184165

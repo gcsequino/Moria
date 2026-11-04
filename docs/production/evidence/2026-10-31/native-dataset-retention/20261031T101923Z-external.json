@@ -1,0 +1,81 @@
+{
+  "sourceSnapshot": "/tmp/moria-proof-snapshots/20261031T093146308591Z-data-custody-pruning-v7",
+  "sourceManifestSha256": "aae3bd2bb90f18fa4869e286fe3676b20a01b64b80d18c2f51214e22f5f7ff11",
+  "artifacts": {
+    "moria-runtime": {
+      "path": "/tmp/moria-proof-snapshots/20261031T093146308591Z-data-custody-pruning-v7/native-proof-artifact/moria-runtime",
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "sha256": "b7b8c27701561f9c5dc3ba413a170ee261cf11a7285fbc87f7327efaa6eecacb"
+    },
+    "moria-catalog-tests": {
+      "path": "/tmp/moria-proof-snapshots/20261031T093146308591Z-data-custody-pruning-v7/native-proof-artifact/moria-native-catalog-test",
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+      "sha256": "2db6ec0c82ea820abb9fe96802bc9bb9b470f05a0bfd6112562ab35b5898b56b"
+    }
+  },
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "2ad70d21b0a7c46ce722fbf49d6aac3b55deae827aa67fb61b5f3bee5c366876",
+      "version": 5
+    },
+    "sourceDigest": "c2aadba5e838868fd142c3efa33bc5d07c369989afda8a65cf2e848d6d7313f6"
+  },
+  "externalTests": {
+    "tests/native-dataset-retention.integration.test.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-native-dataset-retention.integration.test.ts",
+      "sha256": "4d00a891fd1e58e6a3c8b7e045df54001f50f756a9250c0748f8d3c54c29b333"
+    },
+    "tests/fixtures/native-retention/dataset.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-dataset.ts",
+      "sha256": "5d3ca00d431522ae15a276363a6becb537ef698c55984f506499e548136e9d04"
+    },
+    "tests/fixtures/native-retention/history.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-history.ts",
+      "sha256": "46e103708722f1592e2e7b71128543b9bb1a522efc952d8651fc442a3e4637fd"
+    },
+    "tests/fixtures/native-retention/recovery.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-recovery.ts",
+      "sha256": "208b11bd23f207a4508d736b64dcbcf63f5156f94078ada1b38d3afca2cd224e"
+    }
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T093146308591Z-data-custody-pruning-v7,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T093146308591Z-data-custody-pruning-v7/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T093146308591Z-data-custody-pruning-v7/native-proof-artifact/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-native-dataset-retention.integration.test.ts,dst=/work/tests/native-dataset-retention.integration.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-dataset.ts,dst=/work/tests/fixtures/native-retention/dataset.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-history.ts,dst=/work/tests/fixtures/native-retention/history.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-dataset-retention/20261031T101923Z-recovery.ts,dst=/work/tests/fixtures/native-retention/recovery.ts,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-dataset-retention.integration.test.ts"
+  ],
+  "exit": 1
+}

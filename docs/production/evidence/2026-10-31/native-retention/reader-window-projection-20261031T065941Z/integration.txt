@@ -1,0 +1,604 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+    not ok 1 - reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+      ---
+      duration_ms: 16128.755538
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:285:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog event reader_window_baseline timed out: [{"state":"idle","wait_event_type":"Client","wait_event":"ClientRead","blockers":[]},{"state":"idle","wait_event_type":"Client","wait_event":"ClientRead","blockers":[]},{"state":"idle","wait_event_type":"Client","wait_event":"ClientRead","blockers":[]}]
+        
+        
+        running 1 test
+        test catalog_publication ... {"elapsedMillis":"837","event":"closure_hashed"}
+        {"decoderReads":1024,"event":"reader_window_ready","execution":"c5ddb14e-ad6c-414f-8525-e7662b839416"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:245:15)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:308:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:285:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 2 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 9250.881202
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 3 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 4475.036556
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    ok 4 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 13551.097593
+      type: 'test'
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 5 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 137.614864
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    ok 6 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 9905.447882
+      type: 'test'
+      ...
+    # {"event":"registered_publication_phases","phases":[{"elapsedMillis":"892","event":"closure_hashed"},{"elapsedMillis":"4705","event":"candidate_registered"},{"elapsedMillis":"983","event":"closure_hashed"},{"elapsedMillis":"4822","event":"candidate_registered"}]}
+    # {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"7573","total_time":7977.026,"self_time":1117.561},{"funcname":"runtime_execution_check","calls":"10315","total_time":3070.291,"self_time":312.849},{"funcname":"runtime_binding_authority","calls":"10322","total_time":2586.501,"self_time":556.028},{"funcname":"native_serving_resource_access_batch_state","calls":"7702","total_time":2264.172,"self_time":770.64},{"funcname":"native_serving_job_delegation","calls":"10315","total_time":2030.43,"self_time":13.67},{"funcname":"native_serving_session","calls":"7753","total_time":1572.111,"self_time":93.507},{"funcname":"native_serving_accepted_delegation","calls":"11670","total_time":1537.898,"self_time":744.486},{"funcname":"native_serving_session_origin","calls":"18070","total_time":1523.468,"self_time":1055.484},{"funcname":"runtime_job_delegation_guard","calls":"11672","total_time":719.879,"self_time":719.879},{"funcname":"runtime_data_operational","calls":"37306","total_time":716.038,"self_time":716.038},{"funcname":"runtime_job_session_origin","calls":"1353","total_time":592.209,"self_time":53.228},{"funcname":"runtime_environment_cell_check","calls":"28386","total_time":563.651,"self_time":253.334},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"43188","total_time":536.249,"self_time":536.249},{"funcname":"runtime_data_origins","calls":"21895","total_time":412.452,"self_time":347.146},{"funcname":"runtime_schema_admit","calls":"14802","total_time":351.119,"self_time":351.119},{"funcname":"runtime_task_check","calls":"1225","total_time":316.974,"self_time":20.507},{"funcname":"runtime_recovery_check","calls":"28386","total_time":310.279,"self_time":146.742},{"funcname":"native_serving_filesystem_resource_access_state","calls":"21902","total_time":283.623,"self_time":283.623},{"funcname":"runtime_dataset_kind","calls":"15411","total_time":248.466,"self_time":248.466},{"funcname":"runtime_dataset_object_read","calls":"6889","total_time":170.176,"self_time":170.176},{"funcname":"runtime_data_resource","calls":"43826","total_time":155.733,"self_time":155.733},{"funcname":"runtime_dataset_labels_policy_state","calls":"15409","total_time":115.666,"self_time":115.666},{"funcname":"runtime_cli_session_check","calls":"19425","total_time":96.693,"self_time":96.693},{"funcname":"runtime_dataset_binding","calls":"7707","total_time":86.602,"self_time":86.602}]}
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 7 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 9545.759082
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 8 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 9283.404103
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    not ok 9 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 108.179033
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:607:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (180) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:610:20)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:607:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    not ok 10 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 108.909477
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:616:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (186) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:619:20)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:616:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    not ok 11 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 107.728051
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:634:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (192) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:637:20)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:634:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    not ok 12 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 111.145789
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:647:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (198) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:658:22)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:647:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    not ok 13 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 96.142473
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:701:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /FORBIDDEN/. Input:
+        
+        'Error: Native catalog exited 101: \n' +
+          "thread 'catalog_publication' (204) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:\n" +
+          'called `Result::unwrap()` on an `Err` value: db error\n' +
+          '\n' +
+          'Caused by:\n' +
+          '    ERROR: INPUT_PIN_CHANGED\n' +
+          'note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n' +
+          '\n' +
+          '\n' +
+          'running 1 test\n' +
+          'test catalog_publication ... FAILED\n' +
+          '\n' +
+          'failures:\n' +
+          '\n' +
+          'failures:\n' +
+          '    catalog_publication\n' +
+          '\n' +
+          'test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s\n' +
+          '\n'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: |-
+        Native catalog exited 101: 
+        thread 'catalog_publication' (204) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-catalog.integration.test.ts:225:20)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:712:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:701:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    not ok 14 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 468.602117
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:729:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited 101: 
+        thread 'catalog_publication' (234) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-catalog.integration.test.ts:225:20)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        ok 1 - posix
+          ---
+          duration_ms: 15875.627483
+          type: 'test'
+          ...
+        # Subtest: s3
+        ok 2 - s3
+          ---
+          duration_ms: 20942.547982
+          type: 'test'
+          ...
+        1..2
+    not ok 15 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 36925.822734
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:787:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before denied: 
+        thread 'catalog_publication' (299) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:908:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:787:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    not ok 16 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 106.646066
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:914:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (305) panicked at ../../tests/fixtures/native-catalog/harness.rs:155:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INPUT_PIN_CHANGED
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.08s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:919:22)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:914:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 17 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 47.801906
+      type: 'test'
+      ...
+    1..17
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 113420.526305
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:17:1'
+  failureType: 'subtestsFailed'
+  error: '9 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 14896.581864
+      type: 'test'
+      ...
+    # Subtest: clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication
+    ok 2 - clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication
+      ---
+      duration_ms: 38947.196222
+      type: 'test'
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    ok 3 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 14759.125713
+      type: 'test'
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 4 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 8674.132052
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    ok 5 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 6608.984409
+      type: 'test'
+      ...
+    # Subtest: a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+    ok 6 - a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+      ---
+      duration_ms: 8673.104034
+      type: 'test'
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 7 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 8584.928257
+      type: 'test'
+      ...
+    1..7
+ok 2 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ---
+  duration_ms: 106160.528997
+  type: 'test'
+  ...
+# {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"c04ed239-9dae-4db1-ac38-51b59e6218d9","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"7689a5da-34c7-47ee-9c69-7a6e74584acc"}]}
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 9607.214828
+      type: 'test'
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    ok 2 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 8359.081125
+      type: 'test'
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 3 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 3959.604234
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    ok 4 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 6872.143105
+      type: 'test'
+      ...
+    # Subtest: a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+    ok 5 - a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+      ---
+      duration_ms: 3909.550022
+      type: 'test'
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 6 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 3887.416146
+      type: 'test'
+      ...
+    1..6
+ok 3 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ---
+  duration_ms: 41017.309123
+  type: 'test'
+  ...
+# {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"f35b58a5-e8f9-433a-a60a-5fea92558bed","event":"reducer_batches","maxWireBytes":"8388678","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"0fdfcf33-42be-4b6b-a0ff-96f506503bef"}]}
+# Subtest: native effective projections build off-lock, replay concurrent edits and activate with source generations
+    # Subtest: off-lock paged build replays an actual concurrent native action before atomic activation
+    ok 1 - off-lock paged build replays an actual concurrent native action before atomic activation
+      ---
+      duration_ms: 2977.691894
+      type: 'test'
+      ...
+    # Subtest: physical primary UID checks reject missing or different values and protected UID queries seek canonical UID
+    ok 2 - physical primary UID checks reject missing or different values and protected UID queries seek canonical UID
+      ---
+      duration_ms: 104.414927
+      type: 'test'
+      ...
+    # Subtest: strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+    ok 3 - strict materialized scalar codecs and ordering agree with C03 including astral strings and exact int64
+      ---
+      duration_ms: 260.698977
+      type: 'test'
+      ...
+    # Subtest: current actions maintain typed history atomically and exact overflow remains present
+    ok 4 - current actions maintain typed history atomically and exact overflow remains present
+      ---
+      duration_ms: 108.399123
+      type: 'test'
+      ...
+    # Subtest: layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+    ok 5 - layout-only revision rebuild retains Dataset head, UID population, edits and old projection pins
+      ---
+      duration_ms: 966.281479
+      type: 'test'
+      ...
+    # Subtest: expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+    ok 6 - expired coordinators resume durable bounded pages under a new fence and cannot overwrite replacement activation
+      ---
+      duration_ms: 3091.635908
+      type: 'test'
+      ...
+    # Subtest: a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+    ok 7 - a publication tail beyond the barrier budget releases the environment lock and resumes off-lock
+      ---
+      duration_ms: 1478.588415
+      type: 'test'
+      ...
+    # Subtest: a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+    ok 8 - a changed layout anchor cannot be adopted by an in-flight build and requires a fresh immutable indexing binding
+      ---
+      duration_ms: 2093.366035
+      type: 'test'
+      ...
+    # Subtest: protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+    ok 9 - protected whole-population HTTP queries use exact indexed/overflow order and bounded engine fallback
+      ---
+      duration_ms: 379.038708
+      type: 'test'
+      ...
+    # Subtest: protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+    ok 10 - protected typed projection aggregation includes overflow and current overlays with exact authorized groups
+      ---
+      duration_ms: 151.351641
+      type: 'test'
+      ...
+    # Subtest: a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+    ok 11 - a pinned indexed cursor survives projection replacement and suppresses rows hidden by current overlays
+      ---
+      duration_ms: 1700.092734
+      type: 'test'
+      ...
+    1..11
+ok 4 - native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ---
+  duration_ms: 27811.513255
+  type: 'test'
+  ...
+# canonical UID seek plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":3.55,"Plan Rows":2,"Plan Width":16,"Actual Startup Time":0.008,"Actual Total Time":0.008,"Actual Rows":2,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_11a9846deddb452998f21037c3f44794_uid","Relation Name":"runtime_projection_11a9846deddb452998f21037c3f44794","Alias":"p","Startup Cost":0.27,"Total Cost":8.47,"Plan Rows":5,"Plan Width":16,"Actual Startup Time":0.007,"Actual Total Time":0.008,"Actual Rows":2,"Actual Loops":1,"Disabled":false,"Index Cond":"(uid >= '00000127-0000-4000-8000-000000000000'::uuid)","Rows Removed by Index Recheck":0,"Filter":"(NOT deleted)","Rows Removed by Filter":0,"Index Searches":1,"Shared Hit Blocks":4,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":724,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.766,"Triggers":[],"Execution Time":0.018}]
+# 300-row projection plan: [{"Plan":{"Node Type":"Limit","Parallel Aware":false,"Async Capable":false,"Startup Cost":0.27,"Total Cost":6.26,"Plan Rows":10,"Plan Width":29,"Actual Startup Time":0.014,"Actual Total Time":0.017,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0,"Plans":[{"Node Type":"Index Only Scan","Parent Relationship":"Outer","Parallel Aware":false,"Async Capable":false,"Scan Direction":"Forward","Index Name":"runtime_pi_11a9846deddb452998f21037c3f44794_1_c","Relation Name":"runtime_projection_11a9846deddb452998f21037c3f44794","Alias":"runtime_projection_11a9846deddb452998f21037c3f44794","Startup Cost":0.27,"Total Cost":184.19,"Plan Rows":307,"Plan Width":29,"Actual Startup Time":0.014,"Actual Total Time":0.016,"Actual Rows":10,"Actual Loops":1,"Disabled":false,"Heap Fetches":14,"Index Searches":1,"Shared Hit Blocks":16,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0}]},"Planning":{"Shared Hit Blocks":7,"Shared Read Blocks":0,"Shared Dirtied Blocks":0,"Shared Written Blocks":0,"Local Hit Blocks":0,"Local Read Blocks":0,"Local Dirtied Blocks":0,"Local Written Blocks":0,"Temp Read Blocks":0,"Temp Written Blocks":0},"Planning Time":0.095,"Triggers":[],"Execution Time":0.025}]
+1..4
+# tests 47
+# suites 0
+# pass 37
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 289414.733293

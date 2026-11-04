@@ -1,0 +1,26 @@
+{
+  "artifacts": [
+    {
+      "path": "management-function.png",
+      "sha256": "02691cd67e57df5a32d3962dbbb0365650b0c95151fe31ccece2ef49e28136e5",
+      "bytes": 109704
+    },
+    {
+      "path": "management-function.txt",
+      "sha256": "c315e677b28292080307ea1b810e7369ad08bc91ded6c485c8255907c73a55b8",
+      "bytes": 2271
+    },
+    {
+      "path": "private-frontend.png",
+      "sha256": "d5f3fe21ed4827686df0731fabfc1da658c6b5ff6f2742b194ed4f8cfd24ea7a",
+      "bytes": 35333
+    },
+    {
+      "path": "private-frontend.txt",
+      "sha256": "30dee2549627e0ad4de3351999ea25ae6fc7ed6e6c7717a709c9192da84c54e9",
+      "bytes": 345
+    }
+  ],
+  "provenance": "metadata.json",
+  "outcome": "browser interactions succeeded; outer database assertion failed on JSON numeric textual representation 42 versus 42.0; whole trial is not a passing end-to-end gate"
+}

@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: native capacity preparation uses permanent UID allocation, bounded real source production and complete native checksums
+ok 1 - native capacity preparation uses permanent UID allocation, bounded real source production and complete native checksums
+  ---
+  duration_ms: 14706.684445
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15051.424243

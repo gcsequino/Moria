@@ -1,0 +1,17 @@
+{
+  "native_catalog": {
+    "cargoExecutable": "/work/services/runtime/target/release/deps/native_catalog-94d99389a8077992",
+    "copied": "/work/.proof-artifacts/native_catalog",
+    "sha256": "27f65871963109d5022a5f2d483a10beef60ab2c6794a9d20b47116e4dab0eb8"
+  },
+  "moria-indexing": {
+    "cargoExecutable": "/work/services/runtime/target/release/moria-indexing",
+    "copied": "/work/.proof-artifacts/moria-indexing",
+    "sha256": "f225ccf76a623bf95b96e73a036885b1ecd7ee27d0a69533b0e8e8aa7237e878"
+  },
+  "moria-runtime": {
+    "cargoExecutable": "/work/services/runtime/target/release/moria-runtime",
+    "copied": "/work/.proof-artifacts/moria-runtime",
+    "sha256": "29d85c5a240158325c54a5a672e67613fd9357a78aceadeec454b3deecbf7c98"
+  }
+}

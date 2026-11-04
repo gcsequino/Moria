@@ -1,0 +1,418 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+      ---
+      duration_ms: 2107.139773
+      type: 'test'
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    ok 2 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 4935.416872
+      type: 'test'
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    ok 3 - healthy long-running agent work renews the same single-attempt database lease
+      ---
+      duration_ms: 11729.78672
+      type: 'test'
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    ok 4 - bound model dispatch stops after real worker-scope revocation and cannot publish a result
+      ---
+      duration_ms: 2165.86696
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    ok 5 - cancellation and supervisor SIGKILL fence the graph without re-executing user code
+      ---
+      duration_ms: 2430.007693
+      type: 'test'
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    ok 6 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+      ---
+      duration_ms: 2052.867822
+      type: 'test'
+      ...
+    # Subtest: accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+    ok 7 - accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+      ---
+      duration_ms: 12381.621645
+      type: 'test'
+      ...
+    # Subtest: newly granted tool permissions cannot widen an already accepted job capability
+    ok 8 - newly granted tool permissions cannot widen an already accepted job capability
+      ---
+      duration_ms: 2031.973499
+      type: 'test'
+      ...
+    # Subtest: postclaim filesystem rejection records no code start after an expired original session
+    not ok 9 - postclaim filesystem rejection records no code start after an expired original session
+      ---
+      duration_ms: 2078.638748
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:826:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+          {
+            cleaned: true,
+        +   creation_state: 2,
+        +   state: 'sealed'
+        -   creation_state: 0,
+        -   state: 'failed'
+          }
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        state: 'failed'
+        creation_state: 0
+        cleaned: true
+      actual:
+        state: 'sealed'
+        creation_state: 2
+        cleaned: true
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:863:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:826:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: accepted agent code remains pinned across redeployment and current authority gates retained results
+    ok 10 - accepted agent code remains pinned across redeployment and current authority gates retained results
+      ---
+      duration_ms: 3773.500473
+      type: 'test'
+      ...
+    1..10
+not ok 1 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 70132.454263
+  type: 'test'
+  location: '/work/tests/native-agents.integration.test.ts:29:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native delivery preserves action commits while recovering external outcomes explicitly
+    # Subtest: action effects, receipt and outbox intent roll back together and cannot dispatch early
+    ok 1 - action effects, receipt and outbox intent roll back together and cannot dispatch early
+      ---
+      duration_ms: 528.01966
+      type: 'test'
+      ...
+    # Subtest: execution and delivery claims share one global/environment resource budget
+    ok 2 - execution and delivery claims share one global/environment resource budget
+      ---
+      duration_ms: 617.779545
+      type: 'test'
+      ...
+    # Subtest: response loss reuses identical bytes and one stable key at an idempotent destination
+    ok 3 - response loss reuses identical bytes and one stable key at an idempotent destination
+      ---
+      duration_ms: 438.357393
+      type: 'test'
+      ...
+    # Subtest: a real killed dispatcher is reclaimed without a duplicate idempotent effect
+    ok 4 - a real killed dispatcher is reclaimed without a duplicate idempotent effect
+      ---
+      duration_ms: 430.152584
+      type: 'test'
+      ...
+    # Subtest: non-idempotent uncertainty cannot retry until explicit provider evidence is reconciled
+    ok 5 - non-idempotent uncertainty cannot retry until explicit provider evidence is reconciled
+      ---
+      duration_ms: 774.265164
+      type: 'test'
+      ...
+    # Subtest: a killed non-idempotent dispatcher remains uncertain without another send
+    ok 6 - a killed non-idempotent dispatcher remains uncertain without another send
+      ---
+      duration_ms: 543.2989
+      type: 'test'
+      ...
+    # Subtest: cancellation after dispatch reports uncertainty and cannot undo an external effect
+    ok 7 - cancellation after dispatch reports uncertainty and cannot undo an external effect
+      ---
+      duration_ms: 518.598924
+      type: 'test'
+      ...
+    # Subtest: bounded dead letters retain attempts and permit explicit same-payload retry
+    ok 8 - bounded dead letters retain attempts and permit explicit same-payload retry
+      ---
+      duration_ms: 710.197423
+      type: 'test'
+      ...
+    # Subtest: a proven terminal non-delivery can resume, while an abandoned unsent claim is safely fenced
+    ok 9 - a proven terminal non-delivery can resume, while an abandoned unsent claim is safely fenced
+      ---
+      duration_ms: 925.18445
+      type: 'test'
+      ...
+    # Subtest: destination marking limits fail the action transaction and revocation prevents dispatch
+    ok 10 - destination marking limits fail the action transaction and revocation prevents dispatch
+      ---
+      duration_ms: 175.892447
+      type: 'test'
+      ...
+    1..10
+ok 2 - native delivery preserves action commits while recovering external outcomes explicitly
+  ---
+  duration_ms: 8288.628067
+  type: 'test'
+  ...
+# Subtest: native execution authority schedules, fences and composes completion with real publication
+    # Subtest: typed logical requests deduplicate and their pinned inputs cannot mutate
+    ok 1 - typed logical requests deduplicate and their pinned inputs cannot mutate
+      ---
+      duration_ms: 432.476127
+      type: 'test'
+      ...
+    # Subtest: independent native claims obey class admission and stale owners cannot renew or seal
+    ok 2 - independent native claims obey class admission and stale owners cannot renew or seal
+      ---
+      duration_ms: 1302.989758
+      type: 'test'
+      ...
+    # Subtest: task sealing is private; publication and business completion commit or roll back together
+    ok 3 - task sealing is private; publication and business completion commit or roll back together
+      ---
+      duration_ms: 454.587642
+      type: 'test'
+      ...
+    # Subtest: accepted work survives killing Rust before the real commit response arrives
+    ok 4 - accepted work survives killing Rust before the real commit response arrives
+      ---
+      duration_ms: 239.677499
+      type: 'test'
+      ...
+    # Subtest: single-attempt function work is never re-executed after lease loss
+    ok 5 - single-attempt function work is never re-executed after lease loss
+      ---
+      duration_ms: 601.561356
+      type: 'test'
+      ...
+    # Subtest: database deadlines and event bounds remain authoritative
+    ok 6 - database deadlines and event bounds remain authoritative
+      ---
+      duration_ms: 3668.727401
+      type: 'test'
+      ...
+    # Subtest: disabled sessions fail dispatch before any attempt is recorded
+    ok 7 - disabled sessions fail dispatch before any attempt is recorded
+      ---
+      duration_ms: 283.40119
+      type: 'test'
+      ...
+    # Subtest: parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+    ok 8 - parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+      ---
+      duration_ms: 696.460899
+      type: 'test'
+      ...
+    1..8
+ok 3 - native execution authority schedules, fences and composes completion with real publication
+  ---
+  duration_ms: 10344.126515
+  type: 'test'
+  ...
+# Subtest: native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+    # Subtest: authenticated admission pins release/actor/input, rejects forged fields and generic function workers
+    ok 1 - authenticated admission pins release/actor/input, rejects forged fields and generic function workers
+      ---
+      duration_ms: 1355.117723
+      type: 'test'
+      ...
+    # Subtest: a lost public acceptance response and API process death replay one durable invocation
+    ok 2 - a lost public acceptance response and API process death replay one durable invocation
+      ---
+      duration_ms: 1149.178629
+      type: 'test'
+      ...
+    # Subtest: deployed code cannot change an accepted release or replay schema
+    ok 3 - deployed code cannot change an accepted release or replay schema
+      ---
+      duration_ms: 1792.346183
+      type: 'test'
+      ...
+    # Subtest: real native broker preserves reads and committed readWrite effects after later code failure
+    ok 4 - real native broker preserves reads and committed readWrite effects after later code failure
+      ---
+      duration_ms: 3554.020473
+      type: 'test'
+      ...
+    # Subtest: editProposal batch and function receipt commit together; rejection or result failure rolls all edits back
+    ok 5 - editProposal batch and function receipt commit together; rejection or result failure rolls all edits back
+      ---
+      duration_ms: 4122.147872
+      type: 'test'
+      ...
+    # Subtest: live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation
+    ok 6 - live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation
+      ---
+      duration_ms: 650.278084
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor death fence the only attempt and remove local orphans
+    ok 7 - cancellation and supervisor death fence the only attempt and remove local orphans
+      ---
+      duration_ms: 1319.691595
+      type: 'test'
+      ...
+    # Subtest: actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL
+    ok 8 - actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL
+      ---
+      duration_ms: 1852.679287
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success
+    ok 9 - a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success
+      ---
+      duration_ms: 5058.180314
+      type: 'test'
+      ...
+    # Subtest: native worker pool supports bounded nested invocations and function-backed action preparation
+    not ok 10 - native worker pool supports bounded nested invocations and function-backed action preparation
+      ---
+      duration_ms: 1581.905899
+      type: 'test'
+      location: '/work/tests/native-functions.integration.test.ts:879:13'
+      failureType: 'testCodeFailure'
+      error: "Cannot read properties of undefined (reading 'value')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-functions.integration.test.ts:927:44)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-functions.integration.test.ts:879:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: worker CLI rejects missing native configuration before creating a workspace or Node worker
+    ok 11 - worker CLI rejects missing native configuration before creating a workspace or Node worker
+      ---
+      duration_ms: 366.258113
+      type: 'test'
+      ...
+    # Subtest: a public function catching a protected missing-object read retains its labels and failed observation
+    ok 12 - a public function catching a protected missing-object read retains its labels and failed observation
+      ---
+      duration_ms: 4887.95159
+      type: 'test'
+      ...
+    # Subtest: a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically
+    not ok 13 - a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically
+      ---
+      duration_ms: 3495.419356
+      type: 'test'
+      location: '/work/tests/native-functions.integration.test.ts:1185:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"artifact":{"digest":"sha256:7132cc4d0af9b97c8e44c3f3fc7d8d864763b4845ec139f73ff6d0cde827aae7","uri":"oci://127.0.0.1:32829/moria-native-functions-extra"},"attemptId":"937e2ff8-437f-467a-8e7c-c2d73407fcd8","calls":[{"key":"1","path":"/api/management/v1/fs/entries/74a3e114-4f07-4db9-ae2f-911b808f41a2","status":"succeeded"},{"key":"2","path":"/api/management/v1/fs/entries/59699cb2-84d6-43e5-8d71-d0b0345212b8","status":"succeeded"},{"key":"3","path":"/api/management/v1/fs/entries/2a490649-da51-401b-b401-47fe39f90b12","status":"succeeded"},{"key":"4","path":"/api/management/v1/fs/changes","status":"failed"}],"correlationId":"39324dc0-ea4f-4e03-9c6d-acf5c737d64e","createdAt":"2026-10-30T15:13:51.957404+00:00","effect":"readWrite","error":{"code":"FUNCTION_FAILED","message":"Function execution failed"},"finishedAt":"2026-10-30T15:13:53.021136+00:00","id":"0a808969-c3a9-426d-b1a7-6fe7f84ebf2b","markings":[{"environment":"native-functions","marking":"protected"}],"release":"sha256:712fca89b8691db354be85f74dacc81dc8fffd5557d524197d8e3f35f221abc1","resourceId":"94fbf658-d14c-44d2-b011-97c9b7786e05","status":"failed","valueVersion":1}
+        + actual - expected
+        
+        + 'failed'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-functions.integration.test.ts:1239:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-functions.integration.test.ts:1185:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: changed read evidence and revoked access withhold retained results and protected logs
+    ok 14 - changed read evidence and revoked access withhold retained results and protected logs
+      ---
+      duration_ms: 1275.579459
+      type: 'test'
+      ...
+    1..14
+not ok 4 - native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+  ---
+  duration_ms: 41543.241831
+  type: 'test'
+  location: '/work/tests/native-functions.integration.test.ts:31:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native OCI supervision enforces real isolation and owner-bound single attempts
+    # Subtest: typed results, real native object reads and protected logs cross the guest protocol
+    ok 1 - typed results, real native object reads and protected logs cross the guest protocol
+      ---
+      duration_ms: 2699.673599
+      type: 'test'
+      ...
+    # Subtest: Docker enforces UID, namespaces, credentials, root, memory, PID and CPU boundaries
+    ok 2 - Docker enforces UID, namespaces, credentials, root, memory, PID and CPU boundaries
+      ---
+      duration_ms: 4958.191994
+      type: 'test'
+      ...
+    # Subtest: malformed frames, bounded logs and invalid results fail closed
+    ok 3 - malformed frames, bounded logs and invalid results fail closed
+      ---
+      duration_ms: 6433.960675
+      type: 'test'
+      ...
+    # Subtest: a result requires the completion handshake and successful exit without trailing output
+    ok 4 - a result requires the completion handshake and successful exit without trailing output
+      ---
+      duration_ms: 5278.476635
+      type: 'test'
+      ...
+    # Subtest: foreign owners cannot start code and cancellation removes the container within ten seconds
+    ok 5 - foreign owners cannot start code and cancellation removes the container within ten seconds
+      ---
+      duration_ms: 1550.78162
+      type: 'test'
+      ...
+    # Subtest: deadlines and local cancellation signals clean up without rerunning code
+    ok 6 - deadlines and local cancellation signals clean up without rerunning code
+      ---
+      duration_ms: 3078.646441
+      type: 'test'
+      ...
+    # Subtest: supervisor process death fences the only attempt and durable host cleanup removes the orphan
+    ok 7 - supervisor process death fences the only attempt and durable host cleanup removes the orphan
+      ---
+      duration_ms: 1103.732183
+      type: 'test'
+      ...
+    # Subtest: revoked sessions stop live code before protected output can seal
+    ok 8 - revoked sessions stop live code before protected output can seal
+      ---
+      duration_ms: 616.805032
+      type: 'test'
+      ...
+    1..8
+ok 5 - native OCI supervision enforces real isolation and owner-bound single attempts
+  ---
+  duration_ms: 33398.188761
+  type: 'test'
+  ...
+1..5
+# tests 55
+# suites 0
+# pass 50
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 70798.800942

@@ -79,7 +79,7 @@ export class IcebergIndexer {
     )
       throw new MoriaError('SCHEMA_INVALID', 'Object key must be non-null UID.');
     await this.store.catalog.transaction(async (c) => {
-      const state = await this.authority.current(
+      let state = await this.authority.current(
         session.environment,
         session.principal,
         session.application,
@@ -88,6 +88,40 @@ export class IcebergIndexer {
       const { source, target } = this.binding;
       authorize(state.identity, source.resource, 'read', source.markings);
       authorize(state.identity, target.resource, 'index', target.markings);
+      if (!session.sessionHash)
+        throw new MoriaError('UNAUTHENTICATED', 'Index registration requires a verified session');
+      await this.authority.assertCurrent(
+        c,
+        session.environment,
+        session.principal,
+        session.application,
+        state.epoch,
+        session.sessionHash,
+      );
+      const beforeSource = await this.authority.resourceAccess(c, session, source.resource);
+      const beforeTarget = new Set([
+        ...target.markings,
+        ...(await this.authority.resourceAccess(c, session, target.resource, 'write')),
+      ]);
+      if ([...source.markings, ...beforeSource].some((label) => !beforeTarget.has(label)))
+        throw new MoriaError(
+          'MARKING_DOWNGRADE',
+          'Index target must preserve current source classification',
+        );
+      await this.store.catalog.datasetClassification(c, session.sessionHash, source.resource);
+      await this.store.catalog.admitDataProvenance(
+        c,
+        session.sessionHash,
+        [target.resource],
+        [source.resource],
+        'index',
+      );
+      state = await this.authority.current(
+        session.environment,
+        session.principal,
+        session.application,
+        c,
+      );
       const sourceLabels = await this.authority.resourceAccess(c, session, source.resource);
       const labels = [
         ...new Set([
@@ -130,6 +164,12 @@ export class IcebergIndexer {
           'MIGRATION_REQUIRED',
           'Destructive schema changes require an explicit migration.',
         );
+      const projectionRevision: string | undefined = (
+        await c.query(
+          'SELECT revision FROM moria.runtime_projection_bindings WHERE environment=$1 AND resource=$2 AND enabled',
+          [session.environment, target.resource],
+        )
+      ).rows[0]?.revision;
       const definition = {
         version: 1,
         valueVersion: 1,
@@ -141,6 +181,7 @@ export class IcebergIndexer {
         timeoutSeconds,
         schema: { primaryKey: target.schema.primaryKey, properties },
         markings: labels,
+        ...(projectionRevision ? { projectionRevision } : {}),
       };
       const revision = fingerprint({
         definition,
@@ -216,6 +257,28 @@ export class IcebergIndexer {
     };
     checkCancelled();
     const { source, target } = this.binding;
+    if (!session.sessionHash)
+      throw new MoriaError('UNAUTHENTICATED', 'Index registration requires a verified session');
+    await this.store.catalog.transaction(async (c) => {
+      const sourceLabels = await this.authority.resourceAccess(c, session, source.resource);
+      const targetLabels = new Set([
+        ...target.markings,
+        ...(await this.authority.resourceAccess(c, session, target.resource, 'write')),
+      ]);
+      if (sourceLabels.some((label) => !targetLabels.has(label)))
+        throw new MoriaError(
+          'MARKING_DOWNGRADE',
+          'Index target must preserve current source classification',
+        );
+      await this.store.catalog.datasetClassification(c, session.sessionHash!, source.resource);
+      await this.store.catalog.admitDataProvenance(
+        c,
+        session.sessionHash!,
+        [target.resource],
+        [source.resource],
+        'index',
+      );
+    }, session.environment);
     const state = await this.authority.current(
       session.environment,
       session.principal,

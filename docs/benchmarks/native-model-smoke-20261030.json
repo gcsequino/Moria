@@ -1,0 +1,131 @@
+{
+  "kind": "local-functional-model-smoke",
+  "recordedAt": "2026-10-30T11:43:22.941Z",
+  "elapsedMs": 147727,
+  "native": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "f15964f113e68bff6c2b54edf79f7cc6a6c392a2fd941c33ff0b0622e035557b",
+      "version": 5
+    },
+    "sourceDigest": "e94b4fb46fff447bfd331d968b2609730321360c5c14628a950b46b9148a766f"
+  },
+  "engine": {
+    "implementation": "Ollama",
+    "version": "0.40.13",
+    "image": "ollama/ollama@sha256:b2f0122c476bc9fe7ce679d8bb4bd555351e25e2554eefb156f61cb0a89cf429",
+    "cloudDisabled": true,
+    "cpus": 4,
+    "memoryBytes": 6442450944
+  },
+  "models": [
+    {
+      "name": "qwen3:4b",
+      "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7"
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+    }
+  ],
+  "chatProbe": {
+    "capabilities": [
+      "chat",
+      "stream",
+      "structured",
+      "tools"
+    ],
+    "model": "qwen3:4b",
+    "modelRevision": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+    "schemaProfile": {
+      "nodes": 256,
+      "references": false,
+      "regex": "linear"
+    },
+    "unsupported": {},
+    "validitySeconds": 86400
+  },
+  "embeddingProbe": {
+    "capabilities": [
+      "embed"
+    ],
+    "model": "nomic-embed-text:latest",
+    "modelRevision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "schemaProfile": {
+      "nodes": 256,
+      "references": false,
+      "regex": "linear"
+    },
+    "unsupported": {},
+    "validitySeconds": 86400
+  },
+  "calls": [
+    {
+      "resource": "chat",
+      "state": "succeeded",
+      "error": null,
+      "usage": {
+        "inputTokens": "21",
+        "totalTokens": "392",
+        "outputTokens": "371"
+      },
+      "duration_ms": "43849.204000"
+    },
+    {
+      "resource": "chat",
+      "state": "succeeded",
+      "error": null,
+      "usage": {
+        "inputTokens": "21",
+        "totalTokens": "265",
+        "outputTokens": "244"
+      },
+      "duration_ms": "26226.626000"
+    },
+    {
+      "resource": "chat",
+      "state": "succeeded",
+      "error": null,
+      "usage": {
+        "inputTokens": "24",
+        "totalTokens": "505",
+        "outputTokens": "481"
+      },
+      "duration_ms": "49752.239000"
+    },
+    {
+      "resource": "chat",
+      "state": "succeeded",
+      "error": null,
+      "usage": {
+        "inputTokens": "146",
+        "totalTokens": "387",
+        "outputTokens": "241"
+      },
+      "duration_ms": "26828.387000"
+    },
+    {
+      "resource": "embedding",
+      "state": "succeeded",
+      "error": null,
+      "usage": {
+        "inputTokens": "9",
+        "totalTokens": "9"
+      },
+      "duration_ms": "529.429000"
+    },
+    {
+      "resource": "embedding",
+      "state": "succeeded",
+      "error": null,
+      "usage": {
+        "inputTokens": "20",
+        "totalTokens": "20"
+      },
+      "duration_ms": "85.567000"
+    }
+  ],
+  "limitations": [
+    "Functional capability proof only; no inference quality, latency SLO, fleet capacity or HA certification."
+  ]
+}

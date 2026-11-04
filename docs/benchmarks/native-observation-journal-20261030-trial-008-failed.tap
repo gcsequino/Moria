@@ -1,0 +1,159 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+      ---
+      duration_ms: 3638.335261
+      type: 'test'
+      ...
+    # Subtest: SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+    ok 2 - SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+      ---
+      duration_ms: 4730.043558
+      type: 'test'
+      ...
+    # Subtest: a durable pending model intent remains inspectable before gateway admission commits
+    ok 3 - a durable pending model intent remains inspectable before gateway admission commits
+      ---
+      duration_ms: 4175.642835
+      type: 'test'
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    ok 4 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 9320.745318
+      type: 'test'
+      ...
+    # Subtest: exact Agent invocation scope admits required dependencies without filesystem browsing
+    ok 5 - exact Agent invocation scope admits required dependencies without filesystem browsing
+      ---
+      duration_ms: 3223.851281
+      type: 'test'
+      ...
+    # Subtest: Agent observes actual Function child failure labels before returning a caught outcome
+    not ok 6 - Agent observes actual Function child failure labels before returning a caught outcome
+      ---
+      duration_ms: 2446.284338
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:734:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"worker":"","execution":[{"status":"failed","error":"FUNCTION_OBSERVATION_INCOMPLETE"}],"events":[{"kind":"accepted","payload":{"tasks":1}},{"kind":"claimed","payload":{"task":"0feed3b8-d0b4-4dcc-9990-0a341d6384c6","fence":"1","owner":"50719e09-7e14-49c3-8e30-0c950423545d"}},{"kind":"log","payload":{"message":"agent graph started","markings":[]}},{"kind":"brokerDenied","payload":{"code":"INPUT_INVALID","status":400,"markings":[],"requestShape":{"hasInput":true,"bodyObject":true,"closedBody":true,"waitBoolean":true,"canonicalTarget":false}}},{"kind":"failed","payload":{"error":"FUNCTION_OBSERVATION_INCOMPLETE"}}]}
+        
+        0 !== null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:745:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async until (/work/tests/native-agents.integration.test.ts:26:9)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:744:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:734:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Agent cancellation fences a running Function child without a second attempt
+    not ok 7 - Agent cancellation fences a running Function child without a second attempt
+      ---
+      duration_ms: 2983.59968
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:820:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"worker":"","execution":[{"status":"failed","error":"FUNCTION_OBSERVATION_INCOMPLETE"}],"events":[{"kind":"accepted","payload":{"tasks":1}},{"kind":"claimed","payload":{"task":"3887ce70-373b-415d-b437-d3d17d91a7b8","fence":"1","owner":"50719e09-7e14-49c3-8e30-0c950423545d"}},{"kind":"log","payload":{"message":"agent graph started","markings":[]}},{"kind":"brokerDenied","payload":{"code":"INPUT_INVALID","status":400,"markings":[],"requestShape":{"hasInput":true,"bodyObject":true,"closedBody":true,"waitBoolean":true,"canonicalTarget":false}}},{"kind":"failed","payload":{"error":"FUNCTION_OBSERVATION_INCOMPLETE"}}]}
+        
+        0 !== null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:831:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async until (/work/tests/native-agents.integration.test.ts:26:9)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:830:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:820:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    ok 8 - healthy long-running agent work renews the same single-attempt database lease
+      ---
+      duration_ms: 12895.573167
+      type: 'test'
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    ok 9 - bound model dispatch stops after real worker-scope revocation and cannot publish a result
+      ---
+      duration_ms: 3666.589802
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    ok 10 - cancellation and supervisor SIGKILL fence the graph without re-executing user code
+      ---
+      duration_ms: 3621.13105
+      type: 'test'
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    ok 11 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+      ---
+      duration_ms: 3483.803877
+      type: 'test'
+      ...
+    # Subtest: accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+    ok 12 - accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+      ---
+      duration_ms: 12696.173029
+      type: 'test'
+      ...
+    # Subtest: newly granted tool permissions cannot widen an already accepted job capability
+    ok 13 - newly granted tool permissions cannot widen an already accepted job capability
+      ---
+      duration_ms: 3893.175069
+      type: 'test'
+      ...
+    # Subtest: postclaim filesystem rejection records no code start after an expired original session
+    ok 14 - postclaim filesystem rejection records no code start after an expired original session
+      ---
+      duration_ms: 1527.417845
+      type: 'test'
+      ...
+    # Subtest: accepted agent code remains pinned across redeployment and current authority gates retained results
+    ok 15 - accepted agent code remains pinned across redeployment and current authority gates retained results
+      ---
+      duration_ms: 4310.111801
+      type: 'test'
+      ...
+    1..15
+not ok 1 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 109738.099402
+  type: 'test'
+  location: '/work/tests/native-agents.integration.test.ts:32:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: caught secondary link-cardinality failure retains its complete native outcome and rolls replay effects back
+ok 2 - caught secondary link-cardinality failure retains its complete native outcome and rolls replay effects back
+  ---
+  duration_ms: 17804.298402
+  type: 'test'
+  ...
+1..2
+# tests 17
+# suites 0
+# pass 14
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128512.734237

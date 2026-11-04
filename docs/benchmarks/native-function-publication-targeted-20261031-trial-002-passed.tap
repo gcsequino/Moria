@@ -1,0 +1,120 @@
+TAP version 13
+# Subtest: native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+    # Subtest: authenticated admission pins release/actor/input, rejects forged fields and generic function workers
+    ok 1 - authenticated admission pins release/actor/input, rejects forged fields and generic function workers # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.761426
+      type: 'test'
+      ...
+    # Subtest: a lost public acceptance response and API process death replay one durable invocation
+    ok 2 - a lost public acceptance response and API process death replay one durable invocation # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.083678
+      type: 'test'
+      ...
+    # Subtest: publication retries only definite transaction aborts without rerunning the guest
+    ok 3 - publication retries only definite transaction aborts without rerunning the guest
+      ---
+      duration_ms: 6453.982855
+      type: 'test'
+      ...
+    # Subtest: deployed code cannot change an accepted release or replay schema
+    ok 4 - deployed code cannot change an accepted release or replay schema # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.234356
+      type: 'test'
+      ...
+    # Subtest: real native broker preserves reads and committed readWrite effects after later code failure
+    ok 5 - real native broker preserves reads and committed readWrite effects after later code failure # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.08256
+      type: 'test'
+      ...
+    # Subtest: editProposal batch and function receipt commit together; rejection or result failure rolls all edits back
+    ok 6 - editProposal batch and function receipt commit together; rejection or result failure rolls all edits back # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.104048
+      type: 'test'
+      ...
+    # Subtest: live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation
+    ok 7 - live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.084879
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor death fence the only attempt and remove local orphans
+    ok 8 - cancellation and supervisor death fence the only attempt and remove local orphans # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.167652
+      type: 'test'
+      ...
+    # Subtest: actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL
+    ok 9 - actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.15046
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success
+    ok 10 - a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.152861
+      type: 'test'
+      ...
+    # Subtest: native worker pool supports bounded nested invocations and function-backed action preparation
+    ok 11 - native worker pool supports bounded nested invocations and function-backed action preparation # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.106014
+      type: 'test'
+      ...
+    # Subtest: worker CLI rejects missing native configuration before creating a workspace or Node worker
+    ok 12 - worker CLI rejects missing native configuration before creating a workspace or Node worker # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.106683
+      type: 'test'
+      ...
+    # Subtest: a public function catching a protected missing-object read retains its labels and failed observation
+    ok 13 - a public function catching a protected missing-object read retains its labels and failed observation # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.050585
+      type: 'test'
+      ...
+    # Subtest: a killed callback with rolled-back private evidence cannot release failure metadata or logs
+    ok 14 - a killed callback with rolled-back private evidence cannot release failure metadata or logs # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.103693
+      type: 'test'
+      ...
+    # Subtest: a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically
+    ok 15 - a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.056208
+      type: 'test'
+      ...
+    # Subtest: exact Function invocation scopes run without filesystem browsing and remain pinned on acceptance
+    ok 16 - exact Function invocation scopes run without filesystem browsing and remain pinned on acceptance # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.040545
+      type: 'test'
+      ...
+    # Subtest: changed read evidence and revoked access withhold retained results and protected logs
+    ok 17 - changed read evidence and revoked access withhold retained results and protected logs # SKIP explicit targeted proof; full suite remains required
+      ---
+      duration_ms: 0.062733
+      type: 'test'
+      ...
+    1..17
+ok 1 - native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+  ---
+  duration_ms: 13158.4116
+  type: 'test'
+  ...
+# {"phase":"targeted-model-locks","locks":[]}
+1..1
+# tests 18
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 16
+# todo 0
+# duration_ms 13673.212621

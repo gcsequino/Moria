@@ -1,0 +1,34 @@
+{
+  "activePhase": "complete",
+  "timeline": [
+    {
+      "phase": "setup",
+      "elapsedMs": 149.5549219999998
+    },
+    {
+      "phase": "identity",
+      "elapsedMs": 77277.17990999999
+    },
+    {
+      "phase": "source-production",
+      "elapsedMs": 24450.44772200001
+    },
+    {
+      "phase": "source-publication",
+      "elapsedMs": 686964.532432
+    },
+    {
+      "phase": "native-indexing-projection",
+      "elapsedMs": 2394689.836558
+    },
+    {
+      "phase": "native-streaming-oracle",
+      "elapsedMs": 72508.46663499996
+    },
+    {
+      "phase": "operator-plan-samples",
+      "elapsedMs": 97680.54716800014
+    }
+  ],
+  "elapsedMs": 3353720.565347
+}

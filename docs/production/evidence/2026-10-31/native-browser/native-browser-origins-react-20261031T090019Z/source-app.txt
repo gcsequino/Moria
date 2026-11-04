@@ -1,0 +1,47 @@
+TAP version 13
+# Subtest: management active browser graph contains native clients and no retired workspace facade or server dependencies
+ok 1 - management active browser graph contains native clients and no retired workspace facade or server dependencies
+  ---
+  duration_ms: 194.460267
+  type: 'test'
+  ...
+# Subtest: resource views route only the resolved domain and preserve exact-value guidance
+ok 2 - resource views route only the resolved domain and preserve exact-value guidance
+  ---
+  duration_ms: 4.653186
+  type: 'test'
+  ...
+# Subtest: browser origin ownership is canonical, immutable and checked before native exposure across replicas and restart
+ok 3 - browser origin ownership is canonical, immutable and checked before native exposure across replicas and restart
+  ---
+  duration_ms: 2710.185672
+  type: 'test'
+  ...
+# Subtest: default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+ok 4 - default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+  ---
+  duration_ms: 3666.237985
+  type: 'test'
+  ...
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 30312.280971
+      type: 'test'
+      ...
+    1..1
+ok 5 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 41496.138803
+  type: 'test'
+  ...
+1..5
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50006.020976

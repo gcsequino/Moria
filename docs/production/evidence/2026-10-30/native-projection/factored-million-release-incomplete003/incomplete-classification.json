@@ -1,0 +1,10 @@
+{
+  "classification": "Paused after measured projection scale blocker; no oracle or capacity pass",
+  "container": "moria-data-factored-million-v3",
+  "dataRetained": "Paused container writable layer retains original source, native objects and PostgreSQL cluster. Copy before unpausing; expired worker leases may cause fixture cleanup on resume.",
+  "sourcePublicationMs": 644965.118011,
+  "oldProjectionCandidatePlanMs": [14042.517, 14220.616],
+  "boundedCandidatePlanMs": [17.355, 13.774],
+  "operatorProbe": "Read-only actual custom/generic candidate plans; no production SQL/binary change",
+  "fullProfileCertified": false
+}

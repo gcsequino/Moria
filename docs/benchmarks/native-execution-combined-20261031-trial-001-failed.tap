@@ -1,0 +1,309 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    not ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+      ---
+      duration_ms: 272.21464
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:514:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+    # Subtest: SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+    not ok 2 - SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+      ---
+      duration_ms: 741.638323
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:562:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent CLI worker exited 1: 
+        thread 'tokio-rt-worker' (285) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        {"error":"INDEXING_FAILED"}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:591:24)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: a durable pending model intent remains inspectable before gateway admission commits
+    not ok 3 - a durable pending model intent remains inspectable before gateway admission commits
+      ---
+      duration_ms: 8418.305013
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:642:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:654:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:642:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    not ok 4 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 336.51908
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:687:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent process agents once failed 101: 
+        thread 'main' (297) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:439:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: exact Agent invocation scope admits required dependencies without filesystem browsing
+    not ok 5 - exact Agent invocation scope admits required dependencies without filesystem browsing
+      ---
+      duration_ms: 334.503353
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:792:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent process agents once failed 101: 
+        thread 'main' (302) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:439:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: Agent observes actual Function child failure labels before returning a caught outcome
+    not ok 6 - Agent observes actual Function child failure labels before returning a caught outcome
+      ---
+      duration_ms: 360.312096
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:818:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"worker":"\nthread 'main' (307) panicked at src/agents.rs:602:34:\nerror retrieving column model_binding: invalid column `model_binding`\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n","execution":[{"status":"queued","error":null}],"events":[{"kind":"accepted","payload":{"tasks":1}}]}
+        
+        101 !== null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 101
+      operator: 'strictEqual'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:829:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async until (/work/tests/native-agents.integration.test.ts:26:9)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:828:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:818:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Agent cancellation fences a running Function child without a second attempt
+    not ok 7 - Agent cancellation fences a running Function child without a second attempt
+      ---
+      duration_ms: 336.142676
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:904:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"worker":"\nthread 'main' (312) panicked at src/agents.rs:602:34:\nerror retrieving column model_binding: invalid column `model_binding`\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n","execution":[{"status":"queued","error":null}],"events":[{"kind":"accepted","payload":{"tasks":1}}]}
+        
+        101 !== null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 101
+      operator: 'strictEqual'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:915:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async until (/work/tests/native-agents.integration.test.ts:26:9)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:914:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:904:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    not ok 8 - healthy long-running agent work renews the same single-attempt database lease
+      ---
+      duration_ms: 10076.528286
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:979:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:984:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:979:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    not ok 9 - bound model dispatch stops after real worker-scope revocation and cannot publish a result
+      ---
+      duration_ms: 298.397591
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1004:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent process agents once failed 101: 
+        thread 'main' (322) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:439:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    not ok 10 - cancellation and supervisor SIGKILL fence the graph without re-executing user code
+      ---
+      duration_ms: 10075.276788
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1062:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1067:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1062:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    not ok 11 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+      ---
+      duration_ms: 315.032408
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1098:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent process agents once failed 101: 
+        thread 'main' (332) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:439:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: registered worker class admission is independent of unrelated class ordering
+    not ok 12 - registered worker class admission is independent of unrelated class ordering
+      ---
+      duration_ms: 305.087912
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1122:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent process agents once failed 101: 
+        thread 'main' (337) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:439:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+    not ok 13 - Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+      ---
+      duration_ms: 1349.572017
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1142:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The expression evaluated to a falsy value:
+        
+          assert.ok(dispatched.child)
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: ~
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1219:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1142:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+    not ok 14 - accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+      ---
+      duration_ms: 8366.59681
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1567:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1602:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1567:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: newly granted tool permissions cannot widen an already accepted job capability
+    not ok 15 - newly granted tool permissions cannot widen an already accepted job capability
+      ---
+      duration_ms: 355.102626
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1663:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native agent process agents once failed 101: 
+        thread 'main' (372) panicked at src/agents.rs:602:34:
+        error retrieving column model_binding: invalid column `model_binding`
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-agents.integration.test.ts:439:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...

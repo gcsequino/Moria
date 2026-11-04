@@ -7,6 +7,11 @@ export async function* icebergRows(
   pin: { metadataLocation: string; snapshotId: string },
   options: { batchRows?: number; timeoutMs?: number; signal?: AbortSignal } = {},
 ): AsyncGenerator<unknown> {
+  if (pin.metadataLocation.startsWith('moria-snapshot-v2:'))
+    throw new MoriaError(
+      'UNSUPPORTED_CAPABILITY',
+      'Native snapshots require a scoped native reader',
+    );
   const batchRows = options.batchRows ?? 1000;
   if (
     !Number.isInteger(batchRows) ||

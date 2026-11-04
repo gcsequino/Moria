@@ -1,0 +1,100 @@
+{
+  "scope": "explicit targeted subset, not whole suite",
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "moria-agent-model-targeted-004",
+    "--network",
+    "host",
+    "--group-add",
+    "108",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/agent-model-targeted-004/native-agents.external.integration.test.ts,dst=/work/tests/native-agents.integration.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-native-retention-test,dst=/usr/local/bin/moria-native-retention-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-native-sandbox-test,dst=/usr/local/bin/moria-native-sandbox-test,readonly",
+    "-e",
+    "pnpm_config_verify_deps_before_run=false",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_TEST_PROOF_ID=moria-agent-model-targeted-004",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-agents.integration.test.ts"
+  ],
+  "descriptor": {
+    "snapshot": {
+      "root": "/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23",
+      "files": 2446,
+      "manifestSha256": "01e82edb8ef2bbb9de1132e09e2de80d9a5dbc55a088541388d42013cd48da66",
+      "imageDependencyLinks": {
+        ".venv": "/app/.venv"
+      },
+      "dependencyMounts": [
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+      ]
+    },
+    "artifacts": {
+      "moria-runtime": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+        "path": "/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-runtime",
+        "sha256": "9a4d6c533ee0a096faf7cd86a40a8d6fa30c280b9e1f1932595c5c1970226408"
+      },
+      "moria-indexing": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+        "path": "/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-indexing",
+        "sha256": "674ea351d4a949fc206f65afa55a2d902bd8c3f1c9675cab4230cf3c71263d04"
+      },
+      "moria-native-catalog-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+        "path": "/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-native-catalog-test",
+        "sha256": "b7528f8825fd8232f762c19282e10dd3f71be734b08d83f3c10fd884d0e86b2a"
+      },
+      "moria-native-retention-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+        "path": "/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-native-retention-test",
+        "sha256": "5045979a9bfad58288fbf591f10a1aa76a8de2842fd1d54046553cfee9479ca0"
+      },
+      "moria-native-sandbox-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_sandbox-1c205eafd7b8b6e9",
+        "path": "/tmp/moria-proof-snapshots/20261031T134056293220Z-independent-model-guard-search-v23/native-proof-artifacts/moria-native-sandbox-test",
+        "sha256": "e166db793fb3f18e5090b9f13285a2aa7730f3c4238c62d4b7dff1c5e0839196"
+      }
+    },
+    "compiled": {
+      "protocolVersion": 1,
+      "schema": {
+        "checksum": "e28c508ad2b69f29b746df679f97ba044114042bae65e19c92c71a44bfe2bff8",
+        "version": 5
+      },
+      "sourceDigest": "58997d85afa5a083c792decf252ef8246e47b304c98b451c552220adf79ec11b"
+    },
+    "evidence": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/20261031T134056Z"
+  },
+  "baseFixtureSha256": "07338a5b4d274511b34036e51d6b50345b01f22a8284d6a8e668477d3c1fdae2",
+  "externalFixtureSha256": "c35611a4f2cbb630b2b444a52764ec8233589c9dc91529cba12dd6f328d1bd25",
+  "selectedTests": [
+    "Agent admission captures approved material before code and a missed approval pulse cannot revive it"
+  ],
+  "exit": 0
+}

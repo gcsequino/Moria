@@ -1,0 +1,33 @@
+TAP version 13
+# Subtest: managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+not ok 1 - managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+  ---
+  duration_ms: 31891.055076
+  type: 'test'
+  location: '/work/tests/native-dataset-retention.integration.test.ts:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/work/tests/native-dataset-retention.integration.test.ts:209:14)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32346.511319

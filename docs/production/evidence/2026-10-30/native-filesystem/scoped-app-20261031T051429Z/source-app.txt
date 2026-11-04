@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+not ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 2730.40036
+  type: 'test'
+  location: '/work/tests/native-source-runtime.integration.test.ts:22:1'
+  failureType: 'testCodeFailure'
+  error: 'INTERNAL'
+  code: 'INTERNAL'
+  name: 'ApiError'
+  stack: |-
+    decode (/work/packages/platform/src/transport.ts:85:13)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async publishNativeSource (/work/tests/fixtures/native-source/setup.ts:24:6)
+    async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:176:23)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3422.315391

@@ -1,0 +1,89 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 2316.219474
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 1117.937477
+      type: 'test'
+      ...
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 3 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 2265.316023
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 4 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 2364.303415
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 5 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 2312.473515
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 6 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 2463.570457
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 7 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 2313.814595
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 8 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 2435.455844
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 9 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 266.210087
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 10 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 6380.756159
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 11 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 2318.025614
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 12 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 43.20373
+      type: 'test'
+      ...
+    1..12
+ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 29753.742149
+  type: 'test'
+  ...
+1..1
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30141.60999

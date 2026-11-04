@@ -1,0 +1,25 @@
+TAP version 13
+# Subtest: native Dataset abandoned multipart cleanup uses exact issued keys across lost ACKs and late provider effects
+not ok 1 - native Dataset abandoned multipart cleanup uses exact issued keys across lost ACKs and late provider effects
+  ---
+  duration_ms: 46503.397045
+  type: 'test'
+  location: '/proof-driver/multipart.ts:19:1'
+  failureType: 'hookFailed'
+  error: 'connect ECONNREFUSED 127.0.0.1:34473'
+  code: 'ECONNREFUSED'
+  stack: |-
+    TCPConnectWrap.afterConnect [as oncomplete] (node:net:2083:16)
+  ...
+# {"phase":"part","exactMultipartAborted":true,"siblingPreserved":true,"actualProducer":"c1760820-b051-4b89-a7cd-6fd46c823826","receipt":[{"upload_id":"ZDNjY2RmZjMtZWRiOS00OTdjLWJhZGYtNTZlZjA5MWQxODE1LmQxM2VmYjVlLTU1YmItNGViYS04MDQ4LTYzNDY5MjRlZThiMngxNzkzNDM4MjAyOTAxMDE0NTAw","result":"aborted"}]}
+# {"phase":"initiate","exactMultipartAborted":true,"siblingPreserved":true,"actualProducer":"80e29d3c-156a-4806-ae99-624ed2ebf7fa","receipt":[{"upload_id":"ZDNjY2RmZjMtZWRiOS00OTdjLWJhZGYtNTZlZjA5MWQxODE1Ljk2MzUwNzAxLTEwZDItNDRhNy04ODM2LWJjNWJkNjE0YjI1MXgxNzkzNDM4MjA0MjQwNzg1NjMz","result":"aborted"}]}
+# {"phase":"before-initiate","exactMultipartAborted":true,"siblingPreserved":true,"actualProducer":"3c5b0691-ff94-4b80-8150-496a0910b8f6","receipt":[{"upload_id":"ZDNjY2RmZjMtZWRiOS00OTdjLWJhZGYtNTZlZjA5MWQxODE1LmU0MWE5YmQwLTYyYWYtNGRhNy1iMTU1LWVlNTJlMTkzMDM4N3gxNzkzNDM4MjA1NjA2NzQ1MDE3","result":"aborted"}]}
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 47033.868976

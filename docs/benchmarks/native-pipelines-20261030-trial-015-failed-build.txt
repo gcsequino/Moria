@@ -1,0 +1,12 @@
+error: unexpected closing delimiter: `}`
+   --> src/recovery_content.rs:363:1
+    |
+ 56 | async fn charge_state(client:&Client,set:Uuid,bytes:usize)->Result<()>{let bytes=i64::try_from(bytes.checked_add(1024).ok_or_else(||anyhow::anyhow!("RECOVERY_CONTENT_LIMIT"))?)?;
+    |                                                                       - this delimiter might not be properly closed...
+ 57 |     ensure!(client.execute("UPDATE moria.runtime_recovery_content_counters SET state_bytes=state_bytes+$2 WHERE recovery_set=$1 AND state_bytes+$2<=max_state_bytes",&[&set,&bytes]).await?==1,"RECOVERY_CONTENT_LIMIT");Ok(())}
+    |                                                                                                                                                                                                                                - ...as it matches this but it has different indentation
+...
+363 | }
+    | ^ unexpected closing delimiter
+
+

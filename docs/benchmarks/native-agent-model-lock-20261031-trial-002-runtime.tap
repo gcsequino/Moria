@@ -1,0 +1,48 @@
+TAP version 13
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    not ok 1 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 13706.409127
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:37:85'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"FUNCTION_OBSERVATION_INCOMPLETE","correlationId":"377b78e7-5113-401c-9770-76e32b7a0649","details":null,"message":"FUNCTION_OBSERVATION_INCOMPLETE","requestId":"377b78e7-5113-401c-9770-76e32b7a0649","retryable":false}}
+        
+        409 !== 200
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 200
+      actual: 409
+      operator: 'strictEqual'
+      stack: |-
+        get (/work/tests/native-agents.integration.test.ts:552:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:787:24)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:781:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..1
+not ok 1 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 26317.192781
+  type: 'test'
+  location: '/work/tests/native-agents.integration.test.ts:32:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# {"phase":"fresh-no-class-barrier-locks","diagnostics":[{"at":1793453520624,"rows":[{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"advisory","relation":null,"mode":"ShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_execution_tasks","mode":"AccessShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_execution_tasks_pkey","mode":"AccessShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_executions","mode":"RowShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_executions_pkey","mode":"RowShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"transactionid","relation":null,"mode":"ShareLock","granted":false},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"tuple","relation":"moria.runtime_executions","mode":"AccessExclusiveLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"virtualxid","relation":null,"mode":"ExclusiveLock","granted":true}]},{"at":1793453523326,"rows":[{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"advisory","relation":null,"mode":"ShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_execution_tasks","mode":"AccessShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_execution_tasks_pkey","mode":"AccessShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_executions","mode":"RowShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"relation","relation":"moria.runtime_executions_pkey","mode":"RowShareLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"transactionid","relation":null,"mode":"ShareLock","granted":false},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"tuple","relation":"moria.runtime_executions","mode":"AccessExclusiveLock","granted":true},{"pid":282,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"transactionid","blockers":[281],"locktype":"virtualxid","relation":null,"mode":"ExclusiveLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"advisory","relation":null,"mode":"ShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_execution_deadlines","mode":"RowShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_execution_tasks","mode":"AccessShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_execution_tasks_execution_ordinal_key","mode":"AccessShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_execution_tasks_pending","mode":"AccessShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_execution_tasks_pkey","mode":"AccessShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_executions","mode":"RowShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_executions_environment_resource_principal_applicati_key","mode":"RowShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_executions_pending","mode":"RowShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_executions_pkey","mode":"RowShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_publication_expiry","mode":"RowShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"relation","relation":"moria.runtime_task_expiry","mode":"AccessShareLock","granted":true},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"tuple","relation":"moria.runtime_executions","mode":"AccessExclusiveLock","granted":false},{"pid":283,"guard":"runtime_task_check","statement_kind":"SELECT","state":"active","wait_event_type":"Lock","wait_event":"tuple","blockers":[282],"locktype":"virtualxid","relation":null,"mode":"ExclusiveLock","granted":true}]}]}
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26931.727533

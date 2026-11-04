@@ -1,0 +1,73 @@
+{
+  "sourceRoot": "/tmp/moria-proof-snapshots/20261031T101830822998Z-native-execution-combined-002",
+  "sourceManifestSha256": "315b48774a425392f9f5ea298a8abb0b78a7f7529514402a5a22d4ae3efa22f2",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "17bf69ea6890818f817da8c91bfc510f0da08e05575921974b9ad7b45a1fb254",
+      "version": 5
+    },
+    "sourceDigest": "93648c5af5368a0ab40bb2864fa5c0fbd2224b898184afde86dafe4b31c99664"
+  },
+  "artifacts": {
+    "moria-runtime": {
+      "path": "/tmp/moria-root-reused-protocols-20261031T102405Z/moria-runtime",
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "sha256": "6616b7320e931294c2511378635a25051074202cd61ca695ab715d4a75c5ccdd"
+    },
+    "native-catalog": {
+      "path": "/tmp/moria-proof-snapshots/20261031T101830822998Z-native-execution-combined-002/artifacts/native-catalog",
+      "sha256": "cfffe30369ef19032cdd5222683d029f29f3404b1f470b1ec077209585103f20"
+    }
+  },
+  "externalTests": {
+    "tests/native-models.integration.test.ts": {
+      "path": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-protocols/20261031T102405Z/native-models.integration.test.ts",
+      "sha256": "5c1162d329e2698e39eb15689d38ef775e912f1ea14c3656c83e02b5d4ee691e"
+    }
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T101830822998Z-native-execution-combined-002,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-root-reused-protocols-20261031T102405Z/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T101830822998Z-native-execution-combined-002/artifacts/native-catalog,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-protocols/20261031T102405Z/native-models.integration.test.ts,dst=/work/tests/native-models.integration.test.ts,readonly",
+    "-e",
+    "MORIA_NATIVE_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_INDEXING_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-models.integration.test.ts",
+    "tests/native-search.integration.test.ts",
+    "tests/native-search-projector.integration.test.ts",
+    "tests/native-mcp.integration.test.ts",
+    "tests/native-recovery.integration.test.ts",
+    "tests/native-history.integration.test.ts",
+    "tests/native-history-collector.integration.test.ts",
+    "tests/native-history-projection.integration.test.ts"
+  ],
+  "exit": 1
+}

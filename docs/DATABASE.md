@@ -156,3 +156,15 @@ A separately hosted PostgreSQL deployment, remote TLS, full installation
 backup/restore/cutover and mixed-release operation remain unverified. The shared
 schema lock coordinates participating processes, not legacy binaries or a database
 administrator. This issue makes no production capacity or security certification.
+
+### Native operational query spill budget
+
+The operator must configure each native serving role with a finite PostgreSQL
+`temp_file_limit` of at most 256 MiB per backend, for example
+`ALTER ROLE moria_runtime SET temp_file_limit = '256MB';` using the actual scoped
+role name. New connections inherit the setting. The runtime does not grant itself
+permission to change this privileged setting. General scalar sort fails closed
+when the setting is unlimited or larger; it also uses 16 MiB local `work_mem` and
+the existing statement deadline. Projection-backed indexed queries retain their
+own candidate/response checks. Aggregate connection budgets must account for the
+per-backend spill allowance; this is a resource bound, not a latency claim.

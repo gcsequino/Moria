@@ -1,0 +1,147 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17",
+  "sourceManifestSha256": "6a18fba9cef7566326c8bdfb57bdc8b0b8c5d329d417003d7d5e9582a422d4c5",
+  "buildCommand": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17,dst=/work",
+    "--mount",
+    "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+    "--mount",
+    "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+    "-w",
+    "/work/services/runtime",
+    "moria-indexing-toolchain:local",
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--bins",
+    "--test",
+    "native_catalog",
+    "-j",
+    "2",
+    "--message-format=json"
+  ],
+  "buildExitCode": 0,
+  "artifacts": {
+    "moria-runtime": {
+      "cargoPath": "/work/services/runtime/target/release/moria-runtime",
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/.data-capacity-artifacts-v7/moria-runtime",
+      "sha256": "8f044a7ad2a7378234fe92bdebcce16cb51cdffb8ed7f5ee321f5de366e0713d"
+    },
+    "moria-indexing": {
+      "cargoPath": "/work/services/runtime/target/release/moria-indexing",
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/.data-capacity-artifacts-v7/moria-indexing",
+      "sha256": "24312589d3d3943d7eff4b8a035bdea40529361c70aad940b2c5607fbf67c902"
+    },
+    "native_catalog": {
+      "cargoPath": "/work/services/runtime/target/release/deps/native_catalog-94d99389a8077992",
+      "path": "/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17/.data-capacity-artifacts-v7/native_catalog",
+      "sha256": "175c6aee1fc8abefeffabeecdd8f242ca7a7ff1cdc222ee805540073c5fed228"
+    }
+  },
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "d80f903796d0254a61da2d46e0b42e7e33f514c5c42fe980c2572e865bba0bd8",
+      "version": 5
+    },
+    "sourceDigest": "0045d075e4022e7d00dfd1ef576e8a5fa993df3f593d67ed36658b21e350471d"
+  },
+  "driver": {
+    "root": "/tmp/moria-proof-drivers/20261031T070644Z-protected-capacity-v7",
+    "manifestSha256": "327465a083afe309827fe903f538baab415252703dc7c6c34c2f26d57c5cdaa7"
+  },
+  "commands": [
+    {
+      "population": 1000,
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--name",
+        "moria-data-window-uid-1000-v7",
+        "--memory",
+        "12g",
+        "--memory-swap",
+        "24g",
+        "--cpus",
+        "4",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-drivers/20261031T070644Z-protected-capacity-v7,dst=/proof-driver,readonly",
+        "-w",
+        "/work",
+        "-e",
+        "MORIA_RUNTIME_BINARY=/work/.data-capacity-artifacts-v7/moria-runtime",
+        "-e",
+        "MORIA_CATALOG_TEST_BINARY=/work/.data-capacity-artifacts-v7/native_catalog",
+        "-e",
+        "MORIA_CAPACITY_ROWS=1000",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "/proof-driver/million-runner.ts"
+      ]
+    },
+    {
+      "population": 1000000,
+      "command": [
+        "flock",
+        "--exclusive",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--name",
+        "moria-data-window-uid-1000000-v7",
+        "--memory",
+        "12g",
+        "--memory-swap",
+        "24g",
+        "--cpus",
+        "4",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T073454763956Z-dataset-gc-recovery-v17,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-drivers/20261031T070644Z-protected-capacity-v7,dst=/proof-driver,readonly",
+        "-w",
+        "/work",
+        "-e",
+        "MORIA_RUNTIME_BINARY=/work/.data-capacity-artifacts-v7/moria-runtime",
+        "-e",
+        "MORIA_CATALOG_TEST_BINARY=/work/.data-capacity-artifacts-v7/native_catalog",
+        "-e",
+        "MORIA_CAPACITY_ROWS=1000000",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "/proof-driver/million-runner.ts"
+      ]
+    }
+  ],
+  "results": {
+    "1000": {
+      "exitCode": 0
+    },
+    "1000000": {
+      "exitCode": 0
+    }
+  }
+}

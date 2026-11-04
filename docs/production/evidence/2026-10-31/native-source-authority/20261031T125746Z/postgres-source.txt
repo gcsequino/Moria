@@ -1,0 +1,119 @@
+TAP version 13
+# Subtest: managed source roots checkout, publish, plan and activate coherent definitions
+    # Subtest: registered roots preserve metadata dotfiles and allocate stable exported resource identities
+    ok 1 - registered roots preserve metadata dotfiles and allocate stable exported resource identities
+      ---
+      duration_ms: 3036.855604
+      type: 'test'
+      ...
+    # Subtest: sibling roots are independent and duplicate/nested source registration is rejected
+    ok 2 - sibling roots are independent and duplicate/nested source registration is rejected
+      ---
+      duration_ms: 2063.108371
+      type: 'test'
+      ...
+    # Subtest: plans bind release, principal, current policy and expected active revision
+    ok 3 - plans bind release, principal, current policy and expected active revision
+      ---
+      duration_ms: 1499.935152
+      type: 'test'
+      ...
+    # Subtest: missing declarations are retained until explicit dependency-checked deletion
+    ok 4 - missing declarations are retained until explicit dependency-checked deletion
+      ---
+      duration_ms: 1758.617006
+      type: 'test'
+      ...
+    # Subtest: repeated Source history keeps current classification checks authoritative
+    ok 5 - repeated Source history keeps current classification checks authoritative
+      ---
+      duration_ms: 6391.323864
+      type: 'test'
+      ...
+    # Subtest: replacement retains future restrictions on its original source
+    ok 6 - replacement retains future restrictions on its original source
+      ---
+      duration_ms: 4223.747489
+      type: 'test'
+      ...
+    # Subtest: fresh replacement uses live declaration files while pinned historical files remain protected
+    ok 7 - fresh replacement uses live declaration files while pinned historical files remain protected
+      ---
+      duration_ms: 5405.041395
+      type: 'test'
+      ...
+    # Subtest: omitted definitions retain future restrictions on their declaration directory
+    ok 8 - omitted definitions retain future restrictions on their declaration directory
+      ---
+      duration_ms: 1442.674699
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level publish deny
+    ok 9 - activation respects a resource-level publish deny
+      ---
+      duration_ms: 1272.422157
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level delete deny
+    ok 10 - activation respects a resource-level delete deny
+      ---
+      duration_ms: 1300.374909
+      type: 'test'
+      ...
+    # Subtest: identical namespaces in independent projects activate without identity collisions
+    ok 11 - identical namespaces in independent projects activate without identity collisions
+      ---
+      duration_ms: 1820.02944
+      type: 'test'
+      ...
+    # Subtest: pinned cross-project inputs retain their owning project classifications
+    ok 12 - pinned cross-project inputs retain their owning project classifications
+      ---
+      duration_ms: 1711.359918
+      type: 'test'
+      ...
+    # Subtest: identical imported names from different projects require explicit disambiguation
+    ok 13 - identical imported names from different projects require explicit disambiguation
+      ---
+      duration_ms: 540.17299
+      type: 'test'
+      ...
+    # Subtest: active transitive dependencies prevent retirement, and retired consumers release that protection
+    ok 14 - active transitive dependencies prevent retirement, and retired consumers release that protection
+      ---
+      duration_ms: 1821.295177
+      type: 'test'
+      ...
+    # Subtest: same-project pinned source dependencies remain usable
+    ok 15 - same-project pinned source dependencies remain usable
+      ---
+      duration_ms: 462.01952
+      type: 'test'
+      ...
+    # Subtest: cross-project transform outputs require active writable placements and inherit producer restrictions
+    ok 16 - cross-project transform outputs require active writable placements and inherit producer restrictions
+      ---
+      duration_ms: 2186.272024
+      type: 'test'
+      ...
+    # Subtest: code repositories publish CI export manifests without loading source modules
+    ok 17 - code repositories publish CI export manifests without loading source modules
+      ---
+      duration_ms: 783.390344
+      type: 'test'
+      ...
+    1..17
+ok 1 - managed source roots checkout, publish, plan and activate coherent definitions
+  ---
+  duration_ms: 44878.236249
+  type: 'test'
+  ...
+1..1
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45314.893616

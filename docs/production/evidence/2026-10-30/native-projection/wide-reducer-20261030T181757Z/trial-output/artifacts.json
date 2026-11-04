@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "205ddc5ba4120478fa279f82c58b159ba7095f4fcd6784947b7874178e95fb9e",
+      "version": 5
+    },
+    "sourceDigest": "1a03143226d10323625c900e338f988fc282c9c24b60c3a328f72024c49fa486"
+  },
+  "runtime": {
+    "path": "/usr/local/bin/moria-runtime",
+    "sha256": "63492706acc4863c17a7bde43dba84fcf33502d378204a0d4ee41dbd2b5f9616"
+  },
+  "harness": {
+    "path": "/usr/local/bin/moria-catalog-tests",
+    "sha256": "52f6197c8cc7ba181d76d14326028ec1ace97bd2077e02f73835315a9d3f7ca5"
+  }
+}

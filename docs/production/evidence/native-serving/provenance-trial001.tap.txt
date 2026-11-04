@@ -1,0 +1,115 @@
+Immutable source: /tmp/moria-proof-snapshots/20261030T154337070829Z-serving-provenance
+Capture manifest SHA256: 0d50ca54745b4d84dc3c925a65e1b47a8bcf0125d8372cf715d14323a4833d0b
+Diagnosis: the new source-ACL assertion used replica A after an earlier fault test intentionally killed A. Trial002 uses surviving replica B; the source publication, admission and Node ACL assertion had succeeded before this harness error.
+
+TAP version 13
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 194.4965
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 77.075455
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 177.17082
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 84.876914
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 5 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 82.762326
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 6 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 32.989504
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 7 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 172.70504
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 8 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 47.472053
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 9 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 53.351693
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 10 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 75.986463
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 11 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 28.045543
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    ok 12 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 1017.481478
+      type: 'test'
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 13 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 21.086881
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    not ok 14 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 2427.498166
+      type: 'test'
+      location: '/work/tests/native-serving.integration.test.ts:962:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+    1..14
+not ok 1 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 5810.124188
+  type: 'test'
+  location: '/work/tests/native-serving.integration.test.ts:16:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 15
+# suites 0
+# pass 13
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6280.373542
+

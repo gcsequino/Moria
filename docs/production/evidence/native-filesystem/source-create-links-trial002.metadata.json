@@ -1,0 +1,20 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T231800144755Z-native-source-links-complete",
+  "sourceManifestSha256": "0ebfbec93ebab9b45ad23ccb6e814904a7cf22d6d32c2abd6e605abb382ce585",
+  "schema": {
+    "version": 5,
+    "checksum": "b94919a3fbe466d4b57ebfbb12fc1d706ad7e85071e1082e460b17b6e13846c5"
+  },
+  "runtimeSha256": "a6758d3ca8569694f93cadf79f950715787e0b07bc297d06e9504b3b5544537a",
+  "catalogHarnessSha256": "43f13eb5a1b45d03ecd8876948b43a6aaf85982f32fefd97b456ce65391c84af",
+  "runtimeMetadata": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "b94919a3fbe466d4b57ebfbb12fc1d706ad7e85071e1082e460b17b6e13846c5",
+      "version": 5
+    },
+    "sourceDigest": "00a9e0c687c340ce2f5f4a2bc9ccb25cd72ee344be0dd1dba053acfb25db6f93"
+  },
+  "externalHarnessSha256": "8a63cff94d1e9dcd5e0fe9d8f409af757b79c48424a7666f99977d97fef2eb6e",
+  "externalHarnessChange": "Expected existing RESOURCE_LIMIT HTTP429 instead of422; production binaries and schema unchanged."
+}

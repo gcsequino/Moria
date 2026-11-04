@@ -1,0 +1,31 @@
+/work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45
+    Error.captureStackTrace(err)
+          ^
+
+error: inconsistent types deduced for parameter $2
+    at /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async nativeProtectedBaseline (/work/benchmarks/native-protected-baseline.ts:79:3)
+    at async Object.onVerified (/work/.proof-output/million-runner.ts:39:3)
+    at async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:476:7)
+    at async <anonymous> (/work/.proof-output/million-runner.ts:38:15) {
+  length: 142,
+  severity: 'ERROR',
+  code: '42P08',
+  detail: 'text versus uuid',
+  hint: undefined,
+  position: '113',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_param.c',
+  line: '227',
+  routine: 'variable_coerce_param_hook'
+}
+
+Node.js v24.22.0

@@ -1,0 +1,24 @@
+TAP version 13
+# Subtest: finite metadata pruning preserves a live old-root reader and all physical retention pins
+ok 1 - finite metadata pruning preserves a live old-root reader and all physical retention pins
+  ---
+  duration_ms: 40473.109905
+  type: 'test'
+  ...
+# {"metadataSnapshotsBefore":2,"metadataSnapshotsAfter":1,"oldRootUnexpired":true,"liveReaderRows":64,"currentRows":64,"idempotentNoop":true,"indexingIntent":"normal validated publication path retained"}
+# Subtest: declared Dataset keys constrain native replacement and every head publication
+ok 2 - declared Dataset keys constrain native replacement and every head publication
+  ---
+  duration_ms: 33519.207306
+  type: 'test'
+  ...
+# {"rows":64,"duplicateRejectedBeforeHead":true,"certificateCurrent":true,"rawHeadWithoutHistoryDenied":true}
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 74780.37478

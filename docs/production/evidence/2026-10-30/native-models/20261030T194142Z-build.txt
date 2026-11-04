@@ -1,0 +1,32 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `resolve_dataset_pin_registered_in` is never used
+   --> src/catalog.rs:684:21
+    |
+684 | pub(crate) async fn resolve_dataset_pin_registered_in(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `validated_registration_in` is never used
+  --> src/models.rs:80:25
+   |
+78 | impl NativeModels {
+   | ----------------- associated function in this implementation
+79 |     /// Validates operator configuration without granting inference or contacting its provider.
+80 |     pub(crate) async fn validated_registration_in(
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `DatasetProfile` is never constructed
+   --> src/source_runtime.rs:148:19
+    |
+148 | pub(crate) struct DatasetProfile {
+    |                   ^^^^^^^^^^^^^^
+
+warning: function `install_dataset_in` is never used
+   --> src/source_runtime.rs:187:21
+    |
+187 | pub(crate) async fn install_dataset_in(
+    |                     ^^^^^^^^^^^^^^^^^^
+
+warning: `moria-runtime` (lib) generated 4 warnings
+    Finished `dev` profile [unoptimized] target(s) in 14.79s

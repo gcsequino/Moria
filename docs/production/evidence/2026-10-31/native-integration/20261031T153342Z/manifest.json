@@ -1,0 +1,175 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26",
+    "files": 2603,
+    "manifestSha256": "5a2d0d8e23e1751ecb5a1c9ce9878614eb788ab31c2ee90b90ec243cc998836e",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:offline-v26",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ],
+      "watchdogSeconds": 1200
+    },
+    {
+      "phase": "typescript",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:offline-v26",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ],
+      "watchdogSeconds": 1200
+    },
+    {
+      "phase": "architecture",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:offline-v26",
+        "/app/node_modules/.bin/tsx",
+        "scripts/check-architecture.ts"
+      ],
+      "watchdogSeconds": 1200
+    },
+    {
+      "phase": "sdk",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:offline-v26",
+        "/app/node_modules/.bin/tsx",
+        "scripts/generate-sdk.ts",
+        "--check"
+      ],
+      "watchdogSeconds": 1200
+    },
+    {
+      "phase": "library-harness",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "--no-run",
+        "-j",
+        "2",
+        "--message-format=json"
+      ],
+      "watchdogSeconds": 1200
+    },
+    {
+      "phase": "rust-format",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-root-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "watchdogSeconds": 1200
+    }
+  ],
+  "artifacts": {
+    "moria-indexing-tests": {
+      "cargoPath": "/work/services/runtime/target/debug/deps/moria_runtime-caa1227c937bb40e",
+      "path": "/tmp/moria-proof-snapshots/20261031T153342245156Z-typed-pending-progress-offline-v26/native-proof-artifacts/moria-indexing-tests",
+      "sha256": "520ff4231e1ad9ea8ffa24d2c605128738bd0c0055d0a9391f2997f7ab78e390"
+    }
+  },
+  "compiled": null,
+  "outcome": "rust-format failed"
+}

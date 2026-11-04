@@ -11,7 +11,7 @@
   "scripts": {
     "moria": "tsx apps/cli/src/main.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test --test-reporter=./scripts/test-reporter.ts tests/*.test.ts",
+    "test": "tsx --test --test-concurrency=2 --test-reporter=./scripts/test-reporter.ts tests/*.test.ts",
     "check": "pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:indexing && pnpm test && pnpm check:python && pnpm build && pnpm check:starter",
     "check:indexing": "tsx scripts/check-indexing.ts",
     "check:python": "node scripts/check-python.mjs",
@@ -40,6 +40,7 @@
     "@types/pg": "8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "async-exit-hook": "2.0.1",
     "embedded-postgres": "18.4.0-beta.17",
     "jose": "6.2.12",
     "prettier": "3.9.10",

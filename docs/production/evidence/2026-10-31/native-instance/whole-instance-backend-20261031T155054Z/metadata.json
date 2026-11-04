@@ -1,0 +1,162 @@
+{
+  "classification": "same-frozen-source all-enabled-domain backend preflight; supported native CLI provisions full capabilities under unchanged per-call limits; browser tickets not issued",
+  "artifact": {
+    "snapshot": {
+      "root": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b",
+      "files": 2612,
+      "manifestSha256": "746d5d2d9f8a8fc6d894586abcb316af9063f74a9499dc46ac2e159a3e20933c",
+      "imageDependencyLinks": {
+        ".venv": "/app/.venv"
+      },
+      "dependencyMounts": [
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+      ]
+    },
+    "artifacts": {
+      "moria-indexing-tests": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/moria_runtime-caa1227c937bb40e",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing-tests",
+        "sha256": "517bd5764913e9adfee4bfd738e9c41d99538d75dde71992bfbb129be1c2db99"
+      },
+      "moria-runtime": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-runtime",
+        "sha256": "882fdb0b9ade8ccd537d7b99657c695db2019faa3421d1a498cedd3393fdf9ba"
+      },
+      "moria-indexing": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing",
+        "sha256": "507e7316f296057261fff050816f73b8acd7d0f6fed45e0bcf296d7623c35f6e"
+      },
+      "moria-native-catalog-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-catalog-test",
+        "sha256": "99b842cbea2eee7a4e4ed5f3c5fdde6326cedfc57a8752bb8b3d49c4e7712a05"
+      },
+      "moria-native-retention-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-retention-test",
+        "sha256": "039ac799358ba7f09921728d12d0587c807f4dbfa614521cf343eb2653e9fcf6"
+      },
+      "moria-native-sandbox-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_sandbox-1c205eafd7b8b6e9",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-sandbox-test",
+        "sha256": "b870208bf34f59a1a4b03101442c8d3f03f3b29847d7aa78684b392a803670ac"
+      },
+      "moria-native-policy-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_policy-685b52096da78e97",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-policy-test",
+        "sha256": "14012c4dbb472fed92e4d2872f741ab5b6a4cbbe694552d0367d5f8b69184182"
+      },
+      "moria-native-storage-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_storage-18ace889955c532f",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-storage-test",
+        "sha256": "192c23c90e7d4c8499b5fe5f4fc29ae8a3f25ee8ffdfb5be31f3b48212605d0d"
+      },
+      "moria-native-transport-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_transport-c71322eea327c600",
+        "path": "/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-transport-test",
+        "sha256": "f96aaa93f5749d2e8208d8b98ed183fce3dd488b5372105c5b4baf6b802bfd8f"
+      }
+    },
+    "compiled": {
+      "protocolVersion": 1,
+      "schema": {
+        "checksum": "0da6122246679fd9dff1fabab2a560b826349cd88351551f6e7b8b8f2db78507",
+        "version": 5
+      },
+      "sourceDigest": "0fc7cf0ec9465aac28969ac99474c44f9ee4da0f4c166c951a0280ccfd8aa4f0"
+    },
+    "evidence": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/20261031T153618Z"
+  },
+  "testImage": {
+    "tag": "moria-test:offline-v26",
+    "id": "sha256:c1beb07bd4b92dacb9bdfa1e96ed31dabd8d292574785e9f375888066bf31b91"
+  },
+  "command": [
+    "flock",
+    "-s",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "moria-serving-whole-a8dc0450-342a-4fb9-ac40-3bd832dc718f",
+    "--network",
+    "host",
+    "--group-add",
+    "108",
+    "--group-add",
+    "6",
+    "--label",
+    "moria.test.proof=moria-serving-whole-a8dc0450-342a-4fb9-ac40-3bd832dc718f",
+    "--env",
+    "pnpm_config_verify_deps_before_run=false",
+    "--env",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "--env",
+    "MORIA_INDEXING_BINARY=/usr/local/bin/moria-indexing",
+    "--env",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-catalog-tests",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_LOGIC=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_SEARCH=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_PIPELINE=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_AUTOMATION=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_PREFLIGHT_ONLY=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_CLI_PROBES=1",
+    "--env",
+    "MORIA_NATIVE_WHOLE_INSTANCE_MODEL_ENDPOINT=http://127.0.0.1:11436/v1/",
+    "--env",
+    "MORIA_NATIVE_BROWSER_PROOF_FILE=/tmp/moria-instance-ns5tcezt/private-state.json",
+    "--env",
+    "MORIA_TEST_CONTROLLER=moria-serving-whole-a8dc0450-342a-4fb9-ac40-3bd832dc718f",
+    "--env",
+    "MORIA_TEST_PROOF_ID=moria-serving-whole-a8dc0450-342a-4fb9-ac40-3bd832dc718f",
+    "--env",
+    "TMPDIR=/tmp/moria-instance-ns5tcezt",
+    "--env",
+    "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON={\"root\": \"/tmp/moria-engine-scratch-be826409-0bd9-4b16-9c79-6e7c6777f122\", \"hostId\": \"84d8686f-4027-494d-91e3-05e451910467\", \"slots\": [{\"registration\": {\"id\": \"d05be417-acf4-4c79-93c8-a3f1eae1580a\", \"hostId\": \"84d8686f-4027-494d-91e3-05e451910467\", \"mountRoot\": \"/tmp/moria-engine-scratch-be826409-0bd9-4b16-9c79-6e7c6777f122/slot-0\", \"filesystemUuid\": \"e090f0c0-bd0d-4206-a18d-d861210267a9\", \"capacityBytes\": 134217728, \"resourceClass\": \"engine-spill\"}, \"device\": \"/dev/loop60\", \"actualFilesystemBytes\": 108974080}, {\"registration\": {\"id\": \"8b4297ec-71ca-468f-be64-f293e4a109b7\", \"hostId\": \"84d8686f-4027-494d-91e3-05e451910467\", \"mountRoot\": \"/tmp/moria-engine-scratch-be826409-0bd9-4b16-9c79-6e7c6777f122/slot-1\", \"filesystemUuid\": \"f13c9fad-28a5-4893-8b42-524fd4bfd118\", \"capacityBytes\": 134217728, \"resourceClass\": \"engine-spill\"}, \"device\": \"/dev/loop61\", \"actualFilesystemBytes\": 108974080}], \"complete\": true}",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b,dst=/work,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-instance-ns5tcezt,dst=/tmp/moria-instance-ns5tcezt",
+    "--mount",
+    "type=bind,src=/tmp/moria-engine-scratch-be826409-0bd9-4b16-9c79-6e7c6777f122,dst=/tmp/moria-engine-scratch-be826409-0bd9-4b16-9c79-6e7c6777f122",
+    "--mount",
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T153618525989Z-typed-pending-progress-offline-v26b/native-proof-artifacts/moria-native-catalog-test,dst=/usr/local/bin/moria-catalog-tests,readonly",
+    "--device",
+    "/dev/loop60:/dev/loop60:r",
+    "--device",
+    "/dev/loop61:/dev/loop61:r",
+    "-w",
+    "/work",
+    "moria-test:offline-v26",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-source-runtime.integration.test.ts"
+  ],
+  "exit": 1,
+  "cleanup": [
+    {
+      "controllerAbsenceUnconfirmed": "moria-serving-whole-a8dc0450-342a-4fb9-ac40-3bd832dc718f"
+    }
+  ]
+}

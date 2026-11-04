@@ -6,6 +6,8 @@ import { fingerprint } from '../../../packages/compiler/src/index.js';
 import { FilesystemAuthority } from './filesystem.js';
 import type { SessionContext } from '../../ontology/src/service.js';
 import type { FilesystemOperation } from '../../../packages/contracts/filesystem.js';
+import { executionGuard } from './execution.js';
+import { recordAccess } from '../../../packages/authorization/src/flow.js';
 
 export interface PrincipalState {
   enabled: boolean;
@@ -31,6 +33,57 @@ export class Authority {
     resource: string,
     operation: FilesystemOperation = 'read',
   ) {
+    const provenance = await this.catalog.dataProvenance(
+      client,
+      session.environment,
+      resource,
+      operation,
+    );
+    const markings = new Set(provenance.markings);
+    for (const origin of provenance.origins)
+      for (const label of await this.filesystemResourceAccess(
+        client,
+        session,
+        origin,
+        origin === provenance.resource ? operation : 'read',
+      ))
+        markings.add(label);
+    if (markings.size) {
+      const state = await this.current(
+        session.environment,
+        session.principal,
+        session.application,
+        client,
+      );
+      if ([...markings].some((label) => !state.identity.markings.has(label)))
+        throw new MoriaError(
+          'FORBIDDEN',
+          'Resource classification is unavailable to this principal',
+        );
+      await this.assertCurrent(
+        client,
+        session.environment,
+        session.principal,
+        session.application,
+        state.epoch,
+        session.sessionHash,
+      );
+      await executionGuard(
+        client,
+        session,
+        operation === 'read' ? 'read' : 'write',
+        [...markings].map((marking) => ({ environment: session.environment, marking })),
+      );
+      recordAccess(session.environment, resource, operation, [...markings]);
+    }
+    return [...markings].sort();
+  }
+  private async filesystemResourceAccess(
+    client: PoolClient,
+    session: SessionContext,
+    resource: string,
+    operation: FilesystemOperation,
+  ) {
     const rows = (
       await client.query(
         `SELECT e.id,b.active,r.retired FROM moria.fs_entries e
@@ -41,7 +94,18 @@ export class Authority {
         [session.environment, resource],
       )
     ).rows;
-    if (!rows.length) return [] as string[];
+    if (!rows.length) {
+      const historical = await client.query(
+        `SELECT 1 FROM moria.fs_entries e
+        LEFT JOIN moria.fs_resource_bindings b ON b.entry_id=e.id
+        LEFT JOIN moria.fs_resource_identities i ON i.resource_id=e.resource_id
+        WHERE e.environment_id=$1 AND e.kind='resource'
+          AND (e.resource_id::text=$2 OR b.reference=$2 OR i.reference=$2) LIMIT 1`,
+        [session.environment, resource],
+      );
+      if (historical.rowCount) throw new MoriaError('NOT_FOUND', 'Resource is inactive');
+      return [] as string[];
+    }
     if (rows.length > 1)
       throw new MoriaError(
         'FORBIDDEN',
@@ -52,7 +116,7 @@ export class Authority {
     state.domainAccess = true;
     const markings = new Set<string>();
     for (const row of rows) {
-      if (row.active === false || row.retired)
+      if (row.active !== true || row.retired)
         throw new MoriaError('NOT_FOUND', 'Resource is inactive');
       await security.check(client, state, row.id, operation);
       for (const label of await security.effectiveMarkings(client, row.id))

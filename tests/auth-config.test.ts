@@ -12,7 +12,7 @@ test('Google CLI setup validates redirects, references private credentials and s
   const setup = await authCommand(['setup'], { directory });
   assert.equal(
     setup.authorizedRedirectUri,
-    `http://127.0.0.1:${process.env.MORIA_PORT ?? 3210}/api/auth/callback`,
+    `${process.env.MORIA_LOCAL_RUNTIME === 'legacy' ? `http://127.0.0.1:${process.env.MORIA_PORT ?? 3210}` : (process.env.MORIA_NATIVE_AUTH_ORIGIN ?? `http://127.0.0.1:${process.env.MORIA_AUTH_PORT ?? 3211}`)}/api/auth/callback`,
   );
   assert.ok(setup.instructions.some((step: string) => step.includes('grant-admin')));
   const file = resolve(directory, 'download.json');

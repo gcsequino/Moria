@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: actual accepted verifier scopes bound encoded multi-column row-group header IO
+not ok 1 - actual accepted verifier scopes bound encoded multi-column row-group header IO
+  ---
+  duration_ms: 10408.430979
+  type: 'test'
+  location: '/work/tests/native-header-window.integration.test.ts:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: /usr/local/bin/moria-catalog-tests --ignored --exact catalog_publication --nocapture --test-threads=1
+    
+    thread 'catalog_publication' (135) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+    called `Result::unwrap()` on an `Err` value: invalid type: string "1", expected i64 at line 1 column 633
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+  code: 101
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+# Subtest: explicit retention controls exact-issued versioned backup reclamation and real claim fences
+    # Subtest: fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+    ok 1 - fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+      ---
+      duration_ms: 522.289513
+      type: 'test'
+      ...
+    # Subtest: no policy means no collection, and explicit historical retirement removes only its qualified version
+    ok 2 - no policy means no collection, and explicit historical retirement removes only its qualified version
+      ---
+      duration_ms: 629.945789
+      type: 'test'
+      ...
+    # Subtest: a retained foreign root blocks planning even for an expired retired producer
+    ok 3 - a retained foreign root blocks planning even for an expired retired producer
+      ---
+      duration_ms: 394.108315
+      type: 'test'
+      ...
+    # Subtest: policy revocation after a held HEAD prevents the removal effect
+    ok 4 - policy revocation after a held HEAD prevents the removal effect
+      ---
+      duration_ms: 547.344296
+      type: 'test'
+      ...
+    # Subtest: real expired claim ownership is fenced before a replacement removes the version
+    ok 5 - real expired claim ownership is fenced before a replacement removes the version
+      ---
+      duration_ms: 29945.139785
+      type: 'test'
+      ...
+    # Subtest: unqualified null-version objects stay unsupported and are never deleted
+    ok 6 - unqualified null-version objects stay unsupported and are never deleted
+      ---
+      duration_ms: 503.499071
+      type: 'test'
+      ...
+    1..6
+ok 2 - explicit retention controls exact-issued versioned backup reclamation and real claim fences
+  ---
+  duration_ms: 35402.997337
+  type: 'test'
+  ...
+1..2
+# tests 8
+# suites 0
+# pass 7
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46481.183106

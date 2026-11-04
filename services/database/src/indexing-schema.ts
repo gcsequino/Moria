@@ -31,7 +31,7 @@ CREATE TABLE moria.indexing_tasks (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), build uuid NOT NULL REFERENCES moria.indexing_builds(id),
   ordinal integer NOT NULL, plan jsonb NOT NULL, wire bytea, status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','running','sealed')),
   owner uuid, fence bigint NOT NULL DEFAULT 0, lease_until timestamptz,
-  row_count bigint, digest text, UNIQUE(build,ordinal)
+  row_count bigint, digest text, UNIQUE(build,ordinal), UNIQUE(id,build)
 );
 CREATE INDEX indexing_pending_tasks ON moria.indexing_tasks(build,ordinal) WHERE status<>'sealed';
 CREATE TABLE moria.indexing_attempts (
@@ -40,16 +40,44 @@ CREATE TABLE moria.indexing_attempts (
   started_at timestamptz NOT NULL DEFAULT clock_timestamp(), finished_at timestamptz,
   outcome text NOT NULL DEFAULT 'running', PRIMARY KEY(build,kind,unit,fence)
 );
+ALTER TABLE moria.staged_source_rows ADD COLUMN source_value jsonb CHECK(source_value IS NULL OR jsonb_typeof(source_value)='object');
 CREATE TABLE moria.indexing_rows (
-  task uuid NOT NULL REFERENCES moria.indexing_tasks(id), fence bigint NOT NULL,
-  uid uuid NOT NULL, partition integer NOT NULL CHECK(partition>=0), value jsonb NOT NULL,
-  PRIMARY KEY(task,fence,uid)
+  build uuid NOT NULL REFERENCES moria.indexing_builds(id),task uuid NOT NULL, fence bigint NOT NULL,
+  uid uuid NOT NULL, partition integer NOT NULL CHECK(partition>=0), value jsonb NOT NULL, source_value jsonb,
+  PRIMARY KEY(task,fence,uid), FOREIGN KEY(task,build) REFERENCES moria.indexing_tasks(id,build)
 );
-CREATE INDEX indexing_rows_partition ON moria.indexing_rows(partition,uid,task,fence);
+CREATE INDEX indexing_rows_partition ON moria.indexing_rows(build,partition,uid,task,fence);
+CREATE FUNCTION moria.indexing_reduce_page(build_id uuid, shard integer, after_uid uuid)
+RETURNS TABLE(uid uuid,value jsonb,wire_bytes bigint,source_value jsonb) LANGUAGE sql STABLE AS $$
+  WITH candidates AS MATERIALIZED (
+    SELECT r.task,r.fence,r.uid FROM moria.indexing_rows r
+    JOIN moria.indexing_tasks t ON t.id=r.task AND t.fence=r.fence
+    WHERE r.build=build_id AND t.build=build_id AND t.status='sealed' AND t.plan->>'kind'='scan'
+      AND r.partition=shard AND (after_uid IS NULL OR r.uid>after_uid)
+    ORDER BY r.uid LIMIT 1000
+  ), sizes AS MATERIALIZED (
+    SELECT c.*,(octet_length(r.value::text)::bigint+COALESCE(octet_length(r.source_value::text)::bigint,0)) AS wire_bytes
+    FROM candidates c JOIN moria.indexing_rows r ON r.task=c.task AND r.fence=c.fence AND r.uid=c.uid
+  ), budgeted AS (
+    SELECT *,sum(s.wire_bytes) OVER (ORDER BY s.uid) AS prefix_bytes,
+      row_number() OVER (ORDER BY s.uid) AS ordinal FROM sizes s
+  )
+  SELECT b.uid,CASE WHEN b.wire_bytes<=16777216 THEN r.value END,b.wire_bytes,
+    CASE WHEN b.wire_bytes<=16777216 THEN r.source_value END
+  FROM budgeted b JOIN moria.indexing_rows r ON r.task=b.task AND r.fence=b.fence AND r.uid=b.uid
+  WHERE b.prefix_bytes<=8388608 OR b.ordinal=1 ORDER BY b.uid
+$$;
 CREATE TABLE moria.indexing_changes (
   environment text NOT NULL REFERENCES moria.environments(id), revision bigint NOT NULL,
   ordinal integer NOT NULL, target text NOT NULL, generation uuid NOT NULL,
   transaction_end boolean NOT NULL, PRIMARY KEY(environment,revision,ordinal)
+);
+CREATE TABLE moria.indexing_blocked_intents (
+  environment text NOT NULL REFERENCES moria.environments(id), target text NOT NULL, binding_revision text NOT NULL,
+  source text NOT NULL, source_revision bigint NOT NULL, metadata_location text NOT NULL,snapshot_id text NOT NULL,
+  error text NOT NULL,created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  PRIMARY KEY(environment,target,binding_revision,source_revision),
+  FOREIGN KEY(environment,source,source_revision) REFERENCES moria.snapshot_history(environment,dataset,revision)
 );
 
 CREATE FUNCTION moria.indexing_check(build_id uuid) RETURNS void LANGUAGE plpgsql AS $$
@@ -57,6 +85,7 @@ DECLARE b moria.indexing_builds; ctx jsonb; p record; valid boolean;
 BEGIN
   SELECT * INTO b FROM moria.indexing_builds WHERE id=build_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'BUILD_UNKNOWN'; END IF;
+  PERFORM moria.runtime_environment_cell_check(b.environment);
   IF b.status IN ('failed','cancelled','superseded','conflicted') OR (b.status<>'active' AND b.deadline<=clock_timestamp()) THEN
     RAISE EXCEPTION 'BUILD_INACTIVE';
   END IF;
@@ -70,6 +99,10 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM moria.indexing_bindings x WHERE x.environment=b.environment AND x.target=b.target
     AND x.enabled AND x.revision=b.binding_revision AND x.definition=b.definition AND x.context=b.context) THEN RAISE EXCEPTION 'BINDING_CHANGED'; END IF;
   ctx:=b.context;
+  PERFORM moria.runtime_dataset_kind(b.environment,b.source);
+  IF NOT moria.runtime_data_labels(b.environment,b.source) <@ ARRAY(SELECT jsonb_array_elements_text(b.definition->'markings')) THEN
+    RAISE EXCEPTION 'MARKING_DOWNGRADE';
+  END IF;
   SELECT a.enabled AS app_enabled,x.enabled,x.kind,x.synced_at,
     (ib.instance_id IS NULL OR (ip.enabled AND ip.kind=x.kind)) AS instance_enabled,
     x.markings,a.operations AS scopes,g.operations AS grants INTO p
@@ -85,7 +118,16 @@ BEGIN
     OR NOT ARRAY(SELECT jsonb_array_elements_text(b.definition->'markings')) <@ p.markings THEN
     RAISE EXCEPTION 'AUTHORIZATION_CHANGED';
   END IF;
+  IF ctx ? 'executionBinding' OR ctx ? 'serviceAuthority' THEN
+    IF ctx ? 'sessionHash' OR ctx->>'executionBinding' IS NULL OR ctx->>'serviceAuthority' IS NULL THEN RAISE EXCEPTION 'INDEXING_ACCEPTANCE_REQUIRED'; END IF;
+    PERFORM moria.runtime_indexing_delegation_guard(build_id);
+    RETURN;
+  END IF;
   IF ctx->>'sessionHash' IS NOT NULL THEN
+    IF EXISTS(SELECT 1 FROM moria.runtime_indexing_delegations WHERE build=build_id) THEN
+      PERFORM moria.runtime_indexing_delegation_guard(build_id);
+      RETURN;
+    END IF;
     SELECT EXISTS(SELECT 1 FROM moria.workload_sessions s WHERE s.token_hash=ctx->>'sessionHash'
       AND s.environment=b.environment AND s.principal=ctx->>'principal' AND s.application=ctx->>'application'
       AND NOT s.disabled AND s.expires_at>clock_timestamp() AND p.kind='workload'
@@ -100,7 +142,7 @@ BEGIN
 END $$;
 
 CREATE FUNCTION moria.indexing_enqueue(env text, dataset text, source_rev bigint, expected_rev bigint) RETURNS void LANGUAGE plpgsql AS $$
-DECLARE x moria.indexing_bindings; h moria.snapshot_history; build_id uuid; base bigint;
+DECLARE x moria.indexing_bindings; h moria.snapshot_history; build_id uuid; base bigint; denied_code text;
 BEGIN
   SELECT * INTO h FROM moria.snapshot_history WHERE environment=env AND snapshot_history.dataset=indexing_enqueue.dataset AND revision=source_rev;
   IF NOT FOUND THEN RAISE EXCEPTION 'SOURCE_UNPUBLISHED'; END IF;
@@ -108,10 +150,24 @@ BEGIN
     SELECT id INTO build_id FROM moria.indexing_builds WHERE environment=env AND target=x.target AND binding_revision=x.revision AND source_revision=source_rev;
     IF FOUND THEN CONTINUE; END IF;
     SELECT max(revision) INTO base FROM moria.source_generations WHERE environment=env AND object_type=x.target;
-    INSERT INTO moria.indexing_builds(environment,target,binding_revision,definition,context,security_epoch,instance_epoch,
+    BEGIN
+      IF x.context ? 'executionBinding' OR x.context ? 'serviceAuthority' THEN
+        x:=moria.runtime_indexing_service_refresh(env,x.target);
+      END IF;
+      PERFORM moria.runtime_data_assert(env,x.target,dataset);
+      INSERT INTO moria.indexing_builds(environment,target,binding_revision,definition,context,security_epoch,instance_epoch,
       source,source_revision,metadata_location,snapshot_id,deadline)
       VALUES(env,x.target,x.revision,x.definition,x.context,x.security_epoch,x.instance_epoch,dataset,source_rev,h.metadata_location,h.snapshot_id,
       clock_timestamp()+(x.definition->>'timeoutSeconds')::integer*interval '1 second') RETURNING id INTO build_id;
+    EXCEPTION WHEN raise_exception THEN
+      denied_code:=SQLERRM;
+      IF denied_code NOT IN ('UNAUTHENTICATED','AUTHORIZATION_CHANGED','FORBIDDEN','IDENTITY_STALE','BINDING_CHANGED','UNDECLARED_DATA_PROVENANCE',
+        'SERVICE_PURPOSE_REVOKED','INDEXING_AUTHORITY_CHANGED','INDEXING_ACCEPTANCE_REQUIRED','UNSUPPORTED_DATASET_BINDING') THEN RAISE; END IF;
+      SELECT * INTO x FROM moria.indexing_bindings WHERE environment=env AND target=x.target;
+      INSERT INTO moria.indexing_blocked_intents(environment,target,binding_revision,source,source_revision,metadata_location,snapshot_id,error)
+        VALUES(env,x.target,x.revision,dataset,source_rev,h.metadata_location,h.snapshot_id,denied_code) ON CONFLICT DO NOTHING;
+      CONTINUE;
+    END;
     INSERT INTO moria.source_stages(id,environment,object_type,expected_revision,security_epoch,status,object_schema,base_source_revision,required_markings)
       VALUES(build_id,env,x.target,expected_rev,x.security_epoch,'loading',x.definition->'schema',base,ARRAY(SELECT jsonb_array_elements_text(x.definition->'markings')));
     INSERT INTO moria.index_provenance VALUES(build_id,env,x.context->>'principal',x.context->>'application',x.revision,dataset,source_rev,h.metadata_location,h.snapshot_id);
@@ -157,6 +213,7 @@ DECLARE b moria.indexing_builds; r bigint; result jsonb;
 BEGIN
   SELECT * INTO b FROM moria.indexing_builds WHERE id=build_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'BUILD_UNKNOWN'; END IF;
+  PERFORM moria.runtime_environment_cell_check(b.environment);
   PERFORM moria.indexing_check(build_id);
   IF b.status='active' THEN RETURN b.receipt; END IF;
   IF b.status<>'ready' OR b.owner IS DISTINCT FROM worker_id OR b.fence<>worker_fence OR b.lease_until<=clock_timestamp() THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;

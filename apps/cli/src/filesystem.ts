@@ -17,15 +17,20 @@ import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { createTransport } from '../../../packages/platform/src/transport.js';
 import { filesystemClient } from '../../../packages/platform/src/filesystem.js';
-import { sourcePath } from '../../../packages/compiler/src/source.js';
+import {
+  sourcePath,
+  compileSource,
+  sourceDescriptor,
+} from '../../../packages/compiler/src/source.js';
 import { fingerprint } from '../../../packages/compiler/src/index.js';
 import type {
   SourceCheckout,
   FilesystemEntry,
   FilesystemReceipt,
   SourceKind,
+  CompiledSourceArtifact,
 } from '../../../packages/contracts/filesystem.js';
-import { MoriaError } from '../../../packages/contracts/types.js';
+import { MoriaError, type Manifest, type Resource } from '../../../packages/contracts/types.js';
 
 export interface FilesystemOptions {
   directory?: string;
@@ -399,6 +404,128 @@ async function push(client: Client, origin: string, directory: string) {
       .map((file) => file.path),
   };
 }
+export async function publishCompiled(
+  client: Client,
+  rootId: string,
+  exports: Resource[] | undefined,
+) {
+  const checkout = await client.checkout(rootId);
+  if (snapshotDigest(checkout) !== checkout.digest)
+    throw new MoriaError('CONTENT_MISMATCH', 'Source checkout digest is invalid');
+  const registered = await client.compilerContext();
+  if (registered.fingerprint !== fingerprint(registered.principalAttributes))
+    throw new MoriaError('CONTENT_MISMATCH', 'Compiler context fingerprint is invalid');
+  const sourceFiles: { path: string; text: string }[] = [];
+  let total = 0;
+  for (const file of checkout.files) {
+    sourcePath(file.path);
+    const content = file.entry.content;
+    if (!content || content.size > 64 * 1024 * 1024)
+      throw new MoriaError('SOURCE_INVALID', 'Invalid qualified source file');
+    const required =
+      /(?:\.(?:object|link|action|resource)\.json|\.ontology\.json|\.repository\.json)$/.test(
+        file.path,
+      );
+    if (required && content.size > 16 * 1024 * 1024)
+      throw new MoriaError('LIMIT_EXCEEDED', 'Source JSON exceeds16MiB');
+    const response = await client.readFile(file.entry.id, file.entry.revision);
+    if (!response.body) throw new MoriaError('INVALID_RESPONSE', 'Source bytes are unavailable');
+    const hash = createHash('sha256');
+    let size = 0;
+    const parts: Uint8Array[] = [];
+    for await (const chunk of Readable.fromWeb(
+      response.body as import('node:stream/web').ReadableStream,
+    )) {
+      size += chunk.length;
+      total += chunk.length;
+      if (size > content.size || total > 64 * 1024 * 1024)
+        throw new MoriaError('CONTENT_MISMATCH', 'Source exceeds its declared bounds');
+      hash.update(chunk);
+      if (required) parts.push(new Uint8Array(chunk));
+    }
+    if (size !== content.size || `sha256:${hash.digest('hex')}` !== content.digest)
+      throw new MoriaError('CONTENT_MISMATCH', 'Source bytes differ from the checkout');
+    let text = '';
+    if (required) {
+      const bytes = new Uint8Array(size);
+      let offset = 0;
+      for (const part of parts) {
+        bytes.set(part, offset);
+        offset += part.length;
+      }
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      } catch {
+        throw new MoriaError('SOURCE_INVALID', 'Source JSON is not UTF-8');
+      }
+    }
+    sourceFiles.push({ path: file.path, text });
+  }
+  const descriptorFile = sourceFiles.find((file) => file.path === `.${checkout.role.kind}.json`);
+  if (!descriptorFile) throw new MoriaError('SOURCE_INVALID', 'Source descriptor is missing');
+  const descriptor = sourceDescriptor(checkout.role.kind, descriptorFile.text);
+  const imports: Manifest[] = [];
+  for (const dependency of descriptor.dependencies) {
+    const release = (await client.release(dependency.digest)) as {
+      rootId: string;
+      digest: string;
+      compiled: { manifest: Manifest; fingerprint: string };
+    };
+    if (
+      release.rootId !== dependency.rootId ||
+      release.digest !== dependency.digest ||
+      fingerprint(release.compiled.manifest) !== release.compiled.fingerprint
+    )
+      throw new MoriaError('SOURCE_INVALID', 'Pinned source import differs');
+    imports.push(release.compiled.manifest);
+  }
+  const compilerContext = { principalAttributes: registered.principalAttributes };
+  const assembled = compileSource(
+    {
+      kind: checkout.role.kind,
+      projectId: checkout.role.projectId,
+      deploymentUnitId: checkout.role.deploymentUnitId,
+      files: sourceFiles,
+      exports,
+      imports,
+    },
+    compilerContext,
+  );
+  const artifact: CompiledSourceArtifact = {
+    version: 1,
+    rootId,
+    sourceDigest: checkout.digest,
+    ...assembled,
+    compilerContext,
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(artifact));
+  if (bytes.length > 16 * 1024 * 1024)
+    throw new MoriaError('LIMIT_EXCEEDED', 'Compiler artifact exceeds16MiB');
+  const home = await client.home();
+  const homeRole = await client.role(home.home.id);
+  const parentId = homeRole?.configuration.configuration;
+  if (typeof parentId !== 'string')
+    throw new MoriaError('SOURCE_INVALID', 'A managed compiler artifact directory is required');
+  const parent = await client.get(parentId);
+  const name = `compiled-${rootId}-${randomUUID()}.json`;
+  const receipt = await client.writeCompilerArtifact(
+    rootId,
+    checkout.digest,
+    parentId,
+    name,
+    parent.revision,
+    bytes,
+    { idempotencyKey: randomUUID() },
+  );
+  const file = receipt.entries.find((entry) => entry.parentId === parentId && entry.name === name);
+  if (!file?.content)
+    throw new MoriaError('INVALID_RESPONSE', 'Compiler artifact receipt is incomplete');
+  return client.publishArtifact(rootId, checkout.digest, {
+    entryId: file.id,
+    revision: file.revision,
+    digest: file.content.digest,
+  });
+}
 
 export async function filesystemCommand(args: string[], values: FilesystemOptions) {
   const [command, target, argument, ...extra] = args;
@@ -646,13 +773,12 @@ export async function filesystemCommand(args: string[], values: FilesystemOption
       return push(client, origin, target);
     case 'publish': {
       const root = await entry(client, target),
-        checkout = await client.checkout(root.id),
         exports = values.exports
           ? json(await readFile(values.exports, 'utf8'), 'export manifest')
           : undefined;
       if (exports !== undefined && !Array.isArray(exports))
         invalid('Export manifest must be a resource array');
-      return client.publish(root.id, checkout.digest, exports);
+      return publishCompiled(client, root.id, exports);
     }
     case 'plan':
       if (!argument) invalid('fs plan <source-root> <release-digest>');

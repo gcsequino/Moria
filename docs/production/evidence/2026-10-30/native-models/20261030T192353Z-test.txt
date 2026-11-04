@@ -1,0 +1,173 @@
+TAP version 13
+# Subtest: native HTTP admission bounds pending bodies across shared and component routes
+    # Subtest: local CLI profiles use real revocable workload sessions
+    ok 1 - local CLI profiles use real revocable workload sessions
+      ---
+      duration_ms: 70.598444
+      type: 'test'
+      ...
+    # Subtest: app-bound browser cookies enforce exact origin and current session
+    not ok 2 - app-bound browser cookies enforce exact origin and current session
+      ---
+      duration_ms: 16.880102
+      type: 'test'
+      location: '/work/tests/native-http-admission.integration.test.ts:100:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        400 !== 404
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 404
+      actual: 400
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-http-admission.integration.test.ts:106:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-http-admission.integration.test.ts:100:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: four compiler requests hold their slots through an incomplete body
+    ok 3 - four compiler requests hold their slots through an incomplete body
+      ---
+      duration_ms: 67.838983
+      type: 'test'
+      ...
+    # Subtest: model admission retains its separate32 request budget
+    ok 4 - model admission retains its separate32 request budget
+      ---
+      duration_ms: 110.233835
+      type: 'test'
+      ...
+    # Subtest: the shared64 request budget rejects additional work before buffering
+    ok 5 - the shared64 request budget rejects additional work before buffering
+      ---
+      duration_ms: 183.932129
+      type: 'test'
+      ...
+    1..5
+not ok 1 - native HTTP admission bounds pending bodies across shared and component routes
+  ---
+  duration_ms: 3259.517119
+  type: 'test'
+  location: '/work/tests/native-http-admission.integration.test.ts:13:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native model gateway protects real HTTP chat, embeddings, schemas and streams
+    # Subtest: configured capabilities remain unavailable until actual probes pass
+    ok 1 - configured capabilities remain unavailable until actual probes pass
+      ---
+      duration_ms: 571.598971
+      type: 'test'
+      ...
+    # Subtest: stable calls replay exactly without another provider request; conflicts fail
+    ok 2 - stable calls replay exactly without another provider request; conflicts fail
+      ---
+      duration_ms: 490.662154
+      type: 'test'
+      ...
+    # Subtest: structured output and tool arguments use a real bounded JSON Schema validator
+    ok 3 - structured output and tool arguments use a real bounded JSON Schema validator
+      ---
+      duration_ms: 758.815143
+      type: 'test'
+      ...
+    # Subtest: embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+    ok 4 - embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+      ---
+      duration_ms: 435.798002
+      type: 'test'
+      ...
+    # Subtest: streams retain ordered text and terminal result; broken streams never restart
+    ok 5 - streams retain ordered text and terminal result; broken streams never restart
+      ---
+      duration_ms: 289.624884
+      type: 'test'
+      ...
+    # Subtest: stream combinations require their own probe and preserve provider extensions
+    ok 6 - stream combinations require their own probe and preserve provider extensions
+      ---
+      duration_ms: 1446.714593
+      type: 'test'
+      ...
+    # Subtest: revocation during inference blocks result release and preserves the failed attempt
+    ok 7 - revocation during inference blocks result release and preserves the failed attempt
+      ---
+      duration_ms: 148.90079
+      type: 'test'
+      ...
+    # Subtest: stream revocation blocks later events and its terminal result
+    ok 8 - stream revocation blocks later events and its terminal result
+      ---
+      duration_ms: 145.949371
+      type: 'test'
+      ...
+    # Subtest: cross-process cancellation interrupts waiting inference and retains uncertain admission
+    ok 9 - cross-process cancellation interrupts waiting inference and retains uncertain admission
+      ---
+      duration_ms: 857.8231
+      type: 'test'
+      ...
+    # Subtest: provider bodies and caller-selected endpoints remain bounded and protected
+    ok 10 - provider bodies and caller-selected endpoints remain bounded and protected
+      ---
+      duration_ms: 347.564689
+      type: 'test'
+      ...
+    # Subtest: the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+    ok 11 - the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+      ---
+      duration_ms: 858.715595
+      type: 'test'
+      ...
+    # Subtest: one shared class budget covers native execution leases and model calls in both directions
+    ok 12 - one shared class budget covers native execution leases and model calls in both directions
+      ---
+      duration_ms: 1320.383227
+      type: 'test'
+      ...
+    # Subtest: bounded embedding batches retain one vector copy and terminal validation failures are recorded
+    ok 13 - bounded embedding batches retain one vector copy and terminal validation failures are recorded
+      ---
+      duration_ms: 1286.777994
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+    ok 14 - a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+      ---
+      duration_ms: 5843.027093
+      type: 'test'
+      ...
+    # Subtest: Ollama embedding transport disables truncation and records terminal context failure
+    ok 15 - Ollama embedding transport disables truncation and records terminal context failure
+      ---
+      duration_ms: 937.1928
+      type: 'test'
+      ...
+    # Subtest: expired capability proofs fail before contacting the provider
+    ok 16 - expired capability proofs fail before contacting the provider
+      ---
+      duration_ms: 247.55233
+      type: 'test'
+      ...
+    1..16
+ok 2 - native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ---
+  duration_ms: 18369.977392
+  type: 'test'
+  ...
+1..2
+# tests 23
+# suites 0
+# pass 21
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18683.763576

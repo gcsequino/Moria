@@ -1,0 +1,45 @@
+{
+  "trials": [
+    {
+      "id": "001",
+      "outcome": "failed",
+      "tap": "native-job-profile-20261030-trial-001-failed.tap",
+      "sourceManifest": "native-job-profile-20261030-trial-001-source.json",
+      "compiledRuntime": "native-job-profile-20261030-trial-001-runtime.json",
+      "schema": "native-job-profile-20261030-trial-001-schema.json",
+      "tests": 55,
+      "passed": 50,
+      "failed": 5,
+      "skipped": 0,
+      "failure": "Live private parent credentials were rejected by the older bare binding admission; filesystem mutation used the private lease profile after advancing its own epoch but before acknowledgement. The no-code-start fixture's owner ACL denial did not revoke the owner.",
+      "correction": "Bare binding admission validates a live private parent through the common resolver and exact actor/capability checks; filesystem mutation acknowledges inside its transaction before subsequent authority queries. Revoke the actual source resource through source activation for the no-code-start test. Expired ordinary sessions without private proof remain rejected."
+    },
+    {
+      "id": "002",
+      "outcome": "failed",
+      "tap": "native-job-profile-20261030-trial-002-failed.tap",
+      "sourceManifest": "native-job-profile-20261030-trial-002-source.json",
+      "compiledRuntime": "native-job-profile-20261030-trial-002-runtime.json",
+      "schema": "native-job-profile-20261030-trial-002-schema.json",
+      "tests": 55,
+      "passed": 51,
+      "failed": 4,
+      "skipped": 0,
+      "failure": "Nested function execution still failed and required protected broker diagnostics. The no-code-start fixture omitted a source export, but source activation intentionally preserves exports unless explicitly deleted. The filesystem private-epoch regression was fixed and passed.",
+      "correction": "Record only allowlisted structural broker codes and SQLSTATE in protected execution events; assert nested status and child outcomes. Use an explicit source deletion plan and verify the binding is inactive before starting work."
+    },
+    {
+      "id": "003",
+      "outcome": "green",
+      "tap": "native-job-profile-20261030-trial-003-green.tap",
+      "sourceManifest": "native-job-profile-20261030-trial-003-source.json",
+      "compiledRuntime": "native-job-profile-20261030-trial-003-runtime.json",
+      "schema": "native-job-profile-20261030-trial-003-schema.json",
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Native Agent and Function suites, including genuine ordinary-session expiry, nested private parent admission, filesystem own-epoch acknowledgement and postclaim no-code-start rejection."
+    }
+  ]
+}

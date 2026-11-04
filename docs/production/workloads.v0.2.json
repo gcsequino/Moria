@@ -1,8 +1,13 @@
 {
   "contractVersion": "0.2",
-  "status": "proposed-calibration-not-certified",
+  "status": "implementation-targets-not-certified",
   "referenceWorkload": "Large-bank ServiceNow-instance class; no measured equivalence",
-  "approval": { "numericTargetsApproved": false, "productionClaimsAllowed": false },
+  "approval": {
+    "numericTargetsApproved": true,
+    "approvalScope": "implementation-targets",
+    "approvedOn": "2026-10-30",
+    "productionClaimsAllowed": false
+  },
   "units": {
     "externalRates": "scheduled logical API arrivals per second",
     "inputVolume": "decimal bytes",

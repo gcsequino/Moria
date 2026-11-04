@@ -29,6 +29,7 @@ export class ApiError extends Error {
 export interface AuthState {
   user: null | { principal: string; name: string; recovery: boolean; expiresAt: string };
   providers: { id: string; label: string }[];
+  refresh?: { url: string; origin: string; required: boolean };
 }
 export function createTransport(options: ClientOptions = {}) {
   const base = options.baseUrl ?? '';

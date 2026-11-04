@@ -508,6 +508,26 @@ export class FilesystemAuthority {
         matches.some((grant) => grant.effect === 'deny')
       )
         throw new MoriaError('FORBIDDEN', 'Operation is not authorized');
+      try {
+        await client.query('SELECT moria.native_compiler_artifact_access($1,$2)', [
+          member.session.sessionHash ?? null,
+          id,
+        ]);
+      } catch (error) {
+        const code = (error as { message?: string }).message;
+        if (
+          code &&
+          [
+            'FORBIDDEN',
+            'NOT_FOUND',
+            'UNAUTHENTICATED',
+            'IDENTITY_STALE',
+            'RESOURCE_LIMIT',
+          ].includes(code)
+        )
+          throw new MoriaError(code, 'Compiler artifact source access is unavailable');
+        throw error;
+      }
     }
     if (snapshot.execution)
       await client.query(

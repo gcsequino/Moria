@@ -1,6 +1,6 @@
 # Workloads and benchmark contract
 
-Version 0.2. All numerical targets are provisional calibration points, not measured ServiceNow equivalents, approved requirements, or accepted production SLAs. [workloads.v0.2.json](workloads.v0.2.json) is the current machine-readable companion; v0.1 is retained unchanged as history. Neither file is an executable load generator or a complete run manifest.
+Version 0.2. On October 30, 2026, the production-scale profiles were selected as implementation targets: T-S at 1m objects, T-B at 10m, and T-E at 50m with a 100m repeat, including their rates and latency requirements. This approval sets the engineering targets; it does not certify achieved capacity, measured ServiceNow equivalence or a production SLA. Unset topology, workload and cost inputs still require definition before their corresponding acceptance gates can pass. [workloads.v0.2.json](workloads.v0.2.json) is the current machine-readable companion; v0.1 is retained unchanged as history. Neither file is an executable load generator or a complete run manifest.
 
 ## Units and scope
 
@@ -10,11 +10,11 @@ The transaction, data-processing, and deployment profiles are independent axes. 
 
 ## Transactional calibration ladder
 
-| Card | Object population | Steady offered API requests/s | Busy-hour requests/s | Peak requests/s for 15 min |
-|---|---:|---:|---:|---:|
-| T-S: economical | 1m | 20 | 50 | 100 |
-| T-B: bursty enterprise calibration | 10m | 500 | 1,000 | 2,000 |
-| T-E: large-enterprise calibration | 50m, repeat at 100m | 2,000 | 4,000 | 10,000 |
+| Card                               |   Object population | Steady offered API requests/s | Busy-hour requests/s | Peak requests/s for 15 min |
+| ---------------------------------- | ------------------: | ----------------------------: | -------------------: | -------------------------: |
+| T-S: economical                    |                  1m |                            20 |                   50 |                        100 |
+| T-B: bursty enterprise calibration |                 10m |                           500 |                1,000 |                      2,000 |
+| T-E: large-enterprise calibration  | 50m, repeat at 100m |                         2,000 |                4,000 |                     10,000 |
 
 These are synthetic load-generator settings, not evidence of bank traffic. Ramp through intermediate rates to find the capacity boundary. Success at a smaller tier does not certify a larger tier.
 
@@ -46,21 +46,21 @@ Latency runs from scheduled arrival to complete response and includes generator 
 
 ## Provisional service targets
 
-| Dimension | Proposed engineering target |
-|---|---|
-| Indexed detail/page/filtered-list queries | p95 <=500 ms; p99 <=2 s, per operation |
-| Single/multi-object actions within supported limits | p95 <=1 s; p99 <=3 s, per operation |
-| Valid authorized arrivals not completed successfully | <=0.1% of logical arrivals |
-| Unexpected server/transport errors | <=0.1% of attempts, including retries |
-| Safety | zero observed invariant violations; any violation fails the run |
-| HA operational API availability | candidate 99.95% monthly; denominator/exclusions pending review |
-| Small deployment | no HA promise; declared maintenance/cold-start behavior |
-| HA acknowledged action loss after one failure-domain loss | candidate RPO 0 within the declared synchronous durability boundary |
-| HA database failover | candidate RTO <=5 min |
-| Disaster recovery | candidate RPO <=15 min, RTO <=4 h using surviving compatible durable storage; includes metadata and keys |
-| Burst recovery | oldest operational backlog returns within its declared baseline bound <=30 min after peak |
-| Scheduled/bulk freshness | completion deadline per pipeline, pending workload selection |
-| Continuous freshness | candidate p95 <=60 s, p99 <=5 min source-to-published result |
+| Dimension                                                 | Proposed engineering target                                                                              |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Indexed detail/page/filtered-list queries                 | p95 <=500 ms; p99 <=2 s, per operation                                                                   |
+| Single/multi-object actions within supported limits       | p95 <=1 s; p99 <=3 s, per operation                                                                      |
+| Valid authorized arrivals not completed successfully      | <=0.1% of logical arrivals                                                                               |
+| Unexpected server/transport errors                        | <=0.1% of attempts, including retries                                                                    |
+| Safety                                                    | zero observed invariant violations; any violation fails the run                                          |
+| HA operational API availability                           | candidate 99.95% monthly; denominator/exclusions pending review                                          |
+| Small deployment                                          | no HA promise; declared maintenance/cold-start behavior                                                  |
+| HA acknowledged action loss after one failure-domain loss | candidate RPO 0 within the declared synchronous durability boundary                                      |
+| HA database failover                                      | candidate RTO <=5 min                                                                                    |
+| Disaster recovery                                         | candidate RPO <=15 min, RTO <=4 h using surviving compatible durable storage; includes metadata and keys |
+| Burst recovery                                            | oldest operational backlog returns within its declared baseline bound <=30 min after peak                |
+| Scheduled/bulk freshness                                  | completion deadline per pipeline, pending workload selection                                             |
+| Continuous freshness                                      | candidate p95 <=60 s, p99 <=5 min source-to-published result                                             |
 
 Aggregate/relationship deadlines, negative-probe rate, baseline backlog bound, and cost ceilings remain unset. A trial may measure them, but cannot claim to pass an undefined gate. Cold-start trials publish startup latency and do not inherit warm targets. No global sub-second streaming SLA is assumed. RPO 0 excludes simultaneous loss of all synchronous copies. The 4-hour DR target does not cover copying or rebuilding a petabyte warehouse; that scenario requires a separate measured recovery tier. RTO starts at fault time and ends after correct service probes pass, as specified in DELIVERY.md. Monthly availability requires separate operational evidence and cannot be certified by a short benchmark.
 

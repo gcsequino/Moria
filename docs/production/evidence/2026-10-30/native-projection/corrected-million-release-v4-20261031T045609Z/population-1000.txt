@@ -1,0 +1,14 @@
+node:internal/fs/promises:1571
+  return await PromisePrototypeThen(
+         ^
+
+Error: EACCES: permission denied, mkdir '/work/.proof-output/population-1000'
+    at async mkdir (node:internal/fs/promises:1571:10)
+    at async <anonymous> (/work/.proof-output/million-runner.ts:34:1) {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'mkdir',
+  path: '/work/.proof-output/population-1000'
+}
+
+Node.js v24.22.0

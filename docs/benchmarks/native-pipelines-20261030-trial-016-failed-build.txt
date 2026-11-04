@@ -1,0 +1,13 @@
+error[E0277]: can't compare `Vec<serde_json::Value>` with `&Vec<serde_json::Value>`
+   --> src/recovery_metadata.rs:324:24
+    |
+324 |         ensure!(actual == memberships, "RECOVERY_DATABASE_ROLE_REQUIRED");
+    |                        ^^ no implementation for `Vec<serde_json::Value> == &Vec<serde_json::Value>`
+    |
+    = help: the trait `PartialEq<&Vec<serde_json::Value>>` is not implemented for `Vec<serde_json::Value>`
+help: consider dereferencing here
+    |
+324 |         ensure!(actual == *memberships, "RECOVERY_DATABASE_ROLE_REQUIRED");
+    |                           +
+
+

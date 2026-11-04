@@ -1,4 +1,5 @@
 import type { StorageLocation } from './storage.js';
+import type { Manifest, ValueType } from './types.js';
 
 export const filesystemRoot = '00000000-0000-4000-8000-000000000001';
 
@@ -138,6 +139,51 @@ export interface SourcePublication {
   sourceDigest: string;
   resources: { reference: string; id: string }[];
 }
+export interface SourceCompilerContext {
+  revision: string;
+  fingerprint: string;
+  principalAttributes: Record<string, ValueType>;
+}
+export interface SourceCompilerArtifactRef {
+  entryId: string;
+  revision: string;
+  digest: string;
+}
+export interface CompiledSourceArtifact {
+  version: 1;
+  rootId: string;
+  sourceDigest: string;
+  descriptor: SourceDescriptor;
+  compiled: {
+    manifest: Manifest;
+    fingerprint: string;
+    order: string[];
+    policyTypesChecked: boolean;
+    attributeTypesFingerprint?: string;
+  };
+  owned: string[];
+  compilerContext: { principalAttributes: Record<string, ValueType> };
+}
+export interface SourceRuntimeStatus {
+  /** Operational readiness is deliberately hidden from code-only publishers. */
+  withheld?: boolean;
+  reason?: string;
+  version: 1;
+  configured: boolean;
+  ready: boolean;
+  managedCellReady?: boolean;
+  authority?: 'caller';
+  configurationReady: boolean;
+  profileFingerprint: string;
+  components: {
+    reference: string;
+    kind: string;
+    status: 'configured' | 'pending';
+    reasons: string[];
+    readinessReasons?: string[];
+    readiness?: unknown;
+  }[];
+}
 export interface SourcePlan {
   id: string;
   rootId: string;
@@ -147,6 +193,7 @@ export interface SourcePlan {
   resources: string[];
   deletions: string[];
   expiresAt: string;
+  runtime?: SourceRuntimeStatus;
 }
 export interface SourceActivation {
   rootId: string;
@@ -155,4 +202,6 @@ export interface SourceActivation {
   revision: string;
   resources: string[];
   runtimeReady: boolean;
+  runtimeConfigured?: boolean;
+  runtime?: SourceRuntimeStatus;
 }

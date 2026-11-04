@@ -7,3 +7,4 @@ artifacts/
 docs/benchmarks/
 pnpm-lock.yaml
 **/target/
+docs/production/evidence/

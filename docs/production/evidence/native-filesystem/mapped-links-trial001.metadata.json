@@ -1,0 +1,14 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T232941014612Z-mapped-link-uniqueness",
+  "sourceManifestSha256": "811a6958933f6e85d5938f4e1593bd8b41ed30b8dc415988aed75c93b3bd79eb",
+  "runtimeSha256": "22a879ee2925c52c126cba4f078f27695d00188399c8aca07a442a5d0ffa44ff",
+  "catalogHarnessSha256": "80b4eaa01b4af8a363b7cd5f4876cab852f086683cd89a13ea3f6d5dfa15dd82",
+  "runtimeMetadata": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "669eaec77c69ae7b59b92cf1dc38ee8876d94f9369a26c2157bc23c45e123ab2",
+      "version": 5
+    },
+    "sourceDigest": "38c535397c94461c290ff9487c5616f33690f26763a6f89749abf3d5f8737cfb"
+  }
+}

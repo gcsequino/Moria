@@ -1,0 +1,22 @@
+{
+  "activePhase": "native-indexing-projection",
+  "timeline": [
+    {
+      "phase": "setup",
+      "elapsedMs": 179.7048380000001
+    },
+    {
+      "phase": "identity",
+      "elapsedMs": 86307.056023
+    },
+    {
+      "phase": "source-production",
+      "elapsedMs": 35051.281763000006
+    },
+    {
+      "phase": "source-publication",
+      "elapsedMs": 644965.118011
+    }
+  ],
+  "elapsedMs": 766503.160635
+}

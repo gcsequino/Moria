@@ -1,0 +1,159 @@
+Immutable source: /tmp/moria-proof-snapshots/20261030T142549345483Z-serving-fs-bytes
+Capture manifest SHA256: 54f7ab98aeaacfa05af0beb2697aaa8ec5b2dd16804c1fe18c59f2778d2043da
+Native image: moria-test:native-prerequisites
+Binary SHA256: bd28980796ee8d6929e4d447787b336e06e766f240528d54f62cfb3ca5228f7a
+Compiled source digest: 5c379472e0a0923ae6d5c5eaef6045f4d4685245d302c921cd029a435a47cc9b
+Schema checksum: 79fdc975b84a3fb6fe3ffb815bfb78309907ae2a0888e7254a182c16bd96c090
+Result: 0
+
+TAP version 13
+# Subtest: native filesystem replicas enforce current namespace authority and atomic receipts
+    # Subtest: permission filtering precedes directory limits and direct hidden reads remain concealed
+    ok 1 - permission filtering precedes directory limits and direct hidden reads remain concealed
+      ---
+      duration_ms: 265.560303
+      type: 'test'
+      ...
+    # Subtest: opaque directory cursors resume concurrently across replicas with one original expiry
+    ok 2 - opaque directory cursors resume concurrently across replicas with one original expiry
+      ---
+      duration_ms: 135.220204
+      type: 'test'
+      ...
+    # Subtest: same-key races commit one namespace mutation and conflict on different input
+    ok 3 - same-key races commit one namespace mutation and conflict on different input
+      ---
+      duration_ms: 310.899745
+      type: 'test'
+      ...
+    # Subtest: a later failed change rolls back earlier entries, versions and parent touches
+    ok 4 - a later failed change rolls back earlier entries, versions and parent touches
+      ---
+      duration_ms: 31.156844
+      type: 'test'
+      ...
+    # Subtest: moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations
+    ok 5 - moves retain old inherited markings, audit the epoch and invalidate unrelated directory continuations
+      ---
+      duration_ms: 328.551438
+      type: 'test'
+      ...
+    # Subtest: qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas
+    ok 6 - qualified native file bytes preserve Node storage compatibility, immutable versions and replay across replicas
+      ---
+      duration_ms: 2067.425145
+      type: 'test'
+      ...
+    # Subtest: managed/cyclic placements, untrusted content and malformed names fail atomically
+    ok 7 - managed/cyclic placements, untrusted content and malformed names fail atomically
+      ---
+      duration_ms: 63.047112
+      type: 'test'
+      ...
+    1..7
+ok 1 - native filesystem replicas enforce current namespace authority and atomic receipts
+  ---
+  duration_ms: 8254.771111
+  type: 'test'
+  ...
+# Subtest: native serving replicas preserve protected reads, cursors and atomic action outcomes
+    # Subtest: typed identities, canonical restrictions and forbidden projections are enforced before data release
+    ok 1 - typed identities, canonical restrictions and forbidden projections are enforced before data release
+      ---
+      duration_ms: 147.557258
+      type: 'test'
+      ...
+    # Subtest: global engine fallback preserves complete typed ordering and pinned pagination without a layout
+    ok 2 - global engine fallback preserves complete typed ordering and pinned pagination without a layout
+      ---
+      duration_ms: 55.699144
+      type: 'test'
+      ...
+    # Subtest: bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+    ok 3 - bounded typed sorts pin key tuples, authorize keys, and reject complete-scope overflow
+      ---
+      duration_ms: 127.709774
+      type: 'test'
+      ...
+    # Subtest: bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+    ok 4 - bounded SQL aggregation counts only authorized rows with exact typed results and whole-request budgets
+      ---
+      duration_ms: 77.801662
+      type: 'test'
+      ...
+    # Subtest: trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+    ok 5 - trusted UID-reference links enforce both endpoint policies and complete bounded fanout
+      ---
+      duration_ms: 72.29216
+      type: 'test'
+      ...
+    # Subtest: cursor continuations work concurrently across native replicas and retain the original deadline
+    ok 6 - cursor continuations work concurrently across native replicas and retain the original deadline
+      ---
+      duration_ms: 29.435235
+      type: 'test'
+      ...
+    # Subtest: same-key actions across replicas have one durable effect and Node reads native overlays
+    ok 7 - same-key actions across replicas have one durable effect and Node reads native overlays
+      ---
+      duration_ms: 149.121843
+      type: 'test'
+      ...
+    # Subtest: accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+    ok 8 - accepted action input schemas stay pinned through redeployment and expiry never permits key reuse
+      ---
+      duration_ms: 43.980145
+      type: 'test'
+      ...
+    # Subtest: multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+    ok 9 - multi-target actions roll back earlier edits on a later condition failure and commit successful batches once
+      ---
+      duration_ms: 48.240242
+      type: 'test'
+      ...
+    # Subtest: source refresh retains overlays and explicit tombstones survive until an authorized restore
+    ok 10 - source refresh retains overlays and explicit tombstones survive until an authorized restore
+      ---
+      duration_ms: 67.955285
+      type: 'test'
+      ...
+    # Subtest: a committed action survives loss of its HTTP acknowledgment and death of the native replica
+    ok 11 - a committed action survives loss of its HTTP acknowledgment and death of the native replica
+      ---
+      duration_ms: 29.997339
+      type: 'test'
+      ...
+    # Subtest: a session expiring during blocked native evaluation cannot release buffered results
+    ok 12 - a session expiring during blocked native evaluation cannot release buffered results
+      ---
+      duration_ms: 1008.764198
+      type: 'test'
+      ...
+    # Subtest: queued native reads see committed grant revocation before their snapshot
+    ok 13 - queued native reads see committed grant revocation before their snapshot
+      ---
+      duration_ms: 20.424609
+      type: 'test'
+      ...
+    # Subtest: filesystem resource inheritance and provenance remain required by native domain reads
+    ok 14 - filesystem resource inheritance and provenance remain required by native domain reads
+      ---
+      duration_ms: 183.746527
+      type: 'test'
+      ...
+    1..14
+ok 2 - native serving replicas preserve protected reads, cursors and atomic action outcomes
+  ---
+  duration_ms: 4720.564588
+  type: 'test'
+  ...
+1..2
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8678.218383
+

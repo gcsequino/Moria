@@ -1,0 +1,81 @@
+TAP version 13
+# The files belonging to this database system will be owned by user "node".
+# This user must also own the server process.
+# The database cluster will be initialized with locale "C".
+# The default text search configuration will be set to "english".
+# Data page checksums are enabled.
+# creating directory /tmp/catalog-storage-nKxMPd/postgres ... 
+# ok
+# creating subdirectories ... 
+# ok
+# selecting dynamic shared memory implementation ... posix
+# selecting default "max_connections" ... 
+# 100
+# selecting default "shared_buffers" ... 
+# 128MB
+# selecting default time zone ... 
+# Etc/UTC
+# creating configuration files ... 
+# ok
+# running bootstrap script ... 
+# ok
+# performing post-bootstrap initialization ... 
+# ok
+# syncing data to disk ... 
+# ok
+# Success. You can now start the database server using:
+#     '/work/node_modules/.pnpm/@embedded-postgres+linux-x64@18.4.0-beta.17/node_modules/@embedded-postgres/linux-x64/native/bin/pg_ctl' -D /tmp/catalog-storage-nKxMPd/postgres -l logfile start
+# 2026-10-31 07:40:30.525 UTC [76] LOG:  starting PostgreSQL 18.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+# 2026-10-31 07:40:30.525 UTC [76] LOG:  listening on IPv4 address "127.0.0.1", port 35573
+# 2026-10-31 07:40:30.527 UTC [76] LOG:  listening on Unix socket "/tmp/.s.PGSQL.35573"
+# 2026-10-31 07:40:30.531 UTC [82] LOG:  database system was shut down at 2026-10-31 07:40:29 UTC
+# 2026-10-31 07:40:30.534 UTC [76] LOG:  database system is ready to accept connections
+# 2026-10-31 07:40:37.850 UTC [132] LOG:  could not receive data from client: Connection reset by peer
+# 2026-10-31 07:40:46.410 UTC [139] LOG:  could not receive data from client: Connection reset by peer
+# 2026-10-31 07:40:46.632 UTC [145] ERROR:  UNDECLARED_DATASET
+# 2026-10-31 07:40:46.632 UTC [145] CONTEXT:  PL/pgSQL function runtime_dataset_io_check(text,uuid,uuid,uuid,bigint,uuid,text,text,text,boolean) line 32 at RAISE
+# 2026-10-31 07:40:46.632 UTC [145] STATEMENT:  SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+# 2026-10-31 07:40:51.362 UTC [158] ERROR:  UNDECLARED_DATASET
+# 2026-10-31 07:40:51.362 UTC [158] CONTEXT:  PL/pgSQL function runtime_dataset_io_check(text,uuid,uuid,uuid,bigint,uuid,text,text,text,boolean) line 32 at RAISE
+# 2026-10-31 07:40:51.362 UTC [158] STATEMENT:  SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+# 2026-10-31 07:40:54.100 UTC [165] LOG:  could not receive data from client: Connection reset by peer
+# 2026-10-31 07:40:54.227 UTC [175] LOG:  could not send data to client: Broken pipe
+# 2026-10-31 07:40:54.227 UTC [175] FATAL:  connection to client lost
+# 2026-10-31 07:40:59.823 UTC [197] ERROR:  UNDECLARED_DATA_PROVENANCE
+# 2026-10-31 07:40:59.823 UTC [197] CONTEXT:  PL/pgSQL function moria.runtime_data_assert(text,text,text) line 6 at RAISE
+# \\tSQL statement "SELECT moria.runtime_data_assert(NEW.environment,NEW.dataset,source)"
+# \\tPL/pgSQL function moria.runtime_snapshot_data_assert() line 5 at PERFORM
+# 2026-10-31 07:40:59.823 UTC [197] STATEMENT:  INSERT INTO moria.snapshot_history(environment,dataset,revision,metadata_location,snapshot_id,execution,lineage) VALUES($1,$2,$3,$4,$5,$6,$7)
+# 2026-10-31 07:40:59.866 UTC [76] LOG:  received fast shutdown request
+# 2026-10-31 07:40:59.868 UTC [76] LOG:  aborting any active transactions
+# 2026-10-31 07:40:59.869 UTC [76] LOG:  background worker "logical replication launcher" (PID 85) exited with exit code 1
+# 2026-10-31 07:40:59.869 UTC [80] LOG:  shutting down
+# 2026-10-31 07:40:59.871 UTC [80] LOG:  checkpoint starting: shutdown immediate
+# 2026-10-31 07:41:00.181 UTC [80] LOG:  checkpoint complete: wrote 1218 buffers (7.4%), wrote 8 SLRU buffers; 0 WAL file(s) added, 0 removed, 1 recycled; write=0.010 s, sync=0.295 s, total=0.312 s; sync files=1127, longest=0.002 s, average=0.001 s; distance=11772 kB, estimate=11772 kB; lsn=0/22CA818, redo lsn=0/22CA818
+# 2026-10-31 07:41:00.192 UTC [76] LOG:  database system is shut down
+# Subtest: managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+not ok 1 - managed Dataset expiry and exact cleanup preserve current rows and independent recovery copies
+  ---
+  duration_ms: 30006.679191
+  type: 'test'
+  location: '/work/tests/native-dataset-retention.integration.test.ts:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    dataset-retention/expire: {"error":"INDEXING_DATABASE_ERROR"}
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/fixtures/native-retention/dataset.ts:177:39)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30465.507171

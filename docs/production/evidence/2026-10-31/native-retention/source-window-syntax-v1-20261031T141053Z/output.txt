@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/proof-driver/check.ts:12:3) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: /SOURCE_STORE_AUTHORITY_REQUIRED/,
+  operator: 'rejects',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

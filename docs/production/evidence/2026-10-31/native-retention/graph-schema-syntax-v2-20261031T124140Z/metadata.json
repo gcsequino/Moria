@@ -1,0 +1,30 @@
+{
+  "classification": "isolated synthetic schema syntax proof; not full v3 qualification",
+  "baseSource": "/tmp/moria-proof-snapshots/20261031T112705281601Z-protected-narrow-capacity-v9",
+  "driver": "/tmp/moria-proof-drivers/20261031T124140Z-graph-schema-syntax-v2",
+  "schemaSha256": "21a6746c77048daa60805fb41473a8eeaf80d7a1d4f59bb8d91a8691ba021fd3",
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T112705281601Z-protected-narrow-capacity-v9,dst=/work,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-drivers/20261031T124140Z-graph-schema-syntax-v2,dst=/proof-driver,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/node_modules,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "/proof-driver/check.ts"
+  ],
+  "exitCode": 0
+}

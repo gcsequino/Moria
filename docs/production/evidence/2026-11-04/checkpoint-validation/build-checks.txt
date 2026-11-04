@@ -1,0 +1,35 @@
+$ pnpm build:management && pnpm build:snotel
+$ vite build --config apps/management/vite.config.ts
+[36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/management/dist/index.html                   0.40 kB │ gzip:  0.27 kB
+apps/management/dist/assets/index-2o2wHpTR.css   12.38 kB │ gzip:  3.42 kB
+apps/management/dist/assets/index-BfsGE9A2.js   260.99 kB │ gzip: 80.67 kB
+apps/management/dist/assets/source-8E1vKdiD.js  274.60 kB │ gzip: 28.67 kB
+
+[32m✓ built in 140ms[39m
+$ vite build --config apps/snotel/vite.config.ts
+[36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 26 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/snotel/dist/index.html                   0.36 kB │ gzip:  0.27 kB
+apps/snotel/dist/assets/index-CShDBEjJ.css    9.10 kB │ gzip:  2.65 kB
+apps/snotel/dist/assets/index-Cys8spqb.js   259.14 kB │ gzip: 81.08 kB
+
+[32m✓ built in 118ms[39m
+$ tsc --noEmit -p examples/station-explorer/tsconfig.json && tsx scripts/verify-starter.ts
+/app/packages/osdk/src/generate.ts:215
+        throw new Error(`Generated SDK is stale: ${target}`);
+              ^
+
+Error: Generated SDK is stale: /app/examples/station-explorer/src/generated/runtime.ts
+    at writeSdk (/app/packages/osdk/src/generate.ts:215:15)
+    at async <anonymous> (/app/scripts/verify-starter.ts:14:1)
+
+Node.js v24.22.0
+[ELIFECYCLE] Command failed with exit code 1.

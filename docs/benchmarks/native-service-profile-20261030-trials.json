@@ -1,0 +1,45 @@
+{
+  "trials": [
+    {
+      "id": "001",
+      "outcome": "failed",
+      "tap": "native-service-profile-20261030-trial-001-failed.tap",
+      "sourceManifest": "native-service-profile-20261030-trial-001-source.json",
+      "compiledRuntime": "native-service-profile-20261030-trial-001-runtime.json",
+      "schema": "native-service-profile-20261030-trial-001-schema.json",
+      "tests": 14,
+      "passed": 10,
+      "failed": 4,
+      "skipped": 0,
+      "failure": "Execution regression harness was not mounted; cancellation correctly failed after accepted epoch revocation.",
+      "correction": "Mount the exact compiled sandbox harness and assert revoked cancellation fails instead of using it as fixture cleanup."
+    },
+    {
+      "id": "002",
+      "outcome": "failed",
+      "tap": "native-service-profile-20261030-trial-002-failed.tap",
+      "sourceManifest": "native-service-profile-20261030-trial-002-source.json",
+      "compiledRuntime": "native-service-profile-20261030-trial-002-runtime.json",
+      "schema": "native-service-profile-20261030-trial-002-schema.json",
+      "tests": 15,
+      "passed": 13,
+      "failed": 2,
+      "skipped": 0,
+      "failure": "Expected service denial was redacted to the generic database error by the incomplete static error allowlist.",
+      "correction": "Add exact static authority errors to the shared safe-error allowlist, retaining redaction for unknown database errors."
+    },
+    {
+      "id": "003",
+      "outcome": "green",
+      "tap": "native-service-profile-20261030-trial-003-green.tap",
+      "sourceManifest": "native-service-profile-20261030-trial-003-source.json",
+      "compiledRuntime": "native-service-profile-20261030-trial-003-runtime.json",
+      "schema": "native-service-profile-20261030-trial-003-schema.json",
+      "tests": 42,
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Native service authority, execution/scheduler, Agent SDK/CLI and native Function regressions; actual registered private credentials and Docker user-code isolation."
+    }
+  ]
+}

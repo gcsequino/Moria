@@ -1,0 +1,41 @@
+TAP version 13
+# Subtest: operator filesystem GC permanently retires abandoned uploads, honors the grace interval and deletes only an exact qualified S3 version
+not ok 1 - operator filesystem GC permanently retires abandoned uploads, honors the grace interval and deletes only an exact qualified S3 version
+  ---
+  duration_ms: 3992.436723
+  type: 'test'
+  location: '/work/tests/native-filesystem-gc.integration.test.ts:24:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /GC_OPERATOR_REQUIRED/. Input:
+    
+    'Error: {"error":"RECOVERY_OPERATOR_REQUIRED"}\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: |-
+    {"error":"RECOVERY_OPERATOR_REQUIRED"}
+    
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/native-filesystem-gc.integration.test.ts:191:61)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  operator: 'rejects'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/work/tests/native-filesystem-gc.integration.test.ts:279:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4379.481163

@@ -1,0 +1,359 @@
+TAP version 13
+# Subtest: approved operational history collection preserves pins, permanent identity and two source generations
+ok 1 - approved operational history collection preserves pins, permanent identity and two source generations
+  ---
+  duration_ms: 2981.639297
+  type: 'test'
+  ...
+# Subtest: history collection prunes actual native projection intervals without changing protected reads
+    # Subtest: retired native tables obey current, latest-two, floor and structural Search pins, including backup admission
+    ok 1 - retired native tables obey current, latest-two, floor and structural Search pins, including backup admission
+      ---
+      duration_ms: 5623.642825
+      type: 'test'
+      ...
+    1..1
+ok 2 - history collection prunes actual native projection intervals without changing protected reads
+  ---
+  duration_ms: 14000.296735
+  type: 'test'
+  ...
+# Subtest: operational history normalizes bounded read pins against actual execution and cursor authority
+ok 3 - operational history normalizes bounded read pins against actual execution and cursor authority
+  ---
+  duration_ms: 2864.526447
+  type: 'test'
+  ...
+# Subtest: native MCP preserves current authority, typed results and opaque discovery across replicas
+    # Subtest: stateless discovery filters SQL-denied resources without aborting the page
+    ok 1 - stateless discovery filters SQL-denied resources without aborting the page
+      ---
+      duration_ms: 1279.783024
+      type: 'test'
+      ...
+    # Subtest: resource descriptions contain authorized typed metadata only
+    ok 2 - resource descriptions contain authorized typed metadata only
+      ---
+      duration_ms: 989.198898
+      type: 'test'
+      ...
+    # Subtest: queries and actions use protected serving and replica-stable receipts
+    ok 3 - queries and actions use protected serving and replica-stable receipts
+      ---
+      duration_ms: 140.275817
+      type: 'test'
+      ...
+    # Subtest: official Python SDK negotiates and reads protected resources
+    ok 4 - official Python SDK negotiates and reads protected resources
+      ---
+      duration_ms: 1567.003384
+      type: 'test'
+      ...
+    # Subtest: CLI emits a credential reference and calls the dedicated native endpoint
+    ok 5 - CLI emits a credential reference and calls the dedicated native endpoint
+      ---
+      duration_ms: 491.031827
+      type: 'test'
+      ...
+    # Subtest: transport rejects mirrored-header tampering, batches and credential substitution
+    ok 6 - transport rejects mirrored-header tampering, batches and credential substitution
+      ---
+      duration_ms: 45.681147
+      type: 'test'
+      ...
+    # Subtest: epoch changes invalidate cursors and revocation applies to every request
+    not ok 7 - epoch changes invalidate cursors and revocation applies to every request
+      ---
+      duration_ms: 516.125117
+      type: 'test'
+      location: '/work/tests/native-mcp.integration.test.ts:441:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        401 !== 403
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 403
+      actual: 401
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-mcp.integration.test.ts:468:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-mcp.integration.test.ts:441:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..7
+not ok 4 - native MCP preserves current authority, typed results and opaque discovery across replicas
+  ---
+  duration_ms: 8433.880354
+  type: 'test'
+  location: '/work/tests/native-mcp.integration.test.ts:15:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native model gateway protects real HTTP chat, embeddings, schemas and streams
+    # Subtest: configured capabilities remain unavailable until actual probes pass
+    ok 1 - configured capabilities remain unavailable until actual probes pass
+      ---
+      duration_ms: 808.016884
+      type: 'test'
+      ...
+    # Subtest: stable calls replay exactly without another provider request; conflicts fail
+    ok 2 - stable calls replay exactly without another provider request; conflicts fail
+      ---
+      duration_ms: 563.736903
+      type: 'test'
+      ...
+    # Subtest: structured output and tool arguments use a real bounded JSON Schema validator
+    ok 3 - structured output and tool arguments use a real bounded JSON Schema validator
+      ---
+      duration_ms: 840.171644
+      type: 'test'
+      ...
+    # Subtest: embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+    ok 4 - embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors
+      ---
+      duration_ms: 522.56507
+      type: 'test'
+      ...
+    # Subtest: streams retain ordered text and terminal result; broken streams never restart
+    ok 5 - streams retain ordered text and terminal result; broken streams never restart
+      ---
+      duration_ms: 363.618721
+      type: 'test'
+      ...
+    # Subtest: stream combinations require their own probe and preserve provider extensions
+    ok 6 - stream combinations require their own probe and preserve provider extensions
+      ---
+      duration_ms: 1963.542226
+      type: 'test'
+      ...
+    # Subtest: revocation during inference blocks result release and preserves the failed attempt
+    ok 7 - revocation during inference blocks result release and preserves the failed attempt
+      ---
+      duration_ms: 178.674804
+      type: 'test'
+      ...
+    # Subtest: an unobserved binding disable and re-enable cannot revive an admitted call
+    ok 8 - an unobserved binding disable and re-enable cannot revive an admitted call
+      ---
+      duration_ms: 354.765293
+      type: 'test'
+      ...
+    # Subtest: stream revocation blocks later events and its terminal result
+    ok 9 - stream revocation blocks later events and its terminal result
+      ---
+      duration_ms: 175.443181
+      type: 'test'
+      ...
+    # Subtest: cross-process cancellation interrupts waiting inference and retains uncertain admission
+    ok 10 - cross-process cancellation interrupts waiting inference and retains uncertain admission
+      ---
+      duration_ms: 906.669191
+      type: 'test'
+      ...
+    # Subtest: provider bodies and caller-selected endpoints remain bounded and protected
+    ok 11 - provider bodies and caller-selected endpoints remain bounded and protected
+      ---
+      duration_ms: 386.757301
+      type: 'test'
+      ...
+    # Subtest: the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+    ok 12 - the persistent native HTTP role serves authenticated APIs and bounds concurrent inference
+      ---
+      duration_ms: 1184.317331
+      type: 'test'
+      ...
+    # Subtest: one shared class budget covers native execution leases and model calls in both directions
+    ok 13 - one shared class budget covers native execution leases and model calls in both directions
+      ---
+      duration_ms: 1586.842192
+      type: 'test'
+      ...
+    # Subtest: bounded embedding batches retain one vector copy and terminal validation failures are recorded
+    ok 14 - bounded embedding batches retain one vector copy and terminal validation failures are recorded
+      ---
+      duration_ms: 1633.496821
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+    ok 15 - a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt
+      ---
+      duration_ms: 5979.93428
+      type: 'test'
+      ...
+    # Subtest: Ollama embedding transport disables truncation and records terminal context failure
+    ok 16 - Ollama embedding transport disables truncation and records terminal context failure
+      ---
+      duration_ms: 1129.770968
+      type: 'test'
+      ...
+    # Subtest: expired capability proofs fail before contacting the provider
+    ok 17 - expired capability proofs fail before contacting the provider
+      ---
+      duration_ms: 252.413427
+      type: 'test'
+      ...
+    1..17
+ok 5 - native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ---
+  duration_ms: 20814.915801
+  type: 'test'
+  ...
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 439.476804
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 1313.693539
+      type: 'test'
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 150.475883
+      type: 'test'
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 112.267296
+      type: 'test'
+      ...
+    1..4
+ok 6 - native disabled restore fences real work and external uncertainty without losing permanent state
+  ---
+  duration_ms: 4542.913894
+  type: 'test'
+  ...
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+ok 7 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+  ---
+  duration_ms: 10961.987831
+  type: 'test'
+  ...
+# verified posix restore approval completed
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+ok 8 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+  ---
+  duration_ms: 13005.840226
+  type: 'test'
+  ...
+# verified s3 restore approval completed
+# Subtest: registered native search projects full Dataset objects and replays a complete action frame
+    # Subtest: a fresh background service execution atomically replays later changes
+    ok 1 - a fresh background service execution atomically replays later changes
+      ---
+      duration_ms: 1932.700988
+      type: 'test'
+      ...
+    # Subtest: a complete replacement generation reuses persisted embedding bytes
+    ok 2 - a complete replacement generation reuses persisted embedding bytes
+      ---
+      duration_ms: 5841.998197
+      type: 'test'
+      ...
+    # Subtest: a real expired attempt is fenced and a replacement reuses the warm cache
+    ok 3 - a real expired attempt is fenced and a replacement reuses the warm cache
+      ---
+      duration_ms: 36045.993276
+      type: 'test'
+      ...
+    # Subtest: a model binding change creates a complete separately pinned generation
+    ok 4 - a model binding change creates a complete separately pinned generation
+      ---
+      duration_ms: 8275.488692
+      type: 'test'
+      ...
+    # Subtest: revoking the exact projector purpose closes held upstream work without visibility
+    ok 5 - revoking the exact projector purpose closes held upstream work without visibility
+      ---
+      duration_ms: 1335.197837
+      type: 'test'
+      ...
+    1..5
+ok 9 - registered native search projects full Dataset objects and replays a complete action frame
+  ---
+  duration_ms: 68462.035515
+  type: 'test'
+  ...
+# Subtest: native exact retrieval ranks a trusted sealed fixture generation after current protection
+    # Subtest: public native retrieval shares protected results and rejects invalid authority before billing
+    ok 1 - public native retrieval shares protected results and rejects invalid authority before billing
+      ---
+      duration_ms: 352.838687
+      type: 'test'
+      ...
+    # Subtest: actual pgvector cosine ranks complete authorized rows with a stable tie
+    ok 2 - actual pgvector cosine ranks complete authorized rows with a stable tie
+      ---
+      duration_ms: 630.166963
+      type: 'test'
+      ...
+    # Subtest: selected-property denial and invalid topK fail before model dispatch
+    ok 3 - selected-property denial and invalid topK fail before model dispatch
+      ---
+      duration_ms: 337.741211
+      type: 'test'
+      ...
+    # Subtest: current tombstones and effective restrictions filter before topK
+    ok 4 - current tombstones and effective restrictions filter before topK
+      ---
+      duration_ms: 501.38075
+      type: 'test'
+      ...
+    # Subtest: retained embedding labels precede ranking and cache bytes cannot be rewritten
+    ok 5 - retained embedding labels precede ranking and cache bytes cannot be rewritten
+      ---
+      duration_ms: 485.752799
+      type: 'test'
+      ...
+    # Subtest: current canonical policy still applies across source replacement
+    ok 6 - current canonical policy still applies across source replacement
+      ---
+      duration_ms: 506.964342
+      type: 'test'
+      ...
+    # Subtest: a different model binding cannot mix query vectors with the active generation
+    ok 7 - a different model binding cannot mix query vectors with the active generation
+      ---
+      duration_ms: 150.124403
+      type: 'test'
+      ...
+    # Subtest: visibility tokens bind incarnation and generation
+    ok 8 - visibility tokens bind incarnation and generation
+      ---
+      duration_ms: 379.178248
+      type: 'test'
+      ...
+    # Subtest: revocation during actual inference withholds ranked documents
+    ok 9 - revocation during actual inference withholds ranked documents
+      ---
+      duration_ms: 211.849231
+      type: 'test'
+      ...
+    1..9
+ok 10 - native exact retrieval ranks a trusted sealed fixture generation after current protection
+  ---
+  duration_ms: 6798.309504
+  type: 'test'
+  ...
+1..10
+# tests 53
+# suites 0
+# pass 51
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 154980.438569

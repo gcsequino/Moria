@@ -1,0 +1,36 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: method `prepare_action_child` is never used
+   --> src/functions.rs:324:25
+    |
+292 | impl NativeFunctions {
+    | -------------------- method in this implementation
+...
+324 |     pub(crate) async fn prepare_action_child(
+    |                         ^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `moria-runtime` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 1m 03s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-caa1227c937bb40e)
+
+running 3 tests
+test canonical::tests::javascript_number_and_utf16_ordering ... ok
+test canonical::tests::typed_identity_preserves_normalized_envelope ... FAILED
+test canonical::tests::canonical_cross_runtime_vectors ... ok
+
+failures:
+
+---- canonical::tests::typed_identity_preserves_normalized_envelope stdout ----
+
+thread 'canonical::tests::typed_identity_preserves_normalized_envelope' (445) panicked at src/canonical.rs:126:66:
+called `Result::unwrap()` on an `Err` value: Missing nullability
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    canonical::tests::typed_identity_preserves_normalized_envelope
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 42 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

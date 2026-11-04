@@ -1,0 +1,70 @@
+✖ native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution (1998.64921ms)
+✖ native effective projections build off-lock, replay concurrent edits and activate with source generations (1835.3084ms)
+✖ resource data provenance retains classification, bounds cycles and pre-admits publication authority (1872.763336ms)
+✖ native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants (2515.868132ms)
+✖ native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state (2280.242239ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11971.029444
+
+✖ failing tests:
+
+test at tests/native-catalog.integration.test.ts:17:1
+✖ native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution (1998.64921ms)
+  Error: Database schema operation failed; verify migration ownership and schema version.
+      at schema (/work/services/database/src/schema.ts:67:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Catalog.migrate (/work/services/catalog/src/catalog.ts:67:5)
+      at async database (/work/tests/fixtures/catalog-storage/database.ts:24:5)
+      at async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:27:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/native-projection.integration.test.ts:19:1
+✖ native effective projections build off-lock, replay concurrent edits and activate with source generations (1835.3084ms)
+  Error: Database schema operation failed; verify migration ownership and schema version.
+      at schema (/work/services/database/src/schema.ts:67:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Catalog.migrate (/work/services/catalog/src/catalog.ts:67:5)
+      at async database (/work/tests/fixtures/catalog-storage/database.ts:24:5)
+      at async TestContext.<anonymous> (/work/tests/native-projection.integration.test.ts:23:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/native-provenance.integration.test.ts:11:1
+✖ resource data provenance retains classification, bounds cycles and pre-admits publication authority (1872.763336ms)
+  Error: Database schema operation failed; verify migration ownership and schema version.
+      at schema (/work/services/database/src/schema.ts:67:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Catalog.migrate (/work/services/catalog/src/catalog.ts:67:5)
+      at async database (/work/tests/fixtures/catalog-storage/database.ts:24:5)
+      at async TestContext.<anonymous> (/work/tests/native-provenance.integration.test.ts:12:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/native-snapshot-indexing.integration.test.ts:17:1
+✖ native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants (2515.868132ms)
+  Error: Database schema operation failed; verify migration ownership and schema version.
+      at schema (/work/services/database/src/schema.ts:67:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Catalog.migrate (/work/services/catalog/src/catalog.ts:67:5)
+      at async database (/work/tests/fixtures/catalog-storage/database.ts:24:5)
+      at async TestContext.<anonymous> (/work/tests/native-snapshot-indexing.integration.test.ts:21:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/native-storage.integration.test.ts:20:1
+✖ native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state (2280.242239ms)
+  Error: Database schema operation failed; verify migration ownership and schema version.
+      at schema (/work/services/database/src/schema.ts:67:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Catalog.migrate (/work/services/catalog/src/catalog.ts:67:5)
+      at async database (/work/tests/fixtures/catalog-storage/database.ts:24:5)
+      at async TestContext.<anonymous> (/work/tests/native-storage.integration.test.ts:24:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

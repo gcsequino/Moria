@@ -1,0 +1,103 @@
+{
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "build",
+    "--tag",
+    "moria-test:offline-v26",
+    "/tmp/moria-offline-dependencies-20261031T150919Z"
+  ],
+  "inputs": [
+    {
+      "path": "workers/agents/package.json",
+      "sha256": "7b930884d537ddef096fa77b916e2033d30e5015ca680404f768d574cba53201"
+    },
+    {
+      "path": "workers/agents/package-lock.json",
+      "sha256": "1accd3ff537635b6b6d99ddabfffad6b1afd8da047a8785bb7348fa1708086e6"
+    },
+    {
+      "path": "workers/data-engine/requirements.lock",
+      "sha256": "8162bb1b527ade0aabd8f3af6c4c2909cc88675f8161260f5cfb427a6abfa664"
+    }
+  ],
+  "dockerfileSha256": "1c8d12ed6cbd61f48bd80eec67591fdbba7b8ed40fd69d57d7c897aff79e6cbc",
+  "exitCode": 0,
+  "image": {
+    "Architecture": "amd64",
+    "Config": {
+      "ArgsEscaped": true,
+      "Cmd": [
+        "pnpm",
+        "check"
+      ],
+      "Entrypoint": [
+        "docker-entrypoint.sh"
+      ],
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "NODE_VERSION=24.22.0",
+        "YARN_VERSION=1.22.22"
+      ],
+      "User": "node",
+      "WorkingDir": "/app"
+    },
+    "Created": "2026-10-31T15:23:13.566996145Z",
+    "Descriptor": {
+      "digest": "sha256:c1beb07bd4b92dacb9bdfa1e96ed31dabd8d292574785e9f375888066bf31b91",
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 7100
+    },
+    "Id": "sha256:c1beb07bd4b92dacb9bdfa1e96ed31dabd8d292574785e9f375888066bf31b91",
+    "Metadata": {
+      "LastTagTime": "2026-10-31T15:23:13.758581546Z"
+    },
+    "Os": "linux",
+    "Parent": "sha256:71a1aebe57a81e09e5b36509ae14c53924a52efbbc1b905045ff64b6df9bbe1e",
+    "RepoDigests": [
+      "moria-test@sha256:c1beb07bd4b92dacb9bdfa1e96ed31dabd8d292574785e9f375888066bf31b91"
+    ],
+    "RepoTags": [
+      "moria-test:offline-v26"
+    ],
+    "RootFS": {
+      "Layers": [
+        "sha256:e58989146fcec76699871403b9897b5c014af1ccd85f5a9300a215e7975525d7",
+        "sha256:91329da0c497f409b176173a5c4702c9fd79d88e677ec0ada4a0d07f6a001eb1",
+        "sha256:85065cc72b0d3cbe08cd9e8c086688b7836ee321e313096d1cfb441674361f65",
+        "sha256:992664ed29448f28bcd1ca52f64e3d6e28894cc53078f8ed765ecc82e837b4e1",
+        "sha256:48d457b4d425826a81482c431354f54f6aad16b9e333a83ae7b0e6134e625243",
+        "sha256:763316d903d18b5afc75122c8a76f23ecd90cacd1e849f0417276d029d37fe09",
+        "sha256:fe5f5ad5e748f398803802e71f77e4ed4e68bfa9bce0352fea077d3da1f19a1f",
+        "sha256:63e60aac9c15c512730be94d7896f2aec72fa2f57e0543348b95c8f6df77febf",
+        "sha256:0ab0975466c439ede2e39f6cbb1d817bd7179223d581a4ab19b3ada290f43cf3",
+        "sha256:368473b1e22a1ef0f91056afb8dcce744f627fcab8384e3b0851eb31cfc8dc3a",
+        "sha256:19cf3c9da283a33adcfd881ff281c4a5dd45926148e9717cedc0b83b3dc3918c",
+        "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+        "sha256:3aa197abeb594c5252f0ebcbc2fc48d3daea205598e09c4af80f6be6089daac1",
+        "sha256:5666dfb5388d513b902989738da484d8a5e42c61177b5b2588a71437e865bfef",
+        "sha256:215ede06f712611b47ebb5ede225de3d55731fb063d4960e31dc942c4f3a3897",
+        "sha256:9c573640438af26de838bba73b769b8e524c105b8ccb7892744b7e1d26b5f1e5",
+        "sha256:2edf9b6aadc353404048b32b69de28cc2d68e74b724d9863183f2e34bbeb48fc",
+        "sha256:45195608142de81211179589f47ae06d69d2b0e226a3ac6318f4ed03a29962b2",
+        "sha256:e279356dca48a9b1ef98523e6e0c656378ed51cbd269b38781c19ad84a46df5e",
+        "sha256:adc06f1ab70e90e5656704711cf83b354c781dcba1dd1569e04f85deb0da1d5f",
+        "sha256:b5dc897897e373b376e5757930ee6b16755ae60b04374b469e319925fd60032f",
+        "sha256:01a16e183d41ecfb91449b6455698eccb5970d823698a4fbc4ba85d735421af8",
+        "sha256:eaf16d5ed7e19d6a8e755dc3f7f009b1835d310404c829197b76d2b74fc20e0b",
+        "sha256:f6b35d31d630b1def6e26bef3712dc81eeab1aefaf4adf023f23a1fa6ab39b64",
+        "sha256:f91906058f48bd56ba7dc4df15adb9346dfd3098c2945813f050505631ced1a5",
+        "sha256:46962aa00d195963c5e49afaf9f9a171b29feb6794b04ae1dffe57a4e41bf22e",
+        "sha256:8e7f22c610dce47eacb2085d84b5ac7932a7af36c85bfbf602cfcba70b21001e",
+        "sha256:69006a5acf13cc03639aaa23cda9d31fe91c80df2fbac8e224601e7eecac6312",
+        "sha256:a4fe426aa63b061390b17609590e46ab579783d7f5c1513f87c0e079233ace5f",
+        "sha256:975bdd47d948bc1cefef410ed768d96df306e855fd8a25577aab91333591f32d",
+        "sha256:05b13e7371f5d28fc26875d9e722af8b584351fbaa02bb58e3def5b62c816baf"
+      ],
+      "Type": "layers"
+    },
+    "Size": 523607656
+  }
+}

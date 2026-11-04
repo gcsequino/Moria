@@ -1,0 +1,21 @@
+{"method":"DELETE","conditionalHeaderPresent":true}
+{"wrongVersionStatus":204,"objectStillExists":false}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Provider must enforce conditional delete
+
+undefined !== 412
+
+    at <anonymous> (/work/.local/s3-delete-probe.ts:13:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: 412,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

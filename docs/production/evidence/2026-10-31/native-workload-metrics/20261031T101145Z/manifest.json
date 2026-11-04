@@ -1,0 +1,28 @@
+{
+  "files": {
+    "benchmarks/native-protected-baseline.ts": "7d2fd1da208a5b3703bb0ad77b9df553955411198fb4036fefa7b3ff52e905c5",
+    "tests/native-protected-baseline.test.ts": "a392a0a71b812c6f875f6f7669e263e247f9f0403d95536d1aba04606edbeb57"
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-protected-baseline.test.ts"
+  ],
+  "exit": 0
+}

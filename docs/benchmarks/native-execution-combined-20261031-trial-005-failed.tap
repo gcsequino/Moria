@@ -1,0 +1,802 @@
+TAP version 13
+# Subtest: domain cancellation clients accept only the uniform control receipt
+ok 1 - domain cancellation clients accept only the uniform control receipt
+  ---
+  duration_ms: 17.053768
+  type: 'test'
+  ...
+# Subtest: native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+    # Subtest: authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+    ok 1 - authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers
+      ---
+      duration_ms: 5688.210326
+      type: 'test'
+      ...
+    # Subtest: SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+    ok 2 - SDK and CLI use the persistent native API and the agent worker replaces its Node launcher
+      ---
+      duration_ms: 7588.733747
+      type: 'test'
+      ...
+    # Subtest: a durable pending model intent remains inspectable before gateway admission commits
+    ok 3 - a durable pending model intent remains inspectable before gateway admission commits
+      ---
+      duration_ms: 9097.659817
+      type: 'test'
+      ...
+    # Subtest: actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+    ok 4 - actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects
+      ---
+      duration_ms: 20000.784238
+      type: 'test'
+      ...
+    # Subtest: exact Agent invocation scope admits required dependencies without filesystem browsing
+    not ok 5 - exact Agent invocation scope admits required dependencies without filesystem browsing
+      ---
+      duration_ms: 216.492143
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:801:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+          [
+            '5f7cff5e-f74f-4f05-9a4c-31d6f4aecdd4:invoke',
+        +   '5e7b9926-b8ad-497a-8590-51214acf1ad5:invoke'
+          ]
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        0: '5f7cff5e-f74f-4f05-9a4c-31d6f4aecdd4:invoke'
+      actual:
+        0: '5f7cff5e-f74f-4f05-9a4c-31d6f4aecdd4:invoke'
+        1: '5e7b9926-b8ad-497a-8590-51214acf1ad5:invoke'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:809:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:801:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Agent observes actual Function child failure labels before returning a caught outcome
+    not ok 6 - Agent observes actual Function child failure labels before returning a caught outcome
+      ---
+      duration_ms: 454.81195
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:827:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"worker":"","execution":[{"status":"queued","error":null}],"events":[{"kind":"accepted","payload":{"tasks":1}}]}
+        
+        0 !== null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:838:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async until (/work/tests/native-agents.integration.test.ts:26:9)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:837:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:827:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Agent cancellation fences a running Function child without a second attempt
+    not ok 7 - Agent cancellation fences a running Function child without a second attempt
+      ---
+      duration_ms: 7961.823363
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:915:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:925:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:915:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: healthy long-running agent work renews the same single-attempt database lease
+    not ok 8 - healthy long-running agent work renews the same single-attempt database lease
+      ---
+      duration_ms: 10143.390035
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:990:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:995:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:990:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: bound model dispatch stops after real worker-scope revocation and cannot publish a result
+    not ok 9 - bound model dispatch stops after real worker-scope revocation and cannot publish a result
+      ---
+      duration_ms: 10129.244097
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1015:13'
+      failureType: 'testCodeFailure'
+      error: 'Real provider was not reached'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:1034:42)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1024:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1015:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: cancellation and supervisor SIGKILL fence the graph without re-executing user code
+    not ok 10 - cancellation and supervisor SIGKILL fence the graph without re-executing user code
+      ---
+      duration_ms: 10121.791608
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1073:13'
+      failureType: 'testCodeFailure'
+      error: 'Native agent did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-agents.integration.test.ts:29:10)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1078:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1073:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+    not ok 11 - real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death
+      ---
+      duration_ms: 10132.429467
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1109:13'
+      failureType: 'testCodeFailure'
+      error: 'Agent COMMIT barrier not reached'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        <anonymous> (/work/tests/native-agents.integration.test.ts:1121:44)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1118:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1109:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: registered worker class admission is independent of unrelated class ordering
+    not ok 12 - registered worker class admission is independent of unrelated class ordering
+      ---
+      duration_ms: 5589.019005
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1133:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'queued'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'queued'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1144:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1133:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+    not ok 13 - Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement
+      ---
+      duration_ms: 7980.790717
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1153:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"attemptId":"b8826414-c21c-484d-95ad-576ed8154000","correlationId":"678bd175-fccc-4418-be7e-f975af524a9d","id":"3658c909-3e7b-4805-8326-828727f7ca67","markings":[{"environment":"agents-93a8bc78-5224-47b8-8f78-249179020950","marking":"agents/Marking/Private"}],"modelCalls":[],"release":"sha256:6acae5c8e1730b167f3a0d9ccc4f865f4d4e31909ef9f5b95249244b3e4f756b","resourceId":"5f7cff5e-f74f-4f05-9a4c-31d6f4aecdd4","status":"queued","valueVersion":1}
+        + actual - expected
+        
+        + 'queued'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'queued'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1288:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1153:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+    ok 14 - accepted private job authority survives ordinary session expiry while public and stale lease credentials fail
+      ---
+      duration_ms: 14777.384578
+      type: 'test'
+      ...
+    # Subtest: newly granted tool permissions cannot widen an already accepted job capability
+    not ok 15 - newly granted tool permissions cannot widen an already accepted job capability
+      ---
+      duration_ms: 58415.021304
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1704:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"FUNCTION_OBSERVATION_INCOMPLETE","correlationId":"a82aa072-6db4-42bd-a30a-810846df279f","details":null,"message":"FUNCTION_OBSERVATION_INCOMPLETE","requestId":"a82aa072-6db4-42bd-a30a-810846df279f","retryable":false}}
+        
+        409 !== 200
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 200
+      actual: 409
+      operator: 'strictEqual'
+      stack: |-
+        get (/work/tests/native-agents.integration.test.ts:501:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1723:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1704:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: postclaim filesystem rejection records no code start after an expired original session
+    ok 16 - postclaim filesystem rejection records no code start after an expired original session
+      ---
+      duration_ms: 5631.964754
+      type: 'test'
+      ...
+    # Subtest: deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active
+    not ok 17 - deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active
+      ---
+      duration_ms: 8141.341315
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1819:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"NOT_FOUND","correlationId":"a125bf1f-3a96-40ba-a0f6-620fbd16cddf","details":null,"message":"NOT_FOUND","requestId":"a125bf1f-3a96-40ba-a0f6-620fbd16cddf","retryable":false}}
+        
+        404 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 404
+      operator: 'strictEqual'
+      stack: |-
+        enqueue (/work/tests/native-agents.integration.test.ts:495:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1894:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1819:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: accepted agent code remains pinned across redeployment and current authority gates retained results
+    not ok 18 - accepted agent code remains pinned across redeployment and current authority gates retained results
+      ---
+      duration_ms: 96.971886
+      type: 'test'
+      location: '/work/tests/native-agents.integration.test.ts:1899:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"NOT_FOUND","correlationId":"f65607c8-6201-48db-8d51-a8cf842f60ce","details":null,"message":"NOT_FOUND","requestId":"f65607c8-6201-48db-8d51-a8cf842f60ce","retryable":false}}
+        
+        404 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 404
+      operator: 'strictEqual'
+      stack: |-
+        enqueue (/work/tests/native-agents.integration.test.ts:495:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1902:21)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-agents.integration.test.ts:1899:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..18
+not ok 2 - native agent orchestration supervises the locked LangGraph adapter and protected native model/tools
+  ---
+  duration_ms: 200188.390209
+  type: 'test'
+  location: '/work/tests/native-agents.integration.test.ts:32:1'
+  failureType: 'subtestsFailed'
+  error: '12 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+    # Subtest: admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+    not ok 1 - admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+      ---
+      duration_ms: 45188.809646
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:755:13'
+      failureType: 'testCodeFailure'
+      error: '{"error":"{\\"status\\":409,\\"error\\":{\\"code\\":\\"FUNCTION_OBSERVATION_INCOMPLETE\\",\\"correlationId\\":\\"8ff4f47c-08d8-448c-a3ad-61faee002f10\\",\\"details\\":null,\\"message\\":\\"FUNCTION_OBSERVATION_INCOMPLETE\\",\\"requestId\\":\\"8ff4f47c-08d8-448c-a3ad-61faee002f10\\",\\"retryable\\":false}}","states":[{"id":"ac4638ff-b118-4f4f-8cb7-e49e0a4827da","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"8672a74d-e2bb-48fd-92e7-5652c65b57c0","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"b8e6ea1b-acdf-498f-b9eb-0278d947e32e","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"0422ef11-dabd-4f36-a2e7-856c192ebc3a","domain":"evaluation","status":"succeeded","error":null},{"id":"3b631fad-6507-42be-b5b2-3be7000c87f6","domain":"evaluation","status":"succeeded","error":null},{"id":"bdd48d25-b47c-4605-95d8-4ed759e3d92f","domain":"evaluation","status":"succeeded","error":null},{"id":"b90d6bff-c1f5-4f0a-9284-c1fe0351c0d3","domain":"evaluation","status":"succeeded","error":null},{"id":"dc974b5e-f3f3-41c8-8d89-60d4b12d5ef3","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"eb074036-2c14-4622-b2bd-813e6d404ed3","domain":"evaluation","status":"failed","error":"EVALUATION_FAILED"},{"id":"31ebc078-f783-4656-836e-9ebd431e20a8","domain":"evaluation","status":"failed","error":"JOB_PARENT_INACTIVE"},{"id":"78684648-620f-4887-91a9-eb0ca1754837","domain":"evaluation","status":"queued","error":null},{"id":"1bf4546e-7b8a-4891-8ec3-df5d8a1832ac","domain":"agent","status":"failed","error":"FUNCTION_OBSERVATION_INCOMPLETE"},{"id":"721af9a5-d58d-4e2b-8c61-e61173bc633b","domain":"agent","status":"failed","error":"FUNCTION_OBSERVATION_INCOMPLETE"},{"id":"769cbfcf-491d-4531-8a6f-2992cf4b9cca","domain":"agent","status":"succeeded","error":null},{"id":"698ba44a-22e3-4d8e-9d7b-f154296d58f0","domain":"agent","status":"succeeded","error":null},{"id":"4bd89193-f131-4cd7-97d3-92d72363c4f2","domain":"evaluator","status":"succeeded","error":null},{"id":"7efbdf74-fc92-4716-bf0d-33a8b1710227","domain":"evaluator","status":"succeeded","error":null},{"id":"fa94d8f4-fa09-4efe-b5f4-ed5c8bfb8c13","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"443bd3ed-1b7d-4625-a03f-5efe34dc2952","domain":"agent","status":"failed","error":"FUNCTION_FAILED"},{"id":"822477f3-c13f-4579-acf2-db9e7d52c6cd","domain":"agent","status":"running","error":null},{"id":"89ffb7ac-e5d9-4523-915f-b6409e24ad91","domain":"agent","status":"running","error":null}],"failures":[{"id":"31ebc078-f783-4656-836e-9ebd431e20a8","domain":"evaluation","kind":"failed","payload":{"error":"JOB_PARENT_INACTIVE"}},{"id":"eb074036-2c14-4622-b2bd-813e6d404ed3","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"JOB_PARENT_INACTIVE","sqlstate":"P0001"}},{"id":"8672a74d-e2bb-48fd-92e7-5652c65b57c0","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"FUNCTION_OBSERVATION_INCOMPLETE","sqlstate":null}},{"id":"b8e6ea1b-acdf-498f-b9eb-0278d947e32e","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"FUNCTION_OBSERVATION_INCOMPLETE","sqlstate":null}},{"id":"dc974b5e-f3f3-41c8-8d89-60d4b12d5ef3","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"JOB_PARENT_INACTIVE","sqlstate":"P0001"}},{"id":"ac4638ff-b118-4f4f-8cb7-e49e0a4827da","domain":"evaluation","kind":"failed","payload":{"code":"EVALUATION_FAILED","cause":"RESOURCE_BUSY","sqlstate":"55P03"}},{"id":"1bf4546e-7b8a-4891-8ec3-df5d8a1832ac","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_OBSERVATION_INCOMPLETE"}},{"id":"721af9a5-d58d-4e2b-8c61-e61173bc633b","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_OBSERVATION_INCOMPLETE"}},{"id":"fa94d8f4-fa09-4efe-b5f4-ed5c8bfb8c13","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}},{"id":"443bd3ed-1b7d-4625-a03f-5efe34dc2952","domain":"agent","kind":"failed","payload":{"error":"FUNCTION_FAILED"}}],"agentModelCalls":[{"logical_id":"decision","status":102,"error":null},{"logical_id":"decision","status":102,"error":null}],"gatewayCalls":[{"state":"running","error":null},{"state":"succeeded","error":null}],"sandboxObservations":[{"id":"1bf4546e-7b8a-4891-8ec3-df5d8a1832ac","domain":"agent","status":"failed","case_id":"pass","repeat":0,"state":"failed","error":"FUNCTION_OBSERVATION_INCOMPLETE","observation_pending":"1","observation_blocked":true},{"id":"721af9a5-d58d-4e2b-8c61-e61173bc633b","domain":"agent","status":"failed","case_id":"pass","repeat":1,"state":"failed","error":"FUNCTION_OBSERVATION_INCOMPLETE","observation_pending":"1","observation_blocked":true},{"id":"769cbfcf-491d-4531-8a6f-2992cf4b9cca","domain":"agent","status":"succeeded","case_id":"fail","repeat":0,"state":"sealed","error":null,"observation_pending":null,"observation_blocked":false},{"id":"698ba44a-22e3-4d8e-9d7b-f154296d58f0","domain":"agent","status":"succeeded","case_id":"fail","repeat":1,"state":"sealed","error":null,"observation_pending":null,"observation_blocked":false},{"id":"4bd89193-f131-4cd7-97d3-92d72363c4f2","domain":"evaluator","status":"succeeded","case_id":"fail","repeat":1,"state":"sealed","error":null,"observation_pending":null,"observation_blocked":false},{"id":"7efbdf74-fc92-4716-bf0d-33a8b1710227","domain":"evaluator","status":"succeeded","case_id":"fail","repeat":0,"state":"sealed","error":null,"observation_pending":null,"observation_blocked":false},{"id":"fa94d8f4-fa09-4efe-b5f4-ed5c8bfb8c13","domain":"agent","status":"failed","case_id":"error","repeat":0,"state":"failed","error":"FUNCTION_FAILED","observation_pending":null,"observation_blocked":false},{"id":"443bd3ed-1b7d-4625-a03f-5efe34dc2952","domain":"agent","status":"failed","case_id":"error","repeat":1,"state":"failed","error":"FUNCTION_FAILED","observation_pending":null,"observation_blocked":false},{"id":"822477f3-c13f-4579-acf2-db9e7d52c6cd","domain":"agent","status":"running","case_id":"model","repeat":0,"state":"running","error":null,"observation_pending":"1","observation_blocked":false},{"id":"89ffb7ac-e5d9-4523-915f-b6409e24ad91","domain":"agent","status":"running","case_id":"model","repeat":1,"state":"running","error":null,"observation_pending":"1","observation_blocked":false}]}'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        <anonymous> (/work/tests/native-evaluations.integration.test.ts:742:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async <anonymous> (/work/tests/native-evaluations.integration.test.ts:734:18)
+        async until (/work/tests/native-evaluations.integration.test.ts:26:9)
+        async terminal (/work/tests/native-evaluations.integration.test.ts:727:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:803:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:755:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: repeats stay separate and comparison rejects a different evaluator version
+    not ok 2 - repeats stay separate and comparison rejects a different evaluator version
+      ---
+      duration_ms: 249.815755
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:914:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+          [
+            '0d60fefa-065f-4722-8747-3baa18559a24:run',
+        +   'ceda6cbd-6a37-4bae-ae49-b3911f403196:invoke'
+          ]
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        0: '0d60fefa-065f-4722-8747-3baa18559a24:run'
+      actual:
+        0: '0d60fefa-065f-4722-8747-3baa18559a24:run'
+        1: 'ceda6cbd-6a37-4bae-ae49-b3911f403196:invoke'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:927:18)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:914:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: public SDK and CLI inspect the same native receipt and preserve logical replay
+    not ok 3 - public SDK and CLI inspect the same native receipt and preserve logical replay
+      ---
+      duration_ms: 575.021743
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:962:13'
+      failureType: 'testCodeFailure'
+      error: 'FUNCTION_OBSERVATION_INCOMPLETE'
+      code: 'FUNCTION_OBSERVATION_INCOMPLETE'
+      name: 'ApiError'
+      stack: |-
+        decode (/work/packages/platform/src/transport.ts:85:13)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:975:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:962:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: cancelling a run fences every accepted descendant and stops live model and OCI work
+    ok 4 - cancelling a run fences every accepted descendant and stops live model and OCI work
+      ---
+      duration_ms: 41957.227172
+      type: 'test'
+      ...
+    # Subtest: a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+    not ok 5 - a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL
+      ---
+      duration_ms: 91192.899421
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:1083:13'
+      failureType: 'testCodeFailure'
+      error: '{"status":409,"error":{"code":"FUNCTION_OBSERVATION_INCOMPLETE","correlationId":"8d111d4c-c134-4b51-a6d6-bdf831da3ce6","details":null,"message":"FUNCTION_OBSERVATION_INCOMPLETE","requestId":"8d111d4c-c134-4b51-a6d6-bdf831da3ce6","retryable":false}}'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        native (/work/tests/native-evaluations.integration.test.ts:610:31)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async <anonymous> (/work/tests/native-evaluations.integration.test.ts:1112:27)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:1101:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:1083:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: direct Agent results retain the actual private fixture input authority
+    not ok 6 - direct Agent results retain the actual private fixture input authority
+      ---
+      duration_ms: 569.141555
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:1177:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /FORBIDDEN/. Input:
+        
+        'Error: Native evaluation models status failed 1: {"error":"FUNCTION_OBSERVATION_INCOMPLETE"}\n'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: |-
+        Native evaluation models status failed 1: {"error":"FUNCTION_OBSERVATION_INCOMPLETE"}
+        
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-evaluations.integration.test.ts:563:17)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:1216:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:1177:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes
+    not ok 7 - a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes
+      ---
+      duration_ms: 86110.482154
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:1236:13'
+      failureType: 'testCodeFailure'
+      error: 'Native evaluation did not reach its real lifecycle barrier'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      operator: 'fail'
+      stack: |-
+        until (/work/tests/native-evaluations.integration.test.ts:29:10)
+        async terminal (/work/tests/native-evaluations.integration.test.ts:727:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:1339:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:1236:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current clearance and registration protect retained case scores, summaries and events
+    ok 8 - current clearance and registration protect retained case scores, summaries and events
+      ---
+      duration_ms: 474.589551
+      type: 'test'
+      ...
+    1..8
+not ok 3 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 292179.81466
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:32:1'
+  failureType: 'subtestsFailed'
+  error: '6 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native execution authority schedules, fences and composes completion with real publication
+    # Subtest: typed logical requests deduplicate and their pinned inputs cannot mutate
+    ok 1 - typed logical requests deduplicate and their pinned inputs cannot mutate
+      ---
+      duration_ms: 432.386603
+      type: 'test'
+      ...
+    # Subtest: independent native claims obey class admission and stale owners cannot renew or seal
+    ok 2 - independent native claims obey class admission and stale owners cannot renew or seal
+      ---
+      duration_ms: 1395.725136
+      type: 'test'
+      ...
+    # Subtest: task sealing is private; publication and business completion commit or roll back together
+    ok 3 - task sealing is private; publication and business completion commit or roll back together
+      ---
+      duration_ms: 486.158046
+      type: 'test'
+      ...
+    # Subtest: accepted work survives killing Rust before the real commit response arrives
+    ok 4 - accepted work survives killing Rust before the real commit response arrives
+      ---
+      duration_ms: 260.45226
+      type: 'test'
+      ...
+    # Subtest: single-attempt function work is never re-executed after lease loss
+    not ok 5 - single-attempt function work is never re-executed after lease loss
+      ---
+      duration_ms: 211.069297
+      type: 'test'
+      location: '/work/tests/native-execution.integration.test.ts:343:13'
+      failureType: 'testCodeFailure'
+      error: 'spawn /usr/local/bin/moria-native-sandbox-test ENOENT'
+      code: 'ENOENT'
+      stack: |-
+        ChildProcess._handle.onexit (node:internal/child_process:316:19)
+        onErrorNT (node:internal/child_process:554:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+      ...
+    # Subtest: database deadlines and event bounds remain authoritative
+    ok 6 - database deadlines and event bounds remain authoritative
+      ---
+      duration_ms: 3725.142289
+      type: 'test'
+      ...
+    # Subtest: disabled sessions fail dispatch before any attempt is recorded
+    ok 7 - disabled sessions fail dispatch before any attempt is recorded
+      ---
+      duration_ms: 310.412575
+      type: 'test'
+      ...
+    # Subtest: persistent native scheduler starts before inherited stdin closes
+    ok 8 - persistent native scheduler starts before inherited stdin closes
+      ---
+      duration_ms: 189.11743
+      type: 'test'
+      ...
+    # Subtest: parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+    ok 9 - parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+      ---
+      duration_ms: 783.783881
+      type: 'test'
+      ...
+    1..9
+not ok 4 - native execution authority schedules, fences and composes completion with real publication
+  ---
+  duration_ms: 14344.192286
+  type: 'test'
+  location: '/work/tests/native-execution.integration.test.ts:11:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: caught secondary link-cardinality failure retains its complete native outcome and rolls replay effects back
+ok 5 - caught secondary link-cardinality failure retains its complete native outcome and rolls replay effects back
+  ---
+  duration_ms: 11695.897558
+  type: 'test'
+  ...
+# Subtest: native function global aggregate evidence is bounded and protects retained results and logs
+    # Subtest: actual OCI code records a bounded summary and retained protected classification
+    ok 1 - actual OCI code records a bounded summary and retained protected classification
+      ---
+      duration_ms: 3060.582839
+      type: 'test'
+      ...
+    # Subtest: edit-proposal ancestry cannot consume an aggregate
+    ok 2 - edit-proposal ancestry cannot consume an aggregate
+      ---
+      duration_ms: 1409.007828
+      type: 'test'
+      ...
+    1..2
+ok 6 - native function global aggregate evidence is bounded and protects retained results and logs
+  ---
+  duration_ms: 10166.441951
+  type: 'test'
+  ...
+# Subtest: native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+    # Subtest: authenticated admission pins release/actor/input, rejects forged fields and generic function workers
+    ok 1 - authenticated admission pins release/actor/input, rejects forged fields and generic function workers
+      ---
+      duration_ms: 1871.773866
+      type: 'test'
+      ...
+    # Subtest: a lost public acceptance response and API process death replay one durable invocation
+    ok 2 - a lost public acceptance response and API process death replay one durable invocation
+      ---
+      duration_ms: 1558.197927
+      type: 'test'
+      ...
+    # Subtest: deployed code cannot change an accepted release or replay schema
+    not ok 3 - deployed code cannot change an accepted release or replay schema
+      ---
+      duration_ms: 2147.670458
+      type: 'test'
+      location: '/work/tests/native-functions.integration.test.ts:587:13'
+      failureType: 'testCodeFailure'
+      error: "Cannot read properties of undefined (reading 'value')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-functions.integration.test.ts:607:38)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-functions.integration.test.ts:587:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: real native broker preserves reads and committed readWrite effects after later code failure
+    ok 4 - real native broker preserves reads and committed readWrite effects after later code failure
+      ---
+      duration_ms: 5593.357216
+      type: 'test'
+      ...
+    # Subtest: editProposal batch and function receipt commit together; rejection or result failure rolls all edits back
+    ok 5 - editProposal batch and function receipt commit together; rejection or result failure rolls all edits back
+      ---
+      duration_ms: 6682.816355
+      type: 'test'
+      ...
+    # Subtest: live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation
+    ok 6 - live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation
+      ---
+      duration_ms: 817.260339
+      type: 'test'
+      ...
+    # Subtest: cancellation and supervisor death fence the only attempt and remove local orphans
+    ok 7 - cancellation and supervisor death fence the only attempt and remove local orphans
+      ---
+      duration_ms: 1819.590823
+      type: 'test'
+      ...
+    # Subtest: actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL
+    ok 8 - actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL
+      ---
+      duration_ms: 2834.509016
+      type: 'test'
+      ...
+    # Subtest: a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success
+    ok 9 - a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success
+      ---
+      duration_ms: 5117.553763
+      type: 'test'
+      ...
+    # Subtest: native worker pool supports bounded nested invocations and function-backed action preparation
+    ok 10 - native worker pool supports bounded nested invocations and function-backed action preparation
+      ---
+      duration_ms: 6636.967665
+      type: 'test'
+      ...
+    # Subtest: worker CLI rejects missing native configuration before creating a workspace or Node worker
+    ok 11 - worker CLI rejects missing native configuration before creating a workspace or Node worker
+      ---
+      duration_ms: 242.944757
+      type: 'test'
+      ...
+    # Subtest: a public function catching a protected missing-object read retains its labels and failed observation
+    ok 12 - a public function catching a protected missing-object read retains its labels and failed observation
+      ---
+      duration_ms: 6528.842501
+      type: 'test'
+      ...
+    # Subtest: a killed callback with rolled-back private evidence cannot release failure metadata or logs
+    ok 13 - a killed callback with rolled-back private evidence cannot release failure metadata or logs
+      ---
+      duration_ms: 1160.610335
+      type: 'test'
+      ...
+    # Subtest: a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically
+    ok 14 - a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically
+      ---
+      duration_ms: 4563.723861
+      type: 'test'
+      ...
+    # Subtest: exact Function invocation scopes run without filesystem browsing and remain pinned on acceptance
+    ok 15 - exact Function invocation scopes run without filesystem browsing and remain pinned on acceptance
+      ---
+      duration_ms: 1473.016591
+      type: 'test'
+      ...
+    # Subtest: changed read evidence and revoked access withhold retained results and protected logs
+    ok 16 - changed read evidence and revoked access withhold retained results and protected logs
+      ---
+      duration_ms: 1995.450947
+      type: 'test'
+      ...
+    1..16
+not ok 7 - native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+  ---
+  duration_ms: 55687.284898
+  type: 'test'
+  location: '/work/tests/native-functions.integration.test.ts:31:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 143.309166
+      type: 'test'
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+      ---
+      duration_ms: 180.436376
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 282.993296
+      type: 'test'
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential
+      ---
+      duration_ms: 295.53121
+      type: 'test'
+      ...
+    # Subtest: missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+    ok 5 - missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+      ---
+      duration_ms: 437.225853
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    ok 6 - current target, application, grants, clearance, worker scope and actor disable revoke private authority
+      ---
+      duration_ms: 1449.279155
+      type: 'test'
+      ...
+    # Subtest: missed principal, application and instance disable pulses require explicit fresh service reapproval
+    ok 7 - missed principal, application and instance disable pulses require explicit fresh service reapproval
+      ---
+      duration_ms: 1693.739223
+      type: 'test'
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    ok 8 - an unobserved worker disable and restore cannot revive a live lease or private credential
+      ---
+      duration_ms: 369.095511
+      type: 'test'
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    ok 9 - a genuinely expired worker registration remains fenced after its expiry is extended
+      ---
+      duration_ms: 2520.062972
+      type: 'test'
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    ok 10 - lease takeover invalidates the old private credential and replacement capabilities remain bounded
+      ---
+      duration_ms: 410.334228
+      type: 'test'
+      ...
+    1..10
+ok 8 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 10424.885616
+  type: 'test'
+  ...
+1..8
+# tests 71
+# suites 0
+# pass 47
+# fail 24
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 597363.997432

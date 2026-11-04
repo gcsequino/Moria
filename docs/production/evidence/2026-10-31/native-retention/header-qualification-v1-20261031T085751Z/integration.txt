@@ -1,0 +1,813 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+    not ok 1 - reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+      ---
+      duration_ms: 69.371829
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:286:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before reader_window_ready: 
+        thread 'catalog_publication' (98) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:295:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:286:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    not ok 2 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 58.142881
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:355:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (103) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:360:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:355:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    not ok 3 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 60.263617
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:408:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before read: 
+        thread 'catalog_publication' (108) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:434:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:408:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    not ok 4 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 8.651354
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:439:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:443:46)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:439:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    not ok 5 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 43.138298
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:479:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /UNDECLARED_DATASET/. Input:
+        
+        'Error: Native catalog exited 101: \n' +
+          "thread 'catalog_publication' (114) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:\n" +
+          'called `Result::unwrap()` on an `Err` value: db error\n' +
+          '\n' +
+          'Caused by:\n' +
+          '    ERROR: INCOMPATIBLE_SCHEMA\n' +
+          'note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n' +
+          '\n' +
+          '\n' +
+          'running 1 test\n' +
+          'test catalog_publication ... FAILED\n' +
+          '\n' +
+          'failures:\n' +
+          '\n' +
+          'failures:\n' +
+          '    catalog_publication\n' +
+          '\n' +
+          'test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s\n' +
+          '\n'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: |-
+        Native catalog exited 101: 
+        thread 'catalog_publication' (114) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-catalog.integration.test.ts:226:20)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:488:7)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:479:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    not ok 6 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 13.961906
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:490:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:501:20)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:490:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    not ok 7 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 14.433661
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:582:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:586:34)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:582:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    not ok 8 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 13.713987
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:593:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:596:38)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:593:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    not ok 9 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 13.411096
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:608:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:610:32)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:608:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    not ok 10 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 13.731194
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:617:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:619:32)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:617:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    not ok 11 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 13.197056
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:635:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:637:32)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:635:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    not ok 12 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 15.240439
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:648:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:137:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:658:34)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:648:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    not ok 13 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 63.797845
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:702:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /FORBIDDEN/. Input:
+        
+        'Error: Native catalog exited 101: \n' +
+          "thread 'catalog_publication' (126) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:\n" +
+          'called `Result::unwrap()` on an `Err` value: db error\n' +
+          '\n' +
+          'Caused by:\n' +
+          '    ERROR: INCOMPATIBLE_SCHEMA\n' +
+          'note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n' +
+          '\n' +
+          '\n' +
+          'running 1 test\n' +
+          'test catalog_publication ... FAILED\n' +
+          '\n' +
+          'failures:\n' +
+          '\n' +
+          'failures:\n' +
+          '    catalog_publication\n' +
+          '\n' +
+          'test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s\n' +
+          '\n'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: |-
+        Native catalog exited 101: 
+        thread 'catalog_publication' (126) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-catalog.integration.test.ts:226:20)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:713:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:702:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    not ok 14 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 564.212671
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:730:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited 101: 
+        thread 'catalog_publication' (154) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-catalog.integration.test.ts:226:20)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        not ok 1 - posix
+          ---
+          duration_ms: 68.590534
+          type: 'test'
+          location: '/work/tests/native-catalog.integration.test.ts:792:19'
+          failureType: 'testCodeFailure'
+          error: |-
+            Native catalog exited before prepared: 
+            thread 'catalog_publication' (159) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+            called `Result::unwrap()` on an `Err` value: db error
+            
+            Caused by:
+                ERROR: INCOMPATIBLE_SCHEMA
+            note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+            
+            
+            running 1 test
+            test catalog_publication ... FAILED
+            
+            failures:
+            
+            failures:
+                catalog_publication
+            
+            test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+            
+            
+          code: 'ERR_TEST_FAILURE'
+          stack: |-
+            Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:854:32)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:792:11)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:788:5)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+          ...
+        # Subtest: s3
+        not ok 2 - s3
+          ---
+          duration_ms: 68.400283
+          type: 'test'
+          location: '/work/tests/native-catalog.integration.test.ts:792:19'
+          failureType: 'testCodeFailure'
+          error: |-
+            Native catalog exited before prepared: 
+            thread 'catalog_publication' (164) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+            called `Result::unwrap()` on an `Err` value: db error
+            
+            Caused by:
+                ERROR: INCOMPATIBLE_SCHEMA
+            note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+            
+            
+            running 1 test
+            test catalog_publication ... FAILED
+            
+            failures:
+            
+            failures:
+                catalog_publication
+            
+            test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+            
+            
+          code: 'ERR_TEST_FAILURE'
+          stack: |-
+            Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:854:32)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:792:11)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:788:5)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+          ...
+        1..2
+    not ok 15 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 194.121842
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:788:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before denied: 
+        thread 'catalog_publication' (169) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:909:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:788:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    not ok 16 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 56.843136
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:915:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before prepared: 
+        thread 'catalog_publication' (174) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+        called `Result::unwrap()` on an `Err` value: db error
+        
+        Caused by:
+            ERROR: INCOMPATIBLE_SCHEMA
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:239:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:920:22)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:915:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 17 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 47.320431
+      type: 'test'
+      ...
+    1..17
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 3986.778477
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:17:1'
+  failureType: 'subtestsFailed'
+  error: '16 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: actual accepted verifier scopes bound encoded multi-column row-group header IO
+not ok 2 - actual accepted verifier scopes bound encoded multi-column row-group header IO
+  ---
+  duration_ms: 1754.537452
+  type: 'test'
+  location: '/work/tests/native-header-window.integration.test.ts:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    identity: 
+    thread 'catalog_publication' (243) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+    called `Result::unwrap()` on an `Err` value: db error
+    
+    Caused by:
+        ERROR: INCOMPATIBLE_SCHEMA
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+    
+    running 1 test
+    test catalog_publication ... FAILED
+    
+    failures:
+    
+    failures:
+        catalog_publication
+    
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.04s
+    
+    
+    
+    101 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 101
+  operator: 'strictEqual'
+  stack: |-
+    run (/work/benchmarks/native-projection.ts:231:14)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:256:5)
+    async TestContext.<anonymous> (/work/tests/native-header-window.integration.test.ts:17:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: native effective projections build off-lock, replay concurrent edits and activate with source generations
+not ok 3 - native effective projections build off-lock, replay concurrent edits and activate with source generations
+  ---
+  duration_ms: 2453.697151
+  type: 'test'
+  location: '/work/tests/native-projection.integration.test.ts:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: /usr/local/bin/moria-catalog-tests --ignored --exact catalog_publication --nocapture --test-threads=1
+    
+    thread 'catalog_publication' (303) panicked at ../../tests/fixtures/native-catalog/harness.rs:246:10:
+    called `Result::unwrap()` on an `Err` value: db error
+    
+    Caused by:
+        ERROR: INCOMPATIBLE_SCHEMA
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+  code: 101
+  stack: |-
+    genericNodeError (node:internal/errors:986:15)
+    wrappedFn (node:internal/errors:540:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:514:28)
+    maybeClose (node:internal/child_process:1172:16)
+    ChildProcess._handle.onexit (node:internal/child_process:335:5)
+  ...
+# Subtest: explicit retention controls exact-issued versioned backup reclamation and real claim fences
+    # Subtest: fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+    not ok 1 - fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+      ---
+      duration_ms: 45.169277
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:208:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native command failed 1: {"databaseCode":"P0001","error":"INDEXING_DATABASE_ERROR"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-retention.integration.test.ts:121:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: no policy means no collection, and explicit historical retirement removes only its qualified version
+    not ok 2 - no policy means no collection, and explicit historical retirement removes only its qualified version
+      ---
+      duration_ms: 53.428581
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:242:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native command failed 1: {"error":"INDEXING_DATABASE_ERROR"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-retention.integration.test.ts:121:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: a retained foreign root blocks planning even for an expired retired producer
+    not ok 3 - a retained foreign root blocks planning even for an expired retired producer
+      ---
+      duration_ms: 47.224137
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:272:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native command failed 1: {"databaseCode":"P0001","error":"INDEXING_DATABASE_ERROR"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-retention.integration.test.ts:121:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: policy revocation after a held HEAD prevents the removal effect
+    not ok 4 - policy revocation after a held HEAD prevents the removal effect
+      ---
+      duration_ms: 49.032067
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:307:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native command failed 1: {"error":"INDEXING_DATABASE_ERROR"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-retention.integration.test.ts:121:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: real expired claim ownership is fenced before a replacement removes the version
+    not ok 5 - real expired claim ownership is fenced before a replacement removes the version
+      ---
+      duration_ms: 49.222868
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:324:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native command failed 1: {"error":"INDEXING_DATABASE_ERROR"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-retention.integration.test.ts:121:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    # Subtest: unqualified null-version objects stay unsupported and are never deleted
+    not ok 6 - unqualified null-version objects stay unsupported and are never deleted
+      ---
+      duration_ms: 71.940102
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:399:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native command failed 1: {"error":"INDEXING_DATABASE_ERROR"}
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-retention.integration.test.ts:121:22)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      ...
+    1..6
+not ok 4 - explicit retention controls exact-issued versioned backup reclamation and real claim fences
+  ---
+  duration_ms: 2886.956186
+  type: 'test'
+  location: '/work/tests/native-retention.integration.test.ts:17:1'
+  failureType: 'subtestsFailed'
+  error: '6 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..4
+# tests 29
+# suites 0
+# pass 1
+# fail 28
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12284.92932

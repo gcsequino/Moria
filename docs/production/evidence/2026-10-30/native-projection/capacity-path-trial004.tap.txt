@@ -1,0 +1,15 @@
+TAP version 13
+# Subtest: native capacity preparation uses permanent UID allocation, bounded real source production and complete native checksums
+not ok 1 - native capacity preparation uses permanent UID allocation, bounded real source production and complete native checksums
+  ---
+  duration_ms: 2564.642407
+  type: 'test'
+  location: '/work/tests/native-projection-capacity.integration.test.ts:8:1'
+  failureType: 'testCodeFailure'
+  error: 'spawn /work/.venv/bin/python ENOENT'
+  code: 'ENOENT'
+  stack: |-
+    ChildProcess._handle.onexit (node:internal/child_process:316:19)
+    onErrorNT (node:internal/child_process:554:16)
+    process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+  ...

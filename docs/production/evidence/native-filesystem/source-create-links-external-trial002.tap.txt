@@ -1,0 +1,11 @@
+▶ native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ✔ action creation allocates once and enforces source attachment and required overrides (80391.7547ms)
+✔ native source composition requires explicit current Dataset/index authority and installs all bindings atomically (94084.327606ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94933.696586

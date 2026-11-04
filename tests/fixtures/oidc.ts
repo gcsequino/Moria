@@ -8,7 +8,13 @@ export async function oidcFixture() {
     wrongKeys = await generateKeyPair('RS256');
   const jwk = { ...(await exportJWK(keys.publicKey)), kid: 'test', alg: 'RS256', use: 'sig' };
   const codes = new Map<string, URLSearchParams>();
-  const state = { subject: 'subject-1', email: 'snow@example.test', mode: '', userInfoCalls: 0 };
+  const state = {
+    subject: 'subject-1',
+    email: 'snow@example.test',
+    mode: '',
+    userInfoCalls: 0,
+    beforeUserInfo: undefined as undefined | (() => Promise<void>),
+  };
   let issuer = '';
   const server = createServer(async (req, res) => {
     const send = (status: number, value: unknown) => {
@@ -73,6 +79,7 @@ export async function oidcFixture() {
       });
     }
     if (url.pathname === '/userinfo') {
+      await state.beforeUserInfo?.();
       state.userInfoCalls++;
       if (state.mode === 'unavailable') return send(503, { error: 'unavailable' });
       return send(200, {

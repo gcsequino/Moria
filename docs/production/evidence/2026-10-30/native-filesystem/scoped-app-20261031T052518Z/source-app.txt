@@ -1,0 +1,67 @@
+TAP version 13
+# Subtest: default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+not ok 1 - default local launcher hosts native HTTP and scheduler with a separate bounded auth listener
+  ---
+  duration_ms: 3102.834085
+  type: 'test'
+  location: '/work/tests/native-local-runtime.integration.test.ts:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"address":"127.0.0.1:43497","event":"serving"}
+    Moria native API: http://127.0.0.1:43497/
+    Management recovery: pnpm moria auth recover --app management
+    {"event":"native-local-ready"}
+    
+    
+    143 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 143
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/work/tests/native-local-runtime.integration.test.ts:149:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    not ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 27148.539717
+      type: 'test'
+      location: '/work/tests/native-source-runtime.integration.test.ts:545:13'
+      failureType: 'testCodeFailure'
+      error: 'relation "moria.principal_bindings" does not exist'
+      code: '42P01'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:1147:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-source-runtime.integration.test.ts:545:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..1
+not ok 2 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 36414.699481
+  type: 'test'
+  location: '/work/tests/native-source-runtime.integration.test.ts:22:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40376.088131

@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "profile": "real PostgreSQL, registered native execution, OCI isolation and durable callback observations",
+  "acceptedDeadlinesChanged": false,
+  "latestPassed": "011",
+  "trials": [
+    {
+      "trial": "001",
+      "status": "failed",
+      "counts": {
+        "tests": 48,
+        "pass": 42,
+        "fail": 6,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-001-failed.tap",
+      "sourceManifest": "native-observation-journal-20261030-trial-001-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-001-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-001-schema.json"
+    },
+    {
+      "trial": "002",
+      "status": "passed",
+      "counts": {
+        "tests": 48,
+        "pass": 48,
+        "fail": 0,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-002-passed.tap",
+      "sourceManifest": "native-observation-journal-20261030-trial-002-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-002-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-002-schema.json"
+    },
+    {
+      "trial": "003",
+      "status": "failed",
+      "counts": {
+        "tests": 36,
+        "pass": 35,
+        "fail": 1,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-003-failed.tap",
+      "sourceManifest": "native-observation-journal-20261030-trial-003-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-003-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-003-schema.json"
+    },
+    {
+      "trial": "004",
+      "status": "failed",
+      "counts": {
+        "tests": 52,
+        "pass": 46,
+        "fail": 6,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-004-failed.tap",
+      "sourceManifest": "native-observation-journal-20261030-trial-004-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-004-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-004-schema.json"
+    },
+    {
+      "trial": "005",
+      "status": "failed",
+      "counts": {
+        "tests": 17,
+        "pass": 13,
+        "fail": 4,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-005-failed.tap",
+      "sourceManifest": "native-observation-journal-20261030-trial-005-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-005-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-005-schema.json"
+    },
+    {
+      "trial": "006",
+      "status": "failed",
+      "counts": {
+        "tests": 34,
+        "pass": 30,
+        "fail": 4,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-006-failed.tap",
+      "rawSha256": "831733cea02df5b04aa64664271c5fb89f7521997b4f899a999262d1f4996b24",
+      "sourceManifest": "native-observation-journal-20261030-trial-006-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-006-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-006-schema.json",
+      "note": "Actual generic child invocation caught a fixture descriptor/parent envelope mismatch; strong authority assertions retained."
+    },
+    {
+      "trial": "007",
+      "status": "failed",
+      "counts": {
+        "tests": 16,
+        "pass": 13,
+        "fail": 3,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-007-failed.tap",
+      "rawSha256": "046224ef90f3a2444d1268f4534705d8bd20ab31d3610fa8e987ef1fa53d0a43",
+      "sourceManifest": "native-observation-journal-20261030-trial-007-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-007-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-007-schema.json",
+      "note": "Child fixture registration and source export were incomplete; no service-purpose guard was widened."
+    },
+    {
+      "trial": "008",
+      "status": "failed",
+      "counts": {
+        "tests": 17,
+        "pass": 14,
+        "fail": 3,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-008-failed.tap",
+      "rawSha256": "76480e04f860be2ec0a191cd550cda00f11abdd8fa048b3c93c7622dfb9ed25f",
+      "sourceManifest": "native-observation-journal-20261030-trial-008-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-008-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-008-schema.json",
+      "note": "Child fixture metadata remained invalid before code execution; corrected the actual published export."
+    },
+    {
+      "trial": "009",
+      "status": "failed",
+      "counts": {
+        "tests": 17,
+        "pass": 15,
+        "fail": 2,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-009-failed.tap",
+      "rawSha256": "b3d61d04907d0a6b3c52cff60820065e980514c2efe46fb35fe27002d3ea3a0e",
+      "sourceManifest": "native-observation-journal-20261030-trial-009-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-009-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-009-schema.json",
+      "note": "Real failed-child observation exposed a pending log/error handshake; uncertainty remained fail-closed."
+    },
+    {
+      "trial": "010",
+      "status": "passed",
+      "counts": {
+        "tests": 17,
+        "pass": 17,
+        "fail": 0,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-010-passed.tap",
+      "rawSha256": "fd9aa7efc3704cbbb61ecc330432078f08c9ef91f341c1cc28d7048e0343191a",
+      "sourceManifest": "native-observation-journal-20261030-trial-010-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-010-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-010-schema.json",
+      "note": "All seventeen tests passed, including ordinary Agent-to-Function ancestry, private failed child, cancellation, and secondary action-outcome replay."
+    },
+    {
+      "trial": "011",
+      "status": "passed",
+      "counts": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-011-passed.tap",
+      "rawSha256": "cb66d160ad481b138adc011e8aabf6279bf1bef045de3d3185ea67cf2dd4c95e",
+      "sourceManifest": "native-observation-journal-20261030-trial-011-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-011-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-011-schema.json",
+      "note": "All ten actual PostgreSQL service-authority tests passed, including missed target/authority off-on pulses and immutable captured generations."
+    },
+    {
+      "trial": "012",
+      "status": "failed",
+      "counts": {
+        "tests": 20,
+        "pass": 18,
+        "fail": 2,
+        "skipped": 0
+      },
+      "raw": "native-observation-journal-20261030-trial-012-failed.tap",
+      "rawSha256": "50c3b6aa7793583654f90f58043d4c20e7f789ff60e1196f7f67c1d2a8d91aaf",
+      "sourceManifest": "native-observation-journal-20261030-trial-012-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-012-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-012-schema.json",
+      "note": "Eighteen of twenty assertions passed. Scheduler fixture stopped after seeing the durable firing but before receiving the native scheduled stdout frame; the test now waits for both barriers."
+    },
+    {
+      "trial": "013",
+      "status": "failed",
+      "counts": { "tests": 39, "pass": 34, "fail": 5, "skipped": 0 },
+      "raw": "native-observation-journal-20261030-trial-013-failed.tap",
+      "rawSha256": "78a240751c3fd5ddcb4ba69bdc1adca6decb38c85c7c5590a13b2bd96503ed08",
+      "sourceManifest": "native-observation-journal-20261030-trial-013-source.json",
+      "runtimeMetadata": "native-observation-journal-20261030-trial-013-runtime.json",
+      "schema": "native-observation-journal-20261030-trial-013-schema.json",
+      "note": "Execution, service-generation, ordinary ancestry, 72-class registered discovery and secondary Action outcome cases passed. Agent subtests exposed a running Model record after supervisor revocation, Automation timestamp ToSql mismatch, and physical Source fixture declarations inconsistent with redeployed/withdrawn Agent exports. The raw failure is retained; fixes require a fresh proof."
+    }
+  ],
+  "latestPassedScope": "Service authority generation suite only; the latest full callback regression is trial002, and generic Agent/Function ancestry is trial010."
+}

@@ -1,0 +1,118 @@
+syntax = "proto3";
+package moria.runtime.v1;
+
+// Authentication is established by mutual TLS; this envelope is not an actor assertion.
+message RequestContext {
+  uint32 protocol_version = 1;
+  string request_id = 2;
+  string incarnation = 3;
+  string environment_id = 4;
+  uint64 deadline_unix_ms = 5;
+}
+message CapabilityRequest { RequestContext context = 1; }
+message Capability {
+  string name = 1;
+  string interface_kind = 2;
+  uint32 version = 3;
+}
+message Capabilities {
+  uint32 protocol_version = 1;
+  uint32 value_version = 2;
+  string source_digest = 3;
+  string incarnation = 4;
+  uint64 database_time_unix_ms = 5;
+  repeated Capability implemented = 6;
+}
+service RuntimeMetadata {
+  rpc InspectCapabilities(CapabilityRequest) returns (Capabilities);
+}
+
+message DomainOwner {
+  string cell_id = 1;
+  uint64 fence = 2;
+  string incarnation = 3;
+}
+message ResolveIdentitiesRequest {
+  RequestContext context = 1;
+  string domain = 2;
+  DomainOwner owner = 3;
+  repeated string canonical_keys = 4;
+}
+message ResolvedIdentities { repeated string uids = 1; }
+message TransferDomainRequest {
+  RequestContext context = 1;
+  string domain = 2;
+  DomainOwner expected = 3;
+  string next_cell_id = 4;
+}
+service IdentityAuthority {
+  rpc ResolveIdentities(ResolveIdentitiesRequest) returns (ResolvedIdentities);
+  rpc TransferDomain(TransferDomainRequest) returns (DomainOwner);
+}
+
+message InspectPlacementRequest { RequestContext context = 1; }
+message EnvironmentPlacement {
+  string environment_id = 1;
+  DomainOwner owner = 2;
+  string endpoint_ref = 3;
+  bool serving = 4;
+  bool leases_fenced = 5;
+}
+message FreezePlacementRequest {
+  RequestContext context = 1;
+  DomainOwner expected = 2;
+  string next_cell_id = 3;
+}
+message ActivatePlacementRequest { RequestContext context = 1; DomainOwner expected = 2; }
+service EnvironmentDirectory {
+  rpc InspectPlacement(InspectPlacementRequest) returns (EnvironmentPlacement);
+  rpc FreezePlacement(FreezePlacementRequest) returns (EnvironmentPlacement);
+  rpc ActivatePlacement(ActivatePlacementRequest) returns (EnvironmentPlacement);
+}
+
+// JSON bytes use the exact value-model-v1 envelope; 64-bit values are strings.
+// Binding definitions, actors, executable code and credentials are never supplied here.
+message TaskPlan { string key = 1; optional uint32 partition = 2; }
+message RequestExecutionRequest {
+  RequestContext context = 1;
+  string binding_id = 2;
+  string request_key = 3;
+  bytes input_value_json = 4;
+  repeated TaskPlan tasks = 5;
+}
+message ExecutionId { string id = 1; }
+message InspectExecutionRequest { RequestContext context = 1; string id = 2; }
+message ExecutionState { bytes value_json = 1; }
+message ClaimTaskRequest { RequestContext context = 1; repeated string domains = 2; }
+message ExecutionLease {
+  string incarnation = 1;
+  string execution_id = 2;
+  optional string task_id = 3;
+  string owner_id = 4;
+  uint64 fence = 5;
+  string lease_until = 6;
+}
+message TaskClaim {
+  bool available = 1;
+  ExecutionLease lease = 2;
+  bytes spec_json = 3;
+  bytes input_value_json = 4;
+  bytes plan_json = 5;
+}
+message RenewTaskRequest { RequestContext context = 1; ExecutionLease lease = 2; }
+message SealTaskRequest {
+  RequestContext context = 1;
+  ExecutionLease lease = 2;
+  bytes result_value_json = 3;
+  string digest = 4;
+}
+message TaskAcknowledgment { bool accepted = 1; }
+service ExecutionAuthority {
+  rpc RequestExecution(RequestExecutionRequest) returns (ExecutionId);
+  rpc InspectExecution(InspectExecutionRequest) returns (ExecutionState);
+  rpc CancelExecution(InspectExecutionRequest) returns (TaskAcknowledgment);
+  rpc ClaimTask(ClaimTaskRequest) returns (TaskClaim);
+  rpc RenewTask(RenewTaskRequest) returns (ExecutionLease);
+  rpc SealTask(SealTaskRequest) returns (TaskAcknowledgment);
+}
+// Business completion is deliberately absent: the domain publication transaction owns it.

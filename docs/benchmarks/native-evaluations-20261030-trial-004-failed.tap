@@ -1,0 +1,75 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+    # Subtest: admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+    not ok 1 - admission requires a dedicated environment and pins the suite, Agent and real native Dataset
+      ---
+      duration_ms: 35796.041503
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:582:13'
+      failureType: 'testCodeFailure'
+      error: '{"status":404,"error":{"code":"NOT_FOUND","correlationId":"c95c66ef-f86d-4c79-b3ac-f285fbde0b3d","details":null,"message":"NOT_FOUND","requestId":"c95c66ef-f86d-4c79-b3ac-f285fbde0b3d","retryable":false}}'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        native (/work/tests/native-evaluations.integration.test.ts:486:31)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async <anonymous> (/work/tests/native-evaluations.integration.test.ts:576:18)
+        async until (/work/tests/native-evaluations.integration.test.ts:21:9)
+        async terminal (/work/tests/native-evaluations.integration.test.ts:572:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:627:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:582:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: repeats stay separate and comparison rejects a different evaluator version
+    not ok 2 - repeats stay separate and comparison rejects a different evaluator version
+      ---
+      duration_ms: 32933.571675
+      type: 'test'
+      location: '/work/tests/native-evaluations.integration.test.ts:712:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'failed'
+        - 'completed'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'completed'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:716:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-evaluations.integration.test.ts:712:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current clearance and registration protect retained case scores, summaries and events
+    ok 3 - current clearance and registration protect retained case scores, summaries and events
+      ---
+      duration_ms: 259.940412
+      type: 'test'
+      ...
+    1..3
+not ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 108153.736576
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:27:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 4
+# suites 0
+# pass 1
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108674.35661

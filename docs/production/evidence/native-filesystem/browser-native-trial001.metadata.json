@@ -1,0 +1,18 @@
+{
+  "snapshot": "/tmp/moria-proof-snapshots/20261030T192619620462Z-browser-native-publication",
+  "manifestSha256": "dd6b05073eed9374fe8e6377de6d1ea8136cd6247d5c1814e35bf3e3030b1514",
+  "binarySha256": "aa26cd38f849c7e3a05e22a07f3388ae055acbf107fd5d68f4466780e24b2ee7",
+  "compiled": "{\"protocolVersion\":1,\"schema\":{\"checksum\":\"37d1798a6910821d21bafbe80186cfd3712f9707f60a2855a645ccc8887d1117\",\"version\":5},\"sourceDigest\":\"33574e8a13a01e52964288eed838ab190be968453ee5d49bd12c49e2990112f7\"}",
+  "tests": 31,
+  "fail": 0,
+  "skipped": 0,
+  "seconds": 91.453,
+  "browser": {
+    "engine": "Chrome",
+    "cases": 18,
+    "passed": 18,
+    "dynamicCodeGeneration": "blocked",
+    "csp": "default-src 'none'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+    "bundleSha256": "06aa57cf82e07034ecbc601e28a0748d8802338774768b19c38aaa46794ea62e"
+  }
+}

@@ -9,6 +9,11 @@ import { authCommand } from './auth.js';
 import { filesystemCommand } from './filesystem.js';
 import { functionsCommand } from './functions.js';
 import { ApiError } from '../../../packages/osdk/src/runtime.js';
+import { nativeFunctionsWorker, nativeArtifactWorker } from '../../local/src/native-functions.js';
+import { agentsCommand } from './agents.js';
+import { evaluationsCommand } from './evaluations.js';
+import { pipelinesCommand } from './pipelines.js';
+import { mcpCommand } from './mcp.js';
 
 try {
   const { positionals, values } = parseArgs({
@@ -39,6 +44,15 @@ try {
   });
   if (values.help || !positionals.length) {
     console.log(
+      'MCP: moria mcp config|discover|tools [--url https://instance.example]; use a dedicated MORIA_API_TOKEN.',
+    );
+    console.log(
+      'Evaluations: moria evaluations invoke|get|cases|events|cancel|wait <uuid>; compare <uuid> <other-uuid>; moria evaluations worker.',
+    );
+    console.log(
+      'Agents: moria agents invoke|get|events|cancel|wait <uuid>; moria agents worker. See docs/production/contracts/agents-evaluations.md.',
+    );
+    console.log(
       'Functions: moria functions invoke|get|events|cancel|wait <uuid>; moria functions worker. See docs/FUNCTIONS.md.',
     );
     console.log(
@@ -47,12 +61,24 @@ try {
     console.log(
       'Moria\n\n  moria sdk generate <app-contract.json> --out <directory> [--check]\n  moria auth setup|recover|disable [--app management]\n  moria auth grant-admin --email you@gmail.com\n  moria auth configure-google --config client.json --email you@gmail.com\n  moria validate|compile <manifest.json> [--attributes types.json] [--json]\n  moria apps bootstrap|recover [management] [--directory instance-dir]\n  moria apps list\n  moria apps publish <id> <built-directory>\n  moria apps promote <id> <version>\n  moria apps rollback|verify|unlock <id>\n  moria apps serve <id> --port 3211\n\nApp commands run locally without the management UI or database. All accept --directory and --json. Start the bundled console with pnpm start.',
     );
+  } else if (positionals[0] === 'mcp') {
+    console.log(JSON.stringify(await mcpCommand(positionals.slice(1), values), null, 2));
   } else if (positionals[0] === 'fs') {
     console.log(JSON.stringify(await filesystemCommand(positionals.slice(1), values), null, 2));
+  } else if (positionals[0] === 'pipelines') {
+    if (positionals[1] === 'worker' && positionals.length === 2) nativeArtifactWorker('pipelines');
+    console.log(JSON.stringify(await pipelinesCommand(positionals.slice(1), values), null, 2));
+  } else if (positionals[0] === 'evaluations') {
+    if (positionals[1] === 'worker' && positionals.length === 2)
+      nativeArtifactWorker('evaluations');
+    else
+      console.log(JSON.stringify(await evaluationsCommand(positionals.slice(1), values), null, 2));
+  } else if (positionals[0] === 'agents') {
+    if (positionals[1] === 'worker' && positionals.length === 2) nativeArtifactWorker('agents');
+    else console.log(JSON.stringify(await agentsCommand(positionals.slice(1), values), null, 2));
   } else if (positionals[0] === 'functions') {
     if (positionals[1] === 'worker' && positionals.length === 2) {
-      const { launch } = await import('../../local/src/runtime.js');
-      launch('function-worker');
+      nativeFunctionsWorker();
     } else {
       console.log(JSON.stringify(await functionsCommand(positionals.slice(1), values), null, 2));
     }

@@ -7,8 +7,12 @@ or an unqualified namespace. The first runtime is `typescript-v1`.
 
 ## Completion checklist
 
-Status: implementation and local acceptance complete for TypeScript on Docker;
-CI wiring is configured. Independent latest-revision CI/review remains required.
+The native Rust admission, worker and publication path preserves the existing
+TypeScript guest protocol. Its current contracts and verification are in
+[native functions](production/contracts/functions.md) and
+[sandbox supervision](production/contracts/sandbox.md). Default application
+front-door/release composition is tracked separately in the production component
+ledger; it must select the native operational plane explicitly.
 
 The current release targets TypeScript on Docker, using the shared version-1
 platform value model with TypeScript/Python codecs. Additional function languages,
@@ -73,26 +77,42 @@ release used by the supervisor.
 
 ## Worker boundary
 
-Use the existing external PostgreSQL configuration for separate API and worker
-processes. Run `pnpm moria functions worker` on a Linux worker host. It shares the
-instance database, filesystem storage configuration and trusted object bindings
-with the API. The initial runtime binds the local workspace's `assets` object API,
-its edit/reset actions, the filesystem API and function invocation/inspection.
-Additional object/action services require the same trusted bindings as the normal
-API. This release does not implement new ontology capabilities solely for functions.
+Run `pnpm moria functions worker` on a Linux/Node-24 worker host. The CLI replaces
+its process with the configured native runtime before opening a Node workspace,
+database pool or worker. There is no fallback to the Node function supervisor.
+The canonical executable setting is `MORIA_RUNTIME_BINARY`;
+`MORIA_INDEXING_BINARY` remains accepted for existing configurations.
 
-Only this explicit worker process constructs the Docker backend, injecting it into
-the service. `services/functions/src/worker.ts` defines the backend-neutral
-`FunctionWorker` contract and shared resource limits; the service does not import
-Docker or choose a backend implicitly. Starting a worker without an injected
-backend fails before polling. API processes enqueue, inspect and cancel database
-records without a Docker backend or socket.
-Neither the default combined development server nor the fixed Snow/weather worker
-implicitly starts a function worker. With no available worker, an accepted request
-expires visibly; it is never executed later under a new attempt.
+```sh
+export MORIA_RUNTIME_BINARY=/opt/moria/bin/moria-indexing
+export MORIA_INDEXING_DATABASE_SECRET_REF=FUNCTION_DATABASE_URL
+export MORIA_INDEXING_DATABASE_TLS=verify
+export MORIA_FUNCTION_HOST_ID=<registered-host-uuid>
+export MORIA_FUNCTION_WORKER_OWNER=<registered-worker-uuid>
+pnpm moria functions worker
+```
 
-The trusted function worker needs Docker CLI and local daemon access. Treat that
-worker as privileged infrastructure. User images receive no Docker socket, host
+The referenced database URL belongs in the external environment/secret store.
+Use the exact current schema checksum and an unprivileged runtime database role.
+The operator registers the worker's immutable owner/host/incarnation, resource
+classes and expiry in `runtime_function_workers`. Disabled, expired, wrong-host
+or wrong-incarnation registrations cannot claim or seal work. Concurrency defaults
+to four and can be set to 1–32 with `MORIA_FUNCTION_WORKER_CONCURRENCY`; shared
+database class budgets still apply across all replicas.
+
+The native API enqueues, inspects and cancels private invocations without a Docker
+backend or socket. The worker constructs the real native object/filesystem broker
+and directly controls the local Docker Engine through its Unix socket. It never
+polls Node handlers or launches a subprocess per platform call. Missing native
+configuration fails before workspace creation. With no available worker, accepted
+work expires visibly and user code is never retried automatically.
+
+Use the native HTTP origin with `MORIA_URL`/`--url` and `MORIA_API_TOKEN` for the
+existing platform SDK and public CLI commands. The combined legacy development
+server is not a native front-door substitute; its default cutover remains an
+explicit release-composition obligation.
+
+Treat the trusted Docker worker as privileged infrastructure. User images receive no Docker socket, host
 mounts, database credentials, platform token or provider secrets. Containers run
 as UID/GID 65532, with a read-only root, all capabilities dropped, no new privileges,
 private networking disabled, bounded PIDs/memory/CPU and a bounded scratch tmpfs.
@@ -242,11 +262,11 @@ filesystem versions captured inside the mutation transaction so a competing
 write cannot be mistaken for that call's changes. Writes into destinations that
 omit any consumed marking are rejected. Delegated sessions are unsupported.
 
-| Effect | Behavior |
-| --- | --- |
-| `readOnly` | Point reads, queries, filesystem reads and read-only child functions. POST queries are reads; mutating routes are rejected. |
+| Effect         | Behavior                                                                                                                                                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `readOnly`     | Point reads, queries, filesystem reads and read-only child functions. POST queries are reads; mutating routes are rejected.                                                                                                              |
 | `editProposal` | Point-read dependencies and staged ontology actions. Valid output triggers one transaction for the complete staged batch; any failed condition or policy rolls it all back. Filesystem mutations and arbitrary write calls are rejected. |
-| `readWrite` | Authorized supported mutations commit per call. Later code failure or cancellation does not undo earlier commits. |
+| `readWrite`    | Authorized supported mutations commit per call. Later code failure or cancellation does not undo earlier commits.                                                                                                                        |
 
 Each mutating logical call needs a stable idempotency key, scoped to its parent
 invocation. Repeating it with different input conflicts. The durable `calls`
@@ -289,7 +309,11 @@ export default async function echo(input: {
   customers: Customer[];
 }): Promise<{ customer: Customer; customers: Customer[]; customerName: string }> {
   const current = await input.customer.get(['name']);
-  return { customer: input.customer, customers: input.customers, customerName: current.object.name };
+  return {
+    customer: input.customer,
+    customers: input.customers,
+    customerName: current.object.name,
+  };
 }
 ```
 
@@ -316,15 +340,18 @@ carry wire identities; applications can bind them through their matching OSDK.
 
 ## Limits, cancellation and recovery
 
-There are at most four active accepted/running invocations per environment and
-four concurrent attempts per worker. Deadlines include queue/startup time and are
+The default shared resource class admits four live task/publication leases per
+environment and thirty-two globally, with four concurrent attempts per worker.
+Operators configure class budgets and registered worker scopes. Queued invocations
+remain bounded by their original deadlines. Deadlines include queue/startup time and are
 at most 30 seconds. Memory is 32–1024 MiB (256 default); CPU budget is 1–30000 ms
 (1000 default), with one CPU throughput cap and per-process OS limits as an
 additional guard. CPU usage is sampled; budget excess triggers termination.
 Cleanup permits ten seconds before forced termination. No multi-tenant isolation
 or production-capacity certification is implied.
 
-Each attempt holds a ten-second renewable lease and a private fencing token. Only
+Each attempt holds a database-clock lease bounded to thirty seconds and its
+original deadline, with an exact owner and increasing task fence. Only
 the exact current attempt can publish a result before its deadline. Cancellation
 commits a terminal state before worker cleanup; a committed success wins a later
 cancel. Expired workers fail visibly. Worker maintenance cleans terminal/orphaned

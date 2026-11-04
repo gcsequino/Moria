@@ -1,0 +1,28 @@
+{
+  "scope": "Real PostgreSQL current-authority guard only; no user-code completion or capacity certification",
+  "crossCallCache": false,
+  "capacityCertified": false,
+  "trials": [
+    {
+      "trial": "profile-001",
+      "status": "passed",
+      "sourceManifestSha256": "466527f540ad7b21b19a18cf29ff6ed3d083af144bec331f07cc1d7dd931c54c",
+      "currentGuardMillis": 452.267077,
+      "filesystemCalls": 20,
+      "operationalCalls": 20,
+      "jitAvailable": false,
+      "rawTap": "native-pipeline-authority-profile-20261030-trial-profile-001-passed.tap"
+    },
+    {
+      "trial": "profile-002",
+      "status": "failed",
+      "reason": "Disabled Dataset fixture mutation omitted required fresh immutable revision; no denial assertion was relaxed",
+      "sourceManifestSha256": "4a839b4631aafaf5dc572bada670f9a0877875cd2280a87f97495d5fa1e165c2",
+      "currentGuardMillis": 99.435822,
+      "filesystemCalls": 8,
+      "operationalCalls": 20,
+      "jitAvailable": false,
+      "rawTap": "native-pipeline-authority-profile-20261030-trial-profile-002-failed.tap"
+    }
+  ]
+}

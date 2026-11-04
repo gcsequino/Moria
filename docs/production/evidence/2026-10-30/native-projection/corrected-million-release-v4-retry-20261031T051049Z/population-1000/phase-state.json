@@ -1,0 +1,30 @@
+{
+  "activePhase": "operator-plan-samples",
+  "timeline": [
+    {
+      "phase": "setup",
+      "elapsedMs": 148.6996449999997
+    },
+    {
+      "phase": "identity",
+      "elapsedMs": 70.26998700000013
+    },
+    {
+      "phase": "source-production",
+      "elapsedMs": 429.6894419999999
+    },
+    {
+      "phase": "source-publication",
+      "elapsedMs": 1605.3374130000002
+    },
+    {
+      "phase": "native-indexing-projection",
+      "elapsedMs": 3166.3638140000003
+    },
+    {
+      "phase": "native-streaming-oracle",
+      "elapsedMs": 85.5964669999994
+    }
+  ],
+  "elapsedMs": 5505.956768
+}

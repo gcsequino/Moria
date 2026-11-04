@@ -1,0 +1,390 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 7792.108149
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 3475.97271
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    ok 3 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 11064.024761
+      type: 'test'
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 4 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 121.228956
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    not ok 5 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 15059.49936
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:392:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog event prepared timed out: 
+        running 1 test
+        test catalog_publication ... 
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:232:15)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:408:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:392:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 6 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 7593.233941
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 7 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 7478.994485
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 8 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 7480.227045
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 9 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 7382.8633
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 10 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 7533.740024
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 11 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 8205.313323
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 12 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 334.344213
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 13 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 14019.035881
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 14 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 7483.176023
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 15 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 52.507233
+      type: 'test'
+      ...
+    1..15
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 108581.958065
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:16:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+    # Subtest: POSIX publication indexes 300 canonical objects using current namespace read authority
+    ok 1 - POSIX publication indexes 300 canonical objects using current namespace read authority
+      ---
+      duration_ms: 3167.82948
+      type: 'test'
+      ...
+    # Subtest: MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+    ok 2 - MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+      ---
+      duration_ms: 6509.862022
+      type: 'test'
+      ...
+    # Subtest: an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+    ok 3 - an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+      ---
+      duration_ms: 6732.324894
+      type: 'test'
+      ...
+    # Subtest: stale and ambiguous provider bindings cannot activate an object generation
+    ok 4 - stale and ambiguous provider bindings cannot activate an object generation
+      ---
+      duration_ms: 6781.318003
+      type: 'test'
+      ...
+    # Subtest: a pinned physical object with changed bytes fails semantic verification before activation
+    ok 5 - a pinned physical object with changed bytes fails semantic verification before activation
+      ---
+      duration_ms: 4315.951249
+      type: 'test'
+      ...
+    # Subtest: cached verification is immutable and physical file versions are still checked by concurrent task reads
+    ok 6 - cached verification is immutable and physical file versions are still checked by concurrent task reads
+      ---
+      duration_ms: 6755.53333
+      type: 'test'
+      ...
+    # Subtest: a ready verification never caches permission across current authority revocation
+    ok 7 - a ready verification never caches permission across current authority revocation
+      ---
+      duration_ms: 6633.866297
+      type: 'test'
+      ...
+    # Subtest: an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+    ok 8 - an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+      ---
+      duration_ms: 10276.907867
+      type: 'test'
+      ...
+    # Subtest: a published native index retains every enabled Dataset namespace classification after later disable
+    ok 9 - a published native index retains every enabled Dataset namespace classification after later disable
+      ---
+      duration_ms: 47.158564
+      type: 'test'
+      ...
+    1..9
+ok 2 - native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ---
+  duration_ms: 58050.470515
+  type: 'test'
+  ...
+# Subtest: native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+    # Subtest: real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+        # Subtest: native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+            # Subtest: valid
+            ok 1 - valid
+              ---
+              duration_ms: 1501.205716
+              type: 'test'
+              ...
+            # Subtest: wrong-table
+            ok 2 - wrong-table
+              ---
+              duration_ms: 564.328236
+              type: 'test'
+              ...
+            # Subtest: wrong-snapshot
+            ok 3 - wrong-snapshot
+              ---
+              duration_ms: 588.987167
+              type: 'test'
+              ...
+            # Subtest: missing
+            ok 4 - missing
+              ---
+              duration_ms: 970.528271
+              type: 'test'
+              ...
+            # Subtest: extra
+            ok 5 - extra
+              ---
+              duration_ms: 1485.43199
+              type: 'test'
+              ...
+            # Subtest: malformed-manifest
+            ok 6 - malformed-manifest
+              ---
+              duration_ms: 990.087704
+              type: 'test'
+              ...
+            # Subtest: malformed-parquet
+            ok 7 - malformed-parquet
+              ---
+              duration_ms: 1010.031642
+              type: 'test'
+              ...
+            # Subtest: nullable-array
+            ok 8 - nullable-array
+              ---
+              duration_ms: 558.03874
+              type: 'test'
+              ...
+            # Subtest: historical-schema
+            ok 9 - historical-schema
+              ---
+              duration_ms: 1355.423849
+              type: 'test'
+              ...
+            # Subtest: cycle
+            ok 10 - cycle
+              ---
+              duration_ms: 1437.187403
+              type: 'test'
+              ...
+            # Subtest: duplicate-schema
+            ok 11 - duplicate-schema
+              ---
+              duration_ms: 568.763897
+              type: 'test'
+              ...
+            # Subtest: current-projection
+            ok 12 - current-projection
+              ---
+              duration_ms: 1145.599333
+              type: 'test'
+              ...
+            # Subtest: missing-sort-orders
+            ok 13 - missing-sort-orders
+              ---
+              duration_ms: 574.718627
+              type: 'test'
+              ...
+            # Subtest: foreign-reference
+            ok 14 - foreign-reference
+              ---
+              duration_ms: 608.91485
+              type: 'test'
+              ...
+            # Subtest: deleted-valid
+            ok 15 - deleted-valid
+              ---
+              duration_ms: 2387.667909
+              type: 'test'
+              ...
+            # Subtest: deleted-corrupt
+            ok 16 - deleted-corrupt
+              ---
+              duration_ms: 1315.752108
+              type: 'test'
+              ...
+            1..16
+        ok 1 - native Iceberg semantic closure checks parse actual retained metadata, Avro and Parquet
+          ---
+          duration_ms: 17066.734292
+          type: 'test'
+          ...
+        # Subtest: valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO
+            # Subtest: posix
+            not ok 1 - posix
+              ---
+              duration_ms: 643.79525
+              type: 'test'
+              location: '/work/tests/native-storage.integration.test.ts:269:23'
+              failureType: 'testCodeFailure'
+              error: "EACCES: permission denied, open '/tmp/catalog-storage-YirLdP/native-objects/artifactwarehouse/artifacttable/objects/8a88a8ecca980795eb1f5da990a39f14e963a16e0f374a55c2723b0be406b72a'"
+              code: 'EACCES'
+              stack: |-
+                async open (node:internal/fs/promises:1345:25)
+                async writeFile (node:internal/fs/promises:1972:14)
+                async TestContext.<anonymous> (/work/tests/native-storage.integration.test.ts:313:43)
+                async Test.run (node:internal/test_runner/test:1409:7)
+                async TestContext.<anonymous> (/work/tests/native-storage.integration.test.ts:269:15)
+                async Test.run (node:internal/test_runner/test:1409:7)
+                async TestContext.<anonymous> (/work/tests/native-storage.integration.test.ts:265:9)
+                async Test.run (node:internal/test_runner/test:1409:7)
+                async TestContext.<anonymous> (/work/tests/native-storage.integration.test.ts:228:5)
+                async Test.run (node:internal/test_runner/test:1409:7)
+              ...
+            # Subtest: s3
+            ok 2 - s3
+              ---
+              duration_ms: 1429.226012
+              type: 'test'
+              ...
+            1..2
+        not ok 2 - valid same-size Parquet mutation between full closure hashing and semantic proof is denied on POSIX and MinIO
+          ---
+          duration_ms: 2073.600921
+          type: 'test'
+          location: '/work/tests/native-storage.integration.test.ts:265:17'
+          failureType: 'subtestsFailed'
+          error: '1 subtest failed'
+          code: 'ERR_TEST_FAILURE'
+          stack: |-
+            async TestContext.<anonymous> (file:///work/tests/native-storage.integration.test.ts:3:1174)
+            async TestContext.<anonymous> (file:///work/tests/native-storage.integration.test.ts:3:319)
+          ...
+        1..2
+    not ok 1 - real POSIX and S3 paths preserve bounds, integrity, namespace grants and immutable sealing
+      ---
+      duration_ms: 43651.098945
+      type: 'test'
+      location: '/work/tests/native-storage.integration.test.ts:228:13'
+      failureType: 'subtestsFailed'
+      error: '1 subtest failed'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        async TestContext.<anonymous> (file:///work/tests/native-storage.integration.test.ts:3:319)
+      ...
+    # Subtest: SIGKILL after a durable page commit reopens exact bounded closure state
+    ok 2 - SIGKILL after a durable page commit reopens exact bounded closure state
+      ---
+      duration_ms: 8637.265376
+      type: 'test'
+      ...
+    # Subtest: a provider version change between chunks denies subsequent range release
+    ok 3 - a provider version change between chunks denies subsequent range release
+      ---
+      duration_ms: 238.711461
+      type: 'test'
+      ...
+    # Subtest: an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks
+    ok 4 - an actually completed multipart upload with a lost acknowledgement recovers only after full integrity and current authority checks
+      ---
+      duration_ms: 1216.66266
+      type: 'test'
+      ...
+    # Subtest: expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools
+    ok 5 - expired owners cannot read or seal, and replacements cannot mutate prior-attempt spools
+      ---
+      duration_ms: 316.716654
+      type: 'test'
+      ...
+    # Subtest: disabled namespace bindings deny both source reads and artifact writes
+    ok 6 - disabled namespace bindings deny both source reads and artifact writes
+      ---
+      duration_ms: 468.926732
+      type: 'test'
+      ...
+    # Subtest: current authority revocation denies native I/O without publishing any object generation
+    ok 7 - current authority revocation denies native I/O without publishing any object generation
+      ---
+      duration_ms: 1346.692983
+      type: 'test'
+      ...
+    1..7
+not ok 3 - native storage uses real scoped authority, immutable POSIX writes, MinIO ranges and durable paged closure state
+  ---
+  duration_ms: 60439.333933
+  type: 'test'
+  location: '/work/tests/native-storage.integration.test.ts:20:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..3
+# tests 54
+# suites 0
+# pass 48
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 109038.717431

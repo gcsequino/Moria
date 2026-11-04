@@ -1,0 +1,45 @@
+TAP version 13
+# Subtest: native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+not ok 1 - native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ---
+  duration_ms: 15936.407127
+  type: 'test'
+  location: '/work/tests/native-evaluations.integration.test.ts:31:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Actual native fixture publication failed: 
+    running 1 test
+    test catalog_publication ... FAILED
+    
+    failures:
+    
+    failures:
+        catalog_publication
+    
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.30s
+    
+    
+    
+    thread 'catalog_publication' (308) panicked at ../../tests/fixtures/native-catalog/harness.rs:149:10:
+    called `Result::unwrap()` on an `Err` value: db error
+    
+    Caused by:
+        ERROR: DATASET_BINDING_INVALID
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.<anonymous> (/work/tests/native-evaluations.integration.test.ts:606:15)
+    ChildProcess.wrapper (node:events:639:12)
+    ChildProcess.emit (node:events:514:28)
+    ChildProcess._handle.onexit (node:internal/child_process:324:12)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16481.276943

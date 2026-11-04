@@ -1,0 +1,317 @@
+TAP version 13
+# Subtest: native delivery preserves action commits while recovering external outcomes explicitly
+    # Subtest: action effects, receipt and outbox intent roll back together and cannot dispatch early
+    ok 1 - action effects, receipt and outbox intent roll back together and cannot dispatch early
+      ---
+      duration_ms: 693.918553
+      type: 'test'
+      ...
+    # Subtest: execution and delivery claims share one global/environment resource budget
+    ok 2 - execution and delivery claims share one global/environment resource budget
+      ---
+      duration_ms: 947.320326
+      type: 'test'
+      ...
+    # Subtest: response loss reuses identical bytes and one stable key at an idempotent destination
+    ok 3 - response loss reuses identical bytes and one stable key at an idempotent destination
+      ---
+      duration_ms: 705.040565
+      type: 'test'
+      ...
+    # Subtest: a real killed dispatcher is reclaimed without a duplicate idempotent effect
+    ok 4 - a real killed dispatcher is reclaimed without a duplicate idempotent effect
+      ---
+      duration_ms: 609.359325
+      type: 'test'
+      ...
+    # Subtest: non-idempotent uncertainty cannot retry until explicit provider evidence is reconciled
+    ok 5 - non-idempotent uncertainty cannot retry until explicit provider evidence is reconciled
+      ---
+      duration_ms: 1057.652487
+      type: 'test'
+      ...
+    # Subtest: a killed non-idempotent dispatcher remains uncertain without another send
+    ok 6 - a killed non-idempotent dispatcher remains uncertain without another send
+      ---
+      duration_ms: 712.846336
+      type: 'test'
+      ...
+    # Subtest: cancellation after dispatch reports uncertainty and cannot undo an external effect
+    ok 7 - cancellation after dispatch reports uncertainty and cannot undo an external effect
+      ---
+      duration_ms: 698.008959
+      type: 'test'
+      ...
+    # Subtest: bounded dead letters retain attempts and permit explicit same-payload retry
+    ok 8 - bounded dead letters retain attempts and permit explicit same-payload retry
+      ---
+      duration_ms: 863.982968
+      type: 'test'
+      ...
+    # Subtest: a proven terminal non-delivery can resume, while an abandoned unsent claim is safely fenced
+    ok 9 - a proven terminal non-delivery can resume, while an abandoned unsent claim is safely fenced
+      ---
+      duration_ms: 1246.495183
+      type: 'test'
+      ...
+    # Subtest: destination marking limits fail the action transaction and revocation prevents dispatch
+    ok 10 - destination marking limits fail the action transaction and revocation prevents dispatch
+      ---
+      duration_ms: 238.529102
+      type: 'test'
+      ...
+    1..10
+ok 1 - native delivery preserves action commits while recovering external outcomes explicitly
+  ---
+  duration_ms: 12052.845796
+  type: 'test'
+  ...
+# Subtest: native execution authority schedules, fences and composes completion with real publication
+    # Subtest: typed logical requests deduplicate and their pinned inputs cannot mutate
+    ok 1 - typed logical requests deduplicate and their pinned inputs cannot mutate
+      ---
+      duration_ms: 573.215734
+      type: 'test'
+      ...
+    # Subtest: independent native claims obey class admission and stale owners cannot renew or seal
+    ok 2 - independent native claims obey class admission and stale owners cannot renew or seal
+      ---
+      duration_ms: 1984.46652
+      type: 'test'
+      ...
+    # Subtest: task sealing is private; publication and business completion commit or roll back together
+    ok 3 - task sealing is private; publication and business completion commit or roll back together
+      ---
+      duration_ms: 628.651258
+      type: 'test'
+      ...
+    # Subtest: accepted work survives killing Rust before the real commit response arrives
+    ok 4 - accepted work survives killing Rust before the real commit response arrives
+      ---
+      duration_ms: 333.593326
+      type: 'test'
+      ...
+    # Subtest: single-attempt function work is never re-executed after lease loss
+    not ok 5 - single-attempt function work is never re-executed after lease loss
+      ---
+      duration_ms: 273.487603
+      type: 'test'
+      location: '/work/tests/native-execution.integration.test.ts:311:13'
+      failureType: 'testCodeFailure'
+      error: 'spawn /usr/local/bin/moria-native-sandbox-test ENOENT'
+      code: 'ENOENT'
+      stack: |-
+        ChildProcess._handle.onexit (node:internal/child_process:316:19)
+        onErrorNT (node:internal/child_process:554:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+      ...
+    # Subtest: database deadlines and event bounds remain authoritative
+    ok 6 - database deadlines and event bounds remain authoritative
+      ---
+      duration_ms: 3886.513363
+      type: 'test'
+      ...
+    # Subtest: disabled sessions fail dispatch before any attempt is recorded
+    ok 7 - disabled sessions fail dispatch before any attempt is recorded
+      ---
+      duration_ms: 359.461406
+      type: 'test'
+      ...
+    # Subtest: parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+    ok 8 - parallel schedulers commit one firing, coalesce missed intervals and audit overlap/revocation
+      ---
+      duration_ms: 953.920902
+      type: 'test'
+      ...
+    1..8
+not ok 2 - native execution authority schedules, fences and composes completion with real publication
+  ---
+  duration_ms: 13260.771491
+  type: 'test'
+  location: '/work/tests/native-execution.integration.test.ts:11:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    not ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 180.010077
+      type: 'test'
+      location: '/work/tests/native-job-authority.integration.test.ts:149:13'
+      failureType: 'testCodeFailure'
+      error: 'column reference "generation" is ambiguous'
+      code: '42702'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async issue (/work/tests/native-job-authority.integration.test.ts:130:9)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:184:16)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:149:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+      ---
+      duration_ms: 253.539104
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    not ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 124.723205
+      type: 'test'
+      location: '/work/tests/native-job-authority.integration.test.ts:227:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /SERVICE_PURPOSE_REVOKED/. Input:
+        
+        'Error: {"error":"UNAUTHENTICATED"}\n'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: |-
+        {"error":"UNAUTHENTICATED"}
+        
+      stack: |-
+        ChildProcess.<anonymous> (/work/tests/native-job-authority.integration.test.ts:110:61)
+        ChildProcess.wrapper (node:events:639:12)
+        ChildProcess.emit (node:events:514:28)
+        ChildProcess._handle.onexit (node:internal/child_process:324:12)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:244:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:227:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential
+      ---
+      duration_ms: 423.617417
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    not ok 5 - current target, application, grants, clearance, worker scope and actor disable revoke private authority
+      ---
+      duration_ms: 8.671671
+      type: 'test'
+      location: '/work/tests/native-job-authority.integration.test.ts:276:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        The input did not match the regular expression /SERVICE_PURPOSE_REVOKED/. Input:
+        
+        'error: UNAUTHENTICATED'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+      error: 'UNAUTHENTICATED'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async state (/work/tests/native-job-authority.integration.test.ts:144:8)
+        async waitForActual (node:assert:646:5)
+        async strict.rejects (node:assert:769:25)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:290:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:276:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:290:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:276:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    not ok 6 - an unobserved worker disable and restore cannot revive a live lease or private credential
+      ---
+      duration_ms: 16.395992
+      type: 'test'
+      location: '/work/tests/native-job-authority.integration.test.ts:362:13'
+      failureType: 'testCodeFailure'
+      error: 'SERVICE_PURPOSE_REVOKED'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-job-authority.integration.test.ts:70:9)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:365:40)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:362:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    not ok 7 - a genuinely expired worker registration remains fenced after its expiry is extended
+      ---
+      duration_ms: 17.356026
+      type: 'test'
+      location: '/work/tests/native-job-authority.integration.test.ts:406:13'
+      failureType: 'testCodeFailure'
+      error: 'SERVICE_PURPOSE_REVOKED'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-job-authority.integration.test.ts:70:9)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:415:40)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:406:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    not ok 8 - lease takeover invalidates the old private credential and replacement capabilities remain bounded
+      ---
+      duration_ms: 13.661335
+      type: 'test'
+      location: '/work/tests/native-job-authority.integration.test.ts:462:13'
+      failureType: 'testCodeFailure'
+      error: 'SERVICE_PURPOSE_REVOKED'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-job-authority.integration.test.ts:70:9)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:465:36)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-job-authority.integration.test.ts:462:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..8
+not ok 3 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 5538.927639
+  type: 'test'
+  location: '/work/tests/native-job-authority.integration.test.ts:9:1'
+  failureType: 'subtestsFailed'
+  error: '6 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..3
+# tests 29
+# suites 0
+# pass 20
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13897.462775

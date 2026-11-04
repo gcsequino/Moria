@@ -1,0 +1,111 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation",
+    "files": 2207,
+    "manifestSha256": "fd9fcb685b5412fab8b770be12d22a3e85680403ccecc057bd9cf30228a856b9",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "schema",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "host",
+        "--group-add",
+        "108",
+        "-e",
+        "pnpm_config_verify_deps_before_run=false",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "--mount",
+        "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+        "-w",
+        "/work",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "scripts/indexing-schema.ts",
+        "--write"
+      ]
+    },
+    {
+      "phase": "build",
+      "command": [
+        "flock",
+        "-s",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation,dst=/work",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-serving-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "build",
+        "--locked",
+        "--bins",
+        "--test",
+        "native_catalog",
+        "--message-format=json",
+        "-j",
+        "2"
+      ]
+    },
+    {
+      "phase": "source-app",
+      "command": [
+        "flock",
+        "-s",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "host",
+        "--group-add",
+        "108",
+        "-e",
+        "pnpm_config_verify_deps_before_run=false",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "--mount",
+        "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+        "-w",
+        "/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation/native-proof-artifact/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T104425310441Z-native-action-preparation/native-proof-artifact/moria-catalog-tests,dst=/usr/local/bin/moria-catalog-tests,readonly",
+        "moria-test:native-prerequisites",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "tests/native-serving.integration.test.ts",
+        "tests/native-worker-configuration.test.ts"
+      ]
+    }
+  ],
+  "outcome": "passed"
+}

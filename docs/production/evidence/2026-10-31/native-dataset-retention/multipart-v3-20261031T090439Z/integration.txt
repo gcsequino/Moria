@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: native Dataset abandoned multipart cleanup uses exact issued keys across lost ACKs and late provider effects
+not ok 1 - native Dataset abandoned multipart cleanup uses exact issued keys across lost ACKs and late provider effects
+  ---
+  duration_ms: 26095.301981
+  type: 'test'
+  location: '/proof-driver/multipart.ts:18:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Provider barrier deadline  
+    running 1 test
+    test catalog_publication ... {"event":"dataset_multipart_intent","execution":"e5e33a4a-9724-44a9-8227-cd411ae95072","object":{"objectId":"dataset_multipart_f609953179004825a6b50e110d10c538","tableId":"records","version":1,"warehouseId":"retention-data"}}
+    {"event":"dataset_multipart_part"}
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    <anonymous> (/proof-driver/multipart.ts:178:19)
+    async TestContext.<anonymous> (/proof-driver/multipart.ts:170:9)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26610.025028

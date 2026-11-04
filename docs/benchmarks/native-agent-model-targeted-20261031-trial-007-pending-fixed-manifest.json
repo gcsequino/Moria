@@ -1,0 +1,128 @@
+{
+  "scope": "explicit targeted subset, not whole suite",
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "moria-agent-model-targeted-007-pending-fixed",
+    "--network",
+    "host",
+    "--group-add",
+    "108",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/agent-model-targeted-007-pending-fixed/native-agents.external.integration.test.ts,dst=/work/tests/native-agents.integration.test.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-indexing-tests,dst=/usr/local/bin/moria-indexing-tests,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-indexing,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-retention-test,dst=/usr/local/bin/moria-native-retention-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-sandbox-test,dst=/usr/local/bin/moria-native-sandbox-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-policy-test,dst=/usr/local/bin/moria-native-policy-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-storage-test,dst=/usr/local/bin/moria-native-storage-test,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-transport-test,dst=/usr/local/bin/moria-native-transport-test,readonly",
+    "-e",
+    "pnpm_config_verify_deps_before_run=false",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_TEST_PROOF_ID=moria-agent-model-targeted-007-pending-fixed",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-agents.integration.test.ts"
+  ],
+  "descriptor": {
+    "snapshot": {
+      "root": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25",
+      "files": 2541,
+      "manifestSha256": "4c19ba42479e6b3a1a2358cbd36eb284eac3ab34236f2a089973d102855ef0b1",
+      "imageDependencyLinks": {
+        ".venv": "/app/.venv"
+      },
+      "dependencyMounts": [
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+      ]
+    },
+    "artifacts": {
+      "moria-indexing-tests": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/moria_runtime-caa1227c937bb40e",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-indexing-tests",
+        "sha256": "ff16c63f3e4e966b920cac804597999d480824213ce1d21d9260a01917ef0ba3"
+      },
+      "moria-runtime": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-runtime",
+        "sha256": "277ece6683bde6e772b9dc80b76823d8fdca1bb3938af698dc316421ed51dbd9"
+      },
+      "moria-indexing": {
+        "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-indexing",
+        "sha256": "961eec60c35ad6d8a41cd428058d6b9f3e625f1d85ea7967d8e66bdf093979af"
+      },
+      "moria-native-catalog-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-catalog-test",
+        "sha256": "4047c95696943232c42839fc42453f5a08f1d30ac32125343b124a496a5be178"
+      },
+      "moria-native-retention-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-retention-test",
+        "sha256": "75dcaac43673f78f205b04aed6f3c0719f2dd136d72132e84766f858582b5442"
+      },
+      "moria-native-sandbox-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_sandbox-1c205eafd7b8b6e9",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-sandbox-test",
+        "sha256": "60a0d54138f27530775f80c6dd5330bca888e73155614f49723e1484edc78b6b"
+      },
+      "moria-native-policy-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_policy-685b52096da78e97",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-policy-test",
+        "sha256": "1b59fa10a5028f50a1ee30d6c02ae369cfe5e3fa4e15fbdabc8a22e6e46f04fb"
+      },
+      "moria-native-storage-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_storage-18ace889955c532f",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-storage-test",
+        "sha256": "b86b0705ad983375a1ecba119029f865177e8cbd5feada2988e662741835d1e8"
+      },
+      "moria-native-transport-test": {
+        "cargoPath": "/work/services/runtime/target/debug/deps/native_transport-c71322eea327c600",
+        "path": "/tmp/moria-proof-snapshots/20261031T144412493016Z-strict-pending-public-observation-v25/native-proof-artifacts/moria-native-transport-test",
+        "sha256": "d38bfcb83c61584bc13ccbdf14fcf736195e0e7b38cd80d2bda40404eb4bd4b2"
+      }
+    },
+    "compiled": {
+      "protocolVersion": 1,
+      "schema": {
+        "checksum": "e7aacfd2a071bca99b52ba36bf15ad58baeaca1ca7192e55a11f3dbb16565c76",
+        "version": 5
+      },
+      "sourceDigest": "9b6ebe3c0ff172990093ef31f49db4db36626332d0719daebd828baf338d3cc2"
+    },
+    "evidence": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-integration/20261031T144444Z"
+  },
+  "baseFixtureSha256": "085da883bf2780a256ad6aa0255d729b40ae3ab7959a19fb969416f7e99a52d4",
+  "externalFixtureSha256": "7fcf6eb8a13daf80e670ac0fe1ac5599556bd041d5f5d50252d4300e983926b6",
+  "selectedTests": [
+    "a durable model intent commits before gateway admission while public callback data stays withheld"
+  ],
+  "exit": 0
+}

@@ -1,21 +1,13 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import './indexing-schema.js';
+import './generate-native-conformance.js';
+import { nativeInputs, nativeRoot } from './native-inputs.js';
 
-const root = new URL('../services/indexing/', import.meta.url);
-const paths = [
-  'Cargo.toml',
-  'Cargo.lock',
-  'build.rs',
-  'schema.json',
-  'protocol/indexing.proto',
-  '../../packages/contracts/value-conformance.json',
-  ...readdirSync(new URL('src/', root))
-    .filter((name) => name.endsWith('.rs'))
-    .map((name) => `src/${name}`),
-].sort();
+const root = nativeRoot;
+const paths = nativeInputs();
 const digest = createHash('sha256');
 for (const path of paths) {
   const name = Buffer.from(path),
@@ -39,6 +31,27 @@ if (
   compiled.schema.checksum !== schema.checksum
 )
   throw new Error('Rust indexing artifact is stale; rebuild from this source.');
+const nativeBinary = process.env.MORIA_NATIVE_BINARY ?? '/usr/local/bin/moria-runtime';
+const nativeCompiled = JSON.parse(execFileSync(nativeBinary, ['schema'], { encoding: 'utf8' }));
+if (JSON.stringify(nativeCompiled) !== JSON.stringify(compiled))
+  throw new Error('Native runtime and indexing executables disagree; rebuild both.');
+const artifacts = [
+  ['MORIA_POLICY_TEST_BINARY', 'moria-native-policy-test'],
+  ['MORIA_STORAGE_TEST_BINARY', 'moria-native-storage-test'],
+  ['MORIA_RPC_TEST_BINARY', 'moria-native-transport-test'],
+  ['MORIA_CATALOG_TEST_BINARY', 'moria-native-catalog-test'],
+  ['MORIA_NATIVE_SANDBOX_TEST_BINARY', 'moria-native-sandbox-test'],
+  ['MORIA_NATIVE_RETENTION_TEST_BINARY', 'moria-native-retention-test'],
+];
+for (const [variable, name] of artifacts) {
+  const output = execFileSync(
+    process.env[variable] ?? `/usr/local/bin/${name}`,
+    ['--ignored', '--exact', 'native_artifact_metadata', '--nocapture', '--test-threads=1'],
+    { encoding: 'utf8', env: { ...process.env, MORIA_INDEXING_EXPECTED_SOURCE_SHA256: expected } },
+  );
+  if (!/test result: ok\. 1 passed; 0 failed;/.test(output))
+    throw new Error(`Native artifact provenance check did not run: ${name}`);
+}
 const result = execFileSync(testBinary, ['--test-threads=1'], {
   encoding: 'utf8',
   env: { ...process.env, MORIA_INDEXING_EXPECTED_SOURCE_SHA256: expected },

@@ -1,0 +1,13 @@
+/work/services/database/src/schema.ts:67
+    throw new DatabaseError(
+          ^
+
+DatabaseError: Database schema operation failed; verify migration ownership and schema version.
+    at schema (/work/services/database/src/schema.ts:67:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Catalog.migrate (/work/services/catalog/src/catalog.ts:67:5)
+    at async database (/work/tests/fixtures/catalog-storage/database.ts:24:5)
+    at async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:50:14)
+    at async <anonymous> (/work/benchmarks/native-projection.ts:551:7)
+
+Node.js v24.22.0

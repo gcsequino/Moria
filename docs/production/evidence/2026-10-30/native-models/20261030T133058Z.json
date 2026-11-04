@@ -1,0 +1,29 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--user",
+    "1000:1000",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029,dst=/work",
+    "--mount",
+    "type=bind,src=/var/lib/docker/volumes/moria-indexing-target/_data/debug/moria-indexing,dst=/usr/local/bin/moria-runtime,readonly",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "tests/native-models.integration.test.ts"
+  ],
+  "exit": 0,
+  "binarySha256": "bd48aed6b13457b880b0786e80e5422eef674a5c1d3e076abf08d9a3bb5cc249",
+  "schema": {
+    "version": 5,
+    "checksum": "10b5f4e2ab43f96a8ae3bb2b205e7becdbfb67fbc02c28099f67cedd7694b149"
+  },
+  "log": "20261030T133058Z.tap.txt"
+}

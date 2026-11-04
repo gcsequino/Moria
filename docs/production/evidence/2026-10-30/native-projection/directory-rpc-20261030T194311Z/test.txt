@@ -1,0 +1,59 @@
+TAP version 13
+# Subtest: native identity batches preserve canonical allocation through transfer and lost acknowledgment
+    # Subtest: independent native processes resolve each canonical key once in bounded batches
+    ok 1 - independent native processes resolve each canonical key once in bounded batches
+      ---
+      duration_ms: 237.063451
+      type: 'test'
+      ...
+    # Subtest: full-width canonical keys remain stable through concurrent native allocation
+    ok 2 - full-width canonical keys remain stable through concurrent native allocation
+      ---
+      duration_ms: 125.768538
+      type: 'test'
+      ...
+    # Subtest: owner transfer waits for an already-admitted allocation and fences all later old-owner requests
+    ok 3 - owner transfer waits for an already-admitted allocation and fences all later old-owner requests
+      ---
+      duration_ms: 385.493823
+      type: 'test'
+      ...
+    # Subtest: a committed allocation survives native process death before COMMIT acknowledgment
+    ok 4 - a committed allocation survives native process death before COMMIT acknowledgment
+      ---
+      duration_ms: 1055.706933
+      type: 'test'
+      ...
+    # Subtest: lost transfer acknowledgment is inspected without repeating a stale ownership move
+    ok 5 - lost transfer acknowledgment is inspected without repeating a stale ownership move
+      ---
+      duration_ms: 1410.418636
+      type: 'test'
+      ...
+    # Subtest: disabled owners and restored incarnations cannot allocate
+    ok 6 - disabled owners and restored incarnations cannot allocate
+      ---
+      duration_ms: 153.2847
+      type: 'test'
+      ...
+    1..6
+ok 1 - native identity batches preserve canonical allocation through transfer and lost acknowledgment
+  ---
+  duration_ms: 4874.351899
+  type: 'test'
+  ...
+# Subtest: native gRPC requires mutual TLS and current registered service/owner authority
+ok 2 - native gRPC requires mutual TLS and current registered service/owner authority
+  ---
+  duration_ms: 2309.924896
+  type: 'test'
+  ...
+1..2
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5679.523647

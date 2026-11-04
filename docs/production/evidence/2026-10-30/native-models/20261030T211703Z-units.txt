@@ -1,0 +1,35 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `verify_preloaded_artifact` is never used
+  --> src/sandbox.rs:62:21
+   |
+62 | pub(crate) async fn verify_preloaded_artifact(
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: fields `source_resource`, `source_mapping`, and `identity_domain` are never read
+   --> src/serving.rs:132:5
+    |
+122 | struct BindingDefinition {
+    |        ----------------- fields in this struct
+...
+132 |     source_resource: Option<Uuid>,
+    |     ^^^^^^^^^^^^^^^
+133 |     #[serde(default)]
+134 |     source_mapping: BTreeMap<String, String>,
+    |     ^^^^^^^^^^^^^^
+135 |     #[serde(default)]
+136 |     identity_domain: Option<String>,
+    |     ^^^^^^^^^^^^^^^
+    |
+    = note: `BindingDefinition` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: `moria-runtime` (lib test) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 10.20s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-caa1227c937bb40e)
+
+running 1 test
+test mcp::tests::mirrored_names_are_exact_and_not_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 36 filtered out; finished in 0.00s
+

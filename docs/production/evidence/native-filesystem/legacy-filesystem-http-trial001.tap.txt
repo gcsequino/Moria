@@ -1,0 +1,71 @@
+TAP version 13
+# Subtest: filesystem platform API client provides scoped authoring and coherent source deployment
+    # Subtest: non-browser bearer writes authenticate on a browser-enabled management host
+    ok 1 - non-browser bearer writes authenticate on a browser-enabled management host
+      ---
+      duration_ms: 31.271395
+      type: 'test'
+      ...
+    # Subtest: verified local profiles and workload sessions cannot impersonate each other
+    ok 2 - verified local profiles and workload sessions cannot impersonate each other
+      ---
+      duration_ms: 201.667435
+      type: 'test'
+      ...
+    # Subtest: ordinary authors can create projects and versioned source files without instance administration
+    ok 3 - ordinary authors can create projects and versioned source files without instance administration
+      ---
+      duration_ms: 902.310006
+      type: 'test'
+      ...
+    # Subtest: disconnecting during an HTTP upload leaves no visible file and cleans private staging
+    ok 4 - disconnecting during an HTTP upload leaves no visible file and cleans private staging
+      ---
+      duration_ms: 192.846372
+      type: 'test'
+      ...
+    # Subtest: CLI round trips a local source checkout and rejects stale or escaped files
+    not ok 5 - CLI round trips a local source checkout and rejects stale or escaped files
+      ---
+      duration_ms: 942.430212
+      type: 'test'
+      location: '/work/tests/filesystem-http.integration.test.ts:304:13'
+      failureType: 'testCodeFailure'
+      error: 'Filesystem endpoint not found'
+      code: 'NOT_FOUND'
+      name: 'ApiError'
+      stack: |-
+        decode (/work/packages/platform/src/transport.ts:84:13)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async publishCompiled (/work/apps/cli/src/filesystem.ts:411:22)
+        async TestContext.<anonymous> (/work/tests/filesystem-http.integration.test.ts:320:28)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/filesystem-http.integration.test.ts:304:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: strict JSON, query and mutation-key boundaries reject ambiguous requests
+    ok 6 - strict JSON, query and mutation-key boundaries reject ambiguous requests
+      ---
+      duration_ms: 15.353723
+      type: 'test'
+      ...
+    1..6
+not ok 1 - filesystem platform API client provides scoped authoring and coherent source deployment
+  ---
+  duration_ms: 4592.4493
+  type: 'test'
+  location: '/work/tests/filesystem-http.integration.test.ts:18:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 7
+# suites 0
+# pass 5
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5215.793366

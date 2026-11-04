@@ -1,0 +1,241 @@
+TAP version 13
+# Subtest: native change replay preserves complete authority transactions and replay pins
+    # Subtest: uncommitted edits are invisible; all revisions in one transaction share one end marker
+    ok 1 - uncommitted edits are invisible; all revisions in one transaction share one end marker
+      ---
+      duration_ms: 325.228313
+      type: 'test'
+      ...
+    # Subtest: rollback and actual process loss leave no event; complete generation requests pinned rebuild
+    ok 2 - rollback and actual process loss leave no event; complete generation requests pinned rebuild
+      ---
+      duration_ms: 373.568929
+      type: 'test'
+      ...
+    # Subtest: pins cannot change owner, rewind, revive after expiry or cross incarnation
+    ok 3 - pins cannot change owner, rewind, revive after expiry or cross incarnation
+      ---
+      duration_ms: 626.508311
+      type: 'test'
+      ...
+    # Subtest: pagination orders numeric commit positions past revision nine
+    ok 4 - pagination orders numeric commit positions past revision nine
+      ---
+      duration_ms: 578.401881
+      type: 'test'
+      ...
+    1..4
+ok 1 - native change replay preserves complete authority transactions and replay pins
+  ---
+  duration_ms: 4253.09251
+  type: 'test'
+  ...
+# Subtest: native HTTP admission bounds pending bodies across shared and component routes
+    # Subtest: local CLI profiles use real revocable workload sessions
+    ok 1 - local CLI profiles use real revocable workload sessions
+      ---
+      duration_ms: 60.073419
+      type: 'test'
+      ...
+    # Subtest: a missed CLI approval disable pulse permanently fences its issued session
+    ok 2 - a missed CLI approval disable pulse permanently fences its issued session
+      ---
+      duration_ms: 6.139132
+      type: 'test'
+      ...
+    # Subtest: app-bound browser cookies enforce exact origin and current session
+    ok 3 - app-bound browser cookies enforce exact origin and current session
+      ---
+      duration_ms: 42.479207
+      type: 'test'
+      ...
+    # Subtest: managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+    ok 4 - managed cells serialize ownership, fence transfer and fail closed on a real DB partition
+      ---
+      duration_ms: 5811.915418
+      type: 'test'
+      ...
+    # Subtest: four compiler requests hold their slots through an incomplete body
+    ok 5 - four compiler requests hold their slots through an incomplete body
+      ---
+      duration_ms: 93.179799
+      type: 'test'
+      ...
+    # Subtest: model admission retains its separate32 request budget
+    ok 6 - model admission retains its separate32 request budget
+      ---
+      duration_ms: 236.744638
+      type: 'test'
+      ...
+    # Subtest: the shared64 request budget rejects additional work before buffering
+    ok 7 - the shared64 request budget rejects additional work before buffering
+      ---
+      duration_ms: 421.473624
+      type: 'test'
+      ...
+    # Subtest: readiness is current, metrics require instance authority and disabled CLI approval survives restart
+    ok 8 - readiness is current, metrics require instance authority and disabled CLI approval survives restart
+      ---
+      duration_ms: 168.263961
+      type: 'test'
+      ...
+    # Subtest: SIGTERM bounds drain while an actual admitted body is unfinished
+    ok 9 - SIGTERM bounds drain while an actual admitted body is unfinished
+      ---
+      duration_ms: 2010.62366
+      type: 'test'
+      ...
+    1..9
+ok 2 - native HTTP admission bounds pending bodies across shared and component routes
+  ---
+  duration_ms: 10670.018806
+  type: 'test'
+  ...
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 38209.747075
+      type: 'test'
+      ...
+    # Subtest: clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication
+    ok 2 - clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication
+      ---
+      duration_ms: 31246.190556
+      type: 'test'
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    ok 3 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 35930.351888
+      type: 'test'
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 4 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 29331.891656
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    ok 5 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 7487.510741
+      type: 'test'
+      ...
+    # Subtest: a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+    ok 6 - a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+      ---
+      duration_ms: 31493.849948
+      type: 'test'
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 7 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 31252.955356
+      type: 'test'
+      ...
+    1..7
+ok 3 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ---
+  duration_ms: 210864.459731
+  type: 'test'
+  ...
+# {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"3ee96e6b-b758-47c1-9ca3-33ef78424069","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"13469f15-0404-47fe-9711-e5116ffef6c4"}]}
+# Subtest: permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+    # Subtest: native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+    ok 1 - native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution
+      ---
+      duration_ms: 16802.993304
+      type: 'test'
+      ...
+    # Subtest: unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+    ok 2 - unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs
+      ---
+      duration_ms: 17004.615366
+      type: 'test'
+      ...
+    # Subtest: a changed own serving definition records blocked lag without metadata refresh or work acceptance
+    ok 3 - a changed own serving definition records blocked lag without metadata refresh or work acceptance
+      ---
+      duration_ms: 11733.257464
+      type: 'test'
+      ...
+    # Subtest: broader current policy retains the old generation restriction until a newly captured native build activates
+    ok 4 - broader current policy retains the old generation restriction until a newly captured native build activates
+      ---
+      duration_ms: 7918.063091
+      type: 'test'
+      ...
+    # Subtest: a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+    ok 5 - a newly classified Dataset saves its valid head while the older explicit index floor remains blocked
+      ---
+      duration_ms: 12247.673076
+      type: 'test'
+      ...
+    # Subtest: disabled registered purpose remains blocked even after further unrelated epoch changes
+    ok 6 - disabled registered purpose remains blocked even after further unrelated epoch changes
+      ---
+      duration_ms: 12188.241102
+      type: 'test'
+      ...
+    1..6
+ok 4 - permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ---
+  duration_ms: 83549.139969
+  type: 'test'
+  ...
+# {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"badc8838-c99c-4af3-8b60-7ac30f6bc0f9","event":"reducer_batches","maxWireBytes":"8388678","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"28d1291c-9cdd-4074-8575-4358a08a2af5"}]}
+# Subtest: native disabled restore fences real work and external uncertainty without losing permanent state
+    # Subtest: maintenance leases are actual fenced, bounded and idempotent
+    ok 1 - maintenance leases are actual fenced, bounded and idempotent
+      ---
+      duration_ms: 447.92226
+      type: 'test'
+      ...
+    # Subtest: lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+    ok 2 - lost pause COMMIT reply leaves dispatch disabled and exact retry finishes fencing
+      ---
+      duration_ms: 1132.555108
+      type: 'test'
+      ...
+    # Subtest: old active leases and credentials stay fenced while permanent state survives
+    ok 3 - old active leases and credentials stay fenced while permanent state survives
+      ---
+      duration_ms: 155.735957
+      type: 'test'
+      ...
+    # Subtest: a real applied external effect remains uncertain and cannot silently dispatch again
+    ok 4 - a real applied external effect remains uncertain and cannot silently dispatch again
+      ---
+      duration_ms: 107.901324
+      type: 'test'
+      ...
+    1..4
+ok 5 - native disabled restore fences real work and external uncertainty without losing permanent state
+  ---
+  duration_ms: 4464.52318
+  type: 'test'
+  ...
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+ok 6 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (posix)
+  ---
+  duration_ms: 12098.995192
+  type: 'test'
+  ...
+# verified posix restore approval completed
+# Subtest: native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+ok 7 - native clean-host restore verifies multipart metadata, content and keys before enabling dispatch (s3)
+  ---
+  duration_ms: 14291.461938
+  type: 'test'
+  ...
+# verified s3 restore approval completed
+1..7
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 294930.833013

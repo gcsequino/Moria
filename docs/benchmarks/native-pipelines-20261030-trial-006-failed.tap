@@ -1,0 +1,86 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 110.68509
+      type: 'test'
+      ...
+    # Subtest: unobserved profile disable and restore fences accepted work before code starts
+    ok 2 - unobserved profile disable and restore fences accepted work before code starts
+      ---
+      duration_ms: 308.180651
+      type: 'test'
+      ...
+    # Subtest: actual bounded guest reads three wide sources and commits both heads with one receipt
+    not ok 3 - actual bounded guest reads three wide sources and commits both heads with one receipt
+      ---
+      duration_ms: 748.661022
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:556:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"result":{"error":"PIPELINE_AUTHORIZATION_CHANGED","id":"18ba45df-337c-44e1-8307-c3c67a94c451","markings":[{"environment":"be6387b5-f3f8-4d99-97e3-d423513bcd1a","marking":"private"}],"release":"sha256:60de5681a9b2aca7b2ca7cd0371b8b015e05a9aeaf2964f6dd116ce7e136129e","resourceId":"777f03bc-9f03-47f0-9b48-eca940763387","result":null,"status":"failed","valueVersion":1},"events":{"after":"2","events":[{"markings":[{"environment":"be6387b5-f3f8-4d99-97e3-d423513bcd1a","marking":"private"}],"payload":{"tasks":1},"sequence":"1","type":"accepted"},{"markings":[{"environment":"be6387b5-f3f8-4d99-97e3-d423513bcd1a","marking":"private"}],"payload":{"error":"PIPELINE_AUTHORIZATION_CHANGED"},"sequence":"2","type":"noCodeStart"}]}}
+        + actual - expected
+        
+        + 'failed'
+        - 'succeeded'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'succeeded'
+      actual: 'failed'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:562:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:556:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: a second actual guest verifies published Parquet values beyond JS precision through native grants
+    not ok 4 - a second actual guest verifies published Parquet values beyond JS precision through native grants
+      ---
+      duration_ms: 147.114189
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:612:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":{"code":"INTERNAL","correlationId":"a4a5c330-8b93-41af-8301-b74d54374a28","details":null,"message":"INTERNAL","requestId":"a4a5c330-8b93-41af-8301-b74d54374a28","retryable":false}}
+        
+        500 !== 202
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 202
+      actual: 500
+      operator: 'strictEqual'
+      stack: |-
+        invoke (/work/tests/native-pipelines.integration.test.ts:420:14)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:615:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:612:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..4
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 33230.57283
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:29:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 5
+# suites 0
+# pass 2
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33929.954999

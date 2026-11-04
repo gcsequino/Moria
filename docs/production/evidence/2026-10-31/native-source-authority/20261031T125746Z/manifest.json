@@ -1,0 +1,66 @@
+{
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261031T125745746949Z-source-authority-digest-v1",
+    "files": 2375,
+    "manifestSha256": "a9dcf7df54cd8bbfa685a9c16db7dcf56366b61e2d984e15f19cceef4f474b63",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "commands": [
+    {
+      "phase": "typescript",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T125745746949Z-source-authority-digest-v1,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsc",
+        "--noEmit"
+      ],
+      "watchdogSeconds": 180
+    },
+    {
+      "phase": "postgres-source",
+      "command": [
+        "flock",
+        "--shared",
+        "/tmp/moria-native-proof-resources.lock",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        "type=bind,src=/tmp/moria-proof-snapshots/20261031T125745746949Z-source-authority-digest-v1,dst=/work",
+        "--mount",
+        "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+        "-w",
+        "/work",
+        "moria-test:recovery",
+        "/app/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "tests/filesystem-source.integration.test.ts"
+      ],
+      "watchdogSeconds": 180
+    }
+  ],
+  "outcome": "passed",
+  "scope": "actual PostgreSQL Source authority; no claim of a compiled current native runtime or production capacity"
+}

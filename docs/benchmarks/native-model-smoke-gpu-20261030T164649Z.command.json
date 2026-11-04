@@ -1,0 +1,49 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "host",
+    "--user",
+    "1000:1000",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261030T162732333424Z-models-protocol,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261030T162732333424Z-models-protocol/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "-e",
+    "MORIA_LOCAL_MODEL_ENDPOINT=http://127.0.0.1:11436/v1/",
+    "-e",
+    "MORIA_MODEL_SMOKE_REPORT=docs/benchmarks/native-model-smoke-gpu-20261030T164649Z.json",
+    "-w",
+    "/work",
+    "moria-test:native-prerequisites",
+    "/app/node_modules/.bin/tsx",
+    "scripts/native-model-smoke.ts"
+  ],
+  "exit": 0,
+  "snapshot": {
+    "root": "/tmp/moria-proof-snapshots/20261030T162732333424Z-models-protocol",
+    "files": 677,
+    "manifestSha256": "94081aec4178b4c4300832c82209917b2684909f41664550e3acd9b73a280f26",
+    "imageDependencyLinks": {
+      ".venv": "/app/.venv"
+    },
+    "dependencyMounts": [
+      "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly"
+    ]
+  },
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "f1a2a0f2d33c6bf1fb37f8fbceb0b28ba1717aa3a75b9d03210d8acc4aae029f",
+      "version": 5
+    },
+    "sourceDigest": "dea162d2f66e3744d64501ffd15fa8ae6b683b3dc286d5389f0bc7ef91dcffa0"
+  },
+  "binarySha256": "d79df0360a534130f5202ecfe728458ba35a7d09ea81b4bac78d005e453d2fcf",
+  "report": "docs/benchmarks/native-model-smoke-gpu-20261030T164649Z.json",
+  "log": "/tmp/moria-reconcile-20261029/docs/benchmarks/native-model-smoke-gpu-20261030T164649Z.log"
+}

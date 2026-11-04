@@ -1,0 +1,214 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 7030.82869
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 3170.606401
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    ok 3 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 10562.515817
+      type: 'test'
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 4 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 123.179678
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    ok 5 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 14816.615689
+      type: 'test'
+      ...
+    # {"event":"registered_publication_phases","phases":[{"elapsedMillis":"1918","event":"closure_hashed"},{"elapsedMillis":"7218","event":"candidate_registered"},{"elapsedMillis":"1873","event":"closure_hashed"},{"elapsedMillis":"7129","event":"candidate_registered"}]}
+    # {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"4366","total_time":23362.231,"self_time":936.286},{"funcname":"runtime_dataset_labels","calls":"8737","total_time":15792.174,"self_time":246.843},{"funcname":"native_serving_session","calls":"25236","total_time":14031.148,"self_time":870.571},{"funcname":"native_serving_resource_access","calls":"12091","total_time":10533.382,"self_time":22.466},{"funcname":"runtime_job_session_origin","calls":"6713","total_time":8032.818,"self_time":610.375},{"funcname":"runtime_execution_check","calls":"12127","total_time":6960.236,"self_time":938.806},{"funcname":"native_serving_session_origin","calls":"37365","total_time":6329.392,"self_time":6329.392},{"funcname":"runtime_binding_authority","calls":"12133","total_time":6031.657,"self_time":2026.524},{"funcname":"native_serving_job_delegation","calls":"12127","total_time":4005.108,"self_time":49.694},{"funcname":"runtime_data_origins","calls":"20933","total_time":3907.673,"self_time":1971.443},{"funcname":"native_serving_accepted_delegation","calls":"18842","total_time":3900.318,"self_time":2016.901},{"funcname":"native_serving_resource_access_state","calls":"12093","total_time":3730.129,"self_time":441.021},{"funcname":"runtime_data_resource","calls":"33062","total_time":3709.342,"self_time":3709.342},{"funcname":"runtime_data_labels","calls":"8788","total_time":2822.247,"self_time":126.814},{"funcname":"runtime_job_delegation_guard","calls":"18844","total_time":2266.086,"self_time":2266.086},{"funcname":"runtime_worker_check","calls":"6721","total_time":349.193,"self_time":349.193},{"funcname":"native_serving_filesystem_resource_access_state","calls":"20832","total_time":305.353,"self_time":305.353},{"funcname":"runtime_task_check","calls":"1018","total_time":235.438,"self_time":19.153},{"funcname":"runtime_dataset_kind","calls":"8739","total_time":186.354,"self_time":186.354},{"funcname":"runtime_schema_admit","calls":"4489","total_time":111.978,"self_time":111.978},{"funcname":"runtime_snapshot_publish","calls":"6","total_time":59.789,"self_time":8.775},{"funcname":"runtime_execution_request","calls":"6","total_time":40.927,"self_time":8.451},{"funcname":"runtime_dataset_session_matches","calls":"4373","total_time":39.236,"self_time":39.236},{"funcname":"runtime_job_delegation_accept","calls":"6","total_time":18.26,"self_time":4.523}]}
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 6 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 6929.491113
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 7 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 7329.28568
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 8 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 7229.726992
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 9 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 6975.461556
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 10 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 6922.388092
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 11 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 7213.711799
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 12 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 313.899461
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 13 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 13197.784981
+      type: 'test'
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        not ok 1 - posix
+          ---
+          duration_ms: 272.397378
+          type: 'test'
+          location: '/work/tests/native-catalog.integration.test.ts:716:19'
+          failureType: 'testCodeFailure'
+          error: |-
+            Native catalog exited before prepared: 
+            thread 'catalog_publication' (265) panicked at ../../tests/fixtures/native-catalog/harness.rs:74:10:
+            called `Result::unwrap()` on an `Err` value: BINDING_MISMATCH
+            note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+            
+            
+            running 1 test
+            test catalog_publication ... FAILED
+            
+            failures:
+            
+            failures:
+                catalog_publication
+            
+            test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.20s
+            
+            
+          code: 'ERR_TEST_FAILURE'
+          stack: |-
+            Object.event (/work/tests/native-catalog.integration.test.ts:231:19)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:774:30)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:716:11)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:712:5)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+          ...
+        # Subtest: s3
+        not ok 2 - s3
+          ---
+          duration_ms: 322.013067
+          type: 'test'
+          location: '/work/tests/native-catalog.integration.test.ts:716:19'
+          failureType: 'testCodeFailure'
+          error: |-
+            Native catalog exited before prepared: 
+            thread 'catalog_publication' (272) panicked at ../../tests/fixtures/native-catalog/harness.rs:74:10:
+            called `Result::unwrap()` on an `Err` value: BINDING_MISMATCH
+            note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+            
+            
+            running 1 test
+            test catalog_publication ... FAILED
+            
+            failures:
+            
+            failures:
+                catalog_publication
+            
+            test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.26s
+            
+            
+          code: 'ERR_TEST_FAILURE'
+          stack: |-
+            Object.event (/work/tests/native-catalog.integration.test.ts:231:19)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:774:30)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:716:11)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:712:5)
+            async Test.run (node:internal/test_runner/test:1409:7)
+            async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+          ...
+        1..2
+    not ok 14 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 60748.575712
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:712:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog event denied timed out: [{"state":"idle","wait_event_type":"Client","wait_event":"ClientRead","blockers":[]},{"state":"idle","wait_event_type":"Client","wait_event":"ClientRead","blockers":[]},{"state":"idle","wait_event_type":"Client","wait_event":"ClientRead","blockers":[]}]
+        
+        
+        running 1 test
+        test catalog_publication ... {"elapsedMillis":"866","event":"closure_hashed"}
+        {"elapsedMillis":"3291","event":"candidate_registered"}
+        {"elapsedMillis":"855","event":"closure_hashed"}
+        {"elapsedMillis":"3379","event":"candidate_registered"}
+        {"candidates":["a9f17142-83cc-427c-887d-2654b9959fe7","38a85040-409d-4094-8d75-180aac8646a6"],"event":"prepared","lease":{"execution":"a6e62362-5bba-4080-bdd4-61e6fda3bd3c","fence":"1","incarnation":"af8e4277-d9d8-49cc-b034-e6861fae70c9","leaseUntil":"2026-10-30 18:50:45.011826+00","owner":"4896b470-4b9a-465c-b56c-18558ea44b27","task":null}}
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:238:15)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:823:26)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:712:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 15 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 7036.240258
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 16 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 45.068531
+      type: 'test'
+      ...
+    1..16
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 162294.864111
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:16:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 19
+# suites 0
+# pass 15
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 162730.538317

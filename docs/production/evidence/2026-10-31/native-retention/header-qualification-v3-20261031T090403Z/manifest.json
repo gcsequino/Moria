@@ -1,0 +1,103 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3",
+  "sourceManifestSha256": "95d892ecc354fc8ce38b8035a349a593099079ae49b06a18602c64442d971fb7",
+  "buildCommand": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3,dst=/work",
+    "--mount",
+    "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+    "--mount",
+    "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+    "-w",
+    "/work/services/runtime",
+    "moria-indexing-toolchain:local",
+    "cargo",
+    "build",
+    "--locked",
+    "--bin",
+    "moria-runtime",
+    "--test",
+    "native_catalog",
+    "--test",
+    "native_retention",
+    "-j",
+    "2",
+    "--message-format=json"
+  ],
+  "buildExitCode": 0,
+  "artifacts": {
+    "moria-runtime": {
+      "path": "/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-runtime",
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "sha256": "fcc729f9d6974c571dd5d1a911a3dde4a73ca4f9c4e23b23bee3eac0430cdabe"
+    },
+    "native_catalog": {
+      "path": "/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-native-catalog-test",
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+      "sha256": "8dfd6599f676656d74a0bb5b5afc4ae9ee2229347e9ea8c001e34034b6061663"
+    },
+    "native_retention": {
+      "path": "/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-native-retention-test",
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_retention-0b1a986a52526e96",
+      "sha256": "e78ba31e1247959b0a215bca3eaf7a84bebc91271e63e27be7a97c5a853f2272"
+    }
+  },
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "2dcc776083c0fcb5728b0bcdae212f7be38269a13290621433dca9d9d6c35b52",
+      "version": 5
+    },
+    "sourceDigest": "041cce457f82637fbebc11965b4974584f24f44fa57f5174b7d13dcf4eb2a009"
+  },
+  "integrationCommand": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "moria-data-header-qualification-v3",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-indexing,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-native-catalog-test,dst=/usr/local/bin/moria-catalog-tests,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090354309972Z-data-header-qualification-v3/native-proof-artifact/moria-native-retention-test,dst=/usr/local/bin/moria-native-retention-test,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_NATIVE_BINARY=/usr/local/bin/moria-indexing",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-catalog-tests",
+    "-e",
+    "MORIA_NATIVE_RETENTION_TEST_BINARY=/usr/local/bin/moria-native-retention-test",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-header-window.integration.test.ts",
+    "tests/native-retention.integration.test.ts"
+  ],
+  "integrationExitCode": 1
+}

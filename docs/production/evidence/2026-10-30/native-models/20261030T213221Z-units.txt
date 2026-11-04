@@ -1,0 +1,36 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `verify_preloaded_artifact` is never used
+  --> src/sandbox.rs:62:21
+   |
+62 | pub(crate) async fn verify_preloaded_artifact(
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `preloaded_artifact_available` is never used
+  --> src/sandbox.rs:78:21
+   |
+78 | pub(crate) async fn preloaded_artifact_available(artifact:&Value,adapter:Option<&Value>)->Result<bool> {
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `RuntimeStatus` is never constructed
+   --> src/source_runtime.rs:437:19
+    |
+437 | pub(crate) struct RuntimeStatus {
+    |                   ^^^^^^^^^^^^^
+
+warning: function `status_in` is never used
+   --> src/source_runtime.rs:442:21
+    |
+442 | pub(crate) async fn status_in(client:&Client,session:&VerifiedSession,release:&Value,resources:&[Value])->Result<RuntimeStatus> {
+    |                     ^^^^^^^^^
+
+warning: `moria-runtime` (lib test) generated 4 warnings
+    Finished `test` profile [unoptimized] target(s) in 12.79s
+     Running unittests src/lib.rs (target/debug/deps/moria_runtime-caa1227c937bb40e)
+
+running 1 test
+test mcp::tests::mirrored_names_are_exact_and_not_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 0.00s
+

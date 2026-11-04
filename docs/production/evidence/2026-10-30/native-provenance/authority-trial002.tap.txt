@@ -1,0 +1,371 @@
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 1 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 2873.019463
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    not ok 2 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 2220.701975
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:310:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before read: 
+        thread 'catalog_publication' (233) panicked at ../../tests/fixtures/native-catalog/harness.rs:72:10:
+        called `Result::unwrap()` on an `Err` value: Unexpected => file scan task generate failed, source: Unexpected => Failed to load manifest moria://catalogwarehouse/table0/metadata/3b9e2870-1b80-47b7-980c-de238cc5b464-m0.avro, source: DataInvalid => Scoped closure I/O denied, source: db error
+        
+        Caused by:
+            0: Unexpected => Failed to load manifest moria://catalogwarehouse/table0/metadata/3b9e2870-1b80-47b7-980c-de238cc5b464-m0.avro, source: DataInvalid => Scoped closure I/O denied, source: db error
+            1: DataInvalid => Scoped closure I/O denied, source: db error
+            2: db error
+            3: ERROR: deadlock detected
+               DETAIL: Process 237 waits for ShareLock on transaction 1661; blocked by process 243.
+               Process 243 waits for ShareLock on transaction 1662; blocked by process 237.
+               HINT: See server log for query details.
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 2.20s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:229:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:336:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:310:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    not ok 3 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 9.09812
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:341:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:345:34)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:341:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    not ok 4 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 12.943699
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:352:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:355:38)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:352:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    not ok 5 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 13.470289
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:368:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:370:32)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:368:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    not ok 6 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 12.978184
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:377:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:379:32)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:377:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    not ok 7 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 13.1662
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:395:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:397:32)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:395:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    not ok 8 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 14.513969
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:408:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:418:34)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:408:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    not ok 9 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 2923.99192
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:462:13'
+      failureType: 'testCodeFailure'
+      error: 'Missing expected rejection.'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:481:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:462:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    not ok 10 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 8596.656738
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:490:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Native catalog exited before read: 
+        thread 'catalog_publication' (370) panicked at ../../tests/fixtures/native-catalog/harness.rs:72:10:
+        called `Result::unwrap()` on an `Err` value: Unexpected => file scan task generate failed, source: Unexpected => Failed to load manifest moria://catalogwarehouse/table0/metadata/3b9e2870-1b80-47b7-980c-de238cc5b464-m0.avro, source: DataInvalid => Scoped closure I/O denied, source: db error
+        
+        Caused by:
+            0: Unexpected => Failed to load manifest moria://catalogwarehouse/table0/metadata/3b9e2870-1b80-47b7-980c-de238cc5b464-m0.avro, source: DataInvalid => Scoped closure I/O denied, source: db error
+            1: DataInvalid => Scoped closure I/O denied, source: db error
+            2: db error
+            3: ERROR: deadlock detected
+               DETAIL: Process 374 waits for ShareLock on transaction 4029; blocked by process 388.
+               Process 388 waits for ShareLock on transaction 4030; blocked by process 374.
+               HINT: See server log for query details.
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+        
+        
+        running 1 test
+        test catalog_publication ... FAILED
+        
+        failures:
+        
+        failures:
+            catalog_publication
+        
+        test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 3.24s
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        Object.event (/work/tests/native-catalog.integration.test.ts:229:19)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:543:23)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:490:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    not ok 11 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 8.588624
+      type: 'test'
+      location: '/work/tests/native-catalog.integration.test.ts:548:13'
+      failureType: 'testCodeFailure'
+      error: 'FORBIDDEN'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async binding (/work/tests/native-catalog.integration.test.ts:129:9)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:552:34)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-catalog.integration.test.ts:548:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 12 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 47.6481
+      type: 'test'
+      ...
+    1..12
+not ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 20226.781392
+  type: 'test'
+  location: '/work/tests/native-catalog.integration.test.ts:16:1'
+  failureType: 'subtestsFailed'
+  error: '10 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: resource data provenance retains classification, bounds cycles and pre-admits publication authority
+    # Subtest: authorized dependency is admitted before its immutable binding captures the resulting epoch
+    ok 1 - authorized dependency is admitted before its immutable binding captures the resulting epoch
+      ---
+      duration_ms: 17.036517
+      type: 'test'
+      ...
+    # Subtest: a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+    ok 2 - a valid Dataset publication records blocked index intent for an expired registration, then fresh registration accepts the same head
+      ---
+      duration_ms: 2144.746323
+      type: 'test'
+      ...
+    # Subtest: new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+    ok 3 - new namespace classification immediately tightens derived reads in both runtimes and invalidates old epochs
+      ---
+      duration_ms: 44.591457
+      type: 'test'
+      ...
+    # Subtest: duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+    ok 4 - duplicate admission is epoch-stable and cyclic provenance terminates with retained union
+      ---
+      duration_ms: 25.725811
+      type: 'test'
+      ...
+    1..4
+ok 2 - resource data provenance retains classification, bounds cycles and pre-admits publication authority
+  ---
+  duration_ms: 5079.985669
+  type: 'test'
+  ...
+# Subtest: native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+    # Subtest: POSIX publication indexes 300 canonical objects using current namespace read authority
+    ok 1 - POSIX publication indexes 300 canonical objects using current namespace read authority
+      ---
+      duration_ms: 2697.57864
+      type: 'test'
+      ...
+    # Subtest: MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+    ok 2 - MinIO snapshot closure and native Arrow indexing use only provisioned S3 credentials
+      ---
+      duration_ms: 4111.194521
+      type: 'test'
+      ...
+    # Subtest: an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+    ok 3 - an expired verifier is replaced with a new fence and the stopped old process cannot publish its attempt
+      ---
+      duration_ms: 4448.458256
+      type: 'test'
+      ...
+    # Subtest: stale and ambiguous provider bindings cannot activate an object generation
+    ok 4 - stale and ambiguous provider bindings cannot activate an object generation
+      ---
+      duration_ms: 3317.510543
+      type: 'test'
+      ...
+    # Subtest: a pinned physical object with changed bytes fails semantic verification before activation
+    ok 5 - a pinned physical object with changed bytes fails semantic verification before activation
+      ---
+      duration_ms: 2293.421769
+      type: 'test'
+      ...
+    # Subtest: cached verification is immutable and physical file versions are still checked by concurrent task reads
+    ok 6 - cached verification is immutable and physical file versions are still checked by concurrent task reads
+      ---
+      duration_ms: 4257.63632
+      type: 'test'
+      ...
+    # Subtest: a ready verification never caches permission across current authority revocation
+    ok 7 - a ready verification never caches permission across current authority revocation
+      ---
+      duration_ms: 4118.190308
+      type: 'test'
+      ...
+    # Subtest: an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+    ok 8 - an accepted native indexing attempt crosses ordinary TTL under minimal private authority and current revocation guards
+      ---
+      duration_ms: 8041.925132
+      type: 'test'
+      ...
+    # Subtest: a published native index retains every enabled Dataset namespace classification after later disable
+    ok 9 - a published native index retains every enabled Dataset namespace classification after later disable
+      ---
+      duration_ms: 48.784237
+      type: 'test'
+      ...
+    1..9
+ok 3 - native indexing consumes complete V2 snapshots from trusted POSIX and MinIO bindings under read-only indexing grants
+  ---
+  duration_ms: 38100.554304
+  type: 'test'
+  ...
+1..3
+# tests 28
+# suites 0
+# pass 17
+# fail 11
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 38547.849371

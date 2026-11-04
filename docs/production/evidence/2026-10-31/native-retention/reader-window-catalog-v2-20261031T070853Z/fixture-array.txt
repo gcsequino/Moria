@@ -1,0 +1,21 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: associated function `retained_sources_in` is never used
+   --> src/platform.rs:900:25
+    |
+ 28 | impl NativePlatformBroker {
+    | ------------------------- associated function in this implementation
+...
+900 |     pub(crate) async fn retained_sources_in(
+    |                         ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `moria-runtime` (lib) generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 7.24s
+     Running ../../tests/fixtures/native-catalog/harness.rs (target/debug/deps/native_catalog-85e50ef4eacaeaf1)
+
+running 1 test
+test supplied_array_batch_preserves_exact_iceberg_child_metadata_and_nullability ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

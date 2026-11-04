@@ -1,0 +1,55 @@
+{
+  "sourceSnapshot": "/tmp/moria-proof-snapshots/20261031T051048906765Z-recovery-lifecycle-managed-v10",
+  "sourceManifestSha256": "f6ea153225eae4296ff94c9cf825891e04699eb19dadb458ecbe0fe4c274f56e",
+  "binarySha256": "52b1c6b891a047511aaca09d4cd3872980cca850aec274de346b0dab18475a00",
+  "catalogSha256": "369a9c8d25d64d5a2c6d31dc9cb6646ad9eba9474512391ba2211e6cc3ba3e5c",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "1d62173fbc885329c866858126012a244d729bab94e69b8cfc910d7c1604dfa7",
+      "version": 5
+    },
+    "sourceDigest": "ad86c0bd11aea61ee4052f6b0a632590cc2b8b1bd013041d07b0f2c3ea40b0e9"
+  },
+  "scope": "same v10 runtime; external PostgreSQL ERROR-only diagnostics and actual binding-generation fixture correction",
+  "externalHarnessSha256": {
+    "native-search.integration.test.ts": "d9f5c674e80276faedbce0ddc52fc609b8e8127d1e4a250be1cd4dffcf2a3ec6",
+    "development-database.ts": "19a17925c4e91472ad3a6aaa68e13be38de6e377cb6c73c8e89e6638680b577b"
+  },
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T051048906765Z-recovery-lifecycle-managed-v10,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T051048906765Z-recovery-lifecycle-managed-v10/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T051048906765Z-recovery-lifecycle-managed-v10/native-proof-artifact/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+    "--mount",
+    "type=bind,src=/tmp/moria-search-v10-diagnostics/development-database.ts,dst=/work/apps/local/src/development-database.ts,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-search-v10-diagnostics/native-search.integration.test.ts,dst=/work/tests/native-search.integration.test.ts,readonly",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/native-search-projector.integration.test.ts",
+    "tests/native-search.integration.test.ts"
+  ],
+  "exit": 1
+}

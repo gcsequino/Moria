@@ -1,0 +1,28 @@
+{
+  "root": "/tmp/moria-proof-snapshots/20261031T071718397061Z-reader-window-s3-catalog-v3",
+  "compiled": {
+    "protocolVersion": 1,
+    "schema": {
+      "checksum": "5dc88437fd5fe67ac7fb45d9c19f44516f08ab9943cd90ad42b7630b26ab603a",
+      "version": 5
+    },
+    "sourceDigest": "9b0080cb800d20e428ec171f739058b39b6a4c992d3352d82c3230870f5a89e4"
+  },
+  "artifacts": {
+    "moria-runtime": {
+      "cargoPath": "/work/services/runtime/target/debug/moria-runtime",
+      "path": "/tmp/moria-proof-snapshots/20261031T071718397061Z-reader-window-s3-catalog-v3/native-qualified-reader-artifacts/moria-runtime",
+      "sha256": "293215c6a25a68f0bf70cd1e85bf14bdfa328cb956fd06097f02025b1528f197"
+    },
+    "moria-indexing": {
+      "cargoPath": "/work/services/runtime/target/debug/moria-indexing",
+      "path": "/tmp/moria-proof-snapshots/20261031T071718397061Z-reader-window-s3-catalog-v3/native-qualified-reader-artifacts/moria-indexing",
+      "sha256": "030dbc46e13c8e2acd72aba6b36fdb4056cca8fda78b5bdb2b2dc6688d6a9ea5"
+    },
+    "moria-catalog-tests": {
+      "cargoPath": "/work/services/runtime/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+      "path": "/tmp/moria-proof-snapshots/20261031T071718397061Z-reader-window-s3-catalog-v3/native-qualified-reader-artifacts/moria-catalog-tests",
+      "sha256": "ac12fda82cd44866d993b0e69f6680e318b52e5d97b967c74631511ec44e7b51"
+    }
+  }
+}

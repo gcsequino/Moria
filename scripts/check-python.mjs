@@ -3,7 +3,16 @@ import { resolve } from 'node:path';
 
 const python = process.env.MORIA_PYTHON ?? resolve('.venv/bin/python');
 for (const args of [
-  ['-m', 'black', '--check', 'workers', 'benchmarks', 'docs/spec/schemas', 'scripts'],
+  [
+    '-m',
+    'black',
+    '--check',
+    'workers',
+    'benchmarks',
+    'docs/spec/schemas',
+    'scripts',
+    'deploy/test',
+  ],
   ['docs/spec/schemas/validate.py', '--check'],
   ['scripts/validate-production-workloads.py', '--self-test'],
   ['-m', 'unittest', 'benchmarks.test_workloads', 'workers.test_values'],

@@ -5,7 +5,7 @@ import { generate, writeSdk } from '../packages/osdk/src/generate.js';
 import { managementContract, snowContract } from '../packages/osdk/src/bundled.js';
 import { encodeValue, canonicalJson } from '../packages/contracts/values.js';
 import { builtinObjectTypes } from '../packages/contracts/bundled-objects.js';
-import { bindObject, typedRequest } from '../packages/osdk/src/runtime.js';
+import { bindObject, typedRequest, actionClient } from '../packages/osdk/src/runtime.js';
 import { createTransport } from '../packages/platform/src/transport.js';
 import { createClient, ApiError } from '../apps/snotel/src/generated/index.js';
 import {
@@ -13,6 +13,50 @@ import {
   ApiError as ManagementApiError,
 } from '../apps/management/src/generated/index.js';
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
+
+test('native action contracts retain public names while routing permanent IDs and decoding creation results', async () => {
+  const id = '00000000-0000-4000-8000-000000000088',
+    uid = '00000000-0000-4000-8000-000000000089';
+  const result = {
+    revision: '7',
+    created: [{ objectType: id, uid, version: '7' }],
+    changed: [{ objectType: id, uid, version: '7', deleted: false }],
+  };
+  const invoke = actionClient<{ name: string }>(
+    createTransport({
+      fetch: async (url) => {
+        assert.equal(
+          new URL(String(url), 'http://localhost').pathname,
+          `/api/v1/actions/${id}/invoke`,
+        );
+        return json(result);
+      },
+    }),
+    id,
+    { name: { type: 'string', nullable: false } },
+  );
+  assert.deepEqual(
+    await invoke({ name: 'created' }, { idempotencyKey: 'stable-operation' }),
+    result,
+  );
+  const contract = {
+    version: 1 as const,
+    app: 'native',
+    types: {},
+    objects: {},
+    actions: { create: { id, inputs: { name: { type: 'string' as const, nullable: false } } } },
+    endpoints: {},
+  };
+  const files = await generate(contract);
+  assert(files['index.ts'].includes(id));
+  await assert.rejects(
+    generate({
+      ...contract,
+      actions: { create: { ...contract.actions.create, id: 'not-a-uuid' } },
+    }),
+    /action ID/,
+  );
+});
 
 test('generated ontology names denote identity handles and serialize without properties or transport', async () => {
   const uid = '00000000-0000-4000-8000-000000000006';

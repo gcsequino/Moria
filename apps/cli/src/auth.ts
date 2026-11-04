@@ -21,8 +21,20 @@ export async function authCommand(
   const port = Number(process.env.MORIA_PORT ?? 3210);
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
     throw new MoriaError('USAGE', 'Invalid management port.');
-  const origin = `http://127.0.0.1:${port}`,
-    callback = `${origin}/api/auth/callback`;
+  const origin = `http://127.0.0.1:${port}`;
+  const authenticationOrigin =
+    process.env.MORIA_LOCAL_RUNTIME === 'legacy'
+      ? origin
+      : (process.env.MORIA_NATIVE_AUTH_ORIGIN ??
+        `http://127.0.0.1:${process.env.MORIA_AUTH_PORT ?? 3211}`);
+  const configuredAuthentication = new URL(authenticationOrigin);
+  if (
+    configuredAuthentication.origin !== authenticationOrigin ||
+    configuredAuthentication.hostname !== new URL(origin).hostname ||
+    configuredAuthentication.protocol !== 'http:'
+  )
+    throw new MoriaError('USAGE', 'Configure an exact loopback authentication origin.');
+  const callback = `${authenticationOrigin}/api/auth/callback`;
   const authDir = resolve(directory, 'auth'),
     configPath = resolve(authDir, 'providers.json');
   if (command === 'recover') {
@@ -82,7 +94,7 @@ export async function authCommand(
     await writeFile(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
     return {
       administratorInvitation: options.email.toLowerCase(),
-      callback: `http://127.0.0.1:${process.env.MORIA_PORT ?? 3210}/api/auth/callback`,
+      callback,
       next: 'Add the management callback to the existing Google Web client, then restart Moria. First management sign-in grants explicit admin operations; returning sign-ins do not restore revoked grants.',
     };
   }

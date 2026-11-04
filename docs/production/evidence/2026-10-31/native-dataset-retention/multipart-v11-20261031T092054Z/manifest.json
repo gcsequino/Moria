@@ -1,0 +1,51 @@
+{
+  "sourceRoot": "/tmp/moria-proof-snapshots/20261031T090947263284Z-data-header-qualification-v6",
+  "artifactManifest": "/tmp/moria-reconcile-20261029/docs/production/evidence/2026-10-31/native-retention/header-qualification-v6-20261031T090957Z/manifest.json",
+  "driver": "/tmp/moria-proof-drivers/multipart-v11-20261031T092054Z",
+  "driverSha256": "f1554ab1c3e041cd58a19d94468205f0ba1860ce78453a12d1ae0c0e0c9a045b",
+  "command": [
+    "flock",
+    "--shared",
+    "/tmp/moria-native-proof-resources.lock",
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "moria-data-dataset-multipart-v11",
+    "--network",
+    "none",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090947263284Z-data-header-qualification-v6,dst=/work",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-drivers/multipart-v11-20261031T092054Z,dst=/proof-driver,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/work/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-reconcile-20261029/node_modules,dst=/node_modules,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090947263284Z-data-header-qualification-v6/native-proof-artifact/moria-runtime,dst=/usr/local/bin/moria-runtime,readonly",
+    "--mount",
+    "type=bind,src=/tmp/moria-proof-snapshots/20261031T090947263284Z-data-header-qualification-v6/native-proof-artifact/moria-native-catalog-test,dst=/usr/local/bin/moria-native-catalog-test,readonly",
+    "-e",
+    "MORIA_RUNTIME_BINARY=/usr/local/bin/moria-runtime",
+    "-e",
+    "MORIA_CATALOG_TEST_BINARY=/usr/local/bin/moria-native-catalog-test",
+    "-w",
+    "/work",
+    "moria-test:recovery",
+    "/app/node_modules/.bin/tsx",
+    "--test",
+    "--test-reporter=tap",
+    "/proof-driver/multipart.ts"
+  ],
+  "exitCode": 0,
+  "files": {
+    "multipart.ts": {
+      "sha256": "f1554ab1c3e041cd58a19d94468205f0ba1860ce78453a12d1ae0c0e0c9a045b"
+    },
+    "history.ts": {
+      "sha256": "cf5cf55f9365cb4fb4dbba7ec8c3c625d3642e36b0b3d70dc7b8d1ad8f7928cc"
+    }
+  },
+  "originalDriverBeforeImportRewriteSha256": "44e36bc0707038e4d51b9d428972be80e226160c75e7d717440a80c1ed1b463f"
+}

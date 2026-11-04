@@ -1,4 +1,5 @@
 import { registerHooks } from 'node:module';
+process.env.MORIA_LOCAL_RUNTIME = 'legacy';
 
 // Exercise real startup in an empty working directory. A UI build dependency
 // must never be loaded, even if a future bootstrap stops writing artifacts.

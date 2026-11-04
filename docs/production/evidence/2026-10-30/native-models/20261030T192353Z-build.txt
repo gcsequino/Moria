@@ -1,0 +1,11 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: function `resolve_dataset_pin_registered_in` is never used
+   --> src/catalog.rs:684:21
+    |
+684 | pub(crate) async fn resolve_dataset_pin_registered_in(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `moria-runtime` (lib) generated 1 warning
+    Finished `dev` profile [unoptimized] target(s) in 14.26s

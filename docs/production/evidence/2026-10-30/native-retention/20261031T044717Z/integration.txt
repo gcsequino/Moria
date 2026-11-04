@@ -1,0 +1,92 @@
+TAP version 13
+# Subtest: explicit retention controls exact-issued versioned backup reclamation and real claim fences
+    # Subtest: fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+    not ok 1 - fresh actual issued writes remain retained, and their namespace cannot be exposed as Dataset bytes
+      ---
+      duration_ms: 276.809641
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:205:13'
+      failureType: 'testCodeFailure'
+      error: '"undefined" is not valid JSON'
+      code: 'ERR_TEST_FAILURE'
+      name: 'SyntaxError'
+      stack: |-
+        JSON.parse (<anonymous>)
+        issue (/work/tests/native-retention.integration.test.ts:138:19)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-retention.integration.test.ts:214:24)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-retention.integration.test.ts:205:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    # Subtest: no policy means no collection, and explicit historical retirement removes only its qualified version
+    ok 2 - no policy means no collection, and explicit historical retirement removes only its qualified version
+      ---
+      duration_ms: 602.619501
+      type: 'test'
+      ...
+    # Subtest: a retained foreign root blocks planning even for an expired retired producer
+    ok 3 - a retained foreign root blocks planning even for an expired retired producer
+      ---
+      duration_ms: 378.411953
+      type: 'test'
+      ...
+    # Subtest: policy revocation after a held HEAD prevents the removal effect
+    ok 4 - policy revocation after a held HEAD prevents the removal effect
+      ---
+      duration_ms: 521.846616
+      type: 'test'
+      ...
+    # Subtest: real expired claim ownership is fenced before a replacement removes the version
+    ok 5 - real expired claim ownership is fenced before a replacement removes the version
+      ---
+      duration_ms: 29620.256255
+      type: 'test'
+      ...
+    # Subtest: unqualified null-version objects stay unsupported and are never deleted
+    not ok 6 - unqualified null-version objects stay unsupported and are never deleted
+      ---
+      duration_ms: 26.23556
+      type: 'test'
+      location: '/work/tests/native-retention.integration.test.ts:396:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + undefined
+        - 'null'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'null'
+      operator: 'strictEqual'
+      stack: |-
+        mature (/work/tests/native-retention.integration.test.ts:174:19)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-retention.integration.test.ts:406:24)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-retention.integration.test.ts:396:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..6
+not ok 1 - explicit retention controls exact-issued versioned backup reclamation and real claim fences
+  ---
+  duration_ms: 34915.558083
+  type: 'test'
+  location: '/work/tests/native-retention.integration.test.ts:17:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 7
+# suites 0
+# pass 4
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 35368.337283

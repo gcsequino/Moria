@@ -1,0 +1,14 @@
+{
+  "classification": "isolated provider qualification failure; no native deletion enabled",
+  "image": "moria-test:native-prerequisites",
+  "minioSha256": "7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f",
+  "sources": {
+    "tests/fixtures/storage-s3/server.ts": "0325873b93e71ddca35ddee994c31441bd5c9fdb4e739767ecbb546179c142fa",
+    "pnpm-lock.yaml": "f226bb406950377f8f21c9848b7319ae12feff84978134715b15544a18743db7"
+  },
+  "result": {
+    "wrongIfMatchHeaderSent": true,
+    "deleteStatus": 204,
+    "objectStillExists": false
+  }
+}

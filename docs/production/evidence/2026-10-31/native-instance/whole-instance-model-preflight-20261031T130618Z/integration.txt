@@ -1,0 +1,37 @@
+TAP version 13
+# {"event":"whole-instance-phase","phase":"plan"}
+# {"event":"whole-instance-phase","phase":"configure"}
+# {"event":"whole-instance-phase","phase":"chat-approval"}
+# {"event":"whole-instance-phase","phase":"chat-probe"}
+# {"event":"whole-instance-phase-failed","phase":"chat-probe","process":{"exitCode":null,"errors":""}}
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    not ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 100168.685227
+      type: 'test'
+      location: '/work/tests/native-source-runtime.integration.test.ts:622:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+    1..1
+not ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 115062.885166
+  type: 'test'
+  location: '/work/tests/native-source-runtime.integration.test.ts:34:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115795.500456

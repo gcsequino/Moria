@@ -1,0 +1,41 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: publication: 
+thread 'catalog_publication' (110) panicked at ../../tests/fixtures/native-catalog/harness.rs:149:10:
+called `Result::unwrap()` on an `Err` value: db error
+
+Caused by:
+    ERROR: column reference "generation" is ambiguous
+    DETAIL: It could refer to either a PL/pgSQL variable or a table column.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+running 1 test
+test catalog_publication ... FAILED
+
+failures:
+
+failures:
+    catalog_publication
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.10s
+
+
+
+101 !== 0
+
+    at run (/work/benchmarks/native-projection.ts:230:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async nativeProjectionCapacity (/work/benchmarks/native-projection.ts:359:5)
+    at async <anonymous> (/work/.proof-output/million-runner.ts:34:15) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 101,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

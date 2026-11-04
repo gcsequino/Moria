@@ -97,7 +97,8 @@ export function functionsHandler(functions: Functions) {
           Object.keys(value).length
         )
           throw new MoriaError('INPUT_INVALID', 'Expected an empty object');
-        send(200, await functions.cancel(context, id));
+        await functions.cancel(context, id);
+        send(200, { id, cancelRequested: true });
         return true;
       }
       throw new MoriaError('NOT_FOUND', 'Function endpoint not found');

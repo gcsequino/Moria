@@ -1,0 +1,1 @@
+{"event":"graph_schema_applied","classification":"isolated synthetic schema syntax proof; not full v3 qualification"}

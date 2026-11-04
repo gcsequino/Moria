@@ -1,0 +1,60 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    not ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 111.729228
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:423:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        503 !== 409
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 409
+      actual: 503
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:426:16)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:423:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+    1..1
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 26925.472886
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:29:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"error":{"code":"PIPELINE_PROFILE_REQUIRED","correlationId":"f12828fa-503a-4268-883d-05bd9e358e39","details":null,"message":"PIPELINE_PROFILE_REQUIRED","requestId":"f12828fa-503a-4268-883d-05bd9e358e39","retryable":false}}
+    
+    503 !== 202
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 202
+  actual: 503
+  operator: 'strictEqual'
+  stack: |-
+    invoke (/work/tests/native-pipelines.integration.test.ts:420:14)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:480:21)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27712.87643

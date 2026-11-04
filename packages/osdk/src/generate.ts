@@ -76,6 +76,11 @@ export function validateContract(input: unknown): AppContract {
   }
   for (const [r, a] of Object.entries(c.actions)) {
     if (!name(r) || !record(a)) fail('action');
+    if (
+      a.id !== undefined &&
+      (typeof a.id !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(a.id))
+    )
+      fail('action ID must be canonical UUID');
     normalizeType({ type: 'object', properties: a.inputs }, c.types);
     for (const type of Object.values(a.inputs)) normalizeType(type, {}, 'column');
   }
@@ -150,7 +155,7 @@ export async function generate(input: unknown) {
     'actions: {',
     ...Object.entries(c.actions).map(
       ([n, a]) =>
-        `${quote(n)}: actionClient<${ts({ type: 'object', properties: a.inputs })}>(transport, ${quote(n)},${quote(a.inputs)}),`,
+        `${quote(n)}: actionClient<${ts({ type: 'object', properties: a.inputs })}>(transport, ${quote(a.id ?? n)},${quote(a.inputs)}),`,
     ),
     '},',
     'endpoints: {',

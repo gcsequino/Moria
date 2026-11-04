@@ -1,0 +1,84 @@
+# Native Dataset write modes
+
+This contract governs the N09 extension. Existing replacement support is implemented; the mode-aware partset, persistent key index and incremental merge-on-read protocol below are implementation requirements, not completed capacity evidence. Source declarations and trusted native job metadata select the mode. A guest supplies bounded typed rows or keys and receives an opaque partset; it cannot select a mode, table path, physical reference, key definition or checkpoint authority.
+
+## Accepted contract and API
+
+Persist the actual Source Dataset's ordered `primaryKey` and allowed `writeModes` in its native binding alongside columns, Iceberg schema, physical identity and binding revision. Missing `primaryKey` means no key. Changing a key definition requires an explicit schema/index evolution protocol; it cannot reinterpret retained roots. Allowed-mode changes receive a fresh binding revision and current authority checks.
+
+`DatasetIoGrant::write_contract()` derives the current binding and accepted execution contract. A Connection's mode and coverage come from the exact pinned `runtime_pipeline_executions.definition`; a Transform uses replacement. Existing expected-head pins protect the old output root while it is read. The expected-head reader capability comes from the real grant, expected revision and actual native head; it is never manufactured as a caller-supplied input pin.
+
+A version-two task partset binds:
+
+- Actual execution/task/owner/fence/incarnation and Dataset UUID.
+- Full schema hash, ordered key-schema hash, mode and coverage.
+- Expected Dataset revision, snapshot and metadata root, or a verified empty head.
+- Input kind: complete rows for replace/append/upsert; exact key columns only for delete.
+- Bounded part descriptors, counts and accepted resource limits.
+
+The coordinator API is `prepare_output(store, scratch, grant, schema, write_contract, partsets, budgets, cancellation)`. It compares every sealed task partset with the accepted job and current grant before producing a candidate. The existing grouped head publication, expected-head CAS, checkpoint expected-version CAS, lineage, receipt and execution completion remain one transaction. Task checkpoint journals remain bound to the exact sealed task fence. An unchanged result still requires the expected-head and checkpoint checks; it cannot acknowledge a source event before the durable commit.
+
+## Coverage and application mode
+
+Coverage describes input completeness, independently of how rows change the target.
+
+| Coverage    | Allowed modes                   | Completion rule                                                                                                                                                     |
+| ----------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| full        | replace, append, upsert, delete | Every declared scan partition must seal before publication. Full upsert preserves target keys absent from input; full delete removes only explicitly supplied keys. |
+| incremental | append, upsert, delete          | Publish the accepted delta and its exact checkpoint together. Replacement requires a future explicit complete-snapshot capability and is otherwise rejected.        |
+| appendOnly  | append                          | Enforce append semantics; declared keys remain disjoint from the entire current result.                                                                             |
+
+A delete connector's registered output schema is exactly the ordered key schema, while its task partset also pins the complete target schema hash. Other modes require complete target rows. Schema and coverage cannot be chosen by a guest or inferred from a conveniently empty batch.
+
+## Row and key semantics
+
+| Mode    | Input                                                 | Result                                                                                                                                                                           |
+| ------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| replace | Complete rows                                         | Replace the result; enforce all declared keys across every task, not just each batch.                                                                                            |
+| append  | Complete rows                                         | Preserve existing rows and add input. With a declared key, input must be unique and disjoint from the entire current result. Without a key, preserve Dataset multiset semantics. |
+| upsert  | Complete rows and a nonempty declared key             | Replace matching rows and insert missing keys. Input duplicates are rejected; no partial-column updates or implicit last-row wins.                                               |
+| delete  | Exact ordered key columns and a nonempty declared key | Remove matching rows. Payload columns are rejected. Missing targets are idempotent no-ops.                                                                                       |
+
+Every declared key column must exist and be declared non-null, matching the accepted Source validator. Every actual key value must also be non-null. Nullable non-key columns remain unchanged; conflicting key declarations are rejected rather than silently rewritten. The existing typed codecs normalize key values; the key encoding binds the exact ordered descriptors and values. Compare full encoded keys, not just a hash. Hash collisions select a common shard and never make distinct keys equal. No implicit whole-row identity is invented.
+
+Replacement uniqueness is a current correctness requirement independent of the accelerator. Stream projected keys through bounded native spill, in bounded transactions, before any head/checkpoint/completion commit. Duplicate, missing or null keys must leave the previous head, typed rows and checkpoint unchanged. No per-row PostgreSQL or provider round trip is allowed.
+
+## Incremental layout and merge-on-read
+
+The key index is an immutable derived accelerator. Dataset data files and the accepted Iceberg snapshot remain the truth; index bytes never confer deletion authority. Bind an index root to the Dataset UUID, exact snapshot, key/schema hashes, complete current file membership, row/key counts and native layout version and visibility sequence. A missing, stale or unqualified index requires an explicit bounded/distributed bootstrap or a clear capability rejection. It never means that existing keys or files may be omitted.
+
+Use a fixed versioned hash partition of encoded keys. Each partition has sorted immutable key runs mapping full keys to current data-file identities. An immutable directory tree references partition roots; update only affected directory paths and key partitions. Do not copy or scan the whole key index for every batch. New runs and bounded leveled compaction keep update and lookup amplification explicit. Row counts, byte limits, spill, fanout and file-rewrite budgets are admitted before work.
+
+Batch incoming keys by partition. A bounded merge/join against the relevant qualified key runs proves append disjointness and identifies prior current keys. Upsert and delete use standard Iceberg v2 equality-delete files, with exact declared key field IDs and data-sequence semantics. Equality deletes apply only to older data sequences; same-commit replacement data has the new sequence and survives. This follows the [Iceberg scan rules](https://iceberg.apache.org/spec/#scan-planning). Complete upsert rows are new ordinary data files; equality deletes apply to older data rather than deleting the newly inserted replacement rows. Missing delete keys remain no-ops. Standard Iceberg readers must see the same result as the native reader.
+
+Sparse mutations must not rewrite large random-key data files. The native reader performs bounded visibility merging of applicable equality deletes and data files, preserving snapshot-specific sequence/partition semantics. Sorted key/delete runs, file/partition bounds, spill and explicit fanout limits bound read amplification. Bounded compaction tasks rewrite selected file/run groups through actual renewable execution fences and expected-head publication; they cannot silently omit concurrent rows or delete files required by retained snapshots. Full replacement remains the proved path, independently of this extension.
+
+Complete new key runs and directory paths before publication. Index updates track the resulting current key-to-row/file mapping, not merely append an unqualified hint. Missing, stale or incomplete mapping blocks the fast path and requires explicit bootstrap. Root publication, checkpoint CAS and execution completion remain one transaction. Record both sparse-update write amplification and bounded read/compaction amplification. COW remains suitable for bounded compaction or full replacement; a sparse-update profile that rewrites most of the population is not an acceptable production target implementation.
+
+Store private index references in standard Iceberg manifest custom metadata or snapshot summary/property extensions, with a versioned native closure extension. Standard Iceberg readers consume the ordinary data and equality-delete files with their standard sequence semantics. Native closure discovery must enumerate, hash and pin every referenced index node/run. Retention and recovery include those exact sidecars. Old root pins protect old index, data and delete-file versions; only unreferenced issued versions are eligible for the existing qualified cleanup protocol.
+
+Initial bootstrap scans projected keys, not wide payloads, with bounded distributed partitions and spill. It proves full-result uniqueness and exact file/key membership against the pinned head before installation. File sizes and partition counts are explicit workload parameters. Record sparse-update rewrite amplification and index compaction costs; do not represent a full-table rewrite on each mutation as incremental scalability.
+
+## Checkpoints and proof obligations
+
+A connector checkpoint's semantic revision binds its artifact/ABI/schema, configuration, stream, mode, coverage, actual destination/key/schema/physical identity and secret binding revisions. It excludes secret plaintext and unrelated repository changes. A native Dataset binding revision currently also includes Source release audit input, so semantic checkpoint identity must use the actual destination fields rather than blindly rehashing that revision.
+
+Required functional proofs include cross-task duplicate replacement, null/missing keys, existing-key append conflicts, complete-row upsert, key-only delete, no-PK append, stale expected head, lost commit acknowledgement, checkpoint conflict, task takeover, current authority revocation, retained old snapshots/indexes, and independent recovery copies. Exact current/historical rows and counts must match an independent oracle. Throughput, touched-file and read/write amplification, spill and provider/SQL call counts require separate measured scale trials.
+
+## Persistent closure version three
+
+A delta cannot rebuild or rehash a flat closure containing the whole table. Version three uses an immutable radix directory over the SHA-256 route of each full logical name. Branches have at most sixteen children; leaves contain bounded sorted full-name/content records. Full names remain the identity, so a route collision never overwrites a different name. A bounded mutation batch groups changes by directory path and writes only changed leaves and ancestors. Unchanged child descriptors retain their original immutable identity. Per-node entry/byte summaries and root profile hashes are checked rather than trusted from a guest. The key-run directory uses the same bounded persistent directory mechanism; a key partition's sorted runs remain independently bounded.
+
+Reuse is receiver-qualified. A trusted coordinator resolves the actual expected head under its existing execution pin, verifies that its immutable closure root was qualified for the exact Dataset, logical content, reader/key-schema/layout profile, physical binding and current incarnation, and derives reusable children only by traversing that root. A caller-supplied descriptor, checksum or boolean cannot establish ancestry or qualification. A changed file, manifest, index run or directory node is newly verified and journaled through the actual producer authority. A newly published root binds the old qualified subtrees and the exact changed set in the expected-head CAS transaction.
+
+Immutable subtrees need not be eagerly reread at each delta commit. Reuse proves membership and the prior content qualification, rather than continued availability of every descendant. Every accessed node is read through current authority, exact version and content hash. File access uses bounded authenticated chunks tied to a receiver-qualified file certificate; missing, truncated, version-changed or hash-mismatched bytes fail the operation. Unaccessed corruption is detected on access or a separately scheduled scrub. No prior authorization decision is reused across independent calls; current Dataset/source/label/namespace/lease checks remain mandatory at bounded IO and every external frame/proof/publication release.
+
+Native graph custody tracks root-to-child and node-to-content edges, not a flattened member copy per publication. Real retained heads, execution pins, references and recovery captures are roots of that graph. A bounded work queue propagates zero-to-one and one-to-zero reachability; a node or physical version cannot become collectible while a root, pin, in-progress propagation or independent sealed backup still requires it. Shared nodes are reclaimed only after the last live graph reference, actual closed producer, permanent tombstone and existing grace checks. The collector's exact-version authority remains separate from directory membership.
+
+Recovery copies each unique reachable object through the actual graph and inventory proof. Restore requalifies logical nodes and authenticated-file certificates against copied target versions, the new physical binding and incarnation; it retains original audit rows. It cannot copy old physical authority forward. Standard Iceberg metadata/manifests/data remain valid and unchanged in meaning. Version-two roots/readers/backups remain supported; an old flat root needs an explicit bounded/distributed bootstrap before it can participate in incremental directory reuse. None of this changes the minimum physical retention age or permits prefix cleanup.
+
+The version-three directory, graph qualification, authenticated-file index and delta publication must all be implemented and pass real retained/recovered-root proofs before append/upsert/delete are enabled. Until then, those modes fail with `DATASET_WRITE_CAPABILITY_REQUIRED`; replacement continues to enforce declared key uniqueness independently of this accelerator.
+
+The Source/index consumer boundary and publication protocol are specified in [Dataset commit deltas](dataset-deltas.md).
+
+The compiler rejects missing or nullable key-column declarations and preserves nullable non-key columns; actual keyed row values are also required to be non-null. Both Source configuration and Connection validation require a declared key for upsert/delete. Replace and append remain legal without a key, with multiset semantics for keyless append. The compiler checks the same coverage/mode matrix as the native write contract.

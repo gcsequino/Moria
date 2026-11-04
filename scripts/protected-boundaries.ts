@@ -14,6 +14,7 @@ export const protectedClasses: Record<string, readonly string[]> = {
     'services/catalog/src/storage.ts',
     'services/snotel/src/service.ts',
     'apps/local/src/workspace.ts',
+    'apps/local/src/native-runtime.ts',
   ],
   'services/catalog/src/catalog.ts#Catalog': [
     'services/filesystem/src/local.ts',
@@ -40,6 +41,7 @@ export const protectedClasses: Record<string, readonly string[]> = {
     'services/lineage/src/service.ts',
     'apps/local/src/workspace.ts',
     'apps/local/src/runtime.ts',
+    'apps/local/src/native-runtime.ts',
   ],
   'services/ontology/src/store.ts#ObjectStore': [
     'services/ontology/src/store.ts',
@@ -95,10 +97,12 @@ export const protectedFunctions: Record<string, readonly string[]> = {
     'apps/local/src/server.ts',
     'services/app-host/src/scoped.ts',
     'services/app-host/src/static-server.ts',
+    'apps/local/src/native-runtime.ts',
   ],
   'services/http/src/server.ts#browserProfile': [
     'apps/local/src/server.ts',
     'services/app-host/src/scoped.ts',
+    'apps/local/src/native-runtime.ts',
   ],
   'services/http/src/server.ts#dispatchHttp': [
     'apps/local/src/server.ts',
@@ -131,6 +135,7 @@ export const protectedModules: Record<string, readonly string[]> = {
     'services/process/src/python.ts',
     'services/functions/src/docker.ts',
     'apps/cli/src/filesystem.ts',
+    'apps/local/src/native-runtime.ts',
   ],
   child_process: [
     'services/process/src/python.ts',
@@ -152,12 +157,14 @@ export const protectedModules: Record<string, readonly string[]> = {
     'apps/local/src/runtime.ts',
     'apps/local/src/migrate.ts',
     'apps/local/src/development-database.ts',
+    'apps/local/src/native-runtime.ts',
   ],
   'node:module': ['packages/compiler/src/index.ts'],
   module: [],
 };
 
 export const httpListeners = {
+  'apps/local/src/native-runtime.ts': ['tests/native-local-runtime.integration.test.ts'],
   'apps/api/src/function-platform.ts': [
     'tests/functions-platform.integration.test.ts',
     'tests/functions.integration.test.ts',
@@ -186,6 +193,7 @@ export const httpClientImports: Record<string, Record<string, readonly string[]>
 };
 
 export const processAdapters = {
+  'apps/local/src/native-runtime.ts': ['tests/native-local-runtime.integration.test.ts'],
   'services/functions/src/docker.ts': [
     'tests/functions.integration.test.ts',
     'tests/functions-docker-compat.integration.test.ts',
@@ -218,3 +226,10 @@ export const sandboxEntrypoints: Record<string, readonly string[]> = {
     'tests/functions.integration.test.ts',
   ],
 };
+
+/** Native child supervision; user code remains owned by its isolated runtime. */
+export const processLifecycleOwners = [
+  'services/process/src/python.ts',
+  'services/functions/src/docker.ts',
+  'apps/local/src/native-runtime.ts',
+] as const;

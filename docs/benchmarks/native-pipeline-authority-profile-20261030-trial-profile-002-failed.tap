@@ -1,0 +1,48 @@
+TAP version 13
+# Subtest: native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+    # Subtest: metadata authority and actual storage pins precede any user-code claim
+    ok 1 - metadata authority and actual storage pins precede any user-code claim
+      ---
+      duration_ms: 127.027199
+      type: 'test'
+      ...
+    # Subtest: private batched authority retains per-request parity and current revocation
+    not ok 2 - private batched authority retains per-request parity and current revocation
+      ---
+      duration_ms: 469.64229
+      type: 'test'
+      location: '/work/tests/native-pipelines.integration.test.ts:631:13'
+      failureType: 'testCodeFailure'
+      error: 'FRESH_DATASET_REVISION_REQUIRED'
+      code: 'P0001'
+      name: 'error'
+      stack: |-
+        /work/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:706:13)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/work/tests/native-pipelines.integration.test.ts:631:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+# PIPELINE_AUTHORITY_GUARD_PROBE={"jit":{"setting":"on","available":false},"timingsMillis":{"on":["171.111","136.854","137.561"],"off":["128.834","132.249","135.243"]},"scope":"one dedicated probe connection; worker settings unchanged"}
+# PIPELINE_AUTHORITY_FUNCTION_PROFILE=[{"funcname":"runtime_pipeline_current","calls":"1","total_time":99.435822,"self_time":0.604221},{"funcname":"native_serving_resource_access_batch_state","calls":"1","total_time":97.292954,"self_time":0.7124},{"funcname":"native_serving_filesystem_resource_access_state","calls":"8","total_time":94.330584,"self_time":94.330584},{"funcname":"runtime_data_operational","calls":"20","total_time":1.714927,"self_time":1.714927},{"funcname":"runtime_service_binding_guard","calls":"1","total_time":1.182345,"self_time":0.308945},{"funcname":"native_serving_service_authority","calls":"1","total_time":0.8734,"self_time":0.719143},{"funcname":"runtime_data_origins","calls":"8","total_time":0.469272,"self_time":0.421824},{"funcname":"runtime_dataset_kind","calls":"5","total_time":0.356302,"self_time":0.356302},{"funcname":"runtime_environment_cell_check","calls":"1","total_time":0.154257,"self_time":0.093792},{"funcname":"runtime_data_resource","calls":"16","total_time":0.113219,"self_time":0.113219},{"funcname":"runtime_recovery_check","calls":"1","total_time":0.060465,"self_time":0.045693},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"1","total_time":0.014772,"self_time":0.014772}]
+    1..2
+not ok 1 - native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs
+  ---
+  duration_ms: 73764.829121
+  type: 'test'
+  location: '/work/tests/native-pipelines.integration.test.ts:69:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 3
+# suites 0
+# pass 1
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 74432.239809

@@ -1,0 +1,12 @@
+{
+  "classification": "separate bounded read-only observer; no measured runner mutation",
+  "scriptSha256": "4939cf05ea87c16a38f12ac481a8c236900076b2e264e9a420904ad704343055",
+  "command": [
+    "docker",
+    "exec",
+    "moria-data-qualified-seek-1000000-v10",
+    "/app/node_modules/.bin/tsx",
+    "/tmp/phase-diagnostic.mts"
+  ],
+  "exitCode": 0
+}

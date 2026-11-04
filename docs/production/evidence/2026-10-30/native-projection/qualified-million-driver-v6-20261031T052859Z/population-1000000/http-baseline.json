@@ -1,0 +1,282 @@
+{
+  "classification": "exploratory-short-open-loop-baseline",
+  "seed": 1836020329,
+  "rows": 1000000,
+  "rowBytes": 4096,
+  "rates": [
+    20,
+    50,
+    100
+  ],
+  "windowMs": 30000,
+  "maxOutstanding": 256,
+  "timeoutMs": 10000,
+  "replicas": 1,
+  "authorization": "one actual workload session with two markings; full-visibility row policy",
+  "mix": {
+    "detail": 35,
+    "page": 30,
+    "filterSort": 15,
+    "action": 10,
+    "multiAction": 5,
+    "aggregate": 5
+  },
+  "queryContract": "Whole-population indexed queries without optional scope/budget; page uses uid>=sampled UID; filter/sort uses rank>=0 over the complete population. Client validates actual responses <=256KiB and uses a10s arrival deadline.",
+  "pageProjection": [
+    "uid",
+    "id",
+    "name",
+    "region",
+    "enabled",
+    "rank",
+    "amount"
+  ],
+  "distribution": "80% uniform full population / 20% hot 1%; multiAction five selected objects; aggregate exact one-UID scope",
+  "limitations": [
+    "Single source generation; no preloaded overlay history",
+    "No human browser or restricted-visibility mix",
+    "No relation fanout or contention sub-run",
+    "Short windows without production warm-up, recovery, repetitions or soak",
+    "Shared host resources; no production capacity/SLO certification"
+  ],
+  "windows": [
+    {
+      "rate": 20,
+      "windowMs": 30000,
+      "startedAt": "2026-10-31T06:25:29.993Z",
+      "total": {
+        "scheduled": 600,
+        "successful": 600,
+        "p50Ms": 204.76606699964032,
+        "p95Ms": 1238.3668450000696,
+        "p99Ms": 1446.4674939997494,
+        "maxMs": 1587.4238199996762,
+        "errors": {}
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 192,
+          "successful": 192,
+          "p50Ms": 98.60824699979275,
+          "p95Ms": 1073.5463849999942,
+          "p99Ms": 1238.3668450000696,
+          "maxMs": 1294.0406039999798,
+          "errors": {}
+        },
+        "page": {
+          "scheduled": 188,
+          "successful": 188,
+          "p50Ms": 339.18192999996245,
+          "p95Ms": 1298.7478889999911,
+          "p99Ms": 1559.7550119999796,
+          "maxMs": 1587.4238199996762,
+          "errors": {}
+        },
+        "filterSort": {
+          "scheduled": 97,
+          "successful": 97,
+          "p50Ms": 98.39779599988833,
+          "p95Ms": 1252.8883730000816,
+          "p99Ms": 1496.2962039997801,
+          "maxMs": 1496.2962039997801,
+          "errors": {}
+        },
+        "action": {
+          "scheduled": 62,
+          "successful": 62,
+          "p50Ms": 232.80030900007114,
+          "p95Ms": 1321.7744439998642,
+          "p99Ms": 1527.4541319999844,
+          "maxMs": 1527.4541319999844,
+          "errors": {}
+        },
+        "multiAction": {
+          "scheduled": 31,
+          "successful": 31,
+          "p50Ms": 291.8832870000042,
+          "p95Ms": 1162.3804969997145,
+          "p99Ms": 1233.0705450000241,
+          "maxMs": 1233.0705450000241,
+          "errors": {}
+        },
+        "aggregate": {
+          "scheduled": 30,
+          "successful": 30,
+          "p50Ms": 58.508215999696404,
+          "p95Ms": 1028.2424769997597,
+          "p99Ms": 1394.7519119996578,
+          "maxMs": 1394.7519119996578,
+          "errors": {}
+        }
+      }
+    },
+    {
+      "rate": 50,
+      "windowMs": 30000,
+      "startedAt": "2026-10-31T06:26:02.011Z",
+      "total": {
+        "scheduled": 1500,
+        "successful": 798,
+        "p50Ms": 655.6542409998365,
+        "p95Ms": 3202.5825269999914,
+        "p99Ms": 4506.138435999863,
+        "maxMs": 4788.468965000007,
+        "errors": {
+          "RESOURCE_LIMIT\n\n429 !== 200\n": 702
+        }
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 520,
+          "successful": 277,
+          "p50Ms": 415.54608799982816,
+          "p95Ms": 3047.580393999815,
+          "p99Ms": 4334.697515999898,
+          "maxMs": 4506.138435999863,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 243
+          }
+        },
+        "page": {
+          "scheduled": 463,
+          "successful": 252,
+          "p50Ms": 1094.2951749996282,
+          "p95Ms": 3783.1835269997828,
+          "p99Ms": 4653.74353799969,
+          "maxMs": 4788.468965000007,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 211
+          }
+        },
+        "filterSort": {
+          "scheduled": 204,
+          "successful": 104,
+          "p50Ms": 356.91754499962553,
+          "p95Ms": 3131.8286559996195,
+          "p99Ms": 4454.144306999631,
+          "maxMs": 4600.654118999839,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 100
+          }
+        },
+        "action": {
+          "scheduled": 155,
+          "successful": 82,
+          "p50Ms": 1144.215412999969,
+          "p95Ms": 3167.6127969999798,
+          "p99Ms": 4033.576477000024,
+          "maxMs": 4638.455482999794,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 73
+          }
+        },
+        "multiAction": {
+          "scheduled": 80,
+          "successful": 37,
+          "p50Ms": 0.8228849996812642,
+          "p95Ms": 2882.8562629995868,
+          "p99Ms": 4613.6107319998555,
+          "maxMs": 4613.6107319998555,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 43
+          }
+        },
+        "aggregate": {
+          "scheduled": 78,
+          "successful": 46,
+          "p50Ms": 934.9546089996584,
+          "p95Ms": 4323.351542999968,
+          "p99Ms": 4494.447953999974,
+          "maxMs": 4494.447953999974,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 32
+          }
+        }
+      }
+    },
+    {
+      "rate": 100,
+      "windowMs": 30000,
+      "startedAt": "2026-10-31T06:26:36.162Z",
+      "total": {
+        "scheduled": 3000,
+        "successful": 850,
+        "p50Ms": 0.5230880002491176,
+        "p95Ms": 2723.831575000193,
+        "p99Ms": 3174.2978020003065,
+        "maxMs": 3697.3211540002376,
+        "errors": {
+          "RESOURCE_LIMIT\n\n429 !== 200\n": 2150
+        }
+      },
+      "classes": {
+        "detail": {
+          "scheduled": 1036,
+          "successful": 308,
+          "p50Ms": 0.5052400003187358,
+          "p95Ms": 2646.184665000066,
+          "p99Ms": 3135.3058550003916,
+          "maxMs": 3524.708164000418,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 728
+          }
+        },
+        "page": {
+          "scheduled": 909,
+          "successful": 254,
+          "p50Ms": 0.5424359999597073,
+          "p95Ms": 2849.665748000145,
+          "p99Ms": 3178.684544000309,
+          "maxMs": 3697.3211540002376,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 655
+          }
+        },
+        "filterSort": {
+          "scheduled": 468,
+          "successful": 124,
+          "p50Ms": 0.5131000000983477,
+          "p95Ms": 2611.4958340004086,
+          "p99Ms": 3354.9311379999854,
+          "maxMs": 3545.543179000262,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 344
+          }
+        },
+        "action": {
+          "scheduled": 290,
+          "successful": 79,
+          "p50Ms": 0.5485890000127256,
+          "p95Ms": 2803.406857000198,
+          "p99Ms": 3443.033024000004,
+          "maxMs": 3446.720605000388,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 211
+          }
+        },
+        "multiAction": {
+          "scheduled": 149,
+          "successful": 43,
+          "p50Ms": 0.6718860003165901,
+          "p95Ms": 2758.66613700008,
+          "p99Ms": 3159.9287400003523,
+          "maxMs": 3585.1228610002436,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 106
+          }
+        },
+        "aggregate": {
+          "scheduled": 148,
+          "successful": 42,
+          "p50Ms": 0.5364870000630617,
+          "p95Ms": 2595.3904240000993,
+          "p99Ms": 3136.125789999962,
+          "maxMs": 3579.042203000281,
+          "errors": {
+            "RESOURCE_LIMIT\n\n429 !== 200\n": 106
+          }
+        }
+      }
+    }
+  ]
+}

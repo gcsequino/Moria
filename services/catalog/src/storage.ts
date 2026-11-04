@@ -56,6 +56,11 @@ export function encodeMetadataLocation(value: StorageLocation): string {
 }
 
 export function decodeMetadataLocation(value: string): StorageLocation {
+  if (typeof value === 'string' && value.startsWith('moria-snapshot-v2:'))
+    throw new MoriaError(
+      'UNSUPPORTED_CAPABILITY',
+      'This snapshot requires the native catalog reader.',
+    );
   try {
     if (typeof value !== 'string' || value.length > 512 || !value.startsWith(prefix)) {
       throw new StorageError('INVALID_INPUT');
@@ -250,7 +255,7 @@ export class CatalogStorage {
     if (bindings.some((binding) => !binding.icebergTableUuid)) {
       throw new StorageError('BINDING_MISMATCH');
     }
-    const state = await this.authority.current(
+    let state = await this.authority.current(
       session.environment,
       session.principal,
       session.application,
@@ -299,6 +304,24 @@ export class CatalogStorage {
     const check = async () => {
       await catalog.transaction(checkSession, session.environment, 'repeatable-read', 'shared');
     };
+    if (Object.keys(declaration.lineage).length) {
+      await catalog.transaction(async (client) => {
+        await checkSession(client);
+        await catalog.admitDataProvenance(
+          client,
+          session.sessionHash!,
+          bindings.map((binding) => binding.dataset),
+          Object.keys(declaration.lineage),
+          'write',
+        );
+        state = await this.authority.current(
+          session.environment,
+          session.principal,
+          session.application,
+          client,
+        );
+      }, session.environment);
+    }
     const current: TrustedStorageAuthority = {
       checkCurrent: async () => {
         await check();
