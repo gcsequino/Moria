@@ -84,6 +84,9 @@ test(
     });
     assert.match(graph, /"event":"graph_bootstrap_read"/);
     assert.match(graph, /"event":"standard_iceberg_export"/);
+    for (const line of graph.split('\n')) {
+      if (/"event":"graph_(scan_complete|key_parity_checked)"/.test(line)) t.diagnostic(line);
+    }
     const { stdout } = await promisify(execFile)(resolve('.venv/bin/python'), [
       resolve('tests/fixtures/native-retention/iceberg_oracle.py'),
       join(standardExport, 'export.json'),

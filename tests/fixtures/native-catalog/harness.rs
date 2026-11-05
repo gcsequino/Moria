@@ -554,6 +554,7 @@ async fn run() -> Result<()> {
                 "SELECT columns FROM moria.native_dataset_bindings WHERE environment=$1 AND resource=$2",
                 &[&session.environment(), &source.resource.parse::<Uuid>()?],
             ).await?.get(0);
+            let scan_started = std::time::Instant::now();
             let mut stream = snapshot.clone().scan().await?;
             let mut actual = BTreeMap::<String, usize>::new();
             let mut count = 0usize;
@@ -564,7 +565,10 @@ async fn run() -> Result<()> {
                 count += batch.num_rows();
             }
             ensure!(count == fixture.expected_rows.unwrap_or(64), "FIXTURE_READBACK_MISMATCH");
+            event(json!({"event":"graph_scan_complete","rows":count,
+                "elapsedMillis":scan_started.elapsed().as_millis()}));
             if let Some(expected) = fixture.writer_rows.get(&source.resource) {
+                let parity_started = std::time::Instant::now();
                 let schema = snapshot.metadata().current_schema();
                 let expected_rows=if expected.is_empty(){Vec::new()}else{typed_rows(&supplied_batch(schema.as_ref(),expected,&columns)?,&columns)?};
                 for row in expected_rows {
@@ -582,20 +586,36 @@ async fn run() -> Result<()> {
                     let values: Vec<_> = rows.iter().map(|row|keys.iter().map(|key| row[key].clone()).collect::<Vec<_>>()).collect();
                     let batched = snapshot.lookup_keys(&values).await?;
                     ensure!(batched.len() == rows.len(), "FIXTURE_BATCH_KEY_MISMATCH");
-                    for ((row, values), batched) in rows.iter().zip(values).zip(batched) {
-                        let locator = snapshot.lookup_key(&values).await?.ok_or_else(|| anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
-                        ensure!(batched.as_ref() == Some(&locator), "FIXTURE_BATCH_KEY_MISMATCH");
-                        ensure!(locator.file.starts_with("moria://"), "FIXTURE_KEY_NOT_FOUND");
-                        if fixture.mode.starts_with("graph-bootstrap") {
-                            ensure!(locator.row_hash.is_none(), "FIXTURE_BOOTSTRAP_DIGEST_NOT_DEFERRED");
-                        }
-                        if row == &expected[0] {
-                            let verified = snapshot.read_key_row(&values).await?.ok_or_else(||anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
-                            ensure!(verified.locator.row_hash.is_some(), "FIXTURE_ROW_DIGEST_NOT_VERIFIED");
-                            ensure!(canonical_json(&verified.value)? == canonical_json(row)?, "FIXTURE_READBACK_MISMATCH");
-                        }
-                    }
+                    let bootstrap = fixture.mode.starts_with("graph-bootstrap");
+                    // Every scalar lookup checks live authority. Four in flight keep
+                    // serial network latency out of the fixture's parity comparison.
+                    futures::stream::iter(rows.iter().zip(values).zip(batched))
+                        .map(|((row, values), batched)| {
+                            let snapshot = snapshot.as_ref();
+                            let verify_row = row == &expected[0];
+                            async move {
+                                let locator = snapshot.lookup_key(&values).await?
+                                    .ok_or_else(|| anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
+                                ensure!(batched.as_ref() == Some(&locator), "FIXTURE_BATCH_KEY_MISMATCH");
+                                ensure!(locator.file.starts_with("moria://"), "FIXTURE_KEY_NOT_FOUND");
+                                if bootstrap {
+                                    ensure!(locator.row_hash.is_none(), "FIXTURE_BOOTSTRAP_DIGEST_NOT_DEFERRED");
+                                }
+                                if verify_row {
+                                    let verified = snapshot.read_key_row(&values).await?
+                                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
+                                    ensure!(verified.locator.row_hash.is_some(), "FIXTURE_ROW_DIGEST_NOT_VERIFIED");
+                                    ensure!(canonical_json(&verified.value)? == canonical_json(row)?, "FIXTURE_READBACK_MISMATCH");
+                                }
+                                Ok::<_, anyhow::Error>(())
+                            }
+                        })
+                        .buffer_unordered(4)
+                        .try_for_each(|()| async { Ok(()) })
+                        .await?;
                 }
+                event(json!({"event":"graph_key_parity_checked","rows":expected.len(),
+                    "elapsedMillis":parity_started.elapsed().as_millis()}));
             }
             if let Some((directory, metadata)) = export {
                 let members = standard_export::write(snapshot.as_ref(), directory, &metadata).await?;
