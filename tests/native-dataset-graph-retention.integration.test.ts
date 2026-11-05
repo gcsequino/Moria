@@ -7,6 +7,10 @@ import { managedRetentionDataset } from './fixtures/native-retention/dataset.js'
 import { bootstrapGraph } from './fixtures/native-retention/graph.js';
 import { retentionRecovery } from './fixtures/native-retention/recovery.js';
 import {
+  journalRows,
+  assertRestoredReplacementJournal,
+} from './fixtures/native-retention/journal.js';
+import {
   ageClosedDatasetHistory,
   ageClosedUnclaimedCandidates,
 } from './fixtures/native-retention/history.js';
@@ -36,6 +40,8 @@ test(
     await bootstrapGraph(fixture, second.head, secondRows);
     await ageClosedDatasetHistory(fixture);
     const recovery = await retentionRecovery(fixture);
+    const capturedJournal = await journalRows(db.pool, environment, dataset);
+    assert.equal(capturedJournal.length, 2);
     const captured = await recovery.capture('graph-exact-backup');
     assert.equal(
       (
@@ -208,6 +214,7 @@ test(
     assert.equal(removed, true);
     const restored = await recovery.restore(captured.manifest);
     try {
+      await assertRestoredReplacementJournal(fixture, restored, capturedJournal);
       await restored.read(first.head, firstRows, 'graph-read');
       await restored.read(second.head, secondRows, 'graph-read');
       await restored.read(second.head, secondRows);
@@ -320,6 +327,10 @@ test(
         orphanGracePreserved: true,
         freshPhysicalQualification: true,
         independentTypedGraphReadback: true,
+        immutableReplacementJournalRestored: true,
+        journalRootsResolveFreshProviderVersions: true,
+        oldProducerReplayRejected: true,
+        incrementalReplayActivated: false,
         successorPolicyDrainsOriginalWork: true,
         pendingPropagationProtectsGraphObjects: true,
         conflictingTargetVersionRejected: true,

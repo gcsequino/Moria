@@ -2953,3 +2953,20 @@ activation and distributed bootstrap remain open. A fresh full graph recovery
 rerun after this schema addition, combined whole-platform checks, independent
 current CI and production workload evidence are still required. This fresh
 baseline checkpoint does not migrate a live installation.
+
+Replacement journal recovery checkpoint (2026-11-04): TS-only overlay022 on the
+exact trial021 native artifacts passes static/provenance, all 102 units and the
+full C08 gate (1/1, zero skips/cancellations; 152.87s root under unchanged 300s,
+154.19s controller). Two actual backed-up replacement journal records retain
+their immutable identities, normalized schema/key/binding facts and exact
+producer/publication/completion receipts. Every basis/result root resolves
+through the actual new-physical/new-incarnation restore qualification. Real
+HEAD/GET/SHA checks use copied wrapper versions at the fresh prefix; original
+audit versions return 404 there. Actual newly authorized typed reads recover
+both heads, while old-incarnation journal producer reentry fails exactly with
+CANDIDATE_STALE and changes no record. Existing graph collection/succession and
+missing-backup disabled-dispatch coverage remains green. Evidence:
+`production/evidence/2026-11-04/native-dataset-commit-journal/recovery/`.
+This backup precedes metadata pruning; its later unchanged edge is not claimed
+restored. Sparse v3 publication and actual incremental window custody/replay
+remain under implementation.

@@ -92,5 +92,25 @@ preserves the earlier compile, parameter, receipt-path and raw-schema failures
 and the exact synthetic descriptor diagnostic. This checkpoint does not enable
 mutation deltas, execution no-op or row-file compaction production, chain-derived
 indexing pins/consumer IO, incremental Source publication or a live-instance
-migration. New journal-schema recovery and the combined independent gates remain
-required.
+migration. Independent replacement-journal recovery is recorded below; the combined
+independent gates remain required.
+
+## Replacement journal recovery checkpoint
+
+The full graph custody gate now also verifies the actual replacement journal
+from its backup snapshot after a fresh database/provider-prefix restore. The captured
+record fields, candidate/execution identity, schema/key/binding identity
+and exact publication/completion receipt is preserved. Both basis/result root
+references resolve through sealed current-physical/new-incarnation root/member
+qualifications from the actual restore producer. Independent exact-version
+HEAD/GET and SHA-256 checks read the copied wrappers at the new prefix; the old
+audit versions return 404 there. New-authority typed reads recover both heads,
+while old-incarnation journal producer reentry fails with `CANDIDATE_STALE`.
+
+Frozen TS-only overlay022 reuses the exact trial021 native artifacts, passes
+static checks and all 102 units, and passes the complete custody case under its
+unchanged 300-second deadline (152.87s root, 154.19s controller, zero skips or
+cancellations). [Evidence](../evidence/2026-11-04/native-dataset-commit-journal/recovery/summary.json).
+These are restored replacement/full-bootstrap boundaries. This backup precedes
+metadata pruning and does not claim recovery of that later edge. Mutation
+frames, actual window pins/watermarks and incremental replay remain unactivated.

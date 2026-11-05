@@ -1,0 +1,4 @@
+{
+  "tests/fixtures/native-retention/journal.ts": "2a45c318674fad146302d9d9ec52bd45cc736d25a2e0a6a0bc83559a2b675e78",
+  "tests/native-dataset-graph-retention.integration.test.ts": "6636f0475bb6b1b233d73885cf803cce3a3416d1f865aa234dddd1d7f06d1f62"
+}
