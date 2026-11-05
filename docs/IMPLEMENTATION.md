@@ -29,8 +29,18 @@ metadata, exact content, and keys before enabling dispatch. The lost pause
 acknowledgement test preserved fencing and reconciled the exact retry.
 An already-applied external effect stayed uncertain without repeat dispatch.
 
-Hosted Linux CI on the integrated revision remains required. Evaluation
-qualification and whole-instance browser testing are running locally.
+The composed local browser fixture passed both tests. The management UI
+created a record and invoked the Function with input `41`, returning
+`42`. The protected hosted origin served the published management bundle
+and created a separate record. The fixture verified all three stored
+records, including the SDK-created record, one top-level Function receipt,
+and the later Source ACL checks. The same instance ran real Agent, local
+model, Evaluation, Pipeline, Search, and Automation work before browser
+sign-in. It verified authorization revocation without provider calls.
+
+Hosted Linux CI on the integrated revision remains required. The ten-case
+service-dispatched Evaluation still exceeds its original 90-second lifecycle
+barrier and remains under qualification.
 
 ## November 5 Agent publication identity reuse
 

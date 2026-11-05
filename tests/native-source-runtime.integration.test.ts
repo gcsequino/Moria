@@ -1198,32 +1198,40 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
           (await fetch(hosted.url, { headers: { authorization: `Bearer ${token}` } })).status,
           403,
         );
-        const ticketResponse = await fetch(`${hosted.url}/api/auth/recovery-ticket`, {
-          method: 'POST',
-          headers: { 'x-moria-app-key': appKey },
-        });
-        assert.equal(ticketResponse.status, 200, await ticketResponse.clone().text());
-        const recoveryURL = new URL((await ticketResponse.json()).url);
-        const recovered = await fetch(`${hosted.url}/api/auth/recover`, {
-          method: 'POST',
-          headers: { origin: hosted.url, 'content-type': 'application/json' },
-          body: JSON.stringify({
-            ticket: new URLSearchParams(recoveryURL.hash.slice(1)).get('recovery'),
-          }),
-        });
-        assert.equal(recovered.status, 200, await recovered.clone().text());
-        const cookie = recovered.headers
-          .getSetCookie()
-          .find((value) => value.includes('Path=/;'))!
-          .split(';')[0];
-        assert(
-          recovered.headers.getSetCookie().some((value) => value.includes('Path=/api/; Max-Age=0')),
-        );
-        const browserTransport = createTransport({
-          baseUrl: hosted.url,
-          fetch: (url, init) =>
-            fetch(url, { ...init, headers: { ...init?.headers, origin: hosted.url, cookie } }),
-        });
+        const recoverHostedCookie = async () => {
+          const ticketResponse = await fetch(`${hosted.url}/api/auth/recovery-ticket`, {
+            method: 'POST',
+            headers: { 'x-moria-app-key': appKey },
+          });
+          assert.equal(ticketResponse.status, 200, await ticketResponse.clone().text());
+          const recoveryURL = new URL((await ticketResponse.json()).url);
+          const recovered = await fetch(`${hosted.url}/api/auth/recover`, {
+            method: 'POST',
+            headers: { origin: hosted.url, 'content-type': 'application/json' },
+            body: JSON.stringify({
+              ticket: new URLSearchParams(recoveryURL.hash.slice(1)).get('recovery'),
+            }),
+          });
+          assert.equal(recovered.status, 200, await recovered.clone().text());
+          const cookie = recovered.headers
+            .getSetCookie()
+            .find((value) => value.includes('Path=/;'))!
+            .split(';')[0];
+          assert(
+            recovered.headers
+              .getSetCookie()
+              .some((value) => value.includes('Path=/api/; Max-Age=0')),
+          );
+          return cookie;
+        };
+        const hostedTransport = (cookie: string) =>
+          createTransport({
+            baseUrl: hosted.url,
+            fetch: (url, init) =>
+              fetch(url, { ...init, headers: { ...init?.headers, origin: hosted.url, cookie } }),
+          });
+        let cookie = await recoverHostedCookie();
+        let browserTransport = hostedTransport(cookie);
         const browserSession = await browserTransport.auth.session();
         assert.equal(browserSession.user?.principal, principal);
         const html = await fetch(hosted.url, { headers: { cookie } });
@@ -2637,18 +2645,27 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
             if (attempt === 1799) throw new Error('Native browser acceptance was not completed');
             await delay(1000);
           }
+          cookie = await recoverHostedCookie();
+          browserTransport = hostedTransport(cookie);
           for (const name of ['browser-ui-created', 'browser-created', 'browser-app-created']) {
             await assertBrowserCreated(name);
           }
           assert.equal(
             (
               await db.pool.query(
-                "SELECT count(*)::int n FROM moria.runtime_function_receipts r JOIN moria.runtime_function_invocations i ON i.execution=r.execution WHERE i.entry_id=(SELECT id FROM moria.fs_entries WHERE resource_id=$1::uuid AND kind='resource' AND NOT deleted) AND r.result->'value'='42'::jsonb",
+                "SELECT count(*)::int n FROM moria.runtime_function_receipts r JOIN moria.runtime_function_invocations i ON i.execution=r.execution WHERE i.entry_id=(SELECT id FROM moria.fs_entries WHERE resource_id=$1::uuid AND kind='resource' AND NOT deleted) AND i.parent_id IS NULL AND r.result->'value'='42'::jsonb",
                 [fn],
               )
             ).rows[0].n,
             1,
             'Management Function form must run the actual worker',
+          );
+          console.log(
+            JSON.stringify({
+              event: 'whole-instance-browser-readback',
+              objects: 3,
+              topLevelFunctionReceipts: 1,
+            }),
           );
           browserCreates = 2;
         }
