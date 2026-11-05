@@ -65,6 +65,7 @@ CREATE TABLE moria.runtime_dataset_graph_retirements(
 );
 CREATE INDEX runtime_dataset_graph_retirement_pending ON moria.runtime_dataset_graph_retirements(environment,dataset,physical_fingerprint,incarnation,maintenance,root) WHERE NOT completed;
 CREATE INDEX runtime_dataset_graph_retirement_work ON moria.runtime_dataset_graph_retirements(maintenance,root) WHERE NOT completed;
+CREATE INDEX runtime_dataset_graph_history_root ON moria.snapshot_history(moria.runtime_dataset_root_key(metadata_location));
 CREATE TABLE moria.runtime_dataset_graph_task_roots(
  task uuid NOT NULL REFERENCES moria.runtime_execution_tasks(id),owner uuid NOT NULL,fence bigint NOT NULL CHECK(fence>0),resource text NOT NULL,
  node text NOT NULL,physical_fingerprint text NOT NULL,incarnation uuid NOT NULL,
@@ -305,6 +306,11 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_roots WHERE root=NEW.root AND physical_fingerprint=policy.physical_fingerprint AND incarnation=policy.incarnation) THEN RETURN NEW;END IF;
  SELECT * INTO r FROM moria.runtime_dataset_roots WHERE key=NEW.root;
  IF moria.runtime_dataset_root_pinned_except(NEW.root,NEW.maintenance) THEN RAISE EXCEPTION 'GC_REFERENCE_PRESENT';END IF;
+ -- Closed unpublished stages retire through their own queue, not a history maintenance run.
+ IF NOT EXISTS(SELECT 1 FROM moria.snapshot_history h WHERE moria.runtime_dataset_root_key(h.metadata_location)=r.key AND h.metadata_location=r.metadata_location)
+  AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_references WHERE kind='history' AND owner=r.key AND physical_fingerprint=policy.physical_fingerprint AND incarnation=policy.incarnation) THEN
+  RETURN NEW;
+ END IF;
  INSERT INTO moria.runtime_dataset_graph_retirements(root,maintenance,environment,dataset,physical_fingerprint,incarnation)
  VALUES(NEW.root,NEW.maintenance,r.environment,r.dataset,policy.physical_fingerprint,policy.incarnation) ON CONFLICT DO NOTHING;
  RETURN NEW;

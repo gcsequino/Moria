@@ -313,9 +313,21 @@ unsealed; the newer copy is never substituted. The original v2 sidecar custody
 regression runs on the same nine-artifact image. See
 [evidence](evidence/2026-11-05/native-v3-custody/summary.json).
 
-The closed unpublished attached-candidate cleanup path has a separate pending
-lifecycle correction: private GC-plan expiry must not be interpreted as a
-published-history maintenance retirement. It requires a real prepared/cancelled
-producer regression before production activation. Sparse mutations, independent
-standard position-delete proof, distributed bootstrap and incremental Source
-chains remain unqualified.
+Closed unpublished attached candidates expire through the actual closed
+producer's GC plan and stage reference queue. Before adding a maintenance
+retirement, expiry checks both the complete published-history pointer and the
+exact physical/incarnation history reference. A private root with neither is
+already owned by stage cleanup and receives no fabricated maintenance record.
+A fixed-size canonical root-key index bounds the history lookup; the exact
+metadata pointer is still rechecked and any published history protects it.
+
+Trial044 prepares and attaches a real second graph candidate, cancels its
+actual execution, and exercises normal policy planning. Stage references and
+their propagation queue drain, the private root expires and becomes a garbage
+candidate, while the published baseline head, journal and typed rows remain
+unchanged. The failed predecessor preserves transaction rollback evidence.
+Published v3 custody runs on the same exact rebuilt image. See
+[evidence](evidence/2026-11-05/native-v3-private-expiry/summary.json).
+
+Sparse mutations, independent standard position-delete proof, distributed
+bootstrap and incremental Source chains remain unqualified.

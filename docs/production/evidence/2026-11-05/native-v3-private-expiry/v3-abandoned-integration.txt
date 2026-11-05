@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-abandoned.integration.test.ts
+Running 1 integration test files.
+✔ closed unpublished v3 candidates retire through their real stage without maintenance authority (38617.216812ms)
+ℹ {"actualPreparedCandidate":true,"actualCancelledProducer":true,"stageAbandoned":true,"queueDrained":true,"privateRootExpired":true,"privateRootGarbageCandidate":true,"noMaintenanceInvented":true,"publishedHeadAndJournalPreserved":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39082.623983

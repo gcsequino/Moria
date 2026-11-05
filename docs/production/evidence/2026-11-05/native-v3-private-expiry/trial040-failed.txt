@@ -1,0 +1,11 @@
+$ pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter
+$ prettier --check "**/*.{ts,tsx,js,mjs,json,yml,yaml}"
+Checking formatting...
+All matched files use Prettier code style!
+$ tsx scripts/check-architecture.ts
+Protected boundary architecture checks passed.
+$ tsx scripts/generate-sdk.ts --check
+$ tsc --noEmit
+tests/native-dataset-v3-abandoned.integration.test.ts(76,13): error TS7022: 'result' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

@@ -3173,8 +3173,19 @@ checks and all 113 native units pass. Evidence:
 
 Production output selection remains unchanged. V3 expiry retains current
 standard metadata/history files until graph metadata pruning is implemented;
-it fabricates neither a revision nor a delta edge. A separately identified
-closed unpublished attached-candidate expiry/retirement origin mismatch remains
-pending a genuine prepare/cancel/GC regression. V3 reader integration, sparse
-position-delete writes, distributed bootstrap, incremental Source chains,
-production scale qualification and full independent CI remain required.
+it fabricates neither a revision nor a delta edge. The closed unpublished attached-candidate expiry/retirement origin mismatch is
+qualified separately below. V3 reader integration, sparse position-delete writes,
+distributed bootstrap, incremental Source chains, production scale qualification
+and full independent CI remain required.
+
+Private v3 candidate cleanup (2026-11-05): trial044 genuinely prepares/attaches
+a second candidate, cancels its actual execution and runs normal retention
+planning. The stage becomes abandoned, its references/queue drain, and the
+private root expires and becomes a garbage candidate. The published baseline
+head, immutable journal and typed read remain unchanged. Private expiry retains
+its real GC-plan origin; no maintenance lease, run or history retirement is
+invented. The existing published-history path remains separate. Exact pointer
+checks now use a fixed-size canonical root-key index and preserve conservative
+protection by any published history. Static checks, all nine rebuilt artifacts
+and 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-private-expiry/summary.json).

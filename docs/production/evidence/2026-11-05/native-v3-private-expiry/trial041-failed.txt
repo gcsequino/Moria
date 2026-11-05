@@ -1,0 +1,24 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-abandoned.integration.test.ts
+Running 1 integration test files.
+✖ closed unpublished v3 candidates retire through their real stage without maintenance authority (33438.53056ms)
+ℹ {"phase":"privateExpiryFailure","stage":"candidate","expiredRoots":"0","headUnchanged":true,"journalUnchanged":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33906.629687
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-abandoned.integration.test.ts:1:256
+✖ closed unpublished v3 candidates retire through their real stage without maintenance authority (33438.53056ms)
+  Error: dataset-retention/plan: {"error":"INDEXING_DATABASE_ERROR"}
+  
+      at ChildProcess.<anonymous> (/app/tests/fixtures/native-retention/dataset.ts:189:39)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+[ELIFECYCLE] Command failed with exit code 1.

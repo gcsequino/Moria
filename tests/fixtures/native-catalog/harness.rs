@@ -59,6 +59,8 @@ struct Fixture {
     #[serde(default)]
     graph_output: bool,
     #[serde(default)]
+    prepare_only: bool,
+    #[serde(default)]
     s3_bindings: Vec<S3Binding>,
     allocation: Option<capacity::Allocation>,
     closure_limits: Option<ClosureLimits>,
@@ -1277,6 +1279,13 @@ async fn run() -> Result<()> {
         candidates.push(candidate);
     }
     event(json!({"event":"prepared","candidates":candidates,"lease":claim.lease}));
+    if fixture.prepare_only {
+        ensure!(
+            fixture.graph_output && fixture.mode == "writer-supplied",
+            "FIXTURE_MODE_INVALID"
+        );
+        return Ok(());
+    }
     if fixture.mode != "valid" && fixture.mode != "valid-s3" && !fixture.mode.starts_with("writer")
     {
         proceed();
