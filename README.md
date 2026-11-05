@@ -80,15 +80,15 @@ cleanup as the full run:
 sudo python3 deploy/test/run-quality.py moria-test:ci pnpm test:integration tests/native-functions.integration.test.ts
 ```
 
-
 Use the commands in the [Linux quality workflow](.github/workflows/quality.yml)
 to build the test image, preload pinned function images and run the offline gate.
 On the disposable Docker host, run `sudo python3 deploy/test/run-quality.py moria-test:ci`
 after building the image and preloading its pinned prerequisites. This provisions
-two separate two-slot ext4 scratch pools, passes their exact devices and host paths
-to the non-root quality container, and removes only those owned resources after
-the controller stops. Pipeline and composed-instance databases receive different
-pools, preserving permanent incarnation markers. The quality container receives
+separate two-slot ext4 scratch pools for Pipeline, whole-instance, Connector
+custody, Connector discovery, and the discovery restart. It passes the exact devices
+and host paths to the non-root quality container and removes only those owned
+resources after the controller stops. Separate pools preserve permanent instance
+ownership markers. The quality container receives
 the daemon socket; bootstrap and function sandboxes receive no socket. This is
 test packaging, not a production deployment.
 

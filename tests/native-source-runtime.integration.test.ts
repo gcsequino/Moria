@@ -2038,7 +2038,11 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
               assert.ok([200, 202].includes(response.status), await response.clone().text());
               return response.json();
             };
-            const poll = async (path: string, accepted: { id: string; status: string }) => {
+            const poll = async (
+              path: string,
+              accepted: { id: string; status: string },
+              expected: 'succeeded' | 'completed' = 'succeeded',
+            ) => {
               let current = accepted;
               const deadline = Date.now() + 120000;
               while (['queued', 'accepted', 'running', 'preparing'].includes(current.status)) {
@@ -2058,7 +2062,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                 assert.equal(response.status, 200, await response.clone().text());
                 current = await response.json();
               }
-              assert.equal(current.status, 'succeeded');
+              assert.equal(current.status, expected);
               return current;
             };
             const input = (mode: string, prompt: string, value: number | null = null) => ({
@@ -2140,7 +2144,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
             const evaluation = await request(`/api/v1/evaluations/${instanceLogic.suite}/runs`, {
               wait: false,
             });
-            const evaluated = await poll('/api/v1/evaluation-runs/', evaluation);
+            const evaluated = await poll('/api/v1/evaluation-runs/', evaluation, 'completed');
             domainExecutions.evaluation = evaluation.id;
             const cases = await request(`/api/v1/evaluation-runs/${evaluation.id}/cases`);
             assert.equal(cases.cases.length, 1);
