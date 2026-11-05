@@ -1,0 +1,12 @@
+{"controller": "moria-quality-d9e29447-4174-4e83-a03c-23773f478a5a", "image": "sha256:c391776c90e69d561048bbfd1a680621447c89d0b5c42dcea9f3983b0c3266fa", "scratchPools": ["/tmp/moria-engine-scratch-5388dff5-f9ee-411b-b705-345977ec3dad", "/tmp/moria-engine-scratch-474cd2d5-91b0-4376-8a15-6f098a18dc9c"], "temporary": "/tmp/moria-quality-plv12uo3"}
+$ node scripts/test-files.mjs integration tests/functions-docker-compat.integration.test.ts
+Running 1 integration test files.
+✔ Docker CPU accounting supports older daemon APIs without weakening limits (8408.426832ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9054.493059

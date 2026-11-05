@@ -24,13 +24,15 @@ use tokio::{
         UnixStream,
         unix::{OwnedReadHalf, OwnedWriteHalf},
     },
-    sync::watch,
+    sync::{OnceCell, watch},
 };
 use uuid::Uuid;
 
 const OUTPUT_BYTES: usize = 262144;
 const FRAME_BYTES: usize = 65536;
-const DOCKER_API: &str = "v1.51";
+const DOCKER_API_MAX: u32 = 51;
+// The one-shot accounting request requires API 1.41.
+const DOCKER_API_MIN: u32 = 41;
 
 #[derive(Default)]
 struct ObservedResources {
@@ -642,6 +644,7 @@ pub struct SandboxResult {
 #[derive(Clone)]
 pub(crate) struct Docker {
     pub(crate) client: reqwest::Client,
+    api: Arc<OnceCell<String>>,
 }
 impl Docker {
     pub(crate) fn new() -> Result<Self> {
@@ -652,10 +655,35 @@ impl Docker {
                 .redirect(reqwest::redirect::Policy::none())
                 .timeout(Duration::from_secs(5))
                 .build()?,
+            api: Arc::new(OnceCell::new()),
         })
     }
-    pub(crate) fn url(segments: &[&str]) -> Result<reqwest::Url> {
-        let mut url = reqwest::Url::parse(&format!("http://localhost/{DOCKER_API}"))?;
+    fn negotiate_api(metadata: &Value) -> Result<String> {
+        let minor = |key: &str| -> Result<u32> {
+            let minor = metadata[key]
+                .as_str()
+                .and_then(|value| value.strip_prefix("1."))
+                .filter(|value| !value.is_empty() && value.bytes().all(|b| b.is_ascii_digit()))
+                .ok_or_else(|| anyhow::anyhow!("FUNCTION_WORKER_PROTOCOL"))?;
+            Ok(minor.parse()?)
+        };
+        let maximum = minor("ApiVersion")?.min(DOCKER_API_MAX);
+        let minimum = minor("MinAPIVersion")?.max(DOCKER_API_MIN);
+        ensure!(maximum >= minimum, "FUNCTION_WORKER_UNAVAILABLE");
+        Ok(format!("v1.{maximum}"))
+    }
+    async fn api_version(&self) -> Result<&str> {
+        self.api
+            .get_or_try_init(|| async {
+                let response = self.client.get("http://localhost/version").send().await?;
+                Self::negotiate_api(&Self::json_response(response).await?)
+            })
+            .await
+            .map(String::as_str)
+    }
+    pub(crate) async fn url(&self, segments: &[&str]) -> Result<reqwest::Url> {
+        let mut url =
+            reqwest::Url::parse(&format!("http://localhost/{}", self.api_version().await?))?;
         {
             let mut path = url
                 .path_segments_mut()
@@ -689,7 +717,7 @@ impl Docker {
     pub(crate) async fn inspect(&self, name: &str) -> Result<Option<Value>> {
         let response = self
             .client
-            .get(Self::url(&["containers", name, "json"])?)
+            .get(self.url(&["containers", name, "json"]).await?)
             .send()
             .await?;
         if response.status() == reqwest::StatusCode::NOT_FOUND {
@@ -700,7 +728,7 @@ impl Docker {
     async fn image(&self, image: &str) -> Result<()> {
         let metadata = Self::json_response(
             self.client
-                .get(Self::url(&["images", image, "json"])?)
+                .get(self.url(&["images", image, "json"]).await?)
                 .send()
                 .await?,
         )
@@ -721,14 +749,14 @@ impl Docker {
         self.image(adapter).await?;
         let child = Self::json_response(
             self.client
-                .get(Self::url(&["images", image, "json"])?)
+                .get(self.url(&["images", image, "json"]).await?)
                 .send()
                 .await?,
         )
         .await?;
         let parent = Self::json_response(
             self.client
-                .get(Self::url(&["images", adapter, "json"])?)
+                .get(self.url(&["images", adapter, "json"]).await?)
                 .send()
                 .await?,
         )
@@ -763,7 +791,7 @@ impl Docker {
         }
         Self::json_response(
             self.client
-                .post(Self::url(&["containers", "create"])?)
+                .post(self.url(&["containers", "create"]).await?)
                 .query(&[("name", name)])
                 .header("content-type", "application/json")
                 .body(serde_json::to_vec(&config)?)
@@ -777,7 +805,8 @@ impl Docker {
         let stream = UnixStream::connect("/var/run/docker.sock").await?;
         let (reader, mut writer) = stream.into_split();
         let mut reader = BufReader::new(reader);
-        writer.write_all(format!("POST /{DOCKER_API}/containers/{name}/attach?stream=1&stdin=1&stdout=1&stderr=1 HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: tcp\r\nContent-Length: 0\r\n\r\n").as_bytes()).await?;
+        let api = self.api_version().await?;
+        writer.write_all(format!("POST /{api}/containers/{name}/attach?stream=1&stdin=1&stdout=1&stderr=1 HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: tcp\r\nContent-Length: 0\r\n\r\n").as_bytes()).await?;
         let mut header = Vec::new();
         loop {
             let mut line = Vec::new();
@@ -806,7 +835,7 @@ impl Docker {
     async fn start(&self, name: &str) -> Result<()> {
         Self::json_response(
             self.client
-                .post(Self::url(&["containers", name, "start"])?)
+                .post(self.url(&["containers", name, "start"]).await?)
                 .send()
                 .await?,
         )
@@ -816,7 +845,7 @@ impl Docker {
     async fn resources(&self, name: &str) -> Result<(u64, u64)> {
         let data = Self::json_response(
             self.client
-                .get(Self::url(&["containers", name, "stats"])?)
+                .get(self.url(&["containers", name, "stats"]).await?)
                 .query(&[("stream", "false"), ("one-shot", "true")])
                 .timeout(Duration::from_secs(1))
                 .send()
@@ -836,7 +865,7 @@ impl Docker {
     async fn wait(&self, name: &str) -> Result<i64> {
         let data = Self::json_response(
             self.client
-                .post(Self::url(&["containers", name, "wait"])?)
+                .post(self.url(&["containers", name, "wait"]).await?)
                 .query(&[("condition", "not-running")])
                 .send()
                 .await?,
@@ -872,7 +901,7 @@ impl Docker {
         if metadata.pointer("/State/Running") == Some(&Value::Bool(true)) {
             let response = self
                 .client
-                .post(Self::url(&["containers", id, "stop"])?)
+                .post(self.url(&["containers", id, "stop"]).await?)
                 .query(&[("t", "1")])
                 .timeout(Duration::from_secs(3))
                 .send()
@@ -894,7 +923,7 @@ impl Docker {
         };
         let response = self
             .client
-            .delete(Self::url(&["containers", &id])?)
+            .delete(self.url(&["containers", &id]).await?)
             .query(&[("force", "true"), ("v", "true")])
             .timeout(Duration::from_secs(3))
             .send()
@@ -912,6 +941,8 @@ impl Docker {
 enum GuestMessage {
     #[serde(rename = "result")]
     Result { version: u32, value: Value },
+    #[serde(rename = "completed")]
+    Completed { version: u32, nonce: Uuid },
     #[serde(rename = "error")]
     Error { version: u32 },
     #[serde(rename = "log")]
@@ -1603,6 +1634,8 @@ impl SandboxSupervisor {
             let mut total = 0;
             let mut buffer = Vec::new();
             let mut result = None;
+            let mut completion_nonce = None;
+            let mut acknowledged = false;
             let mut calls = BTreeSet::new();
             let mut sequence = 0u64;
             let mut logs = 0;
@@ -1614,11 +1647,22 @@ impl SandboxSupervisor {
                 }
                 buffer.extend(bytes);
                 while let Some(end) = buffer.iter().position(|b| *b == b'\n') {
-                    ensure!(end <= frame_bytes && result.is_none(), "FUNCTION_PROTOCOL");
+                    ensure!(end <= frame_bytes && !acknowledged, "FUNCTION_PROTOCOL");
                     let line: Vec<u8> = buffer.drain(..=end).collect();
                     let message: GuestMessage = serde_json::from_slice(&line[..end])
                         .map_err(|_| anyhow::anyhow!("FUNCTION_PROTOCOL"))?;
+                    ensure!(
+                        result.is_none() || matches!(&message, GuestMessage::Completed { .. }),
+                        "FUNCTION_PROTOCOL"
+                    );
                     match message {
+                        GuestMessage::Completed { version, nonce } => {
+                            ensure!(
+                                version == 1 && result.is_some() && completion_nonce == Some(nonce),
+                                "FUNCTION_PROTOCOL"
+                            );
+                            acknowledged = true;
+                        }
                         GuestMessage::Result { version, value } => {
                             ensure!(version == 1, "FUNCTION_PROTOCOL");
                             let descriptor = values::descriptor(
@@ -1642,13 +1686,15 @@ impl SandboxSupervisor {
                                 "FUNCTION_WORKER_ACCOUNTING"
                             );
                             context.check().await?;
+                            let nonce = Uuid::new_v4();
                             write_limited(
                                 &mut writer,
-                                json!({"version":1,"type":"complete"}),
+                                json!({"version":1,"type":"complete","nonce":nonce}),
                                 frame_bytes,
                             )
                             .await?;
                             completed.store(true, Ordering::SeqCst);
+                            completion_nonce = Some(nonce);
                             result = Some(value);
                         }
                         GuestMessage::Error { version } => {
@@ -1762,6 +1808,7 @@ impl SandboxSupervisor {
             ensure!(buffer.is_empty(), "FUNCTION_PROTOCOL");
             ensure!(self.docker.wait(&name).await? == 0, "FUNCTION_FAILED");
             let result = result.ok_or_else(|| anyhow::anyhow!("FUNCTION_OUTPUT_MISSING"))?;
+            ensure!(acknowledged, "FUNCTION_PROTOCOL");
             context.begin_observation("_system/finish").await?;
             self.broker.finish(context, &result).await?;
             context.observation_completed().await?;
@@ -2055,6 +2102,90 @@ pub fn error_code(error: &anyhow::Error) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn docker_api_negotiates_a_supported_overlap_without_losing_accounting() {
+        for (maximum, minimum, expected) in [
+            ("1.48", "1.24", "v1.48"),
+            ("1.52", "1.44", "v1.51"),
+            ("1.100", "1.44", "v1.51"),
+            ("1.41", "1.12", "v1.41"),
+        ] {
+            assert_eq!(
+                Docker::negotiate_api(&json!({"ApiVersion": maximum, "MinAPIVersion": minimum}))
+                    .unwrap(),
+                expected
+            );
+        }
+        for metadata in [
+            json!({"ApiVersion":"1.40","MinAPIVersion":"1.12"}),
+            json!({"ApiVersion":"1.52","MinAPIVersion":"1.52"}),
+            json!({"ApiVersion":"1.48","MinAPIVersion":"1.49"}),
+            json!({"ApiVersion":"2.48","MinAPIVersion":"1.24"}),
+            json!({"ApiVersion":"1.48.0","MinAPIVersion":"1.24"}),
+            json!({"ApiVersion":1.48,"MinAPIVersion":"1.24"}),
+            json!({"ApiVersion":"1.","MinAPIVersion":"1.24"}),
+            json!({"ApiVersion":"1.4294967296","MinAPIVersion":"1.24"}),
+            json!({"ApiVersion":"1.48"}),
+        ] {
+            assert!(Docker::negotiate_api(&metadata).is_err(), "{metadata}");
+        }
+    }
+    #[tokio::test]
+    async fn docker_native_requests_retry_failed_negotiation_and_share_the_selected_version() {
+        let directory = tempfile::tempdir().unwrap();
+        let socket = directory.path().join("docker.sock");
+        let listener = tokio::net::UnixListener::bind(&socket).unwrap();
+        let server = tokio::spawn(async move {
+            for (path, status, body) in [
+                ("/version", 500, "{}"),
+                (
+                    "/version",
+                    200,
+                    r#"{"ApiVersion":"1.48","MinAPIVersion":"1.24"}"#,
+                ),
+                ("/v1.48/containers/owned%2Fname/json", 404, "{}"),
+                ("/v1.48/containers/owned%2Fname/json", 404, "{}"),
+            ] {
+                let (stream, _) = listener.accept().await.unwrap();
+                let (reader, mut writer) = stream.into_split();
+                let mut reader = BufReader::new(reader);
+                let mut request = String::new();
+                reader.read_line(&mut request).await.unwrap();
+                assert_eq!(request, format!("GET {path} HTTP/1.1\r\n"));
+                loop {
+                    let mut line = String::new();
+                    assert!(reader.read_line(&mut line).await.unwrap() > 0);
+                    if line == "\r\n" {
+                        break;
+                    }
+                }
+                writer.write_all(format!("HTTP/1.1 {status} fixture\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{body}", body.len()).as_bytes()).await.unwrap();
+            }
+        });
+        let docker = Docker {
+            client: reqwest::Client::builder()
+                .unix_socket(socket.as_path())
+                .no_proxy()
+                .timeout(Duration::from_secs(2))
+                .build()
+                .unwrap(),
+            api: Arc::new(OnceCell::new()),
+        };
+        assert!(docker.inspect("owned/name").await.is_err());
+        assert!(docker.inspect("owned/name").await.unwrap().is_none());
+        assert!(
+            docker
+                .clone()
+                .inspect("owned/name")
+                .await
+                .unwrap()
+                .is_none()
+        );
+        tokio::time::timeout(Duration::from_secs(2), server)
+            .await
+            .unwrap()
+            .unwrap();
+    }
     #[test]
     fn broker_calls_cannot_override_actor_or_select_external_urls() {
         assert!(

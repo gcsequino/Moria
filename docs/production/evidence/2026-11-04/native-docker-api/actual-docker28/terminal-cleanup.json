@@ -1,0 +1,11 @@
+{
+  "timestampUtc": "2026-11-05T01:11:23.456163+00:00",
+  "ownedDockerStopped": true,
+  "ownedContainerdStopped": true,
+  "ownedNetworkNamespaceRemoved": true,
+  "ownedTestContainersAbsentBeforeStop": true,
+  "globalBridgeIdentityUnchanged": true,
+  "localProofAndImageCaches": "retained",
+  "existingContainerCountUnchanged": 4,
+  "existingContainerPidsUnchanged": true
+}
