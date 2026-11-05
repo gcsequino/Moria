@@ -644,6 +644,25 @@ test(
           ).rows[0].count,
           '0',
         );
+        const reap = (
+          await db.pool.query(
+            "SELECT pg_get_functiondef('moria.runtime_execution_reap(uuid)'::regprocedure) definition",
+          )
+        ).rows[0].definition as string;
+        const conflict = reap.replace(
+          '\nBEGIN\n',
+          `\nBEGIN
+  IF nextval('moria.fixture_search_retry')=1 THEN
+    RAISE EXCEPTION USING ERRCODE='40001', MESSAGE='fixture search scheduling conflict';
+  END IF;
+`,
+        );
+        assert.notEqual(conflict, reap);
+        await db.pool.query(`
+          CREATE SEQUENCE moria.fixture_search_retry;
+          GRANT USAGE ON SEQUENCE moria.fixture_search_retry TO PUBLIC;
+          ${conflict}
+        `);
         hold = true;
         const workers = [await worker(), await worker()];
         await Promise.race([
@@ -682,6 +701,15 @@ test(
         hold = false;
         release();
         await Promise.all(workers.map((worker) => worker.done));
+        assert.ok(
+          (await db.pool.query('SELECT is_called FROM moria.fixture_search_retry')).rows[0]
+            .is_called,
+        );
+        assert.ok(
+          workers.some((worker) => worker.errors().includes('"event":"search_iteration_retry"')),
+        );
+        await db.pool.query(reap);
+        await db.pool.query('DROP SEQUENCE moria.fixture_search_retry');
         const execution = (
           await db.pool.query(
             'SELECT status,error,result FROM moria.runtime_executions WHERE id=$1',
