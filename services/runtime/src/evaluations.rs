@@ -1297,21 +1297,6 @@ impl NativeEvaluations {
     async fn publish_control(&self, lease: &Lease, host: Uuid) -> Result<()> {
         let session = self.live(lease, host).await?;
         let root:Uuid=self.db.get().await?.query_one("SELECT COALESCE((SELECT evaluation FROM moria.runtime_evaluation_cases WHERE execution=$1),$1)",&[&lease.execution]).await?.get(0);
-        if root == lease.execution {
-            loop {
-                let mut client = self.db.get().await?;
-                let tx = client.transaction().await?;
-                self.live_in(tx.client(), lease, host).await?;
-                tx.execute("UPDATE moria.runtime_evaluation_cases c SET outcome='error',error='CASE_WORKER_LOST',finished_at=clock_timestamp() FROM moria.runtime_executions e WHERE c.evaluation=$1 AND e.id=c.execution AND e.status IN ('failed','cancelled') AND c.outcome IN ('pending','running')",&[&root]).await?;
-                let pending:i64=tx.query_one("SELECT count(*) FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND outcome IN ('pending','running')",&[&root]).await?.get(0);
-                tx.commit().await?;
-                if pending == 0 {
-                    break;
-                }
-                drop(client);
-                tokio::time::sleep(Duration::from_millis(100)).await;
-            }
-        }
         let mut admission = Admission::begin(&self.db, session.environment(), false, None).await?;
         let tx = admission.client.as_mut().unwrap().transaction().await?;
         self.live_in(tx.client(), lease, host).await?;
@@ -1335,6 +1320,7 @@ impl NativeEvaluations {
         self.live_in(tx.client(), lease, host).await?;
         let completion = if root == lease.execution {
             ensure!(header.get::<_, bool>("loaded"), "EVALUATION_NOT_READY");
+            tx.execute("UPDATE moria.runtime_evaluation_cases c SET outcome='error',error='CASE_WORKER_LOST',finished_at=clock_timestamp() FROM moria.runtime_executions e WHERE c.evaluation=$1 AND e.id=c.execution AND e.status IN ('failed','cancelled') AND c.outcome IN ('pending','running')",&[&root]).await?;
             let counts=tx.query_one("SELECT count(*)::text,count(*) FILTER(WHERE outcome='pass')::text,count(*) FILTER(WHERE outcome='fail')::text,count(*) FILTER(WHERE outcome='error')::text,avg(score)::float8,stddev_samp(score)::float8,count(*) FILTER(WHERE outcome IN ('pending','running')) FROM moria.runtime_evaluation_cases WHERE evaluation=$1",&[&root]).await?;
             ensure!(counts.get::<_, i64>(6) == 0, "EVALUATION_NOT_READY");
             let summary = json!({"total":counts.get::<_,String>(0),"passed":counts.get::<_,String>(1),"failed":counts.get::<_,String>(2),"errors":counts.get::<_,String>(3),"meanScore":counts.get::<_,Option<f64>>(4),"scoreStandardDeviation":counts.get::<_,Option<f64>>(5)});

@@ -590,7 +590,14 @@ impl ExecutionAuthority {
                 continue;
             }
             let query = if publication {
-                "SELECT e.* FROM moria.runtime_executions e WHERE e.resource_class=$1 AND moria.runtime_environment_cell_available(e.environment) AND e.status='running' AND e.deadline>clock_timestamp() AND e.spec->>'domain'=ANY($2::text[]) AND ($4::uuid IS NULL OR e.id=$4) AND EXISTS(SELECT 1 FROM moria.runtime_sandbox_bindings s WHERE s.binding=e.binding AND s.domain IN ('transform','sync'))=$5 AND NOT EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=e.id AND t.status<>'sealed') AND moria.runtime_resource_in_use($1,e.environment)<$3 ORDER BY e.created_at FOR UPDATE OF e SKIP LOCKED LIMIT 1"
+                "SELECT e.* FROM moria.runtime_executions e WHERE e.resource_class=$1 AND moria.runtime_environment_cell_available(e.environment) AND e.status='running' AND e.deadline>clock_timestamp() AND e.spec->>'domain'=ANY($2::text[]) AND ($4::uuid IS NULL OR e.id=$4) AND EXISTS(SELECT 1 FROM moria.runtime_sandbox_bindings s WHERE s.binding=e.binding AND s.domain IN ('transform','sync'))=$5 AND NOT EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=e.id AND t.status<>'sealed')
+                 AND (e.spec->>'domain'<>'evaluation' OR NOT EXISTS (
+                     SELECT 1 FROM moria.runtime_evaluation_cases c
+                     WHERE c.evaluation=e.id AND c.outcome IN ('pending','running')
+                     AND NOT EXISTS (SELECT 1 FROM moria.runtime_executions child
+                       WHERE child.id=c.execution AND child.status IN ('failed','cancelled'))
+                 )) AND moria.runtime_resource_in_use($1,e.environment)<$3
+                 ORDER BY e.created_at FOR UPDATE OF e SKIP LOCKED LIMIT 1"
             } else {
                 "SELECT e.* FROM moria.runtime_executions e WHERE e.resource_class=$1 AND moria.runtime_environment_cell_available(e.environment) AND e.status IN ('queued','running') AND e.deadline>clock_timestamp() AND e.spec->>'domain'=ANY($2::text[]) AND ($4::uuid IS NULL OR e.id=$4) AND EXISTS(SELECT 1 FROM moria.runtime_sandbox_bindings s WHERE s.binding=e.binding AND s.domain IN ('transform','sync'))=$5 AND EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=e.id AND t.status='pending') AND moria.runtime_resource_in_use($1,e.environment)<$3 ORDER BY e.created_at FOR UPDATE OF e SKIP LOCKED LIMIT 1"
             };
