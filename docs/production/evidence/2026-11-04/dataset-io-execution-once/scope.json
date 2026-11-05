@@ -1,0 +1,24 @@
+{
+  "nativeSourceDigest": "72da2358cbca9a972c2cd250d68f529e1db224e7b83c13f5ff24b7f5b0fc51f8",
+  "nativeArtifacts": 9,
+  "nativeUnits": 106,
+  "catalog": {
+    "pass": 21,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "jobAuthority": {
+    "pass": 12,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "originalPrivateChecksPerIO": 2,
+  "newPrivateChecksPerIO": 1,
+  "fullEvidence": "/home/gcseq/moria-proofs/dataset-io-execution-once-20261105",
+  "limitations": [
+    "One initial MinIO Arrow-output prepared-event timeout retained; unchanged full-file repeat passed.",
+    "Production workload and complete Pipeline qualification remain open."
+  ]
+}

@@ -221,6 +221,11 @@ BEGIN
   IF current_state->>'environment' IS DISTINCT FROM origin->>'environment'
     OR current_state->>'principal' IS DISTINCT FROM origin->>'principal'
     OR current_state->>'application' IS DISTINCT FROM origin->>'application' THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
+  -- This local result attests the execution already checked by the private credential path.
+  IF EXISTS(SELECT 1 FROM moria.runtime_job_sessions s WHERE s.token_hash=native_serving_session.token_hash
+    AND s.execution::text=origin->>'execution') THEN
+    current_state:=current_state||jsonb_build_object('privateValidatedExecution',origin->>'execution');
+  END IF;
   RETURN current_state;
 END $$;
 

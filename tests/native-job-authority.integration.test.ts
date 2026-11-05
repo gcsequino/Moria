@@ -185,6 +185,7 @@ test(
         assert.equal(lease.execution, job.id);
         hash = await issue(lease);
         const current = await state(hash);
+        assert.equal(current.privateValidatedExecution, job.id);
         assert.equal(current.principal, principal);
         assert.deepEqual(current.identity.markings, ['private']);
         assert.deepEqual([...current.identity.grantedOperations].sort(), [...operations].sort());

@@ -110,7 +110,9 @@ BEGIN
   -- The accepted-job guard reads this row FOR SHARE; take the later task fence lock first.
   PERFORM 1 FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
   state:=moria.native_serving_session(session_hash);
-  PERFORM moria.runtime_execution_check(execution_id);
+  IF state->>'privateValidatedExecution' IS DISTINCT FROM execution_id::text THEN
+    PERFORM moria.runtime_execution_check(execution_id);
+  END IF;
   SELECT * INTO e FROM moria.runtime_executions WHERE id=execution_id;
   SELECT * INTO b FROM moria.runtime_execution_bindings WHERE id=e.binding;
   inherited:=b.markings;
