@@ -1,0 +1,10 @@
+{
+  "nativeDigest": "2dbd1bb0a9bfb524ef6300ae97323eda0627fcdbcd09c49b57949f1bf7f0cf48",
+  "image": "sha256:01df1bfe75edf0b21fba58e4437d14a10153b69d953a8748591004d60556192c",
+  "static": true,
+  "artifacts": 9,
+  "nativeUnits": 109,
+  "filesystemCases": 21,
+  "pipelineFile": "running at checkpoint; not qualified",
+  "serviceEvaluation": "running at checkpoint; not qualified"
+}

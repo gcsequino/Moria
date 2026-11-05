@@ -3189,3 +3189,28 @@ checks now use a fixed-size canonical root-key index and preserve conservative
 protection by any published history. Static checks, all nine rebuilt artifacts
 and 113 native units pass. Evidence:
 [qualification](production/evidence/2026-11-05/native-v3-private-expiry/summary.json).
+
+## Native Source bootstrap and staging lifecycle
+
+The managed full-build Source bootstrap checkpoint publishes immutable generation aliases and complete declared-key maps over the existing staged population. Static checks, all nine matching native artifacts, 99 units and the full 17-case real indexing service file passed, including compound Dataset keys, maximum-width unkeyed rows, Action tombstones, registered FullObjectSource/Search access, fresh-backend recovery and published-history cleanup. The scoped contract and retained evidence are in `docs/production/NATIVE-SOURCE-STORES.md` and `docs/production/evidence/2026-11-04/source-store-bootstrap/`.
+
+Closed-build staging core correctness passed the focused 3/3 real native lifecycle with all nine artifacts, 106 units and full static checks: published builds retain all aliased data while temporary spills are removed; expired unpublished builds require real closure/policy/reference checks and write barriers before bounded payload/projection cleanup. Actual policy successor, write/backup barriers, private payload/orphan cleanup and published-data preservation assertions passed; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-core/`. Indexed pending discovery with bounded legacy reconciliation passed focused 3/3 with six index access-path checks; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-queue/`. The full 20-case indexing service file passed with zero skips or cancellations in 309.67 seconds and all original root deadlines unchanged. Accepted near-cap physical-width proof and explicit width-blocked deferral remain required before complete collector qualification. Sparse Source/Dataset delta activation remains closed. No production capacity certification is inferred from the local correctness populations.
+
+Native journal/Source integration (2026-11-05): trial046 combines the committed
+Source staging/renewal baseline with v3 C04/C08 work. The first complete Source
+run exposed an overly strict journal basis check at a logical namespace
+revision change. Results still require the current namespace; retained bases
+now derive from their actual Catalog revision and exact sealed current
+physical/incarnation qualification, with expired/mismatched identities rejected
+and the helper denied to ordinary callers. The original complete Source file
+passes 20/20, including classified-head/disabled-purpose behavior, recovery,
+real Action history and native staging collection. The two original journal
+cases pass with additional historical-root negatives and atomic rollback, and
+the actual v3 replacement/empty path passes on the same nine-artifact image.
+Static checks and 113 units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-journal-source-qualification/summary.json).
+
+No v3 production writer or sparse Source window is enabled by this checkpoint.
+Actual v3 Source reader integration and graph metadata pruning remain pending,
+along with sparse standard position-delete production, distributed bootstrap,
+production workload qualification and independent full CI.

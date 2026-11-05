@@ -1,0 +1,39 @@
+{"controller": "moria-quality-c0d062c7-2276-42d0-bc0c-66a51e6458c0", "image": "sha256:142e789d1e590cf9f9729953cf22dc9944ebd1b7adcab85d2676d9a383ddf865", "scratchPools": ["/tmp/moria-engine-scratch-0932348d-3129-41f2-bad8-0333a9f7c1c2", "/tmp/moria-engine-scratch-b52c37d1-d566-4d24-9c05-7f8c19035c63", "/tmp/moria-engine-scratch-d3ae11a0-34b5-41b1-b5c8-40fc18e60e7f"], "temporary": "/tmp/moria-quality-lix0_hjy"}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (10868.121453ms)
+  ✖ real closed staging collection preserves published aliases and drains expired private rows through native history once (18132.417238ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle) (34628.013726ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"39108cd1-e2e9-4b9d-a4cc-ac2dd087392f","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"e75a1304-a59e-4fc5-b99a-ed0304010293"}]}
+ℹ tests 3
+ℹ suites 0
+ℹ pass 1
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35120.585017
+
+✖ failing tests:
+
+test at tests/native-indexing-service.integration.test.ts:702:17
+✖ real closed staging collection preserves published aliases and drains expired private rows through native history once (18132.417238ms)
+  AssertionError [ERR_ASSERTION]: finished published work must not hide pending staging work
+  + actual - expected
+
+  + 'planRequired'
+  - 'busy'
+
+      at sourceStagingCollection (/app/tests/fixtures/native-source-store/staging.ts:363:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/native-indexing-service.integration.test.ts:705:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-indexing-service.integration.test.ts:702:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'planRequired',
+    expected: 'busy',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

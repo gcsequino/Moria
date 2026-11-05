@@ -1,0 +1,170 @@
+{
+  "mergeParents": [
+    "721c31c7600f4a8c6863e54ae2b7a6ba6b43b766",
+    "453bea6852a1b63d83dfde8aaf751aed14ca5f1a"
+  ],
+  "classification": "Merged committed Source staging/renewal baseline with native v3 C04/C08 and retained Dataset journal basis qualification. Existing production writer selection remains unchanged.",
+  "image": "sha256:d70ee07e860355109fed580da78ebb8eca83a18783bb06539385ea3b476284d2",
+  "nativeSourceDigest": "02d750da1f13e3463475a9462574e3a3c5bad6257c10b51b8b20fbc96e3a5ffd",
+  "sourceHashes": {
+    "services/database/src/dataset-commit-delta-schema.ts": "4d54f8cdd37d751d4919241577016dfa42b886bb97350df2135ea999d9fae19d",
+    "services/database/src/indexing-staging-schema.ts": "84aeb884bd70f7a4f311ac16a28e98041090c5d94c585ebb62cfda3f24fd4a80",
+    "services/database/src/source-store-schema.ts": "b406d80f3a740fa428038e4556d59df8575f63e95f4e1e344208f9cca5ed1c9d",
+    "services/database/src/serving-runtime-schema.ts": "b68a6a5539b065ccd49072470850233969ceb3f1e7d7dba3f075688dfc766070",
+    "services/runtime/schema.json": "9249b3e422b1c33f65d93455327cd2c2fb3d5a774889cca006417aec04cabd08",
+    "services/runtime/src/worker.rs": "35df183a8bcc695e3b6d5ec50c450a26b498831056faae31b33fc1c8a9a2ed10",
+    "services/runtime/src/history.rs": "560655149d82c16da7ec30f3333447471d29a91bd2f1549365b179df13960b63",
+    "tests/native-dataset-commit-delta.integration.test.ts": "480db5ec2dbc5838263706615a218842514996f0359fcc7f90a6b024d08b6f26"
+  },
+  "artifacts": {
+    "moria-native-transport-test": {
+      "sha256": "ff4ed413a6162268e8db80cd6b04f9dad5c82e460e9763cd407c8a242af3ee97",
+      "bytes": 26625688
+    },
+    "moria-native-storage-test": {
+      "sha256": "1efa8f7ac7636079e5e661a4ad1f53bf2d5b4e939c06b397602bb90fbc694ee5",
+      "bytes": 101944008
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "c7d84544fa562f7a2e7510cbebe4a9884a06f1a5c9930d022eeb74b064b3f19c",
+      "bytes": 57637280
+    },
+    "moria-native-retention-test": {
+      "sha256": "bf060e9c0feee5ba9b0d025ae5d765ce2c989bd3ebec89be50c98cf54d302089",
+      "bytes": 27095344
+    },
+    "moria-native-policy-test": {
+      "sha256": "a454eda8bafda1d81a8c964bb12245b4cb0ab7bbdc389833b59c918a04fe7b72",
+      "bytes": 22288496
+    },
+    "moria-native-catalog-test": {
+      "sha256": "e6f0e77635c12e33fb9fa55d5fbc2801f501b884ef7ce9d08d494c28b333cb9b",
+      "bytes": 117334792
+    },
+    "moria-indexing-tests": {
+      "sha256": "92a7b2ed38a3f9eb81c9ec9f54a468d38725f820953bffd03453ef150d2111e0",
+      "bytes": 83340048
+    },
+    "moria-indexing": {
+      "sha256": "632e861bfaba26c7e20b29d983090a7c8e322d30fe00643a4fd96d4eb8d78303",
+      "bytes": 161341408
+    },
+    "moria-runtime": {
+      "sha256": "6c1221159caae3f49546d42ee150791ca024a92081e8e0013e57d0657ee42299",
+      "bytes": 161341400
+    }
+  },
+  "nativeBuild": {
+    "exitCode": 0,
+    "seconds": 20.776966124001774,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "jobs": 1,
+    "executables": 9
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 18.486012776003918
+  },
+  "exactStaticAndIndexing": {
+    "exitCode": 0,
+    "seconds": 28.10384045200044,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "failedPredecessor045": {
+    "passed": 14,
+    "failed": 6,
+    "failedLeaves": 4,
+    "skipped": 0,
+    "cancelled": 0,
+    "controllerSeconds": 297.64348065300146,
+    "failure": "DATASET_DELTA_ROOT_UNQUALIFIED when classification advances logical namespace revision but basis retains its original qualified namespace revision",
+    "controllerAbsent": true
+  },
+  "qualificationRules": [
+    "Result requires current namespace revision and actual producer-owned sealed root",
+    "Basis revision is captured from the immutable Catalog history by trusted publisher",
+    "Basis requires exact environment/Dataset/revision/location/snapshot, sealed current physical binding/incarnation and warehouse/table; original logical namespace revision may differ",
+    "Expired roots rejected; direct helper calls denied to ordinary database role",
+    "Journal membership grants no IO; profile/current authority guards remain required"
+  ],
+  "remaining": [
+    "Actual v3 Source graph-reader integration",
+    "V3 graph metadata pruning and production output activation",
+    "Sparse standard position deletes with independent reader proof",
+    "Distributed bootstrap and actual mutation journals/incremental Source windows",
+    "Production workload qualification and full independent CI"
+  ],
+  "journal": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "controllerSeconds": 39.41350293800497,
+    "assertions": [
+      "Actual replace/metadataPrune contiguous edges and sealed receipts",
+      "Wrong historical revision, zero revision, mismatched snapshot and expired basis rejected",
+      "Ordinary caller cannot call private root helper",
+      "Actual ledger fault rolls back head, publication and execution completion"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "fullSource": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "controllerSeconds": 293.8966030619995,
+    "assertions": [
+      "Original entire Source file; all root deadlines unchanged",
+      "Mapped canonical/raw rows and actual metadata refresh",
+      "Clean-host recovery followed by real native publication",
+      "Real Action overlays/tombstones across replacement and retained reads",
+      "Classification namespace advance saves valid head while old index floor stays blocked",
+      "Disabled purpose remains blocked; unrelated epochs do not reopen it",
+      "Maximum-width row batching and actual native closed-staging cleanup"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "v3C04": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "controllerSeconds": 98.44000558300468,
+    "assertions": [
+      "Actual v3 array-key and nullable-row first head",
+      "Common typed read, complete key/point digest validation and exact receipt replay",
+      "Actual empty v3 head and retained first read",
+      "Two immutable real replacement journal edges"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "v3C08": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootDeadlineSeconds": 300,
+    "controllerSeconds": 97.89499018099741,
+    "assertions": [
+      "Actual v3 heads with pinned-old-version backup despite newer current",
+      "Original non-advancing expiry, successor retirement and propagation behavior",
+      "Exact source root version collection and retained standard history",
+      "Fresh-prefix restore with typed reads, fresh qualification and journal mapping",
+      "Original missing-child dispatch-disabled and target-conflict/reuse denials"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  }
+}

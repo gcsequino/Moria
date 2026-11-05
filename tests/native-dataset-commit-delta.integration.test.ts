@@ -73,6 +73,37 @@ test(
       ),
       /DATASET_DELTA_PRODUCER_REQUIRED/,
     );
+    const qualifiedRoot = (head: typeof first.head, revision: string | null) =>
+      db.pool.query('SELECT moria.runtime_dataset_commit_root_check($1,$2,$3,$4,$5) AS key', [
+        environment,
+        dataset,
+        head.metadataLocation,
+        head.snapshotId,
+        revision,
+      ]);
+    assert.equal(
+      (await qualifiedRoot(first.head, first.head.revision)).rows[0].key,
+      recorded[0].result_root,
+    );
+    await assert.rejects(
+      qualifiedRoot(first.head, second.head.revision),
+      /DATASET_DELTA_ROOT_UNQUALIFIED/,
+    );
+    await assert.rejects(qualifiedRoot(first.head, '0'), /DATASET_DELTA_ROOT_UNQUALIFIED/);
+    await assert.rejects(
+      qualifiedRoot({ ...first.head, snapshotId: randomUUID() }, first.head.revision),
+      /DATASET_DELTA_ROOT_UNQUALIFIED/,
+    );
+    await assert.rejects(
+      ordinary.query('SELECT moria.runtime_dataset_commit_root_check($1,$2,$3,$4,$5)', [
+        environment,
+        dataset,
+        first.head.metadataLocation,
+        first.head.snapshotId,
+        first.head.revision,
+      ]),
+      /permission denied/,
+    );
     await ageClosedDatasetHistory(fixture);
     const policy = await fixture.command(
       ['dataset-retention', 'approve'],
@@ -118,7 +149,13 @@ test(
     assert.equal(unchanged.equivalence_receipt.snapshot, second.head.snapshotId);
     assert.match(unchanged.equivalence_receipt.currentSnapshotHash, /^sha256:[0-9a-f]{64}$/);
     assert.deepEqual(unchanged.sealed_receipt, expired);
-    await fixture.read((await db.catalog.heads(environment, [dataset]))[0]);
+    const latest = (await db.catalog.heads(environment, [dataset]))[0];
+    await assert.rejects(
+      qualifiedRoot(first.head, first.head.revision),
+      /DATASET_DELTA_ROOT_UNQUALIFIED/,
+    );
+    assert.equal((await qualifiedRoot(latest, null)).rows[0].key, unchanged.result_root);
+    await fixture.read(latest);
   },
 );
 

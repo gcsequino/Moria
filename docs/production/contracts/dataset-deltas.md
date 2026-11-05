@@ -34,6 +34,17 @@ Compaction changes physical layout while preserving logical rows; its event expl
 
 ## Acceptance and custody
 
+Publication qualifies the result against the current enabled binding and logical
+namespace revision. Its basis comes from the actual immutable prior Catalog
+revision, snapshot and metadata pointer. A retained sealed basis location may
+carry its original logical namespace revision when its warehouse/table, exact
+physical fingerprint and receiver incarnation still match the current binding.
+An expired root or mismatched historical pointer is rejected. A provider change
+requires actual receiver qualification; a journal entry does not supply it.
+This preserves a valid Dataset publication when classification advances while
+an older indexing purpose remains explicitly blocked. It grants no root IO and
+does not relax current authority, schema/key or Source rebuild requirements.
+
 The indexer consumes a contiguous chain beginning at its actually active Dataset revision. Every event's basis must equal the preceding result, and every receipt/root must match the actual publication journal. A bounded window may combine several contiguous commits by full Dataset key, using native spill; it may publish only the net result at the selected real target snapshot. Gaps and schema/Source mapping changes require explicit bootstrap. Arrival order, a later timestamp or the current head alone cannot prove a missing interval.
 
 Actual pending indexing intents/builds pin every intermediate event's exact row/key roots in the derived contiguous window until their materialized PostgreSQL result and consumer watermark commit. A pin of only the latest result snapshot is insufficient when older builds have been superseded. Missing or expired chain custody requires explicit rebootstrap; journal membership alone grants no IO. Lifetime follows the current enabled indexing definition and actual pending/active work; no invented lease or caller-created pin is accepted. Current authority, namespace, schema/key profile, Source mapping/release and renewable worker fence are rechecked at bounded IO and final publication. After successful materialization, ordinary Object/Function/Search reads use retained PostgreSQL versions rather than requiring physical Dataset replay. Recovery copies live delta roots and restores their real consumer state; exact replay remains idempotent by commit and consumer identity.

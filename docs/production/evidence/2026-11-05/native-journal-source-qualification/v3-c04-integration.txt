@@ -1,0 +1,15 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3.integration.test.ts
+Running 1 integration test files.
+✔ qualified v3 replacement heads bind standard metadata and typed array-key rows (97212.939278ms)
+ℹ {"phase":"firstPublishedAndTypedRead","revision":"1"}
+ℹ {"phase":"arrayKeysAndPointDigestVerified","rows":64}
+ℹ {"phase":"emptyPublished","revision":"2"}
+ℹ {"rows":64,"arrayKeys":true,"nullableNonKey":true,"emptyReplacement":true,"retainedRead":true,"rootMembers":1,"actualJournalEdges":2}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97652.426695

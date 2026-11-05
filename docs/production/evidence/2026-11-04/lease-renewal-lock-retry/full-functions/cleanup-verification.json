@@ -1,0 +1,11 @@
+{
+  "controller": "moria-quality-1e38cbe2-7890-49af-805e-f1d8d4a94c54",
+  "controllerAbsent": true,
+  "labelsAbsent": true,
+  "pathsAbsent": {
+    "/tmp/moria-engine-scratch-ca0204c9-7ce6-4fed-a0af-39b6865f9932": true,
+    "/tmp/moria-engine-scratch-2de058a7-2428-458e-ba85-cea4ee7c7565": true,
+    "/tmp/moria-engine-scratch-cff3ca0d-1e76-4082-8942-95c205e0594e": true,
+    "/tmp/moria-quality-pv5scgwe": true
+  }
+}

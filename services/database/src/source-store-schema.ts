@@ -42,7 +42,11 @@ BEGIN
   OR OLD.status='retired' AND NEW.status<>'retired'
   OR OLD.status='published' AND NEW.status NOT IN ('published','retired')
   OR OLD.status='sealed' AND NEW.status='loading' AND NOT EXISTS(SELECT 1 FROM moria.indexing_builds WHERE id=OLD.id AND status='failed')
-  OR OLD.status='loading' AND NEW.status NOT IN ('loading','sealed') THEN RAISE EXCEPTION 'IMMUTABLE_SOURCE_STORE';END IF;
+  OR OLD.status='loading' AND NEW.status NOT IN ('loading','sealed','retired')
+  OR NEW.status='retired' AND OLD.status IN ('loading','sealed') AND (
+   EXISTS(SELECT 1 FROM moria.native_source_generation_aliases WHERE store=OLD.id)
+   OR NOT EXISTS(SELECT 1 FROM moria.indexing_builds b WHERE b.id=OLD.id
+    AND b.status IN ('failed','cancelled','superseded','conflicted') AND b.deadline<=clock_timestamp())) THEN RAISE EXCEPTION 'IMMUTABLE_SOURCE_STORE';END IF;
  RETURN NEW;
 END $$;
 CREATE TRIGGER native_source_store_immutable BEFORE UPDATE OR DELETE ON moria.native_source_row_stores FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_store_immutable();
@@ -70,6 +74,7 @@ REVOKE ALL ON FUNCTION moria.runtime_source_store_profile(uuid) FROM PUBLIC;
 CREATE FUNCTION moria.runtime_source_store_open(input_build uuid,input_worker uuid,input_fence bigint) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE b moria.indexing_builds;d moria.native_dataset_bindings;s moria.native_source_row_stores;profile jsonb;
 BEGIN
+ PERFORM moria.runtime_indexing_staging_shared(input_build);
  PERFORM moria.indexing_claim_check(input_build,NULL,input_worker,input_fence);
  SELECT * INTO b FROM moria.indexing_builds WHERE id=input_build;
  profile:=moria.runtime_source_store_profile(input_build);
@@ -85,6 +90,7 @@ END $$;
 CREATE FUNCTION moria.runtime_source_store_task(input_build uuid,input_task uuid,input_worker uuid,input_fence bigint) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE s moria.native_source_row_stores;
 BEGIN
+ PERFORM moria.runtime_indexing_staging_shared(input_build);
  PERFORM moria.indexing_claim_check(input_build,input_task,input_worker,input_fence);
  SELECT * INTO s FROM moria.native_source_row_stores WHERE id=input_build;
  IF NOT FOUND THEN RETURN NULL;END IF;
@@ -119,6 +125,7 @@ END $$;
 CREATE FUNCTION moria.runtime_source_store_seal(input_build uuid,input_worker uuid,input_fence bigint) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE s moria.native_source_row_stores;profile jsonb;rows bigint;input_keys bigint;expected bigint;
 BEGIN
+ PERFORM moria.runtime_indexing_staging_shared(input_build);
  PERFORM moria.indexing_claim_check(input_build,NULL,input_worker,input_fence);
  SELECT * INTO s FROM moria.native_source_row_stores WHERE id=input_build FOR UPDATE;
  IF NOT FOUND THEN RETURN;END IF;
@@ -134,6 +141,7 @@ END $$;
 CREATE FUNCTION moria.runtime_source_store_publish(input_build uuid,input_worker uuid,input_fence bigint,input_revision bigint) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE s moria.native_source_row_stores;b moria.indexing_builds;
 BEGIN
+ PERFORM moria.runtime_indexing_staging_shared(input_build);
  PERFORM moria.indexing_claim_check(input_build,NULL,input_worker,input_fence);
  SELECT * INTO s FROM moria.native_source_row_stores WHERE id=input_build FOR UPDATE;
  IF NOT FOUND THEN RETURN;END IF;
@@ -156,6 +164,9 @@ END $$;
 CREATE CONSTRAINT TRIGGER native_source_alias_atomic AFTER INSERT ON moria.source_generations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_alias_atomic();
 CREATE FUNCTION moria.runtime_source_store_retry(input_build uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 BEGIN
+ IF NOT pg_try_advisory_xact_lock(hashtextextended('moria/indexing-staging/v1/'||input_build::text,0)) THEN
+  RAISE EXCEPTION 'INDEXING_STAGING_BUSY';
+ END IF;
  PERFORM moria.runtime_indexing_retry_authority(input_build);
  IF EXISTS(SELECT 1 FROM moria.native_source_generation_aliases WHERE store=input_build) THEN RAISE EXCEPTION 'IMMUTABLE_SOURCE_STORE';END IF;
  DELETE FROM moria.native_source_key_map WHERE store=input_build;

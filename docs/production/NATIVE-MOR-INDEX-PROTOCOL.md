@@ -331,3 +331,26 @@ Published v3 custody runs on the same exact rebuilt image. See
 
 Sparse mutations, independent standard position-delete proof, distributed
 bootstrap and incremental Source chains remain unqualified.
+
+## Journal qualification across namespace revision changes
+
+The journal separates a new result's current binding/namespace qualification
+from its actual immutable prior Catalog basis. A retained basis may keep its
+original logical namespace revision while preserving exact current physical
+provider and receiver incarnation, warehouse/table, metadata pointer and
+snapshot. The trusted publisher supplies the actual historical revision;
+ordinary database callers cannot invoke the private helper. Expired roots and
+mismatched historical identities fail before an edge is recorded.
+
+Trial046 integrates the committed Source staging/renewal baseline and passes
+the original complete 20-case Source file, including classification changes
+that save a valid Dataset head while an older indexing purpose remains blocked.
+It also passes the existing two journal cases with additional historical-root
+negatives and actual publication rollback, and actual v3 replacement/empty
+publication. All nine rebuilt artifacts, static checks and 113 native units
+match. Evidence:
+[qualification](evidence/2026-11-05/native-journal-source-qualification/summary.json).
+
+V3 Source graph-reader integration remains a separate pending runtime gate.
+Production output activation, graph metadata pruning, standard position-delete
+proof, sparse writes and distributed bootstrap remain closed.

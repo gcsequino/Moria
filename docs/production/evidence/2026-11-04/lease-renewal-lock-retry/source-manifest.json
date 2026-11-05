@@ -1,0 +1,13 @@
+{
+  "gitHead": "22727149789f09ef4f2089096f02cf37f7b111e5",
+  "includesWorkingChanges": true,
+  "fileCount": 3334,
+  "archiveSha256": "951b612b86b1ffd7db551976f531998df332d75724f58db1cc7a3ab61ffec0f9",
+  "manifestSha256": "93fbfb5d3a41fef18c76adfc79a1ecb3a770a297950878f842e7eee40467cbf3",
+  "nativeDigest": "799142972269a373bdc833f75409b22b2c99cab2e49e6c2c5c8b6c526acc9e65",
+  "image": "sha256:0e9d8bbd8b182f77e81fdef62f89745ba3f3a3a5a127bb8c57b19e9d79d1105c",
+  "sourceArchive": "/home/gcseq/moria-proofs/renewal-lock-retry-native-20261105/source.tar.gz",
+  "fullManifest": "/home/gcseq/moria-proofs/renewal-lock-retry-native-20261105/source.tar.manifest.json",
+  "baselineImage": "sha256:3247b876b367e68ae1766508b38e7a118bf7ce49626abc00d5b0c15c68342c1c",
+  "baselineNativeDigest": "6868e131188c681f082947a0660f02c9f6cfb7e7ea4c2bcbf97aaa603a4e5193"
+}

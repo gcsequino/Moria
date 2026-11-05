@@ -1,0 +1,119 @@
+{
+  "scope": "closed indexing staging core correctness only",
+  "image": "sha256:c95558d29c9ac8a3035a0e171c287e97fd2def5b0843a7398dfe33eb4a6120fa",
+  "nativeSourceDigest": "07dfda73895d0932e78ccb94cf58b60dd4e1c92c91809a2969d9f66bda01798c",
+  "static": "passed",
+  "nativeArtifacts": 9,
+  "nativeUnitTestsPassed": 106,
+  "warmBuildSeconds": 18.13,
+  "focusedTests": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "results": {
+    "exitCode": 0,
+    "elapsedSeconds": 31.790156781004043
+  },
+  "remaining": [
+    "bounded pending queue and indexed legacy reconciliation",
+    "full original indexing service file plus staging root (20 cases)",
+    "independent CI and production capacity ladder"
+  ],
+  "runs": [
+    {
+      "trial": 1,
+      "reason": "ordinary CLI rejects earlier recovery admission",
+      "exitCode": 1,
+      "elapsedSeconds": 20.418149016000825,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 2,
+      "reason": "cancelled table-creation transaction leaves no committed orphan",
+      "exitCode": 1,
+      "elapsedSeconds": 62.99193933400238,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 3,
+      "reason": "fixture pause reached normal lock timeout",
+      "exitCode": 1,
+      "elapsedSeconds": 63.20217464099915,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 4,
+      "reason": "never integration-run; timeout override rejected",
+      "integrationRun": false
+    },
+    {
+      "trial": 5,
+      "reason": "observer required later index operation but paused earlier begin index",
+      "exitCode": 1,
+      "elapsedSeconds": 40.81466155599992,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 6,
+      "reason": "safe lock diagnostic confirms matching barrier at begin",
+      "exitCode": 1,
+      "elapsedSeconds": 53.47957071500059,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 7,
+      "reason": "published lane complete is followed by planRequired",
+      "exitCode": 1,
+      "elapsedSeconds": 49.40940803999911,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 8,
+      "reason": "exact pending staging handoff regression returns planRequired instead of busy",
+      "exitCode": 1,
+      "elapsedSeconds": 36.57131261399627,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    {
+      "trial": 9,
+      "reason": "focused core lifecycle green",
+      "exitCode": 0,
+      "elapsedSeconds": 31.790156781004043,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    }
+  ]
+}

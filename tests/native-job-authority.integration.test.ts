@@ -6,6 +6,7 @@ import type { PoolClient } from 'pg';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 import { setTimeout as delay } from 'node:timers/promises';
+import { renewalLockFixture } from './fixtures/native-evaluations/renewal-lock.js';
 
 test(
   'registered service jobs require immutable purpose and a current registered lease',
@@ -734,6 +735,34 @@ test(
         await native('cancel', { id: next.id });
         await assert.rejects(state(currentHash), /JOB_LEASE_LOST|JOB_DELEGATION_INACTIVE/);
       },
+    );
+    await renewalLockFixture(
+      t,
+      db.pool,
+      native,
+      async (publication) => {
+        const accepted = await request(await binding());
+        let current = (
+          await native('worker-claim', { domains: ['transform'], target: accepted.id })
+        ).lease;
+        if (publication) {
+          await native('seal', {
+            lease: current,
+            result: { staged: true },
+            digest: 'b'.repeat(64),
+          });
+          current = (
+            await native('worker-claim', {
+              domains: ['transform'],
+              publication: true,
+              target: accepted.id,
+            })
+          ).lease;
+          assert.equal(current.task, null);
+        }
+        return current;
+      },
+      connection,
     );
   },
 );

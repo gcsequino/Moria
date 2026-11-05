@@ -123,6 +123,75 @@ test(
       );
       return receipt.entries.find((entry) => entry.name === name)!;
     }
+    await t.test(
+      'administrator grants require both current capability sets with a large identity',
+      async () => {
+        const policy = (
+          await db.pool.query(
+            'SELECT revision::text,markings,grants FROM moria.fs_policies WHERE entry_id=$1',
+            [filesystemRoot],
+          )
+        ).rows[0];
+        const padded = [
+          ...operations,
+          ...Array.from({ length: 512 }, (_, i) => `acl/Resource/padding-${i}:read`),
+        ];
+        const hash = createHash('sha256').update(token.token).digest('hex');
+        const access = () =>
+          db.pool.query(
+            "SELECT moria.native_filesystem_acl_targets_state(moria.native_serving_session($1),ARRAY[$2]::uuid[],'read',false) AS labels",
+            [hash, filesystemRoot],
+          );
+        try {
+          await security.setPolicy('operator', filesystemRoot, policy.revision, {
+            markings: policy.markings,
+            grants: [
+              {
+                subject: { kind: 'administrators' },
+                operations: ['read'],
+                inherit: false,
+                effect: 'allow',
+              },
+            ],
+          });
+          for (const [grant, scope] of [
+            [false, false],
+            [true, false],
+            [false, true],
+            [true, true],
+            [false, true],
+          ] as const) {
+            await authority.setApplication(
+              environment,
+              'operator',
+              application,
+              scope ? [...padded, 'instance:manage'] : padded,
+            );
+            await authority.setGrants(
+              environment,
+              'operator',
+              principal,
+              application,
+              grant ? [...padded, 'instance:manage'] : padded,
+            );
+            if (grant && scope) assert.deepEqual((await access()).rows[0].labels, []);
+            else await assert.rejects(access(), /FORBIDDEN/);
+          }
+        } finally {
+          await authority.setApplication(environment, 'operator', application, operations);
+          await authority.setGrants(environment, 'operator', principal, application, operations);
+          const revision = (
+            await db.pool.query('SELECT revision::text FROM moria.fs_policies WHERE entry_id=$1', [
+              filesystemRoot,
+            ])
+          ).rows[0].revision;
+          await security.setPolicy('operator', filesystemRoot, revision, {
+            markings: policy.markings,
+            grants: policy.grants,
+          });
+        }
+      },
+    );
     await t.test('ACL graph duplicates and cycles retain live markings and denies', async () => {
       const origin = await directory(project.id, 'acl-origin'),
         target = await directory(origin.id, 'acl-target');

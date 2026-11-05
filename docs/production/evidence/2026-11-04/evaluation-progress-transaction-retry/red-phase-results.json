@@ -1,0 +1,10 @@
+[
+  {
+    "event": "evaluation_progress_transaction_retry_state",
+    "intermittent": 4,
+    "committed_successes": 3,
+    "persistent": 4,
+    "bounded_resumes": 0,
+    "recovered": 0
+  }
+]

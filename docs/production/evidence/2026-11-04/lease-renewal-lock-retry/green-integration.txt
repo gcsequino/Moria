@@ -1,0 +1,36 @@
+{"controller": "moria-quality-cd55fea2-ff52-4c80-9756-bc5b2da3cdc7", "image": "sha256:0e9d8bbd8b182f77e81fdef62f89745ba3f3a3a5a127bb8c57b19e9d79d1105c", "scratchPools": ["/tmp/moria-engine-scratch-e494e4bd-e224-4745-8797-91d822d3e1b8", "/tmp/moria-engine-scratch-1378579e-a823-4091-9055-215c1abe5a7f", "/tmp/moria-engine-scratch-5a3ba662-6b1a-4b31-892d-fbf4b826ea36"], "temporary": "/tmp/moria-quality-kovvgzk9"}
+$ node scripts/test-files.mjs integration tests/native-job-authority.integration.test.ts
+Running 1 integration test files.
+▶ registered service jobs require immutable purpose and a current registered lease
+  ✔ registered service admission has no ordinary session and cannot mint before an actual lease (148.994402ms)
+  ✔ current private credentials traverse accepted delegation once (25.379361ms)
+  ✔ unregistered legacy bindings and mismatched purposes cannot acquire a service capability (186.021024ms)
+  ✔ private service descendants remain inside the exact registered target and parent capability (1660.32235ms)
+  ✔ a generic operator claim cannot mint a registered private worker credential (298.766494ms)
+  ✔ missed registry disable pulses cannot be repaired by acknowledging current authorization epochs (463.993477ms)
+  ✔ current target, application, grants, clearance, worker scope and actor disable revoke private authority (1566.967137ms)
+  ✔ missed principal, application and instance disable pulses require explicit fresh service reapproval (1863.234308ms)
+  ✔ an unobserved worker disable and restore cannot revive a live lease or private credential (380.214352ms)
+  ✔ a genuinely expired worker registration remains fenced after its expiry is extended (2528.93232ms)
+  ✔ lease takeover invalidates the old private credential and replacement capabilities remain bounded (444.785067ms)
+{"event":"renewal_lock_recovery","phase":"task","execution":"968a9c7d-0964-40df-99ed-3646db8b5738","serverAborts":1}
+  ✔ task renewal recovers from a six-second shared-row lock (6491.212018ms)
+{"event":"renewal_lock_recovery","phase":"publication","execution":"b921469a-f594-450b-bcbd-6df3ae10d19a","serverAborts":1}
+  ✔ publication renewal recovers from a six-second shared-row lock (6720.620465ms)
+{"event":"renewal_lock_bounded","execution":"932b5cf2-49a6-4e22-989b-98a6373f3bc1","serverAborts":4}
+  ✔ persistent renewal lock contention stops after four server-aborted transactions (20556.693573ms)
+{"event":"renewal_lock_negative","kind":"revoked","execution":"7605dd03-e83b-4d78-b4e5-a11401aa1998","serverAborts":1}
+  ✔ renewal retry rechecks revoked authority after the lock timeout (6467.299996ms)
+{"event":"renewal_lock_negative","kind":"expired","execution":"6ca441df-b4e9-43bd-b28b-7b3bc69a5f07","serverAborts":1}
+  ✔ renewal retry rechecks expired authority after the lock timeout (6469.971684ms)
+{"event":"renewal_lock_negative","kind":"fence","execution":"0f377d86-d3af-41d8-8c04-e3cfd4dd1f37","serverAborts":1}
+  ✔ renewal retry rechecks fence authority after the lock timeout (6481.831785ms)
+✔ registered service jobs require immutable purpose and a current registered lease (64450.281575ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64815.900147

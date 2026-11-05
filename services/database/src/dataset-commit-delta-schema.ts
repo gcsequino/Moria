@@ -52,7 +52,7 @@ BEGIN
   OR profile->'orderedPrimaryKey' IS DISTINCT FROM to_jsonb(binding.primary_key)
  THEN RAISE EXCEPTION 'DATASET_DELTA_PROFILE_CHANGED';END IF;
 END $$;
-CREATE FUNCTION moria.runtime_dataset_commit_root_check(env text,resource_name text,location text,snapshot text) RETURNS text LANGUAGE plpgsql AS $$
+CREATE FUNCTION moria.runtime_dataset_commit_root_check(env text,resource_name text,location text,snapshot text,at_revision bigint) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE binding moria.native_dataset_bindings;root_key text;
 BEGIN
  SELECT * INTO binding FROM moria.native_dataset_bindings WHERE environment=env AND resource::text=resource_name AND enabled FOR SHARE;
@@ -63,7 +63,10 @@ BEGIN
    AND r.sealed AND l.sealed AND l.physical_fingerprint=binding.physical_binding_fingerprint
    AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance)
    AND l.namespace->>'warehouseId'=binding.warehouse_id AND l.namespace->>'tableId'=binding.table_id
-   AND l.namespace->>'revision'=binding.namespace_revision)
+   AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_expired_roots expired WHERE expired.root=r.key)
+   AND ((at_revision IS NULL AND l.namespace->>'revision'=binding.namespace_revision)
+    OR (at_revision>0 AND EXISTS(SELECT 1 FROM moria.snapshot_history h WHERE h.environment=env AND h.dataset=resource_name
+      AND h.revision=at_revision AND h.metadata_location=location AND h.snapshot_id=snapshot))))
  THEN RAISE EXCEPTION 'DATASET_DELTA_ROOT_UNQUALIFIED';END IF;
  RETURN root_key;
 END $$;
@@ -92,14 +95,14 @@ BEGIN
  IF c.write_mode<>'replace' THEN RAISE EXCEPTION 'DATASET_DELTA_PRODUCER_UNSUPPORTED';END IF;
  profile:=c.delta_profile;
  PERFORM moria.runtime_dataset_commit_profile_check(c.environment,c.resource,profile);
- result_key:=moria.runtime_dataset_commit_root_check(c.environment,c.resource,c.metadata_location,c.snapshot_id);
+ result_key:=moria.runtime_dataset_commit_root_check(c.environment,c.resource,c.metadata_location,c.snapshot_id,NULL);
  IF NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_roots r JOIN moria.runtime_dataset_producers p ON p.scope=r.producer
   WHERE r.key=result_key AND p.execution=execution_id AND p.task IS NULL AND p.owner=c.owner AND p.fence=c.fence AND p.incarnation=c.incarnation)
  THEN RAISE EXCEPTION 'DATASET_DELTA_PRODUCER_REQUIRED';END IF;
  IF c.expected_revision>0 THEN
   SELECT * INTO basis FROM moria.snapshot_history WHERE environment=c.environment AND dataset=c.resource AND revision=c.expected_revision;
   IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_DELTA_CHAIN_MISSING';END IF;
-  basis_key:=moria.runtime_dataset_commit_root_check(c.environment,c.resource,basis.metadata_location,basis.snapshot_id);
+  basis_key:=moria.runtime_dataset_commit_root_check(c.environment,c.resource,basis.metadata_location,basis.snapshot_id,basis.revision);
  END IF;
  INSERT INTO moria.runtime_dataset_commit_deltas(commit,environment,dataset,basis_revision,basis_snapshot,basis_metadata,result_revision,result_snapshot,result_metadata,
   basis_root,result_root,binding_revision,dataset_schema_hash,dataset_schema,key_schema_hash,ordered_primary_key,mode,change_kind,complete_rows_root,producer_kind,execution,candidate,sealed_receipt)
@@ -122,8 +125,8 @@ BEGIN
   OR NOT EXISTS(SELECT 1 FROM moria.publications p WHERE p.environment=policy_row.environment AND p.execution=result.execution AND p.receipt=publication_receipt)
  THEN RAISE EXCEPTION 'DATASET_DELTA_PUBLICATION_REQUIRED';END IF;
  PERFORM moria.runtime_dataset_commit_profile_check(policy_row.environment,policy_row.dataset,profile);
- basis_key:=moria.runtime_dataset_commit_root_check(policy_row.environment,policy_row.dataset,basis.metadata_location,basis.snapshot_id);
- result_key:=moria.runtime_dataset_commit_root_check(policy_row.environment,policy_row.dataset,result.metadata_location,result.snapshot_id);
+ basis_key:=moria.runtime_dataset_commit_root_check(policy_row.environment,policy_row.dataset,basis.metadata_location,basis.snapshot_id,basis.revision);
+ result_key:=moria.runtime_dataset_commit_root_check(policy_row.environment,policy_row.dataset,result.metadata_location,result.snapshot_id,NULL);
  IF jsonb_typeof(equivalence) IS DISTINCT FROM 'object' OR equivalence-ARRAY['version','kind','basisRoot','resultRoot','snapshot','currentSnapshotHash']<>'{}'::jsonb
   OR equivalence->>'version' IS DISTINCT FROM '1' OR equivalence->>'kind' IS DISTINCT FROM 'metadataPrune'
   OR equivalence->>'basisRoot' IS DISTINCT FROM basis_key OR equivalence->>'resultRoot' IS DISTINCT FROM result_key
@@ -150,5 +153,5 @@ END $$;
 CREATE CONSTRAINT TRIGGER runtime_dataset_commit_edge_required AFTER INSERT OR UPDATE ON moria.dataset_heads
  DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION moria.runtime_dataset_commit_edge_required();
 REVOKE ALL ON FUNCTION moria.runtime_dataset_commit_profile_check(text,text,jsonb) FROM PUBLIC;
-REVOKE ALL ON FUNCTION moria.runtime_dataset_commit_root_check(text,text,text,text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION moria.runtime_dataset_commit_root_check(text,text,text,text,bigint) FROM PUBLIC;
 `;
