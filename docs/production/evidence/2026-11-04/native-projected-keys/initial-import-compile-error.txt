@@ -1,0 +1,13 @@
+error[E0432]: unresolved import `parquet::arrow::ArrowReaderOptions`
+  --> src/native_snapshot_v3/point.rs:12:9
+   |
+12 |         ArrowReaderOptions,
+   |         ^^^^^^^^^^^^^^^^^^ no `ArrowReaderOptions` in `arrow`
+
+
+error[E0432]: unresolved import `parquet::arrow::ArrowReaderOptions`
+  --> src/native_snapshot_v3/point.rs:12:9
+   |
+12 |         ArrowReaderOptions,
+   |         ^^^^^^^^^^^^^^^^^^ no `ArrowReaderOptions` in `arrow`
+

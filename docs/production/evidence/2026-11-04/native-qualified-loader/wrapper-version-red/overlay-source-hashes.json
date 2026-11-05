@@ -1,0 +1,4 @@
+{
+  "tests/native-dataset-graph-wrapper-version.integration.test.ts": "417b1df762ca7112a6d62c61515f34ae60c5449aca7e4c895e6d246117275c3e",
+  "tests/fixtures/native-retention/version-trace.ts": "30271fd6c44b424a2cdbaee461aa859eb3b3d8462875b8c257960aec3aa59acf"
+}

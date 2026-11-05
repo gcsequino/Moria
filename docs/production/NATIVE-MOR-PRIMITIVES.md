@@ -75,9 +75,10 @@ Dataset mutation. See the [index protocol](NATIVE-MOR-INDEX-PROTOCOL.md) and
   every promised output head, lineage and Connector checkpoint. Prove crash
   recovery, head conflicts, fenced retries and commit-before-ack replay.
 - Complete bounded distributed projected-key bootstrap. The current bounded
-  serial bootstrap reads payloads to derive row hashes and is not qualification
-  of the accepted production bootstrap profile. Deferred digests must be explicit;
-  no fabricated hash can stand in for verified row content.
+  serial keyed derivation now projects typed keys and defers row digests, with
+  qualified retained-v2 proof reuse and guarded touched-row derivation. Initial
+  chunk certificates can still require one-time full byte authentication.
+  Distributed task execution and measured amplification remain unqualified.
 - Complete Source delta publication with every native writer footprint acquired
   before the environment revision lock, including mapped Link uniqueness and
   current projection membership.

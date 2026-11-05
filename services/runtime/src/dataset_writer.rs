@@ -909,7 +909,7 @@ pub async fn prepare_replacement(
 }
 
 mod keys;
-pub(crate) use keys::validate_primary_keys;
+pub(crate) use keys::{encoded_key, validate_primary_keys};
 
 mod contract;
 pub use contract::{ExpectedHead, WriteContract};

@@ -3037,3 +3037,59 @@ embedding probes before a later logic-configuration API failure. Retained failed
 composed trials and exact component proof are in
 `production/evidence/2026-11-04/model-buffered-probes`; full platform and capacity
 qualification remain open.
+Deferred digest format checkpoint (2026-11-04): new native runs use explicit
+version-three tags for deferred hash/locator entries. Locators represent a
+missing digest explicitly; a verified all-zero digest is still a known digest.
+Readers preserve version-two known-record compatibility and reject new tags
+under that older version, unknown versions and mismatched headers. Frozen
+trial010 passes all 96 native units and exact provenance for all nine rebuilt
+executables. Current bootstrap still emits verified payload hashes; projected
+scanning, touched-row derivation, distributed task closure and sparse publication
+remain unactivated. Evidence: `production/evidence/2026-11-04/native-deferred-digests/`.
+
+Projected key derivation checkpoint (2026-11-04): serial keyed bootstrap now
+projects actual typed key columns and records explicit deferred digests. Exact
+receiver-qualified retained v2 member/version receipts can use the existing
+verified-spool/retained-subset path; unsupported legacy versions retain full
+validation. The new touched-key API resolves the actual qualified locator,
+checks file/physical row/sequence/selection, applies existing Parquet allocation
+guards, validates the complete typed row and full encoded key, verifies any
+known digest and rechecks current authority. It accepts no supplied locator.
+
+Frozen trial013 passes static checks, all nine native artifacts, 96 units and
+64-row array-key/nullable-payload readback with every bootstrap digest deferred
+and a full typed point-row oracle (1/1, zero skips/cancellations; 101.67s root under
+120s, 108.75s controller). A failed helper test exposed generic schema validation
+accepting extra columns; exact key/full-row column guards now reject them.
+Initial chunk certification still performs one-time full byte authentication
+when prior receipts are absent. Distributed tasks, new-loader negatives,
+latest-format authority/C08 reruns, actual standard position-delete oracle,
+sparse C04 publication and production workloads remain open. Both Dataset
+contracts now explicitly use standard position deletes to preserve accepted
+array keys, with actual installed-reader proof required before activation.
+Evidence: `production/evidence/2026-11-04/native-projected-keys/`.
+
+Qualified native loader checkpoint (2026-11-04): retained-v2 reuse now requires
+the stored sealed reader profile, environment, Dataset and snapshot to agree
+with the actual current head. Root wrappers and pages are read at their exact
+qualified provider version with unchanged hash, canonical and structure checks.
+A real old-version deletion trace reproduced newer-current substitution before
+the fix. The corrected reader explicitly requests the old version, accepts it
+while present and rejects its actual absence without head or graph publication.
+
+Frozen trial015 passes full static checks, nine-artifact provenance, all 99
+native units and 12 integration cases across four separate sequential files
+(4 version traces, 6 qualification negatives, 1 warmed authority revocation,
+1 full C08 custody), with no skipped or cancelled cases. C08 passed in 133.71s
+root / 146.46s controller and retains exact-version collection, policy successor
+propagation, independent clean-host typed recovery, fresh qualifications and
+missing-child rejection with dispatch disabled. All controllers were removed.
+Wrong point locators, sequence, full key, digest and schema have negative units;
+a real installed Parquet two-row-group unit verifies relative selection.
+Evidence: `production/evidence/2026-11-04/native-qualified-loader/`.
+
+The earlier trial013 array-key positive remains separate evidence. No sparse
+Dataset mode or distributed bootstrap is enabled by this checkpoint. Their
+publication/journal integration, independent standard position-delete readback,
+large multi-row-group Dataset and legacy fallback fixtures, whole-platform CI
+and approved capacity ladder remain required.

@@ -35,7 +35,7 @@ impl Merge<'_> {
                     && matches!(
                         (self.kind, &entry.value),
                         (_, RunValue::Deleted)
-                            | (RunKind::Hashes, RunValue::Hash(_))
+                            | (RunKind::Hashes, RunValue::Hash(_) | RunValue::DeferredHash)
                             | (RunKind::Locations, RunValue::Location(_))
                     ),
                 "DATASET_KEY_INDEX_INVALID"

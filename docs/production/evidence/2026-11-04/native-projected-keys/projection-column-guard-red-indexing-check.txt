@@ -1,0 +1,253 @@
+$ tsx scripts/check-indexing.ts
+Verified 19 canonical and 47 typed fingerprint cases.
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: /usr/local/bin/moria-indexing-tests --test-threads=1
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at <anonymous> (/app/scripts/check-indexing.ts:55:16)
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  status: 101,
+  signal: null,
+  output: [
+    null,
+    '\n' +
+      'running 96 tests\n' +
+      'test app_host::tests::immutable_assets_verify_manifest_bytes_and_reject_symlink_replacement ... ok\n' +
+      'test app_host::tests::legacy_manifest_entry_order_is_preserved_and_duplicate_paths_are_rejected ... ok\n' +
+      'test authenticated_file::tests::index_profile_authenticates_only_bounded_sixty_four_kib_chunks ... ok\n' +
+      'test authenticated_file::tests::malformed_certificate_and_physical_binding_rejected ... ok\n' +
+      'test authenticated_file::tests::partial_reads_authenticate_complete_bounded_chunks ... ok\n' +
+      'test authorization::tests::action_value_expressions_preserve_types_nullability_and_boolean_policy_roots ... ok\n' +
+      'test authorization::tests::grants_markings_destinations_and_environment_are_intersections ... ok\n' +
+      'test authorization::tests::policy_shared_conformance_vectors ... ok\n' +
+      'test authorization::tests::projection_intersects_delegation_and_pinned_current_visibility_before_data ... ok\n' +
+      'test authorization::tests::strict_complexity_and_sql_identifiers_are_enforced ... ok\n' +
+      'test canonical::tests::canonical_cross_runtime_vectors ... ok\n' +
+      'test canonical::tests::javascript_number_and_utf16_ordering ... ok\n' +
+      'test canonical::tests::typed_identity_preserves_normalized_envelope ... ok\n' +
+      'test database::error_tests::public_diagnostics_return_only_known_error_codes ... ok\n' +
+      'test dataset_retention::operator::tests::metadata_pruning_retains_current_snapshot_and_schema ... ok\n' +
+      'test dataset_writer::contract::tests::coverage_and_mode_are_independent_and_closed ... ok\n' +
+      'test dataset_writer::key_run::tests::duplicates_malformed_counts_and_unknown_operations_rejected ... ok\n' +
+      'test dataset_writer::key_run::tests::packed_partition_runs_roundtrip_and_delete_visibility ... ok\n' +
+      'test dataset_writer::key_run::tests::partial_compaction_retains_deletion_above_untouched_older_runs ... ok\n' +
+      'test dataset_writer::key_run::tests::sparse_point_fences_bound_reads_and_reject_omitted_or_shifted_ranges ... ok\n' +
+      'test dataset_writer::key_run::tests::version_three_distinguishes_deferred_verified_zero_and_deleted_records ... ok\n' +
+      'test dataset_writer::key_run::tests::version_two_known_records_remain_readable_and_unknown_versions_fail ... ok\n' +
+      'test dataset_writer::key_run_merge::tests::partial_compaction_retains_deletion_above_untouched_older_runs ... ok\n' +
+      'test dataset_writer::key_run_merge::tests::streaming_compaction_keeps_newest_exact_keys_and_fails_ambiguity_or_budget ... ok\n' +
+      'test dataset_writer::keys::tests::complete_keys_are_typed_ordered_null_rejecting_and_unique_across_batches ... ok\n' +
+      'test dataset_writer::keys::tests::float_zero_keys_use_the_same_logical_identity ... ok\n' +
+      'test dataset_writer::row_selection::tests::exact_bitmap_boundaries_and_duplicate_or_wrong_locator_rejection ... ok\n' +
+      'test dataset_writer::rows::tests::array_keys_preserve_order_duplicates_and_actual_null_rejection ... ok\n' +
+      'test dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns ... FAILED\n' +
+      'test dataset_writer::visibility::tests::equality_delete_sequence_is_strict_and_reinsert_survives ... ok\n' +
+      'test dataset_writer::visibility::tests::position_deletes_match_exact_file_ordinal_and_include_equal_sequence ... ok\n' +
+      'test delivery::tests::endpoint_never_accepts_redirect_targets_credentials_or_plaintext_remote_hosts ... ok\n' +
+      'test engine_ipc::compact_tests::compact_list_reuses_the_accepted_item_field ... ok\n' +
+      'test engine_ipc::compact_tests::four_column_rows_charge_one_ipc_body_and_share_schema ... ok\n' +
+      'test engine_ipc::compact_tests::pyarrow_uuid_transport_preserves_the_exact_canonical_metadata ... ok\n' +
+      'test engine_ipc::compact_tests::sliced_rows_do_not_charge_or_retain_the_unused_page ... ok\n' +
+      'test engine_ipc::tests::metadata_lengths_and_offsets_are_checked_before_arrow_decode ... ok\n' +
+      'test engine_ipc::tests::scalar_arrays_have_a_preallocation_complexity_bound ... ok\n' +
+      'test execution::tests::exact_input_normalization_and_single_attempt_validation ... ok\n' +
+      'test filesystem::source::validation::tests::compiler_acceptance_matches_all_kind_reference_and_rejections ... ok\n' +
+      'test filesystem::source::validation::tests::dataset_only_scalar_arrays_match_the_shared_column_profile ... ok\n' +
+      'test filesystem::source::validation::tests::object_properties_and_action_inputs_accept_scalar_arrays_too ... ok\n' +
+      'test filesystem::source::validation::tests::trusted_schemas_and_semantic_references_are_independently_checked ... ok\n' +
+      'test filesystem::tests::namespace_boundary_rejects_noncanonical_names_and_untrusted_registration ... ok\n' +
+      'test filesystem_gc::tests::policy_requires_orphan_grace_and_exact_filesystem_namespace ... ok\n' +
+      'test http_admission::tests::accepted_connection_budget_is_held_until_the_socket_closes ... ok\n' +
+      'test http_admission::tests::active_handler_can_finish_after_tcp_idle_but_response_idle_still_expires ... ok\n' +
+      'test http_admission::tests::idle_connections_release_real_socket_capacity ... ok\n' +
+      'test http_admission::tests::response_admission_survives_headers_and_releases_on_end_or_drop ... ok\n' +
+      'test http_auth::navigation_tests::cookie_navigation_is_top_level_safe_method_only ... ok\n' +
+      'test indexing_service::tests::service_revision_is_exact_ascii_canonical_and_binds_all_authority_parts ... ok\n' +
+      'test io::tests::kernel_scope_rejects_escapes_symlinks_and_non_regular_files ... ok\n' +
+      'test lifecycle::tests::completion_and_drop_are_distinct_and_streaming_bytes_are_exact ... ok\n' +
+      'test lifecycle::tests::drain_has_a_finite_deadline ... ok\n' +
+      'test mcp::tests::mirrored_names_are_exact_and_not_authority ... ok\n' +
+      'test model_protocol::tests::bounded_schema_and_provider_outputs_are_validated ... ok\n' +
+      'test model_protocol::tests::stream_requires_terminal_and_handles_split_unicode_and_tool_arguments ... ok\n' +
+      'test models::tests::current_receipt_classification_preserves_the_result_limit ... ok\n' +
+      'test native_snapshot_v3::index_tests::empty_result_keeps_paired_tombstone_directories_without_inventing_live_rows ... ok\n' +
+      'test persistent_directory::tests::malformed_paths_summaries_and_budgets_fail_closed ... ok\n' +
+      'test persistent_directory::tests::sparse_changes_copy_paths_and_keep_old_roots ... ok\n' +
+      'test pipelines::tests::checkpoint_identity_tracks_interpretation_without_window_or_authority_generations ... ok\n' +
+      'test platform::tests::action_keys_bind_parent_action_and_exact_guest_key ... ok\n' +
+      'test platform::tests::typed_references_include_nested_arrays_and_skip_nullable_absence ... ok\n' +
+      'test recovery_content::offline::tests::offline_inventory_copies_exact_members_without_database_and_replays ... ok\n' +
+      'test recovery_content::offline::tests::offline_inventory_rejects_changed_provider_version_and_existing_wrong_target ... ok\n' +
+      'test recovery_content::offline::tests::offline_inventory_rejects_identical_unowned_target_and_custody_tamper ... ok\n' +
+      'test recovery_content::offline::tests::offline_inventory_rejects_same_size_backup_corruption_and_logical_revision_changes ... ok\n' +
+      'test recovery_content::tests::backup_data_objects_accept_the_durable_uuid_identity_without_path_syntax ... ok\n' +
+      'test recovery_keys::tests::actual_key_files_are_private_versioned_and_never_followed ... ok\n' +
+      'test retrieval::tests::paragraph_preference_is_deterministic_and_preserves_delimiters ... ok\n' +
+      'test retrieval::tests::unicode_offsets_preserve_complete_text_with_exact_overlap ... ok\n' +
+      'test sandbox::tests::broker_calls_cannot_override_actor_or_select_external_urls ... ok\n' +
+      'test scratch::tests::dedicated_filesystem_required ... ok\n' +
+      'test search::tests::cosine_input_uses_actual_float32_dimension_and_nonzero_profile ... ok\n' +
+      'test serving::tests::consumed_views_ignore_unrelated_fields_but_preserve_old_policy_witnesses ... ok\n' +
+      'test serving::tests::effective_primary_uid_predicates_seek_the_permanent_row_key ... ok\n' +
+      'test serving::tests::request_shapes_are_strict_and_cursors_are_opaque ... ok\n' +
+      'test snapshot::parquet_bounds::tests::compact_nesting_is_bounded ... ok\n' +
+      'test snapshot::parquet_bounds::tests::encoded_column_walk_is_exact ... ok\n' +
+      'test snapshot::parquet_bounds::tests::oversized_page_rejected_before_any_decode ... ok\n' +
+      'test snapshot::parquet_bounds::tests::oversized_value_count_rejected_before_any_decode ... ok\n' +
+      'test snapshot::parquet_bounds::tests::raw_collection_claim_is_rejected_without_allocating ... ok\n' +
+      'test snapshot::parquet_bounds::tests::real_dictionary_array_expansion_is_rejected_before_decode ... ok\n' +
+      'test snapshot::parquet_bounds::tests::real_page_header_size_claim_is_rejected_before_decode ... ok\n' +
+      'test snapshot::parquet_bounds::tests::real_plain_and_small_dictionary_columns_have_exact_bounded_walks ... ok\n' +
+      'test source_runtime::tests::dataset_schema_is_stable_exact_and_bounded ... ok\n' +
+      'test storage::read_window_tests::exact_multipart_discovery_accepts_qualified_empty_key_marker_only_for_exact_rows ... ok\n' +
+      'test storage::read_window_tests::exact_multipart_discovery_never_returns_sibling_uploads_or_markers ... ok\n' +
+      'test storage::read_window_tests::private_window_is_bounded_version_pinned_and_never_authorizes_result_release ... ok\n' +
+      'test values::tests::shared_value_conformance ... ok\n' +
+      'test values::wire_schema_tests::public_wire_shape_retains_exact_strings_nullability_and_object_identity ... ok\n' +
+      'test wire::tests::compiled_source_matches_the_quality_gate ... ok\n' +
+      'test wire::tests::incompatible_reader_is_rejected_before_decoding_its_payload ... ok\n' +
+      'test wire::tests::lease_golden_encoding_preserves_large_fences ... ok\n' +
+      'test worker::mapping_tests::canonical_hidden_fields_survive_mapping_with_exact_types ... ok\n' +
+      '\n' +
+      'failures:\n' +
+      '\n' +
+      '---- dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns stdout ----\n' +
+      '\n' +
+      "thread 'dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns' (107) panicked at src/dataset_writer/rows.rs:216:9:\n" +
+      'assertion failed: encode_projected_keys(&batch, &keys, &columns).is_err()\n' +
+      'note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n' +
+      '\n' +
+      '\n' +
+      'failures:\n' +
+      '    dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns\n' +
+      '\n' +
+      'test result: FAILED. 95 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.12s\n' +
+      '\n',
+    ''
+  ],
+  pid: 78,
+  stdout: '\n' +
+    'running 96 tests\n' +
+    'test app_host::tests::immutable_assets_verify_manifest_bytes_and_reject_symlink_replacement ... ok\n' +
+    'test app_host::tests::legacy_manifest_entry_order_is_preserved_and_duplicate_paths_are_rejected ... ok\n' +
+    'test authenticated_file::tests::index_profile_authenticates_only_bounded_sixty_four_kib_chunks ... ok\n' +
+    'test authenticated_file::tests::malformed_certificate_and_physical_binding_rejected ... ok\n' +
+    'test authenticated_file::tests::partial_reads_authenticate_complete_bounded_chunks ... ok\n' +
+    'test authorization::tests::action_value_expressions_preserve_types_nullability_and_boolean_policy_roots ... ok\n' +
+    'test authorization::tests::grants_markings_destinations_and_environment_are_intersections ... ok\n' +
+    'test authorization::tests::policy_shared_conformance_vectors ... ok\n' +
+    'test authorization::tests::projection_intersects_delegation_and_pinned_current_visibility_before_data ... ok\n' +
+    'test authorization::tests::strict_complexity_and_sql_identifiers_are_enforced ... ok\n' +
+    'test canonical::tests::canonical_cross_runtime_vectors ... ok\n' +
+    'test canonical::tests::javascript_number_and_utf16_ordering ... ok\n' +
+    'test canonical::tests::typed_identity_preserves_normalized_envelope ... ok\n' +
+    'test database::error_tests::public_diagnostics_return_only_known_error_codes ... ok\n' +
+    'test dataset_retention::operator::tests::metadata_pruning_retains_current_snapshot_and_schema ... ok\n' +
+    'test dataset_writer::contract::tests::coverage_and_mode_are_independent_and_closed ... ok\n' +
+    'test dataset_writer::key_run::tests::duplicates_malformed_counts_and_unknown_operations_rejected ... ok\n' +
+    'test dataset_writer::key_run::tests::packed_partition_runs_roundtrip_and_delete_visibility ... ok\n' +
+    'test dataset_writer::key_run::tests::partial_compaction_retains_deletion_above_untouched_older_runs ... ok\n' +
+    'test dataset_writer::key_run::tests::sparse_point_fences_bound_reads_and_reject_omitted_or_shifted_ranges ... ok\n' +
+    'test dataset_writer::key_run::tests::version_three_distinguishes_deferred_verified_zero_and_deleted_records ... ok\n' +
+    'test dataset_writer::key_run::tests::version_two_known_records_remain_readable_and_unknown_versions_fail ... ok\n' +
+    'test dataset_writer::key_run_merge::tests::partial_compaction_retains_deletion_above_untouched_older_runs ... ok\n' +
+    'test dataset_writer::key_run_merge::tests::streaming_compaction_keeps_newest_exact_keys_and_fails_ambiguity_or_budget ... ok\n' +
+    'test dataset_writer::keys::tests::complete_keys_are_typed_ordered_null_rejecting_and_unique_across_batches ... ok\n' +
+    'test dataset_writer::keys::tests::float_zero_keys_use_the_same_logical_identity ... ok\n' +
+    'test dataset_writer::row_selection::tests::exact_bitmap_boundaries_and_duplicate_or_wrong_locator_rejection ... ok\n' +
+    'test dataset_writer::rows::tests::array_keys_preserve_order_duplicates_and_actual_null_rejection ... ok\n' +
+    'test dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns ... FAILED\n' +
+    'test dataset_writer::visibility::tests::equality_delete_sequence_is_strict_and_reinsert_survives ... ok\n' +
+    'test dataset_writer::visibility::tests::position_deletes_match_exact_file_ordinal_and_include_equal_sequence ... ok\n' +
+    'test delivery::tests::endpoint_never_accepts_redirect_targets_credentials_or_plaintext_remote_hosts ... ok\n' +
+    'test engine_ipc::compact_tests::compact_list_reuses_the_accepted_item_field ... ok\n' +
+    'test engine_ipc::compact_tests::four_column_rows_charge_one_ipc_body_and_share_schema ... ok\n' +
+    'test engine_ipc::compact_tests::pyarrow_uuid_transport_preserves_the_exact_canonical_metadata ... ok\n' +
+    'test engine_ipc::compact_tests::sliced_rows_do_not_charge_or_retain_the_unused_page ... ok\n' +
+    'test engine_ipc::tests::metadata_lengths_and_offsets_are_checked_before_arrow_decode ... ok\n' +
+    'test engine_ipc::tests::scalar_arrays_have_a_preallocation_complexity_bound ... ok\n' +
+    'test execution::tests::exact_input_normalization_and_single_attempt_validation ... ok\n' +
+    'test filesystem::source::validation::tests::compiler_acceptance_matches_all_kind_reference_and_rejections ... ok\n' +
+    'test filesystem::source::validation::tests::dataset_only_scalar_arrays_match_the_shared_column_profile ... ok\n' +
+    'test filesystem::source::validation::tests::object_properties_and_action_inputs_accept_scalar_arrays_too ... ok\n' +
+    'test filesystem::source::validation::tests::trusted_schemas_and_semantic_references_are_independently_checked ... ok\n' +
+    'test filesystem::tests::namespace_boundary_rejects_noncanonical_names_and_untrusted_registration ... ok\n' +
+    'test filesystem_gc::tests::policy_requires_orphan_grace_and_exact_filesystem_namespace ... ok\n' +
+    'test http_admission::tests::accepted_connection_budget_is_held_until_the_socket_closes ... ok\n' +
+    'test http_admission::tests::active_handler_can_finish_after_tcp_idle_but_response_idle_still_expires ... ok\n' +
+    'test http_admission::tests::idle_connections_release_real_socket_capacity ... ok\n' +
+    'test http_admission::tests::response_admission_survives_headers_and_releases_on_end_or_drop ... ok\n' +
+    'test http_auth::navigation_tests::cookie_navigation_is_top_level_safe_method_only ... ok\n' +
+    'test indexing_service::tests::service_revision_is_exact_ascii_canonical_and_binds_all_authority_parts ... ok\n' +
+    'test io::tests::kernel_scope_rejects_escapes_symlinks_and_non_regular_files ... ok\n' +
+    'test lifecycle::tests::completion_and_drop_are_distinct_and_streaming_bytes_are_exact ... ok\n' +
+    'test lifecycle::tests::drain_has_a_finite_deadline ... ok\n' +
+    'test mcp::tests::mirrored_names_are_exact_and_not_authority ... ok\n' +
+    'test model_protocol::tests::bounded_schema_and_provider_outputs_are_validated ... ok\n' +
+    'test model_protocol::tests::stream_requires_terminal_and_handles_split_unicode_and_tool_arguments ... ok\n' +
+    'test models::tests::current_receipt_classification_preserves_the_result_limit ... ok\n' +
+    'test native_snapshot_v3::index_tests::empty_result_keeps_paired_tombstone_directories_without_inventing_live_rows ... ok\n' +
+    'test persistent_directory::tests::malformed_paths_summaries_and_budgets_fail_closed ... ok\n' +
+    'test persistent_directory::tests::sparse_changes_copy_paths_and_keep_old_roots ... ok\n' +
+    'test pipelines::tests::checkpoint_identity_tracks_interpretation_without_window_or_authority_generations ... ok\n' +
+    'test platform::tests::action_keys_bind_parent_action_and_exact_guest_key ... ok\n' +
+    'test platform::tests::typed_references_include_nested_arrays_and_skip_nullable_absence ... ok\n' +
+    'test recovery_content::offline::tests::offline_inventory_copies_exact_members_without_database_and_replays ... ok\n' +
+    'test recovery_content::offline::tests::offline_inventory_rejects_changed_provider_version_and_existing_wrong_target ... ok\n' +
+    'test recovery_content::offline::tests::offline_inventory_rejects_identical_unowned_target_and_custody_tamper ... ok\n' +
+    'test recovery_content::offline::tests::offline_inventory_rejects_same_size_backup_corruption_and_logical_revision_changes ... ok\n' +
+    'test recovery_content::tests::backup_data_objects_accept_the_durable_uuid_identity_without_path_syntax ... ok\n' +
+    'test recovery_keys::tests::actual_key_files_are_private_versioned_and_never_followed ... ok\n' +
+    'test retrieval::tests::paragraph_preference_is_deterministic_and_preserves_delimiters ... ok\n' +
+    'test retrieval::tests::unicode_offsets_preserve_complete_text_with_exact_overlap ... ok\n' +
+    'test sandbox::tests::broker_calls_cannot_override_actor_or_select_external_urls ... ok\n' +
+    'test scratch::tests::dedicated_filesystem_required ... ok\n' +
+    'test search::tests::cosine_input_uses_actual_float32_dimension_and_nonzero_profile ... ok\n' +
+    'test serving::tests::consumed_views_ignore_unrelated_fields_but_preserve_old_policy_witnesses ... ok\n' +
+    'test serving::tests::effective_primary_uid_predicates_seek_the_permanent_row_key ... ok\n' +
+    'test serving::tests::request_shapes_are_strict_and_cursors_are_opaque ... ok\n' +
+    'test snapshot::parquet_bounds::tests::compact_nesting_is_bounded ... ok\n' +
+    'test snapshot::parquet_bounds::tests::encoded_column_walk_is_exact ... ok\n' +
+    'test snapshot::parquet_bounds::tests::oversized_page_rejected_before_any_decode ... ok\n' +
+    'test snapshot::parquet_bounds::tests::oversized_value_count_rejected_before_any_decode ... ok\n' +
+    'test snapshot::parquet_bounds::tests::raw_collection_claim_is_rejected_without_allocating ... ok\n' +
+    'test snapshot::parquet_bounds::tests::real_dictionary_array_expansion_is_rejected_before_decode ... ok\n' +
+    'test snapshot::parquet_bounds::tests::real_page_header_size_claim_is_rejected_before_decode ... ok\n' +
+    'test snapshot::parquet_bounds::tests::real_plain_and_small_dictionary_columns_have_exact_bounded_walks ... ok\n' +
+    'test source_runtime::tests::dataset_schema_is_stable_exact_and_bounded ... ok\n' +
+    'test storage::read_window_tests::exact_multipart_discovery_accepts_qualified_empty_key_marker_only_for_exact_rows ... ok\n' +
+    'test storage::read_window_tests::exact_multipart_discovery_never_returns_sibling_uploads_or_markers ... ok\n' +
+    'test storage::read_window_tests::private_window_is_bounded_version_pinned_and_never_authorizes_result_release ... ok\n' +
+    'test values::tests::shared_value_conformance ... ok\n' +
+    'test values::wire_schema_tests::public_wire_shape_retains_exact_strings_nullability_and_object_identity ... ok\n' +
+    'test wire::tests::compiled_source_matches_the_quality_gate ... ok\n' +
+    'test wire::tests::incompatible_reader_is_rejected_before_decoding_its_payload ... ok\n' +
+    'test wire::tests::lease_golden_encoding_preserves_large_fences ... ok\n' +
+    'test worker::mapping_tests::canonical_hidden_fields_survive_mapping_with_exact_types ... ok\n' +
+    '\n' +
+    'failures:\n' +
+    '\n' +
+    '---- dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns stdout ----\n' +
+    '\n' +
+    "thread 'dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns' (107) panicked at src/dataset_writer/rows.rs:216:9:\n" +
+    'assertion failed: encode_projected_keys(&batch, &keys, &columns).is_err()\n' +
+    'note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n' +
+    '\n' +
+    '\n' +
+    'failures:\n' +
+    '    dataset_writer::rows::tests::delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns\n' +
+    '\n' +
+    'test result: FAILED. 95 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.12s\n' +
+    '\n',
+  stderr: ''
+}
+
+Node.js v24.22.0
+[ELIFECYCLE] Command failed with exit code 1.

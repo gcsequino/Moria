@@ -7,7 +7,7 @@ use super::{
     visibility::{BootstrapBudget, VisibilityBootstrap, VisibleRow},
 };
 use crate::{
-    catalog::{DatasetIoGrant, NativeSnapshotRef, load_snapshot},
+    catalog::{DatasetIoGrant, NativeSnapshotRef, load_qualified_snapshot},
     dataset_graph::{NativeGraph, QualifiedNode},
     native_snapshot_v3::{LogicalFile, PROFILE, RootDescriptor, VisibilityIndex},
     persistent_directory::{
@@ -135,7 +135,7 @@ impl Builder {
                 sizing.push(&location)?;
                 hash_rows.push(RunEntry {
                     key: row.key.clone(),
-                    value: RunValue::Hash(row.row_hash),
+                    value: row.row_hash.map_or(RunValue::DeferredHash, RunValue::Hash),
                 });
                 location_rows.push(location);
             }
@@ -274,7 +274,8 @@ pub async fn bootstrap_expected_head(
     let location: String = row.get(1);
     let snapshot: String = row.get(2);
     let reference = NativeSnapshotRef::decode(&location)?;
-    let loaded = load_snapshot(
+    let graph = NativeGraph::acquire(store.clone(), grant.clone(), cancel.clone()).await?;
+    let loaded = load_qualified_snapshot(
         scratch,
         store.clone(),
         grant.clone(),
@@ -283,11 +284,11 @@ pub async fn bootstrap_expected_head(
         snapshot.parse()?,
         limits,
         cancel.clone(),
+        &graph,
     )
     .await?;
     let table = loaded.table().await?;
     grant.validate_schema(table.metadata().current_schema().as_ref())?;
-    let graph = NativeGraph::acquire(store, grant.clone(), cancel.clone()).await?;
     let sequence = u64::try_from(
         table
             .metadata()
@@ -445,6 +446,9 @@ pub async fn bootstrap_expected_head(
                         .as_struct()
                         .fields()
                         .iter()
+                        .filter(|field| {
+                            keys.is_empty() || keys.iter().any(|key| key == &field.name)
+                        })
                         .map(|field| field.id)
                         .collect(),
                 )
@@ -462,16 +466,16 @@ pub async fn bootstrap_expected_head(
             while let Some(batch) = batches.try_next().await? {
                 grant.check_current().await?;
                 if let Some(visible) = visible.as_mut() {
-                    let canonical = rows::encode_rows(&batch, &keys, &descriptors)?;
+                    let canonical = rows::encode_projected_keys(&batch, &keys, &descriptors)?;
                     let page = canonical
                         .iter()
                         .enumerate()
                         .map(|(index, row)| VisibleRow {
-                            key: row.key().into(),
+                            key: row.clone(),
                             file: name.clone(),
                             row: physical + index as u64,
                             data_sequence: u64::try_from(*data_sequence).unwrap(),
-                            row_hash: row.row_hash(),
+                            row_hash: None,
                         })
                         .collect::<Vec<_>>();
                     visible.data_page(&page).await?;

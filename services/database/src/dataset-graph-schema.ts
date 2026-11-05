@@ -397,7 +397,9 @@ BEGIN
  IF NOT FOUND OR head.revision::text IS DISTINCT FROM state->>'expectedRevision' THEN RAISE EXCEPTION 'HEAD_CONFLICT';END IF;
  PERFORM moria.runtime_dataset_root_assert(head.metadata_location);
  SELECT m.content,m.physical_version INTO member FROM moria.runtime_dataset_member_locations m JOIN moria.runtime_dataset_root_locations root ON root.root=m.root AND root.physical_fingerprint=m.physical_fingerprint AND root.incarnation=m.incarnation
+  JOIN moria.runtime_dataset_roots retained ON retained.key=m.root
   WHERE m.root=moria.runtime_dataset_root_key(head.metadata_location) AND m.physical_fingerprint=state->>'physicalFingerprint' AND m.incarnation=(state->>'incarnation')::uuid AND root.sealed
+  AND retained.sealed AND retained.environment=state->>'environment' AND retained.dataset=state->>'resource' AND retained.snapshot_id=head.snapshot_id AND retained.reader_profile='iceberg-v2-cow-flat-bounded-v2'
   AND m.warehouse_id=state->'namespace'->>'warehouseId' AND m.table_id=state->'namespace'->>'tableId' AND m.object_id=wanted->'object'->>'objectId' AND m.content=wanted LIMIT 1;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  INSERT INTO moria.runtime_dataset_graph_byte_admissions(producer,root,physical_fingerprint,incarnation,content,physical_version)

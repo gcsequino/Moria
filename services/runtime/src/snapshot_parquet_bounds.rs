@@ -152,7 +152,7 @@ impl<'a> Compact<'a> {
 }
 
 /// Validate raw footer collection claims and schema depth before the library constructs vectors.
-pub(super) fn footer(bytes: &[u8]) -> Result<()> {
+pub(crate) fn footer(bytes: &[u8]) -> Result<()> {
     ensure!(bytes.len() <= 8 * 1024 * 1024, "PARQUET_ALLOCATION_LIMIT");
     let mut input = Compact::new(bytes, 262144);
     let mut last = 0;
@@ -209,7 +209,7 @@ pub(super) fn footer(bytes: &[u8]) -> Result<()> {
 }
 
 /// Inspect the bounded IPC schema before the Parquet adapter converts embedded Arrow metadata.
-pub(super) fn arrow_metadata(metadata: &ParquetMetaData) -> Result<()> {
+pub(crate) fn arrow_metadata(metadata: &ParquetMetaData) -> Result<()> {
     use arrow_ipc::Type as T;
     use base64::Engine;
     fn validate_field(field: arrow_ipc::Field<'_>, depth: usize, nodes: &mut usize) -> Result<()> {
@@ -353,7 +353,7 @@ pub(super) fn arrow_metadata(metadata: &ParquetMetaData) -> Result<()> {
     Ok(())
 }
 
-pub(super) struct Chunk {
+pub(crate) struct Chunk {
     pub offset: u64,
     pub size: u64,
     values: i64,
@@ -363,7 +363,7 @@ pub(super) struct Chunk {
     dictionary: bool,
 }
 /// An upper bound on decoded leaf buffers includes dictionary expansion and offsets.
-pub(super) fn metadata(metadata: &ParquetMetaData, file_size: u64) -> Result<Vec<Chunk>> {
+pub(crate) fn metadata(metadata: &ParquetMetaData, file_size: u64) -> Result<Vec<Chunk>> {
     ensure!(
         metadata.num_row_groups() <= 4096,
         "PARQUET_ALLOCATION_LIMIT"
@@ -462,7 +462,7 @@ fn data_header(input: &mut Compact<'_>, v2: bool) -> Result<(i64, i64)> {
     ))
 }
 /// Walk each compressed column without decoding values or allocating claimed page buffers.
-pub(super) struct PageWalk {
+pub(crate) struct PageWalk {
     position: usize,
     values: i64,
     uncompressed: i64,
@@ -588,7 +588,7 @@ impl PageWalk {
     }
 }
 #[cfg(test)]
-pub(super) fn pages(bytes: &[u8], chunk: &Chunk) -> Result<()> {
+pub(crate) fn pages(bytes: &[u8], chunk: &Chunk) -> Result<()> {
     ensure!(bytes.len() as u64 == chunk.size, "PARQUET_ALLOCATION_LIMIT");
     let mut walk = PageWalk::new();
     while walk.position() < chunk.size {

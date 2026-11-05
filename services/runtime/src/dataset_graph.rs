@@ -571,3 +571,33 @@ impl NativeGraph {
         Ok(value)
     }
 }
+
+#[async_trait::async_trait]
+impl crate::storage::VerifiedVersionAuthority for NativeGraph {
+    async fn verified_version(&self, content: &SealedObject) -> Result<ObjectVersion> {
+        self.check_current().await?;
+        self.grant.validate_store(self.store.as_ref())?;
+        let wanted = serde_json::to_value(content)?;
+        let state: Value = self
+            .grant
+            .database()
+            .get()
+            .await?
+            .query_one(
+                "SELECT moria.runtime_dataset_graph_bootstrap_member($1,$2)",
+                &[&self.claims, &wanted],
+            )
+            .await?
+            .get(0);
+        ensure!(
+            state["content"] == wanted
+                && state["physicalFingerprint"] == self.store.physical_fingerprint()?
+                && state["incarnation"] == self.grant.lease().incarnation.to_string(),
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        let version: ObjectVersion = serde_json::from_value(state["physicalVersion"].clone())?;
+        ensure!(version.size == content.size, "CONTENT_MISMATCH");
+        self.check_current().await?;
+        Ok(version)
+    }
+}

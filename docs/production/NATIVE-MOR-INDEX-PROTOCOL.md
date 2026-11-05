@@ -30,7 +30,7 @@ verified canonical full-row digest or an explicit deferred state. A hash-run
 entry likewise distinguishes a deferred digest, verified digest and key deletion.
 No all-zero digest, absent key or tombstone represents a deferred digest.
 
-The next run descriptor is version 3 with the eight-byte `MORIAKR3` header.
+The new run descriptor is version 3 with the eight-byte `MORIAKR3` header.
 Existing record tags remain 0 (deleted), 1 (verified hash) and 2 (locator with
 verified hash). New tags are 3 (deferred hash) and 4 (locator without a hash).
 The locator keeps its existing file/physical-row/data-sequence fields; tag 4
@@ -95,8 +95,95 @@ still needs expected-head, lease and checkpoint checks before acknowledgement.
 
 Qualification must include an all-deleted result followed by append/upsert,
 partial compaction above an older key, deferred/verified digest round trips,
-wide payloads excluded from bootstrap I/O, wrong physical locators, arrays and
+wide payload columns excluded from key decoding, separately measured migration/authentication I/O, wrong physical locators, arrays and
 nullable non-key columns, cross-task duplicates and missing reports, unchanged
 upserts, actual standard-engine position-delete readback, old-reader retention,
 crash/conflict/replay and clean-host graph recovery. Production activation waits
 for these proofs and the approved workload ladder.
+
+## Format checkpoint
+
+The explicit version-three codec and optional Rust locator digest are
+implemented. Frozen trial010 builds all nine native executables and passes
+all 96 library units with no ignored or filtered tests. Known zero digests,
+deferred digests and deletion remain distinct, new tags are rejected under
+version two, and original known version-two records remain readable. This is
+[codec evidence](evidence/2026-11-04/native-deferred-digests/summary.json), not
+qualification of projected bootstrap or sparse publication. At trial010 bootstrap
+still derived verified hashes from payloads. The following checkpoint adds
+projected derivation and a touched-row reader; distributed task receipts remain
+open.
+
+## Projected-key and touched-row checkpoint
+
+The serial keyed derivation now projects only declared key columns and stores
+explicit deferred digests in its spill and runs. An exact previously qualified
+retained v2 root can reuse its member/version/schema proof through the existing
+verified-spool and retained-subset verifier; the current real coordinator,
+expected head, physical fingerprint and incarnation must match every receipt.
+Changed versions, missing membership and current-authority failures do not
+trigger a trust fallback. Unsupported legacy version tokens keep the original
+full byte and typed validation path.
+
+`NativeSnapshot::read_key_row(&Arc<Self>, values)` resolves the actual pinned
+index and returns an optional complete typed value and locator with a verified
+digest. It accepts no caller-supplied locator. It checks exact file membership,
+physical ordinal, data sequence and live row selection, reads the chosen Parquet
+row group through version-pinned graph IO with the existing footer/page
+allocation guards, verifies the complete schema and full encoded key, checks any
+prior verified digest, and rechecks current authority before returning.
+
+Frozen trial013 passes static checks, exact provenance for nine native artifacts,
+96 units and the actual 64-row array-key/nullable-payload graph integration under
+its unchanged 120-second deadline. Every bootstrap locator is explicitly deferred;
+the first actual point read matches the full typed oracle and returns a verified
+digest. [Evidence](evidence/2026-11-04/native-projected-keys/summary.json) retains
+the failed projection-column guard trial and the successful focused gate. That earlier checkpoint did not qualify the new loader negatives or latest-format
+authority/recovery. Those proofs are recorded separately below; distributed tasks,
+provider amplification and sparse publication remain open.
+
+Initial migration cost is separate: a v2 root without authenticated chunk
+receipts still needs explicit one-time byte authentication to create persisted
+exact-version certificates. Key-only decoding does not imply that those bytes
+were never read. Sparse mutations must reuse those persisted qualifications and
+must not rehash or redecode the complete population per mutation.
+
+## Qualified loader version binding checkpoint
+
+Retained-root reuse now also verifies the stored qualification row's sealed
+state, reader profile, environment, Dataset and snapshot against the actual
+current expected head. Every physical fingerprint and producer incarnation
+still matches its original exact member receipt. A synthetic profile mismatch
+was accepted before this check and is now rejected with immutable guards enabled.
+
+Root wrappers and metadata pages use explicit receipt-version GETs before full
+SHA-256, canonical encoding and structural validation. An actual regression
+trace reproduced the prior defect: after the old qualified wrapper version was
+deleted, the loader read a newer current copy and accepted it. The new loader
+requests the old version explicitly. A newer current copy is valid only while
+the old qualified version remains readable; actual missing old root/page
+versions fail closed without changing the Dataset head or publishing a graph.
+Only unsupported immutable-version formats use the original full-validation
+legacy path. Missing qualified bytes or invalid receipts never authorize that
+fallback.
+
+Frozen trial015 passes static checks, exact nine-artifact provenance and all 99
+native units. Four separate sequential integration files pass 12 cases with no
+skips or cancellations: four actual root/page version traces, six qualification
+negatives, warmed current-authority revocation and the full graph custody proof.
+The latter preserves exact-version GC, original pending-retirement authority
+across policy succession, independent clean-host typed recovery and disabled
+dispatch after a missing backup child. Every controller is absent at completion.
+The point-verifier units reject wrong file, ordinal, sequence, key, digest and
+schema; an actual installed Parquet writer/reader unit selects a row from its
+second row group. This is not a qualified large multi-row-group Dataset proof.
+[Evidence](evidence/2026-11-04/native-qualified-loader/summary.json) preserves
+the failing stored-profile and wrapper-version traces as separate trials, plus
+the earlier insufficiently specific member-version expectation. The earlier
+64-row array-key/nullable-payload positive belongs to trial013 and is not counted
+as another same-source trial015 result.
+
+Distributed bootstrap, sparse writes and C04 publication, DatasetCommitDelta
+production, the independent standard position-delete reader oracle, legacy
+fallback integration, full independent CI and production workload certification
+remain open.

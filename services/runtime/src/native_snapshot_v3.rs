@@ -21,6 +21,9 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::{ops::Range, sync::Arc};
 use uuid::Uuid;
+mod point;
+pub use point::VerifiedKeyRow;
+
 pub const PROFILE: &str = "iceberg-v2-native-mor-bounded-v3";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -310,11 +313,7 @@ impl NativeSnapshot {
         self.check_current().await?;
         Ok(selection)
     }
-    pub async fn lookup_key(
-        &self,
-        values: &[Value],
-    ) -> Result<Option<crate::dataset_writer::key_run::Locator>> {
-        self.check_current().await?;
+    fn encoded_lookup_key(&self, values: &[Value]) -> Result<Vec<u8>> {
         ensure!(
             !self.descriptor.primary_key.is_empty()
                 && values.len() == self.descriptor.primary_key.len(),
@@ -334,6 +333,14 @@ impl NativeSnapshot {
         }
         let key = canonical_json(&Value::Array(normalized))?.into_bytes();
         ensure!(key.len() <= 4 * 1024 * 1024, "DATASET_PRIMARY_KEY_LIMIT");
+        Ok(key)
+    }
+    pub async fn lookup_key(
+        &self,
+        values: &[Value],
+    ) -> Result<Option<crate::dataset_writer::key_run::Locator>> {
+        self.check_current().await?;
+        let key = self.encoded_lookup_key(values)?;
         let Some(directory) = self.index_directory("locations").await? else {
             self.check_current().await?;
             return Ok(None);
