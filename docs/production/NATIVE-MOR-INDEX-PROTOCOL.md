@@ -30,7 +30,7 @@ verified canonical full-row digest or an explicit deferred state. A hash-run
 entry likewise distinguishes a deferred digest, verified digest and key deletion.
 No all-zero digest, absent key or tombstone represents a deferred digest.
 
-The next run descriptor is version 3 with the eight-byte `MORIAKR3` header.
+The new run descriptor is version 3 with the eight-byte `MORIAKR3` header.
 Existing record tags remain 0 (deleted), 1 (verified hash) and 2 (locator with
 verified hash). New tags are 3 (deferred hash) and 4 (locator without a hash).
 The locator keeps its existing file/physical-row/data-sequence fields; tag 4
@@ -100,3 +100,15 @@ nullable non-key columns, cross-task duplicates and missing reports, unchanged
 upserts, actual standard-engine position-delete readback, old-reader retention,
 crash/conflict/replay and clean-host graph recovery. Production activation waits
 for these proofs and the approved workload ladder.
+
+## Format checkpoint
+
+The explicit version-three codec and optional Rust locator digest are
+implemented. Frozen trial010 builds all nine native executables and passes
+all 96 library units with no ignored or filtered tests. Known zero digests,
+deferred digests and deletion remain distinct, new tags are rejected under
+version two, and original known version-two records remain readable. This is
+[codec evidence](evidence/2026-11-04/native-deferred-digests/summary.json), not
+qualification of projected bootstrap or sparse publication. Current bootstrap
+still derives verified hashes from payloads until its projected-reader slice is
+implemented; distributed task receipts and touched-row derivation remain open.

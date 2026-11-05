@@ -122,7 +122,7 @@ impl Builder {
                         file: row.file.clone(),
                         row: row.row,
                         data_sequence: row.data_sequence,
-                        row_hash: row.row_hash,
+                        row_hash: Some(row.row_hash),
                     }),
                 };
                 if !sizing.would_fit(&location) {

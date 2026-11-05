@@ -3,7 +3,8 @@ use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-const MAGIC: &[u8; 8] = b"MORIAKR2";
+const MAGIC: &[u8; 8] = b"MORIAKR3";
+const LEGACY_MAGIC: &[u8; 8] = b"MORIAKR2";
 const LIMIT: usize = 16 * 1024 * 1024;
 const KEY_LIMIT: usize = 4 * 1024 * 1024;
 const RECORD_LIMIT: usize = 65536;
@@ -24,12 +25,13 @@ pub struct Locator {
     pub file: String,
     pub row: u64,
     pub data_sequence: u64,
-    pub row_hash: [u8; 32],
+    pub row_hash: Option<[u8; 32]>,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RunValue {
     Deleted,
     Hash([u8; 32]),
+    DeferredHash,
     Location(Locator),
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -108,7 +110,7 @@ impl RunWriter {
         );
         Ok(Self {
             descriptor: RunDescriptor {
-                version: 2,
+                version: 3,
                 kind,
                 key_schema_hash: key_schema_hash.into(),
                 sequence,
@@ -127,7 +129,10 @@ impl RunWriter {
             n.checked_add(match &entry.value {
                 RunValue::Deleted => 1,
                 RunValue::Hash(_) => 33,
-                RunValue::Location(value) => 57 + value.file.len(),
+                RunValue::DeferredHash => 1,
+                RunValue::Location(value) => {
+                    25 + value.file.len() + if value.row_hash.is_some() { 32 } else { 0 }
+                }
             })
         });
         !self.failed
@@ -168,6 +173,7 @@ impl RunWriter {
                 append(&mut self.bytes, &[1])?;
                 append(&mut self.bytes, hash)?;
             }
+            (RunKind::Hashes, RunValue::DeferredHash) => append(&mut self.bytes, &[3])?,
             (RunKind::Locations, RunValue::Location(value)) => {
                 ensure!(
                     !value.file.is_empty()
@@ -177,12 +183,17 @@ impl RunWriter {
                         && value.data_sequence <= 9_007_199_254_740_991,
                     "DATASET_KEY_INDEX_INVALID"
                 );
-                append(&mut self.bytes, &[2])?;
+                append(
+                    &mut self.bytes,
+                    &[if value.row_hash.is_some() { 2 } else { 4 }],
+                )?;
                 append(&mut self.bytes, &(value.file.len() as u32).to_le_bytes())?;
                 append(&mut self.bytes, value.file.as_bytes())?;
                 append(&mut self.bytes, &value.row.to_le_bytes())?;
                 append(&mut self.bytes, &value.data_sequence.to_le_bytes())?;
-                append(&mut self.bytes, &value.row_hash)?;
+                if let Some(hash) = &value.row_hash {
+                    append(&mut self.bytes, hash)?;
+                }
             }
             _ => anyhow::bail!("DATASET_KEY_INDEX_INVALID"),
         }
@@ -262,7 +273,7 @@ fn long(bytes: &[u8], offset: &mut usize) -> Result<u64> {
 }
 fn validate_descriptor(descriptor: &RunDescriptor) -> Result<()> {
     ensure!(
-        descriptor.version == 2
+        matches!(descriptor.version, 2 | 3)
             && valid_hash(&descriptor.key_schema_hash)
             && descriptor.sequence <= 9_007_199_254_740_991
             && descriptor.entries > 0
@@ -345,7 +356,13 @@ fn validate_descriptor(descriptor: &RunDescriptor) -> Result<()> {
 pub fn validate_header(descriptor: &RunDescriptor, header: &[u8], actual_size: u64) -> Result<()> {
     validate_descriptor(descriptor)?;
     ensure!(
-        header == MAGIC && actual_size == descriptor.size,
+        header
+            == if descriptor.version == 2 {
+                LEGACY_MAGIC
+            } else {
+                MAGIC
+            }
+            && actual_size == descriptor.size,
         "DATASET_KEY_INDEX_INVALID"
     );
     Ok(())
@@ -374,7 +391,7 @@ pub fn decode_partition(
     validate_descriptor(descriptor)?;
     allocation_bound(slice)?;
     ensure!(
-        descriptor.version == 2
+        matches!(descriptor.version, 2 | 3)
             && valid_hash(&descriptor.key_schema_hash)
             && descriptor.sequence <= 9_007_199_254_740_991
             && slice.start >= MAGIC.len() as u64
@@ -414,7 +431,10 @@ pub fn decode_partition(
         let value = match (operation, descriptor.kind) {
             (0, _) => RunValue::Deleted,
             (1, RunKind::Hashes) => RunValue::Hash(take(bytes, &mut offset, 32)?.try_into()?),
-            (2, RunKind::Locations) => {
+            (3, RunKind::Hashes) if descriptor.version == 3 => RunValue::DeferredHash,
+            (operation @ (2 | 4), RunKind::Locations)
+                if operation == 2 || descriptor.version == 3 =>
+            {
                 let length = integer(bytes, &mut offset)? as usize;
                 ensure!(
                     (1..=NAME_LIMIT).contains(&length),
@@ -424,7 +444,11 @@ pub fn decode_partition(
                 ensure!(file.starts_with("moria://"), "DATASET_KEY_INDEX_INVALID");
                 let row = long(bytes, &mut offset)?;
                 let data_sequence = long(bytes, &mut offset)?;
-                let row_hash = take(bytes, &mut offset, 32)?.try_into()?;
+                let row_hash = if operation == 2 {
+                    Some(take(bytes, &mut offset, 32)?.try_into()?)
+                } else {
+                    None
+                };
                 RunValue::Location(Locator {
                     file,
                     row,
@@ -486,7 +510,7 @@ pub fn merge_partition(
                     && matches!(
                         (kind, &entry.value),
                         (_, RunValue::Deleted)
-                            | (RunKind::Hashes, RunValue::Hash(_))
+                            | (RunKind::Hashes, RunValue::Hash(_) | RunValue::DeferredHash)
                             | (RunKind::Locations, RunValue::Location(_))
                     ),
                 "DATASET_KEY_INDEX_INVALID"
@@ -681,6 +705,98 @@ mod tests {
                 .value,
             RunValue::Hash([2; 32])
         );
+    }
+    #[test]
+    fn version_three_distinguishes_deferred_verified_zero_and_deleted_records() {
+        let hash = format!("sha256:{}", "a".repeat(64));
+        for (kind, values) in [
+            (
+                RunKind::Hashes,
+                vec![
+                    RunValue::Deleted,
+                    RunValue::DeferredHash,
+                    RunValue::Hash([0; 32]),
+                ],
+            ),
+            (
+                RunKind::Locations,
+                vec![
+                    RunValue::Deleted,
+                    RunValue::Location(Locator {
+                        file: "moria://w/t/data".into(),
+                        row: 7,
+                        data_sequence: 2,
+                        row_hash: None,
+                    }),
+                    RunValue::Location(Locator {
+                        file: "moria://w/t/data".into(),
+                        row: 8,
+                        data_sequence: 2,
+                        row_hash: Some([0; 32]),
+                    }),
+                ],
+            ),
+        ] {
+            let mut entries = values
+                .into_iter()
+                .enumerate()
+                .map(|(i, value)| RunEntry {
+                    key: vec![i as u8 + 1],
+                    value,
+                })
+                .collect::<Vec<_>>();
+            entries.sort_by(|a, b| compare_keys(&a.key, &b.key));
+            let mut writer = RunWriter::new(kind, &hash, 2).unwrap();
+            for entry in &entries {
+                writer.push(entry).unwrap();
+            }
+            let (descriptor, bytes) = writer.finish().unwrap();
+            assert_eq!(descriptor.version, 3);
+            assert_eq!(&bytes[..8], b"MORIAKR3");
+            verify_complete_run(&descriptor, &bytes).unwrap();
+            let actual = descriptor
+                .partitions
+                .iter()
+                .flat_map(|slice| {
+                    decode_partition(
+                        &descriptor,
+                        slice,
+                        &bytes[slice.start as usize..slice.end as usize],
+                    )
+                    .unwrap()
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(actual, entries);
+            let mut legacy = descriptor.clone();
+            legacy.version = 2;
+            let mut legacy_bytes = bytes.clone();
+            legacy_bytes[..8].copy_from_slice(LEGACY_MAGIC);
+            assert!(verify_complete_run(&legacy, &legacy_bytes).is_err());
+        }
+    }
+    #[test]
+    fn version_two_known_records_remain_readable_and_unknown_versions_fail() {
+        let mut writer =
+            RunWriter::new(RunKind::Hashes, &format!("sha256:{}", "a".repeat(64)), 1).unwrap();
+        writer
+            .push(&RunEntry {
+                key: b"key".to_vec(),
+                value: RunValue::Hash([0; 32]),
+            })
+            .unwrap();
+        let (mut descriptor, mut bytes) = writer.finish().unwrap();
+        descriptor.version = 2;
+        bytes[..8].copy_from_slice(LEGACY_MAGIC);
+        verify_complete_run(&descriptor, &bytes).unwrap();
+        assert_eq!(
+            decode_partition(&descriptor, &descriptor.partitions[0], &bytes[8..]).unwrap()[0].value,
+            RunValue::Hash([0; 32])
+        );
+        descriptor.version = 3;
+        assert!(verify_complete_run(&descriptor, &bytes).is_err());
+        bytes[..8].copy_from_slice(MAGIC);
+        descriptor.version = 4;
+        assert!(verify_complete_run(&descriptor, &bytes).is_err());
     }
     #[test]
     fn partial_compaction_retains_deletion_above_untouched_older_runs() {

@@ -2869,3 +2869,13 @@ settles explicit deferred digests, version-three run tags with version-two reads
 exact touched-row verification and bounded distributed projected-key bootstrap.
 Those remaining APIs, sparse publication and their integration proofs remain
 under implementation. Evidence: `production/evidence/2026-11-04/native-index-tombstones/`.
+
+Deferred digest format checkpoint (2026-11-04): new native runs use explicit
+version-three tags for deferred hash/locator entries. Locators represent a
+missing digest explicitly; a verified all-zero digest is still a known digest.
+Readers preserve version-two known-record compatibility and reject new tags
+under that older version, unknown versions and mismatched headers. Frozen
+trial010 passes all 96 native units and exact provenance for all nine rebuilt
+executables. Current bootstrap still emits verified payload hashes; projected
+scanning, touched-row derivation, distributed task closure and sparse publication
+remain unactivated. Evidence: `production/evidence/2026-11-04/native-deferred-digests/`.
