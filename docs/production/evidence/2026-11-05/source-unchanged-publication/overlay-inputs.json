@@ -1,0 +1,9 @@
+{
+  "baseNativeImage": "sha256:7f050b6b59f94a4acbdad5755e8252f0b2ca687b527263037b8e7820542d5fd3",
+  "changed": {
+    "tests/native-source-unchanged.integration.test.ts": "0827634f7a3e8efa9d5ba1ed80af00c4fbe91aa85ee9c94e1dad279fc399e091",
+    "tests/fixtures/native-source-store/projector.ts": "b39c37752a3a00f6f2358378f78abbd7abd887ac3647bb09216259110e6cbeb9",
+    "tests/fixtures/native-source-store/managed.ts": "a1ec29ed29a6241066ae79277a38d28a11be135eb35bf1413e83dc7dab0af1ec",
+    "tests/fixtures/native-retention/dataset.ts": "c670292de971599c898121ca0c9f4677d4b71fa33445f8d7dac804aba071bc9f"
+  }
+}

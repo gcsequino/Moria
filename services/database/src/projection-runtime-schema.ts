@@ -400,10 +400,21 @@ CREATE TRIGGER runtime_projection_overlay AFTER INSERT ON moria.overlay_versions
 
 CREATE FUNCTION moria.runtime_projection_activate() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
   SET search_path=pg_catalog,moria AS $$
-DECLARE p moria.runtime_projections;b moria.indexing_builds;binding moria.runtime_projection_bindings;
+DECLARE p moria.runtime_projections;b moria.indexing_builds;binding moria.runtime_projection_bindings;reused boolean;
 BEGIN
   IF TG_RELID<>'moria.source_generations'::regclass THEN RAISE EXCEPTION 'PROJECTION_INVALID'; END IF;
+  reused:=moria.runtime_source_generation_reused(NEW.environment,NEW.object_type,NEW.revision,NEW.stage);
   SELECT * INTO binding FROM moria.runtime_projection_bindings WHERE environment=NEW.environment AND resource=NEW.object_type AND enabled;
+  IF reused THEN
+    IF binding.resource IS NULL OR NOT EXISTS(SELECT 1 FROM moria.runtime_projections active
+     WHERE active.stage=NEW.stage AND active.environment=NEW.environment AND active.resource=NEW.object_type
+      AND active.status='active' AND active.activation_revision<NEW.revision AND active.closed_revision IS NULL
+      AND active.object_schema=NEW.object_schema AND active.definition=binding.definition AND active.binding_revision=binding.revision
+      AND active.applied_through>=COALESCE((SELECT max(o.revision) FROM moria.overlay_versions o
+       WHERE o.environment=NEW.environment AND o.object_type=NEW.object_type AND o.revision<NEW.revision),0))
+    THEN RAISE EXCEPTION 'PROJECTION_NOT_READY';END IF;
+    RETURN NEW;
+  END IF;
   IF FOUND THEN
     SELECT * INTO p FROM moria.runtime_projections WHERE stage=NEW.stage FOR UPDATE;
     SELECT * INTO b FROM moria.indexing_builds WHERE id=NEW.stage;

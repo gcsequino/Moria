@@ -2,7 +2,7 @@ use super::{Definition, NativeSearch};
 use crate::{
     canonical::fingerprint,
     execution::{ExecutionSpec, TaskPlan},
-    full_object_source::resolve_full_object_source_pin_in,
+    full_object_source::{resolve_full_object_source_pin_in, same_source_content},
     jobs::RegisteredService,
 };
 use anyhow::{Result, ensure};
@@ -78,7 +78,15 @@ impl NativeSearch {
         let definition: Definition = serde_json::from_value(collection.get("definition"))?;
         let changed = projector != root.get::<_, Uuid>("projector_binding")
             || pin.source_stage != root.get::<_, Uuid>("source_stage")
-            || pin.source_revision != root.get::<_, String>("source_pin_revision")
+            || !same_source_content(
+                tx.client(),
+                &environment,
+                &pin.object_resource,
+                pin.source_stage,
+                &root.get::<_, String>("source_pin_revision"),
+                &pin.source_revision,
+            )
+            .await?
             || pin.object_binding_revision != root.get::<_, String>("object_binding_revision")
             || profile["modelBindingFingerprint"] != root.get::<_, String>("model_fingerprint")
             || root.get::<_, String>("collection_revision")

@@ -16,9 +16,16 @@ import type { ObjectSchema } from '../../../services/ontology/src/store.js';
 export async function prepareManagedSource(
   fixture: Awaited<ReturnType<typeof managedRetentionDataset>>,
   columns: ObjectSchema['properties'],
+  options: {
+    actions?: boolean;
+    profiles?: unknown[];
+    beforeApply?: (client: ReturnType<typeof filesystemClient>) => Promise<void>;
+  } = {},
 ) {
-  const { db, environment, dataset, principal, application } = fixture;
+  const { db, environment, dataset, principal, application, markings } = fixture;
   const headBefore = (await db.catalog.heads(environment, [dataset]))[0];
+  const targetType = 'v3_source/ObjectType/Record';
+  const actionNames = options.actions ? (['Edit', 'Delete'] as const) : [];
   const dependent = await publishNativeSource(fixture.baseUrl, fixture.token, [
     {
       path: '.ontology.json',
@@ -47,8 +54,31 @@ export async function prepareManagedSource(
         },
       }),
     },
+    ...actionNames.map((name) => ({
+      path: name + '.action.json',
+      text: JSON.stringify({
+        apiVersion: 'moria/v1alpha2',
+        kind: 'Action',
+        metadata: { namespace: 'v3_source', name },
+        spec: {
+          targetType,
+          targetParameter: 'uid',
+          inputs: { uid: columns.uid, ...(name === 'Edit' ? { note: columns.note } : {}) },
+          condition: { literal: true },
+          edits: [
+            {
+              op: name === 'Edit' ? 'set' : 'delete',
+              targetType,
+              uid: { parameter: 'uid' },
+              ...(name === 'Edit' ? { property: 'note', value: { parameter: 'note' } } : {}),
+            },
+          ],
+        },
+      }),
+    })),
   ]);
-  const target = dependent.resource('v3_source/ObjectType/Record');
+  const target = dependent.resource(targetType);
+  const actions = actionNames.map((name) => dependent.resource('v3_source/Action/' + name));
   const authority = new Authority(db.catalog);
   const current = await authority.current(environment, principal, application);
   const operations = [
@@ -59,6 +89,7 @@ export async function prepareManagedSource(
       dataset + ':write',
       target + ':index',
       target + ':read',
+      ...actions.map((id) => id + ':invoke'),
     ]),
   ];
   await authority.setApplication(environment, 'fixture', application, operations);
@@ -67,13 +98,14 @@ export async function prepareManagedSource(
   const registrar = (await sessions.mint({ environment, principal, application }, 'fixture')).token;
   const service = randomUUID();
   await db.pool.query(
-    "INSERT INTO moria.runtime_service_authorities(id,environment,principal,application,operations,markings,domains,resource_classes,incarnation) SELECT $1,$2,$3,$4,$5,ARRAY['private'],ARRAY['indexing'],ARRAY['standard'],incarnation FROM moria.indexing_instance",
+    "INSERT INTO moria.runtime_service_authorities(id,environment,principal,application,operations,markings,domains,resource_classes,incarnation) SELECT $1,$2,$3,$4,$5,$6,ARRAY['indexing'],ARRAY['standard'],incarnation FROM moria.indexing_instance",
     [
       service,
       environment,
       principal,
       application,
       [dataset + ':read', target + ':index', 'filesystem:read'],
+      markings,
     ],
   );
   await db.pool.query(
@@ -118,12 +150,13 @@ export async function prepareManagedSource(
           },
         },
         artifactNamespace,
-        markings: ['private'],
+        markings,
         partitions: 2,
         timeoutSeconds: 1800,
         serviceBindingRevision: 'v3-source-v1',
       },
     },
+    ...(options.profiles ?? []),
   ]);
   const transport = (token: string) =>
     createTransport({
@@ -132,6 +165,7 @@ export async function prepareManagedSource(
         fetch(url, { ...init, headers: { ...init?.headers, authorization: 'Bearer ' + token } }),
     });
   const fs = filesystemClient(transport(registrar));
+  await options.beforeApply?.(fs);
   const plan = await fs.plan(dependent.root.id, dependent.publication.digest);
   await fs.apply(plan.id);
   assert.deepEqual((await db.catalog.heads(environment, [dataset]))[0], headBefore);
@@ -170,5 +204,16 @@ export async function prepareManagedSource(
     });
     return result.stdout;
   };
-  return { target, context, sessions, registrar, transport, drain, service };
+  return {
+    target,
+    actions,
+    dependent,
+    baseUrl: configured.url,
+    context,
+    sessions,
+    registrar,
+    transport,
+    drain,
+    service,
+  };
 }

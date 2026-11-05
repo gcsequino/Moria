@@ -7,12 +7,24 @@ import type { TestContext } from 'node:test';
 import type { database } from '../catalog-storage/database.js';
 import type { Authority } from '../../../services/security/src/authority.js';
 
-const markings = ['permanent/Marking/Private', 'permanent/Marking/Secret'];
+const defaultMarkings = ['permanent/Marking/Private', 'permanent/Marking/Secret'];
 /** A real registered projector reads the managed Source alias; ordinary row policy stays narrower. */
 export async function prepareSourceStoreProjector(
   write: (name: string, value: unknown) => Promise<void>,
   t: TestContext,
+  options: {
+    namespace?: string;
+    markings?: string[];
+    textProperty?: string;
+    overlayText?: string;
+  } = {},
 ) {
+  const {
+    namespace = 'permanent',
+    markings = defaultMarkings,
+    textProperty = 'label',
+    overlayText = 'source-store overlay',
+  } = options;
   const received: string[] = [];
   const provider = createServer(async (request, response) => {
     try {
@@ -59,14 +71,14 @@ export async function prepareSourceStoreProjector(
         adapter: 'openai-compatible-v1',
         endpoint,
         destination: 'source-fixture',
-        destinationPolicy: 'permanent/Policy/SourceDestination',
+        destinationPolicy: namespace + '/Policy/SourceDestination',
       },
     ],
     [
       'Model',
       'SourceEmbedding',
       {
-        provider: 'permanent/ModelProvider/SourceProvider',
+        provider: namespace + '/ModelProvider/SourceProvider',
         upstreamName: 'source-embedding',
         versionLabel: 'immutable-source-v1',
         mutable: false,
@@ -78,11 +90,26 @@ export async function prepareSourceStoreProjector(
     await write(`${name}.resource.json`, {
       apiVersion: 'moria/v1alpha2',
       kind,
-      metadata: { namespace: 'permanent', name },
+      metadata: { namespace, name },
       spec,
     });
+  const binding = {
+    endpointRef: 'SOURCE_STORE_MODEL_ENDPOINT',
+    model: 'source-embedding',
+    modelRevision: 'immutable-source-v1',
+    resourceClass: 'models',
+    destination: 'source-fixture',
+    markings: [markings[0]],
+    destinationPolicy: {
+      allowedDestinations: ['source-fixture'],
+      allowedMarkings: markings,
+    },
+    capabilities: ['embed'],
+    dimensions: 3,
+  };
   return {
     env: { SOURCE_STORE_MODEL_ENDPOINT: endpoint },
+    binding,
     async verify(input: {
       db: Awaited<ReturnType<typeof database>>;
       authority: Authority;
@@ -100,6 +127,8 @@ export async function prepareSourceStoreProjector(
       deletedUid: string;
       overlayUid: string;
       store: string;
+      installedModel?: boolean;
+      afterBuild?: () => Promise<void>;
     }) {
       const {
         db,
@@ -158,29 +187,24 @@ export async function prepareSourceStoreProjector(
         operations = [...new Set([...state.identity.grantedOperations, ...serviceOperations])];
       await authority.setApplication(environment, 'fixture', application, operations);
       await authority.setGrants(environment, 'fixture', principal, application, operations);
-      await db.pool.query(
-        'INSERT INTO moria.native_model_bindings(environment,resource,revision,definition) VALUES($1,$2,$3,$4)',
-        [
-          environment,
-          model,
-          'source-model-v1',
-          {
-            endpointRef: 'SOURCE_STORE_MODEL_ENDPOINT',
-            model: 'source-embedding',
-            modelRevision: 'immutable-source-v1',
-            resourceClass: 'models',
-            destination: 'source-fixture',
-            markings: [markings[0]],
-            destinationPolicy: {
-              allowedDestinations: ['source-fixture'],
-              allowedMarkings: markings,
-            },
-            capabilities: ['embed'],
-            dimensions: 3,
-          },
-        ],
+      if (input.installedModel) {
+        const installed = (
+          await db.pool.query(
+            'SELECT definition FROM moria.native_model_bindings WHERE environment=$1 AND resource=$2 AND enabled',
+            [environment, model],
+          )
+        ).rows[0];
+        assert.deepEqual(installed?.definition, binding);
+      } else {
+        await db.pool.query(
+          'INSERT INTO moria.native_model_bindings(environment,resource,revision,definition) VALUES($1,$2,$3,$4)',
+          [environment, model, 'source-model-v1', binding],
+        );
+      }
+      const probe = JSON.parse(
+        await run(['models', 'probe'], { token, resource: model, input: {} }),
       );
-      await run(['models', 'probe'], { token, resource: model, input: {} });
+      assert.deepEqual(probe.capabilities, ['embed'], JSON.stringify(probe));
       received.length = 0;
       await db.pool.query(
         "INSERT INTO moria.runtime_service_authorities(id,environment,principal,application,operations,markings,domains,resource_classes,incarnation) SELECT $1,$2,$3,$4,$5,$6,ARRAY['search'],ARRAY['search'],incarnation FROM moria.indexing_instance",
@@ -199,7 +223,7 @@ export async function prepareSourceStoreProjector(
           'source-collection-v1',
           {
             source: target,
-            textProperty: 'label',
+            textProperty,
             embeddingModel: model,
             chunkSize: 1000,
             chunkOverlap: 100,
@@ -211,8 +235,8 @@ export async function prepareSourceStoreProjector(
       );
       const projector = (
         await db.pool.query(
-          "INSERT INTO moria.native_search_projector_bindings(revision,environment,collection,collection_id,service_id,service_binding_revision,source_resource,text_property,source_dataset,model_resource,model_destination,markings) VALUES('source-projector-v1',$1,$2,$2::text::uuid,$3,'source-search-v1',$4,'label',$5,$6,'source-fixture',$7) RETURNING id",
-          [environment, collection, service, target, source, model, [markings[0]]],
+          "INSERT INTO moria.native_search_projector_bindings(revision,environment,collection,collection_id,service_id,service_binding_revision,source_resource,text_property,source_dataset,model_resource,model_destination,markings) VALUES('source-projector-v1',$1,$2,$2::text::uuid,$3,'source-search-v1',$4,$5,$6,$7,'source-fixture',$8) RETURNING id",
+          [environment, collection, service, target, textProperty, source, model, [markings[0]]],
         )
       ).rows[0].id;
       await db.pool.query(
@@ -300,13 +324,33 @@ export async function prepareSourceStoreProjector(
       ).rows;
       assert.deepEqual(
         overlay.map((row) => row.text),
-        ['source-store overlay'],
+        [overlayText],
       );
-      assert.ok(received.includes('source-store overlay'));
+      assert.ok(received.includes(overlayText));
       assert.ok(
         received.length >= input.expectedRows,
         'registered full Source includes rows hidden by ordinary row policy',
       );
+      if (input.afterBuild) {
+        const embedded = received.length;
+        await input.afterBuild();
+        await promisify(execFile)(runtime, ['search', 'drain'], {
+          env: { ...env, MORIA_SEARCH_WORKER_OWNER: owner, MORIA_SEARCH_HOST_ID: host },
+          timeout: 150000,
+          maxBuffer: 16 * 1024 * 1024,
+        });
+        const progress = (
+          await db.pool.query(
+            "SELECT c.active_generation,g.covered_revision::text,e.revision::text,(SELECT count(*)::int FROM moria.native_search_rebuilds r JOIN moria.native_search_generations candidate ON candidate.id=r.generation WHERE candidate.environment=c.environment AND candidate.resource=c.resource) AS rebuilds,(SELECT count(*)::int FROM moria.native_search_execution_sources x JOIN moria.runtime_executions ex ON ex.id=x.execution WHERE x.generation=g.id AND x.kind='replay' AND ex.status='succeeded') AS replays FROM moria.native_search_collections c JOIN moria.native_search_generations g ON g.id=c.active_generation JOIN moria.environments e ON e.id=c.environment WHERE c.id=$1",
+            [collection],
+          )
+        ).rows[0];
+        assert.equal(progress.active_generation, accepted.generation);
+        assert.equal(progress.covered_revision, progress.revision);
+        assert.equal(progress.rebuilds, 1);
+        assert.ok(progress.replays > 0, JSON.stringify(progress));
+        assert.equal(received.length, embedded, 'metadata-only Source advances do not embed again');
+      }
       return {
         execution: accepted.execution,
         generation: accepted.generation,

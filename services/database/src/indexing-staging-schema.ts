@@ -160,6 +160,7 @@ CREATE FUNCTION moria.runtime_indexing_staging_published(input_build uuid)
 RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT EXISTS(SELECT 1 FROM moria.source_generations g WHERE g.stage=input_build)
     OR EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a WHERE a.store=input_build)
+    OR EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a WHERE a.indexed_build=input_build)
     OR EXISTS(SELECT 1 FROM moria.native_source_row_stores s
       WHERE s.id=input_build AND s.status IN ('published','retired'))
     OR EXISTS(SELECT 1 FROM moria.runtime_projections p

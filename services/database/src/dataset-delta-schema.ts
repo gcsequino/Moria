@@ -133,7 +133,7 @@ $$;
 CREATE FUNCTION moria.runtime_source_delta_page(input_build uuid,input_worker uuid,input_fence bigint,maximum integer DEFAULT 256)
  RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE w moria.native_source_delta_windows;b moria.indexing_builds;binding moria.native_dataset_bindings;
- edge moria.runtime_dataset_commit_deltas;descriptor jsonb;bytes bigint:=0;captured integer:=0;denial text;found_edge boolean:=false;
+ edge moria.runtime_dataset_commit_deltas;descriptor jsonb;bytes bigint:=0;captured integer:=0;denial text;found_edge boolean:=false;qualified_root text;
 BEGIN
  IF maximum IS NULL OR maximum NOT BETWEEN 1 AND 256 THEN RAISE EXCEPTION 'RESOURCE_LIMIT';END IF;
  PERFORM moria.runtime_indexing_staging_shared(input_build);
@@ -188,7 +188,13 @@ BEGIN
     OR edge.equivalence_receipt->>'currentSnapshotHash' IS NULL OR edge.equivalence_receipt->>'currentSnapshotHash' !~ '^sha256:[0-9a-f]{64}$')
     THEN denial:='unsupportedEquivalence';EXIT;END IF;
    BEGIN
-    PERFORM moria.runtime_dataset_commit_root_check(edge.environment,edge.dataset,edge.result_metadata,edge.result_snapshot,edge.result_revision);
+    qualified_root:=moria.runtime_dataset_commit_root_check(edge.environment,edge.dataset,edge.result_metadata,edge.result_snapshot,edge.result_revision);
+    IF qualified_root IS DISTINCT FROM edge.result_root OR NOT EXISTS(
+      SELECT 1 FROM moria.runtime_dataset_roots root WHERE root.key=qualified_root
+       AND CASE WHEN left(edge.result_metadata,18)='moria-snapshot-v2:' THEN root.root->>'version'='2' AND root.reader_profile='iceberg-v2-cow-flat-bounded-v2'
+                WHEN left(edge.result_metadata,18)='moria-snapshot-v3:' THEN root.root->>'version'='3' AND root.reader_profile='iceberg-v2-native-mor-bounded-v3'
+                ELSE false END)
+    THEN denial:='journalRootUnavailable';END IF;
    EXCEPTION WHEN raise_exception THEN
     IF SQLERRM NOT IN ('DATASET_DELTA_ROOT_UNQUALIFIED','DATASET_SNAPSHOT_EXPIRED') THEN RAISE;END IF;
     denial:='journalRootUnavailable';
@@ -214,6 +220,98 @@ BEGIN
   'basisDatasetRevision',w.basis_dataset_revision::text,'capturedThrough',w.cursor_revision::text,'targetDatasetRevision',w.target_dataset_revision::text,
   'captured',captured,'descriptorBytes',bytes::text,'pending',w.status='capturing');
 END $$;
+-- Called only for an inserted generation. The deferred alias guard requires
+-- the same window to close as the actual indexed build commits active.
+CREATE FUNCTION moria.runtime_source_generation_reused(input_environment text,input_target text,input_revision bigint,input_stage uuid)
+ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+ SELECT EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a JOIN moria.native_source_delta_windows w ON w.build=a.indexed_build
+  WHERE a.environment=input_environment AND a.object_type=input_target AND a.revision=input_revision AND a.store=input_stage
+   AND a.indexed_build<>a.store AND w.status='qualified' AND NOT w.has_mutation AND w.basis_store=a.store
+   AND w.basis_source_version=a.source_version AND w.target_dataset_revision=a.indexed_dataset_revision
+   AND w.cursor_revision=w.target_dataset_revision)
+$$;
+
+CREATE FUNCTION moria.runtime_source_delta_activate_unchanged(input_build uuid,input_worker uuid,input_fence bigint)
+ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+DECLARE b moria.indexing_builds;w moria.native_source_delta_windows;s moria.native_source_row_stores;
+ a moria.native_source_generation_aliases;g moria.source_generations;d moria.native_dataset_bindings;
+ source_stage moria.source_stages;environment_row moria.environments;profile jsonb;next_revision bigint;result jsonb;
+BEGIN
+ -- Use the same control-lock order as C04, never waiting on a competing
+ -- writer when attempting an opportunistic unchanged publication.
+ SELECT * INTO b FROM moria.indexing_builds WHERE id=input_build;
+ IF NOT FOUND THEN RAISE EXCEPTION 'BUILD_UNKNOWN';END IF;
+ IF NOT pg_try_advisory_xact_lock(hashtextextended('moria/environment/'||b.environment,0))
+  OR NOT pg_try_advisory_xact_lock_shared(hashtextextended('moria/filesystem',0))
+  OR NOT pg_try_advisory_xact_lock_shared(hashtextextended('moria/indexing-staging/v1/'||input_build::text,0)) THEN
+  RETURN jsonb_build_object('state','busy');
+ END IF;
+ BEGIN
+  SELECT * INTO environment_row FROM moria.environments WHERE id=b.environment FOR UPDATE NOWAIT;
+  SELECT * INTO b FROM moria.indexing_builds WHERE id=input_build FOR UPDATE NOWAIT;
+  SELECT * INTO w FROM moria.native_source_delta_windows WHERE build=input_build FOR UPDATE NOWAIT;
+  SELECT * INTO source_stage FROM moria.source_stages WHERE id=input_build FOR UPDATE NOWAIT;
+ EXCEPTION WHEN lock_not_available THEN RETURN jsonb_build_object('state','busy');
+ END;
+ IF b.status='active' AND b.owner=input_worker AND b.fence=input_fence AND b.receipt->>'kind'='unchanged' THEN
+  PERFORM moria.indexing_check(input_build);
+  RETURN jsonb_build_object('state','published','receipt',b.receipt);
+ END IF;
+ IF b.status<>'planning' OR b.owner IS DISTINCT FROM input_worker OR b.fence<>input_fence
+  OR b.lease_until<=clock_timestamp() OR b.deadline<=clock_timestamp() THEN RAISE EXCEPTION 'LEASE_LOST';END IF;
+ PERFORM moria.indexing_claim_check(input_build,NULL,input_worker,input_fence);
+ IF w.build IS NULL OR w.status<>'qualified' OR w.closed_at IS NOT NULL OR w.has_mutation THEN
+  RETURN jsonb_build_object('state','bootstrap');
+ END IF;
+ IF source_stage.status IS DISTINCT FROM 'loading' OR b.planned
+  OR EXISTS(SELECT 1 FROM moria.indexing_tasks t WHERE t.build=input_build)
+  OR EXISTS(SELECT 1 FROM moria.native_source_row_stores store WHERE store.id=input_build) THEN
+  RETURN jsonb_build_object('state','bootstrap');
+ END IF;
+ SELECT * INTO g FROM moria.source_generations head WHERE head.environment=b.environment AND head.object_type=b.target ORDER BY head.revision DESC LIMIT 1;
+ SELECT * INTO a FROM moria.native_source_generation_aliases alias WHERE alias.environment=b.environment AND alias.object_type=b.target AND alias.revision=g.revision;
+ SELECT * INTO s FROM moria.native_source_row_stores store WHERE store.id=a.store AND store.status='published';
+ SELECT * INTO d FROM moria.native_dataset_bindings binding WHERE binding.environment=b.environment AND binding.resource::text=b.source AND binding.enabled;
+ profile:=moria.runtime_source_store_profile(input_build);
+ IF ROW(g.revision,g.stage,a.store,a.source_version,a.indexed_dataset_revision)
+  IS DISTINCT FROM ROW(w.basis_generation,w.basis_store,w.basis_store,w.basis_source_version,w.basis_dataset_revision)
+  OR s.id IS NULL OR d.resource IS NULL OR profile IS NULL OR source_stage.security_epoch<>environment_row.security_epoch
+  OR source_stage.base_source_revision IS DISTINCT FROM w.basis_generation
+  OR ROW(g.object_schema,g.required_markings) IS DISTINCT FROM ROW(source_stage.object_schema,source_stage.required_markings)
+  OR ROW(s.definition_hash,s.key_schema_hash,s.schema_hash,s.serving_generation,s.layout_hash,s.constraint_hash,s.incarnation)
+    IS DISTINCT FROM ROW(profile->>'definitionHash',profile->>'keySchemaHash',profile->>'schemaHash',(profile->>'servingGeneration')::bigint,profile->>'layoutHash',profile->>'constraintHash',(profile->>'incarnation')::uuid)
+  OR ROW(w.definition_hash,w.binding_revision,w.key_schema_hash,w.ordered_primary_key,w.physical_fingerprint,w.incarnation)
+    IS DISTINCT FROM ROW(s.definition_hash,d.revision,d.key_schema_hash,d.primary_key,d.physical_binding_fingerprint,s.incarnation)
+  OR ROW(w.target_dataset_revision,w.cursor_revision,w.cursor_snapshot,w.cursor_metadata)
+    IS DISTINCT FROM ROW(b.source_revision,b.source_revision,b.snapshot_id,b.metadata_location) THEN
+  RETURN jsonb_build_object('state','bootstrap');
+ END IF;
+ IF NOT EXISTS(SELECT 1 FROM moria.dataset_heads h WHERE h.environment=b.environment AND h.dataset=b.source
+   AND ROW(h.revision,h.snapshot_id,h.metadata_location)=ROW(b.source_revision,b.snapshot_id,b.metadata_location)) THEN
+  RAISE EXCEPTION 'HEAD_CONFLICT';
+ END IF;
+ IF NOT EXISTS(SELECT 1 FROM moria.native_source_delta_members m JOIN moria.runtime_dataset_commit_deltas edge
+   ON edge.commit=m.commit AND edge.dataset=m.dataset AND edge.result_revision=m.result_revision
+   WHERE m.build=input_build AND m.result_revision=b.source_revision AND edge.change_kind='unchanged'
+    AND edge.result_root=moria.runtime_dataset_root_key(b.metadata_location))
+  OR NOT EXISTS(SELECT 1 FROM moria.indexing_attempts attempt WHERE attempt.build=input_build AND attempt.kind='coordinator'
+    AND attempt.unit=input_build AND attempt.owner=input_worker AND attempt.fence=input_fence AND attempt.outcome='running') THEN
+  RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';
+ END IF;
+ IF b.lease_until<=clock_timestamp() OR b.deadline<=clock_timestamp() THEN RAISE EXCEPTION 'LEASE_LOST';END IF;
+ UPDATE moria.environments SET revision=revision+1 WHERE id=b.environment RETURNING revision INTO next_revision;
+ INSERT INTO moria.native_source_generation_aliases
+ VALUES(b.environment,b.target,next_revision,a.store,a.source_version,b.id,b.source_revision,b.snapshot_id,moria.runtime_dataset_root_key(b.metadata_location));
+ INSERT INTO moria.source_generations(environment,object_type,revision,stage,object_schema,required_markings)
+ VALUES(b.environment,b.target,next_revision,a.store,g.object_schema,g.required_markings);
+ UPDATE moria.source_stages SET status='published',published_revision=next_revision WHERE id=input_build;
+ result:=jsonb_build_object('kind','unchanged','stage',a.store,'indexedBuild',b.id,'revision',next_revision::text,'sourceRevision',b.source_revision::text);
+ UPDATE moria.indexing_attempts SET outcome='active',finished_at=clock_timestamp()
+  WHERE build=input_build AND kind='coordinator' AND unit=input_build AND owner=input_worker AND fence=input_fence AND outcome='running';
+ UPDATE moria.indexing_builds SET status='active',receipt=result,lease_until=NULL WHERE id=input_build;
+ RETURN jsonb_build_object('state','published','receipt',result);
+END $$;
+REVOKE ALL ON FUNCTION moria.runtime_source_generation_reused(text,text,bigint,uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION moria.runtime_source_delta_capture(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION moria.runtime_source_delta_build_capture() FROM PUBLIC;
 REVOKE ALL ON FUNCTION moria.runtime_source_delta_build_close() FROM PUBLIC;

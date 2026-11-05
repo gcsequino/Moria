@@ -36,7 +36,7 @@ impl SearchWorker {
         at_revision: Option<&str>,
     ) -> Result<(Generation, FullObjectSourcePin)> {
         let client = self.search.db.get().await?;
-        let row=client.query_one("SELECT g.*,x.model_secret_approval,r.projector_binding,r.source_stage,r.source_revision::text AS source_pin_revision,r.markings,c.id AS collection_id,p.service_binding_revision,p.service_id FROM moria.native_search_execution_sources x JOIN moria.native_search_rebuilds r ON r.generation=x.generation JOIN moria.native_search_generations g ON g.id=r.generation JOIN moria.native_search_collections c ON c.environment=g.environment AND c.resource=g.resource AND c.revision=g.collection_revision AND c.definition=g.definition AND c.enabled JOIN moria.native_search_projector_bindings p ON p.id=r.projector_binding AND p.id=c.projector_binding AND p.enabled WHERE x.execution=$1",&[&lease.execution]).await?;
+        let row=client.query_one("SELECT g.*,x.model_secret_approval,CASE WHEN x.kind='replay' THEN x.target_revision ELSE g.base_revision END::text AS execution_source_revision,r.projector_binding,r.source_stage,r.source_revision::text AS source_pin_revision,r.markings,c.id AS collection_id,p.service_binding_revision,p.service_id FROM moria.native_search_execution_sources x JOIN moria.native_search_rebuilds r ON r.generation=x.generation JOIN moria.native_search_generations g ON g.id=r.generation JOIN moria.native_search_collections c ON c.environment=g.environment AND c.resource=g.resource AND c.revision=g.collection_revision AND c.definition=g.definition AND c.enabled JOIN moria.native_search_projector_bindings p ON p.id=r.projector_binding AND p.id=c.projector_binding AND p.enabled WHERE x.execution=$1",&[&lease.execution]).await?;
         let environment: String = row.get("environment");
         let mut admission =
             crate::functions::Admission::begin(&self.search.db, &environment, false, None).await?;
@@ -55,7 +55,7 @@ impl SearchWorker {
             service.id() == row.get::<_, Uuid>("service_id"),
             "SERVICE_PURPOSE_REVOKED"
         );
-        let base = row.get::<_, i64>("base_revision").to_string();
+        let base: String = row.get("execution_source_revision");
         let pin = resolve_full_object_source_pin_in(
             tx.client(),
             &service,
@@ -65,7 +65,15 @@ impl SearchWorker {
         .await?;
         ensure!(
             pin.source_stage == row.get::<_, Uuid>("source_stage")
-                && pin.source_revision == row.get::<_, String>("source_pin_revision")
+                && crate::full_object_source::same_source_content(
+                    tx.client(),
+                    &environment,
+                    &pin.object_resource,
+                    pin.source_stage,
+                    &row.get::<_, String>("source_pin_revision"),
+                    &pin.source_revision
+                )
+                .await?
                 && pin.object_binding_revision == row.get::<_, String>("object_binding_revision"),
             "SEARCH_SOURCE_CHANGED"
         );
@@ -407,7 +415,10 @@ impl SearchWorker {
     return Ok(());
    }
    let current:i64=if kind=="replay" {state.get(1)}else{state.get(2)};
-   ensure!(client.query_one("SELECT stage FROM moria.source_generations WHERE environment=$1 AND object_type=$2 ORDER BY revision DESC LIMIT 1",&[&session.environment(),&pin.object_resource]).await?.get::<_,Option<Uuid>>(0)==Some(pin.source_stage),"SEARCH_SOURCE_CHANGED");
+   let current_source=client.query_one("SELECT stage,revision::text FROM moria.source_generations WHERE environment=$1 AND object_type=$2 ORDER BY revision DESC LIMIT 1",&[&session.environment(),&pin.object_resource]).await?;
+   ensure!(current_source.get::<_,Option<Uuid>>(0)==Some(pin.source_stage)
+     && crate::full_object_source::same_source_content(client, &session.environment(), &pin.object_resource, pin.source_stage,
+        &current_source.get::<_,String>(1), &pin.source_revision).await?, "SEARCH_SOURCE_CHANGED");
    let profile=self.search.models.capabilities_in(client,session,&generation.definition.embedding_model).await?;
    ensure!(profile["modelBindingFingerprint"]==generation.model_fingerprint,"SEARCH_MODEL_CHANGED");
    client.execute("UPDATE moria.native_search_generations SET status='retired' WHERE environment=$1 AND resource=$2 AND status='active' AND id<>$3",&[&session.environment(),&pin.collection,&generation.id]).await?;

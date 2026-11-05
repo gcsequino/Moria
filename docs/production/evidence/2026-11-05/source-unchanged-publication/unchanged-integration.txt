@@ -1,0 +1,26 @@
+{"controller": "moria-quality-bbc8f680-1cd2-4e4a-8edd-4d8349f77cb8", "image": "sha256:aace6d66007a6d17979812aacfbb30e62479fd2e2369ff55d7a2baaac38f240a", "scratchPools": ["/tmp/moria-engine-scratch-0ca50acc-ff95-451f-a8a0-4558a8f3d613", "/tmp/moria-engine-scratch-e98556a7-4d1e-42d9-b2c1-a94e6dde7832", "/tmp/moria-engine-scratch-176791da-b2f2-454a-b454-cbf4024e463a"], "temporary": "/tmp/moria-quality-cof0hb5a"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 542ms using pnpm v11.25.0
+✔ certified metadata-only v2 commits reuse the Source rows, keys, typed projection and Action state (42155.49245ms)
+✔ certified metadata-only v3 commits reuse the Source rows, keys, typed projection and Action state (107467.110726ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 150131.581008

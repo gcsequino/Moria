@@ -228,7 +228,9 @@ BEGIN
    AND NOT EXISTS(SELECT 1 FROM (SELECT r.revision FROM moria.source_generations r WHERE r.environment=g.environment AND r.object_type=g.object_type ORDER BY r.revision DESC LIMIT policy.keep_generations) retained WHERE retained.revision=g.revision)
    AND g.revision<>(SELECT max(r.revision) FROM moria.source_generations r WHERE r.environment=g.environment AND r.object_type=g.object_type AND r.revision<=work.floor)
    AND NOT EXISTS(SELECT 1 FROM moria.native_search_rebuilds r JOIN moria.native_search_generations h ON h.id=r.generation WHERE r.source_stage=g.stage AND h.status IN ('building','ready','active'))
-   AND (g.stage IS NULL OR NOT EXISTS(SELECT 1 FROM moria.source_generations shared WHERE shared.stage=g.stage AND ROW(shared.environment,shared.object_type,shared.revision)<>ROW(g.environment,g.object_type,g.revision)))
+   AND (g.stage IS NULL OR CASE WHEN EXISTS(SELECT 1 FROM moria.native_source_row_stores store WHERE store.id=g.stage) THEN
+    g.revision=(SELECT a.revision FROM moria.native_source_generation_aliases a WHERE a.store=g.stage ORDER BY a.revision DESC LIMIT 1)
+    ELSE NOT EXISTS(SELECT 1 FROM moria.source_generations shared WHERE shared.stage=g.stage AND ROW(shared.environment,shared.object_type,shared.revision)<>ROW(g.environment,g.object_type,g.revision)) END)
    ORDER BY g.object_type,g.revision LIMIT 1;
   IF NOT FOUND THEN UPDATE moria.runtime_history_collections SET phase='projections',position='{}'::jsonb WHERE id=work.id;
   ELSE

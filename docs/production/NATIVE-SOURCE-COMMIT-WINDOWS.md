@@ -1,6 +1,6 @@
 # Qualified Source commit windows
 
-This implementation slice derives transient Dataset custody and bounded journal pages from a real accepted indexing build and its current materialized Source alias. It does not yet publish an unchanged alias or enable mutation consumption. The existing full-build path still performs publication.
+An accepted native indexing build derives transient Dataset custody and bounded journal pages from its current materialized Source alias. A certified metadata-only window can advance the logical Source revision while keeping its physical rows and projections. All other supported work still follows the existing full build.
 
 ## Custody and ordering
 
@@ -14,8 +14,16 @@ Actual publication appends the journal after enqueue in the same C04 transaction
 
 Each edge must exactly match the preceding basis and actual historical result, publication receipt and execution/candidate or maintenance origin. Dataset binding revision, typed schema hash, key hash and ordered primary keys must agree throughout. Receiver root qualification comes from the real current physical provider/incarnation, using the historical namespace identity for an older committed edge. Normalized native typed schema hashes remain distinct from the Source store composite schema hash; raw Iceberg JSON spelling is not compared.
 
-A real replacement boundary, journal gap, incompatible profile, unsupported equivalence or unavailable receiver root selects explicit bootstrap. It never silently drops a missing interval. Qualified metadata-pruning edges must retain the same snapshot and exact certified basis/result roots. Pending pages persist their cursor and exact journal membership under the existing shared Dataset retention admission. The live range is the root pin; members do not create duplicate physical pin rows on supersession. The actual native planner performs qualification under its renewable coordinator fence before continuing the existing full-build path.
+A real replacement boundary, journal gap, incompatible profile, unsupported equivalence or unavailable receiver root selects explicit bootstrap. It never silently drops a missing interval. Qualified metadata-pruning edges must retain the same snapshot and exact certified basis/result roots. Pending pages persist their cursor and exact journal membership under the existing shared Dataset retention admission. The live range is the root pin; members do not create duplicate physical pin rows on supersession. The native planner performs qualification under its renewable coordinator fence before attempting certified unchanged publication or the existing full-build path.
+
+## Certified unchanged publication
+
+A fully qualified metadata-prune window can publish an unchanged Source generation. The logical environment revision and Dataset watermark advance to the actual accepted build; the physical Source store and content version remain unchanged. The immutable generation alias records both identities. Publication rechecks the latest Source basis, exact current Dataset head, active serving and projection profile, and the live coordinator fence in one transaction. It performs no Dataset reads, scan or reduce tasks, canonical writes, projection DDL, or invalidation frame. Unknown equivalence, a replaced basis, or a changed profile uses the original full build.
+
+The typed projection keeps its original activation interval, including edits already replayed in that interval. Search resolves the new logical Dataset provenance; it may replay into an existing Search generation only when both exact Source aliases share the same physical store and content version. Existing execution and frame pins and current authority checks remain in force. A true change in either physical store or content version is not equivalent.
+
+The focused v2/v3 gate exercised two real pruning commits per format, the existing physical store, key map and projection, a retained typed cursor, session revocation, and Action override/tombstone state. The v3 case also installed the compiled Model and used a registered Search projector with a loopback embedding provider: one existing Search generation reached the latest environment revision without sending more embedding inputs. See [the exact artifacts and results](evidence/2026-11-05/source-unchanged-publication/summary.json).
 
 ## Remaining activation
 
-The next slice must atomically reuse canonical storage and typed projections for a genuinely unchanged chain while recording an exact new Dataset watermark/Source alias and preserving historical readers and overlays. Mutation footprint reads, coalescing, changed-key publication, complete writer lock order, exact Search change pages and independent replay/recovery remain gated. No incremental alias, target watermark or capacity result follows from custody qualification alone.
+Mutation footprint reads, coalescing, changed-key publication, complete writer lock order, exact affected-UID Search pages and independent replay/recovery remain gated. The bounded fixture does not establish production capacity.

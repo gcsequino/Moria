@@ -21,11 +21,13 @@ export async function managedRetentionDataset(
     primaryKey?: string[];
     columns?: Record<string, unknown>;
     writeModes?: string[];
+    declaredMarking?: boolean;
     wrapS3?: (
       source: Awaited<ReturnType<typeof startS3>>,
     ) => Promise<Awaited<ReturnType<typeof startS3>>>;
   } = {},
 ) {
+  const markings = [options.declaredMarking ? 'retention/Marking/Private' : 'private'];
   const runtime = process.env.MORIA_RUNTIME_BINARY ?? '/usr/local/bin/moria-runtime';
   const harness =
     process.env.MORIA_CATALOG_TEST_BINARY ?? '/usr/local/bin/moria-native-catalog-test';
@@ -81,7 +83,7 @@ export async function managedRetentionDataset(
     await authority.syncPrincipal(environment, 'fixture', principal, {
       kind: 'workload',
       enabled: true,
-      markings: ['private'],
+      markings,
       attributes: {},
     });
     await authority.setApplication(environment, 'fixture', application, operations);
@@ -258,6 +260,19 @@ export async function managedRetentionDataset(
         path: '.ontology.json',
         text: JSON.stringify({ version: 1, name: 'Retention Dataset', namespace: 'retention' }),
       },
+      ...(options.declaredMarking
+        ? [
+            {
+              path: 'Private.resource.json',
+              text: JSON.stringify({
+                apiVersion: 'moria/v1alpha2',
+                kind: 'Marking',
+                metadata: { namespace: 'retention', name: 'Private' },
+                spec: { eligibilityGroup: 'fixture', declassifierGroup: 'fixture' },
+              }),
+            },
+          ]
+        : []),
       {
         path: 'records.resource.json',
         text: JSON.stringify({
@@ -283,7 +298,7 @@ export async function managedRetentionDataset(
         environment,
         projectId: published.role.projectId,
         reference: 'retention/Dataset/records',
-        configuration: { namespace, icebergUuid, markings: ['private'] },
+        configuration: { namespace, icebergUuid, markings },
       },
     ]);
     const client = filesystemClient(
@@ -318,13 +333,14 @@ export async function managedRetentionDataset(
       };
       return (
         await db.pool.query(
-          "INSERT INTO moria.runtime_execution_bindings(environment,resource,spec,context,operations,markings,security_epoch,instance_epoch,incarnation) SELECT $1,$2,$3,$4,$5,ARRAY['private'],$6,s.security_epoch,i.incarnation FROM moria.instance_state s,moria.indexing_instance i RETURNING id",
+          'INSERT INTO moria.runtime_execution_bindings(environment,resource,spec,context,operations,markings,security_epoch,instance_epoch,incarnation) SELECT $1,$2,$3,$4,$5,$6,$7,s.security_epoch,i.incarnation FROM moria.instance_state s,moria.indexing_instance i RETURNING id',
           [
             environment,
             dataset,
             spec,
             context,
             [`${dataset}:read`, `${dataset}:write`, 'filesystem:read'],
+            markings,
             state.epoch,
           ],
         )
@@ -348,7 +364,10 @@ export async function managedRetentionDataset(
             ...nativeEnv,
             // Independent harness processes must not share the privileged engine's private cache.
             MORIA_NATIVE_SNAPSHOT_SCRATCH_ROOT: await mkdtemp(join(db.root, 'catalog-scratch-')),
-            MORIA_NATIVE_CATALOG_FIXTURE: JSON.stringify(fixture),
+            MORIA_NATIVE_CATALOG_FIXTURE: JSON.stringify({
+              expectedMarkings: markings,
+              ...(fixture as object),
+            }),
           },
           timeout: 120000,
           maxBuffer: 1024 * 1024,
@@ -428,6 +447,7 @@ export async function managedRetentionDataset(
       runtime,
       harness,
       columns,
+      markings,
       icebergUuid,
       dataset,
       fsRoot,

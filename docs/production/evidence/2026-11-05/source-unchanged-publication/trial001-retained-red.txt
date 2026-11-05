@@ -1,0 +1,58 @@
+{"controller": "moria-quality-ba64df05-dedc-4bf9-a1d8-daf6f902b030", "image": "sha256:7f050b6b59f94a4acbdad5755e8252f0b2ca687b527263037b8e7820542d5fd3", "scratchPools": ["/tmp/moria-engine-scratch-531b1be6-b007-4838-a276-04348ce3a783", "/tmp/moria-engine-scratch-c7adebf8-77f5-4132-9b23-a6163e8d1694", "/tmp/moria-engine-scratch-30eb8464-355c-473c-94c1-1e437e68a507"], "temporary": "/tmp/moria-quality-ltiir1t1"}
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+
+Done in 665ms using pnpm v11.25.0
+✖ certified metadata-only v2 commits reuse the Source rows, keys, typed projection and Action state (42684.052949ms)
+✖ certified metadata-only v3 commits reuse the Source rows, keys, typed projection and Action state (48919.689018ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92235.625728
+
+✖ failing tests:
+
+test at tests/native-source-unchanged.integration.test.ts:15:3
+✖ certified metadata-only v2 commits reuse the Source rows, keys, typed projection and Action state (42684.052949ms)
+  Error [ApiError]: CURSOR_INVALIDATED
+      at decode (/qualified/packages/platform/src/transport.ts:85:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async typedRequest (/qualified/packages/osdk/src/runtime.ts:105:18)
+      at async TestContext.<anonymous> (/qualified/tests/native-source-unchanged.integration.test.ts:209:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    status: 409,
+    code: 'CURSOR_INVALIDATED',
+    correlationId: '0b009922-0622-49c8-8595-a0ba9ca72d8f',
+    retryable: false,
+    details: null
+  }
+
+test at tests/native-source-unchanged.integration.test.ts:15:3
+✖ certified metadata-only v3 commits reuse the Source rows, keys, typed projection and Action state (48919.689018ms)
+  Error [MoriaError]: Manifest validation failed
+      at compileManifest (/qualified/packages/compiler/src/browser.ts:23:11)
+      at compileSource (/qualified/packages/compiler/src/browser.ts:40:40)
+      at publishBrowserSource (/qualified/packages/platform/src/source.ts:119:27)
+      at async publishNativeSource (/qualified/tests/fixtures/native-source/setup.ts:95:9)
+      at async TestContext.<anonymous> (/qualified/tests/native-source-unchanged.integration.test.ts:68:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'VALIDATION_FAILED',
+    details: [ { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'columns'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'writeModes'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'inputs'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'outputs'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'artifact'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'runtime'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'limits'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'artifact'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'abiVersion'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'capabilities'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'configurationSchema'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: 'additionalProperties: must NOT have additional properties' }, { code: 'SCHEMA_INVALID', path: '/resources/1/kind', message: 'const: must be equal to constant' }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'implementation'" }, { code: 'SCHEMA_INVALID', path: '/resources/1/spec', message: "required: must have required property 'configuration'" } ]
+  }

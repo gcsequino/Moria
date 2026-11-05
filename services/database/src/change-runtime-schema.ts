@@ -42,13 +42,18 @@ BEGIN
 END $$;
 CREATE FUNCTION moria.runtime_capture_object_change() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF TG_TABLE_NAME='overlay_versions' THEN
-    PERFORM moria.runtime_capture_change_item(NEW.environment,NEW.revision,NEW.object_type,'object',NEW.uid,NULL);
-  ELSE
+  PERFORM moria.runtime_capture_change_item(NEW.environment,NEW.revision,NEW.object_type,'object',NEW.uid,NULL);
+  RETURN NEW;
+END $$;
+CREATE FUNCTION moria.runtime_capture_source_generation() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+BEGIN
+  IF TG_RELID<>'moria.source_generations'::regclass THEN RAISE EXCEPTION 'CHANGE_INVALID';END IF;
+  IF NOT moria.runtime_source_generation_reused(NEW.environment,NEW.object_type,NEW.revision,NEW.stage) THEN
     PERFORM moria.runtime_capture_change_item(NEW.environment,NEW.revision,NEW.object_type,'rebuild',NULL,NEW.stage);
   END IF;
   RETURN NEW;
 END $$;
+REVOKE ALL ON FUNCTION moria.runtime_capture_source_generation() FROM PUBLIC;
 CREATE FUNCTION moria.runtime_capture_link_change() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE endpoint record;
 BEGIN
@@ -66,7 +71,7 @@ CREATE TRIGGER runtime_capture_link AFTER INSERT ON moria.native_link_edge_versi
 CREATE TRIGGER runtime_capture_overlay AFTER INSERT ON moria.overlay_versions
   FOR EACH ROW EXECUTE FUNCTION moria.runtime_capture_object_change();
 CREATE TRIGGER runtime_capture_generation AFTER INSERT ON moria.source_generations
-  FOR EACH ROW EXECUTE FUNCTION moria.runtime_capture_object_change();
+  FOR EACH ROW EXECUTE FUNCTION moria.runtime_capture_source_generation();
 
 CREATE FUNCTION moria.runtime_seal_change_transaction() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

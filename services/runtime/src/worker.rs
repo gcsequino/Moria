@@ -373,7 +373,7 @@ impl Worker {
         .map_err(Into::into)
     }
 
-    async fn capture_source_window(&self, build: Uuid, fence: i64) -> Result<()> {
+    async fn capture_source_window(&self, build: Uuid, fence: i64) -> Result<bool> {
         loop {
             self.db.guard_claim(build, None, self.owner, fence).await?;
             let page: Value = self
@@ -395,7 +395,7 @@ impl Worker {
                 json!({"event":"source_delta_page","build":build,"page":page})
             );
             if page["pending"] != true {
-                return Ok(());
+                return Ok(page["state"] == "qualified" && page["kind"] == "unchanged");
             }
         }
     }
@@ -405,8 +405,29 @@ impl Worker {
         let definition: Value = row.get("definition");
         if definition.get("servingBindingGeneration").is_some()
             && definition.get("projectionRevision").is_some()
+            && self.capture_source_window(build, fence).await?
         {
-            self.capture_source_window(build, fence).await?;
+            loop {
+                let result: Value = self
+                    .db
+                    .get()
+                    .await?
+                    .query_one(
+                        "SELECT moria.runtime_source_delta_activate_unchanged($1,$2,$3)",
+                        &[&build, &self.owner, &fence],
+                    )
+                    .await?
+                    .get(0);
+                match result["state"].as_str() {
+                    Some("published") => return Ok(()),
+                    Some("bootstrap") => break,
+                    Some("busy") => {
+                        self.db.guard_claim(build, None, self.owner, fence).await?;
+                        tokio::time::sleep(Duration::from_millis(100)).await;
+                    }
+                    _ => bail!("SOURCE_ALIAS_REQUIRED"),
+                }
+            }
         }
         let scope = Scope {
             db: self.db.clone(),

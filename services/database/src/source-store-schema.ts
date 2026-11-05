@@ -19,10 +19,12 @@ CREATE TABLE moria.native_source_key_map(
 CREATE TABLE moria.native_source_generation_aliases(
  environment text NOT NULL,object_type text NOT NULL,revision bigint NOT NULL,
  store uuid NOT NULL REFERENCES moria.native_source_row_stores(id),source_version bigint NOT NULL CHECK(source_version=1),
+ indexed_build uuid NOT NULL UNIQUE REFERENCES moria.indexing_builds(id),
  indexed_dataset_revision bigint NOT NULL,indexed_snapshot text,indexed_root text NOT NULL,
- PRIMARY KEY(environment,object_type,revision),UNIQUE(store,source_version),
+ PRIMARY KEY(environment,object_type,revision),
  FOREIGN KEY(environment,object_type,revision) REFERENCES moria.source_generations(environment,object_type,revision) DEFERRABLE INITIALLY DEFERRED
 );
+CREATE INDEX native_source_alias_store ON moria.native_source_generation_aliases(store,revision DESC);
 CREATE FUNCTION moria.runtime_source_store_owner() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
  IF NOT has_schema_privilege(current_user,'moria','CREATE') THEN RAISE EXCEPTION 'SOURCE_STORE_AUTHORITY_REQUIRED';END IF;
@@ -148,17 +150,26 @@ BEGIN
  SELECT * INTO b FROM moria.indexing_builds WHERE id=input_build;
  IF s.status<>'sealed' OR s.owner<>input_worker OR s.fence<>input_fence OR s.profile IS DISTINCT FROM moria.runtime_source_store_profile(input_build)
   OR NOT EXISTS(SELECT 1 FROM moria.source_generations WHERE environment=b.environment AND object_type=b.target AND revision=input_revision AND stage=input_build) THEN RAISE EXCEPTION 'SOURCE_STORE_INCOMPLETE';END IF;
- INSERT INTO moria.native_source_generation_aliases VALUES(b.environment,b.target,input_revision,input_build,1,b.source_revision,b.snapshot_id,moria.runtime_dataset_root_key(b.metadata_location));
+ INSERT INTO moria.native_source_generation_aliases VALUES(b.environment,b.target,input_revision,input_build,1,input_build,b.source_revision,b.snapshot_id,moria.runtime_dataset_root_key(b.metadata_location));
  UPDATE moria.native_source_row_stores SET status='published' WHERE id=input_build;
 END $$;
 CREATE FUNCTION moria.runtime_source_alias_atomic() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
-DECLARE s moria.native_source_row_stores;b moria.indexing_builds;
+DECLARE s moria.native_source_row_stores;b moria.indexing_builds;a moria.native_source_generation_aliases;
 BEGIN
  SELECT * INTO s FROM moria.native_source_row_stores WHERE id=NEW.stage;
  IF NOT FOUND THEN RETURN NEW;END IF;
- SELECT * INTO b FROM moria.indexing_builds WHERE id=NEW.stage;
- IF s.status<>'published' OR b.status<>'active' OR b.receipt->>'revision' IS DISTINCT FROM NEW.revision::text
-  OR NOT EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a WHERE a.environment=NEW.environment AND a.object_type=NEW.object_type AND a.revision=NEW.revision AND a.store=NEW.stage AND a.source_version=1 AND a.indexed_dataset_revision=b.source_revision AND a.indexed_snapshot IS NOT DISTINCT FROM b.snapshot_id AND a.indexed_root=moria.runtime_dataset_root_key(b.metadata_location)) THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
+ SELECT * INTO a FROM moria.native_source_generation_aliases alias WHERE alias.environment=NEW.environment AND alias.object_type=NEW.object_type AND alias.revision=NEW.revision;
+ SELECT * INTO b FROM moria.indexing_builds WHERE id=a.indexed_build;
+ IF s.status<>'published' OR a.store IS DISTINCT FROM NEW.stage OR a.source_version IS DISTINCT FROM 1
+  OR b.status IS DISTINCT FROM 'active' OR ROW(b.environment,b.target) IS DISTINCT FROM ROW(NEW.environment,NEW.object_type)
+  OR b.receipt->>'revision' IS DISTINCT FROM NEW.revision::text
+  OR b.receipt->>'stage' IS DISTINCT FROM NEW.stage::text
+  OR ROW(a.indexed_dataset_revision,a.indexed_snapshot,a.indexed_root) IS DISTINCT FROM ROW(b.source_revision,b.snapshot_id,moria.runtime_dataset_root_key(b.metadata_location))
+  OR (a.indexed_build<>a.store AND NOT EXISTS(
+   SELECT 1 FROM moria.native_source_delta_windows w WHERE w.build=a.indexed_build AND w.status='qualified' AND NOT w.has_mutation
+    AND w.closed_at IS NOT NULL AND w.basis_store=a.store AND w.basis_source_version=a.source_version
+    AND w.target_dataset_revision=a.indexed_dataset_revision AND w.cursor_revision=w.target_dataset_revision))
+ THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
  RETURN NEW;
 END $$;
 CREATE CONSTRAINT TRIGGER native_source_alias_atomic AFTER INSERT ON moria.source_generations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_alias_atomic();
@@ -187,10 +198,7 @@ BEGIN
  ELSIF NOT EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a JOIN moria.source_generations g
   ON g.environment=a.environment AND g.object_type=a.object_type AND g.revision=a.revision AND g.stage=input_stage
   WHERE a.environment=input_environment AND a.object_type=input_target AND a.store=input_stage AND a.source_version=1
-  AND (input_generation_revision IS NULL OR a.revision=input_generation_revision)
-  AND a.indexed_dataset_revision::text=store.profile->>'targetDatasetRevision'
-  AND a.indexed_snapshot IS NOT DISTINCT FROM store.profile->>'targetSnapshot'
-  AND a.indexed_root=store.profile->>'targetRoot') THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
+  AND (input_generation_revision IS NULL OR a.revision=input_generation_revision)) THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
  RETURN store.id;
 END $$;
 CREATE OR REPLACE FUNCTION moria.runtime_object_base_stage(stage_id uuid,env text,target text,at_revision bigint)

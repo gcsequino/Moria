@@ -1,0 +1,101 @@
+{
+  "qualification": {
+    "artifact": {
+      "id": "sha256:aace6d66007a6d17979812aacfbb30e62479fd2e2369ff55d7a2baaac38f240a",
+      "tag": "moria-test:source-delta-unchanged-native-003"
+    },
+    "nativeInputDigest": "ab00e8d55f479b28435fa83afc5b8411e8ce24639c5517a162453201576bc3e7",
+    "units": 113,
+    "exactNineArtifacts": true
+  },
+  "gates": {
+    "unchanged": {
+      "file": "tests/native-source-unchanged.integration.test.ts",
+      "exitCode": 0,
+      "elapsedSeconds": 152.2575159620028,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "custody": {
+      "file": "tests/native-source-delta.integration.test.ts",
+      "exitCode": 0,
+      "elapsedSeconds": 116.57619639899349,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "permanent-v3": {
+      "file": "tests/native-dataset-v3-service.integration.test.ts",
+      "exitCode": 0,
+      "elapsedSeconds": 54.98646030000236,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    }
+  },
+  "retained": {
+    "trial001": {
+      "file": "tests/native-source-unchanged.integration.test.ts",
+      "exitCode": 1,
+      "elapsedSeconds": 94.64992657500261,
+      "counts": {
+        "tests": 2,
+        "pass": 0,
+        "fail": 2,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "trial002": {
+      "file": "tests/native-source-unchanged.integration.test.ts",
+      "exitCode": 1,
+      "elapsedSeconds": 127.34014945100353,
+      "counts": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    }
+  },
+  "scope": "Managed native v2/v3 certified metadata-only logical Source publication and registered Search replay; sparse mutation and capacity are not certified."
+}

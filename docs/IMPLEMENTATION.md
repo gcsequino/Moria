@@ -3256,4 +3256,23 @@ Production writer/sparse activation and production capacity remain unqualified.
 
 The qualified native custody slice derives a live range from the actual accepted build and active Source alias. It protects superseded intermediate Dataset roots without scanning other builds during C04. The actual coordinator qualifies resumable journal pages with exact history/publication/producer receipts and current physical receiver custody. Real v2 and v3 fixtures exercised two certified metadata-pruning edges, supersession, bounded page resume, repeated acknowledgement, ordinary modification denial, wrong owner denial and actual cancellation. No fabricated work or root qualification was used.
 
-All nine exact native artifacts, 113 units, full static checks, both custody cases and the original permanent-v3 case passed without skips or cancellations. All controllers and scratch pools were removed. Evidence: `production/evidence/2026-11-05/source-commit-window-custody/`. Unchanged alias/projection reuse, sparse mutation publication and production workloads remain unqualified. See `production/NATIVE-SOURCE-COMMIT-WINDOWS.md`.
+All nine exact native artifacts, 113 units, full static checks, both custody cases and the original permanent-v3 case passed without skips or cancellations. All controllers and scratch pools were removed. Evidence: `production/evidence/2026-11-05/source-commit-window-custody/`. That checkpoint qualified custody only. See `production/NATIVE-SOURCE-COMMIT-WINDOWS.md`.
+
+## Certified metadata-only Source publication
+
+A live coordinator can publish a new logical alias and exact Dataset watermark
+from a fully qualified unchanged commit window. The alias retains its physical
+Source store and content version, including existing canonical rows, keys,
+typed projection interval and Action state. The transaction performs no scan,
+reduce, projection rebuild, or object invalidation. Search replay recognizes
+the exact same content version while continuing to resolve current Model,
+Dataset and service authority.
+
+The real v2/v3 gate proved two actual metadata-prune advances per format and
+historical cursor continuity after the current authority was established. It
+also proved that a cursor opened before explicit registrar revocation remained
+invalid. The v3 registered Search replay used an installed compiled Model and
+an actual loopback embedding provider. The existing Search generation covered
+the latest environment revision with zero new embedding inputs. See
+[the exact qualification](production/evidence/2026-11-05/source-unchanged-publication/summary.json).
+Sparse mutation publication and production workload qualification remain open.

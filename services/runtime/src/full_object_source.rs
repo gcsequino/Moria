@@ -54,6 +54,24 @@ fn revision(text: &str) -> Result<i64> {
     ensure!(value >= 0 && value.to_string() == text, "REVISION_INVALID");
     Ok(value)
 }
+/// Only immutable aliases can prove two logical generations share canonical content.
+pub(crate) async fn same_source_content(
+    client: &Client,
+    environment: &str,
+    resource: &str,
+    stage: Uuid,
+    left: &str,
+    right: &str,
+) -> Result<bool> {
+    if left == right {
+        return Ok(true);
+    }
+    Ok(client.query_one(
+        "SELECT EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a JOIN moria.native_source_generation_aliases b ON b.environment=a.environment AND b.object_type=a.object_type AND b.store=a.store AND b.source_version=a.source_version WHERE a.environment=$1 AND a.object_type=$2 AND a.store=$3 AND a.revision=$4 AND b.revision=$5)",
+        &[&environment,&resource,&stage,&revision(left)?,&revision(right)?],
+    ).await?.get(0))
+}
+
 fn marks(value: Option<&Value>) -> Result<Vec<String>> {
     Ok(serde_json::from_value(value.cloned().unwrap_or(json!([])))?)
 }
@@ -90,7 +108,7 @@ async fn pin_state_in(
         .await?
         .get(0);
     ensure!(at <= current, "REVISION_INVALID");
-    let row=client.query_opt("SELECT p.*,c.definition AS collection_definition,o.object_type_id,o.revision AS object_binding_revision,o.authority_generation::text AS object_binding_generation,o.definition AS object_definition,moria.runtime_source_stage(g.stage,p.environment,p.source_resource,g.revision) AS source_stage,g.revision::text AS source_revision,g.object_schema,g.required_markings,build.definition AS indexing_definition,i.source_revision::text AS dataset_revision,i.metadata_location,i.snapshot_id,m.revision AS model_binding_revision,m.definition AS model_definition FROM moria.native_search_projector_bindings p JOIN moria.native_search_collections c ON c.environment=p.environment AND c.resource=p.collection AND c.id=p.collection_id AND c.projector_binding=p.id AND c.enabled JOIN moria.native_serving_bindings o ON o.environment=p.environment AND o.resource=p.source_resource AND o.enabled JOIN LATERAL(SELECT * FROM moria.source_generations g WHERE g.environment=p.environment AND g.object_type=p.source_resource AND g.revision<=$3 ORDER BY revision DESC LIMIT 1)g ON true JOIN moria.index_provenance i ON i.stage=g.stage AND i.environment=p.environment AND i.source_dataset=p.source_dataset JOIN moria.indexing_builds build ON build.id=g.stage AND build.source=i.source_dataset AND build.source_revision=i.source_revision AND build.metadata_location=i.metadata_location AND build.snapshot_id=i.snapshot_id AND build.binding_revision=i.contract JOIN moria.native_model_bindings m ON m.environment=p.environment AND m.resource=p.model_resource AND m.enabled WHERE p.id=$1 AND p.environment=$2 AND p.enabled AND p.purpose='full-object-projection' AND p.domain='search' FOR SHARE OF p,c,o,m",&[&projector_binding,&service.environment(),&at]).await?.ok_or_else(||anyhow::anyhow!("FULL_SOURCE_PURPOSE_REVOKED"))?;
+    let row=client.query_opt("SELECT p.*,c.definition AS collection_definition,o.object_type_id,o.revision AS object_binding_revision,o.authority_generation::text AS object_binding_generation,o.definition AS object_definition,moria.runtime_source_stage(g.stage,p.environment,p.source_resource,g.revision) AS source_stage,g.revision::text AS source_revision,g.object_schema,g.required_markings,build.definition AS indexing_definition,i.source_revision::text AS dataset_revision,i.metadata_location,i.snapshot_id,m.revision AS model_binding_revision,m.definition AS model_definition FROM moria.native_search_projector_bindings p JOIN moria.native_search_collections c ON c.environment=p.environment AND c.resource=p.collection AND c.id=p.collection_id AND c.projector_binding=p.id AND c.enabled JOIN moria.native_serving_bindings o ON o.environment=p.environment AND o.resource=p.source_resource AND o.enabled JOIN LATERAL(SELECT * FROM moria.source_generations g WHERE g.environment=p.environment AND g.object_type=p.source_resource AND g.revision<=$3 ORDER BY revision DESC LIMIT 1)g ON true LEFT JOIN moria.native_source_generation_aliases alias ON alias.environment=p.environment AND alias.object_type=p.source_resource AND alias.revision=g.revision AND alias.store=g.stage JOIN moria.index_provenance i ON i.stage=COALESCE(alias.indexed_build,g.stage) AND i.environment=p.environment AND i.source_dataset=p.source_dataset JOIN moria.indexing_builds build ON build.id=i.stage AND build.source=i.source_dataset AND build.source_revision=i.source_revision AND build.metadata_location=i.metadata_location AND build.snapshot_id=i.snapshot_id AND build.binding_revision=i.contract JOIN moria.native_model_bindings m ON m.environment=p.environment AND m.resource=p.model_resource AND m.enabled WHERE p.id=$1 AND p.environment=$2 AND p.enabled AND p.purpose='full-object-projection' AND p.domain='search' FOR SHARE OF p,c,o,m",&[&projector_binding,&service.environment(),&at]).await?.ok_or_else(||anyhow::anyhow!("FULL_SOURCE_PURPOSE_REVOKED"))?;
     let service_id: Uuid = row.get("service_id");
     let collection_id: Uuid = row.get("collection_id");
     let target_revision: String = row.get("service_binding_revision");
@@ -294,7 +312,15 @@ impl FullObjectSourceGrant {
         let row=client.query_opt("SELECT r.source_stage,r.source_revision::text,g.base_revision,b.spec->>'resourceClass' AS resource_class FROM moria.runtime_executions e JOIN moria.runtime_execution_bindings b ON b.id=e.binding JOIN moria.runtime_execution_services s ON s.binding=b.id JOIN moria.runtime_job_delegations d ON d.execution=e.id AND d.service_authority=s.authority JOIN moria.native_search_execution_sources map ON map.execution=e.id JOIN moria.native_search_rebuilds r ON r.generation=map.generation JOIN moria.native_search_generations g ON g.id=r.generation JOIN moria.environments env ON env.id=e.environment WHERE e.id=$1 AND e.environment=$2 AND e.resource=$3 AND e.spec->>'domain'='search' AND e.status IN ('running','preparing') AND s.authority=$4 AND s.target_revision=$5 AND r.projector_binding=$6 AND g.base_revision<=$7 AND $7<=env.revision AND moria.runtime_dataset_session_matches($8,$1,$9,$10,$11,$12)",&[&self.lease.execution,&self.session.environment(),&self.pin.collection_id,&self.pin.service_id,&self.pin.service_binding_revision,&self.pin.projector_binding,&at,&self.session.session_hash(),&self.lease.task,&self.lease.owner,&self.lease.fence.parse::<i64>()?,&self.lease.incarnation]).await?.ok_or_else(||anyhow::anyhow!("FULL_SOURCE_PURPOSE_REVOKED"))?;
         ensure!(
             row.get::<_, Option<Uuid>>("source_stage") == Some(self.pin.source_stage)
-                && row.get::<_, String>("source_revision") == self.pin.source_revision,
+                && same_source_content(
+                    client,
+                    &self.session.environment(),
+                    &self.pin.object_resource,
+                    self.pin.source_stage,
+                    &row.get::<_, String>("source_revision"),
+                    &self.pin.source_revision
+                )
+                .await?,
             "SEARCH_SOURCE_CHANGED"
         );
         let service = RegisteredService::load_in(

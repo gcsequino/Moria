@@ -1,0 +1,38 @@
+{"controller": "moria-quality-f0361c23-ea50-4793-80f0-8f807d870b93", "image": "sha256:537452c4d2e0b30101441b7600478b225a4195d65b83af6f1a5ead2419ab95e9", "scratchPools": ["/tmp/moria-engine-scratch-9446a0e9-aca5-4dc7-a794-2445438f7566", "/tmp/moria-engine-scratch-d376a4e4-eed4-4fb4-9c38-9e4d59b96d95", "/tmp/moria-engine-scratch-340d06b0-62d3-4d1e-8a22-1cf1365813fc"], "temporary": "/tmp/moria-quality-o301vgr_"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 646ms using pnpm v11.25.0
+✔ certified metadata-only v2 commits reuse the Source rows, keys, typed projection and Action state (47094.343133ms)
+✖ certified metadata-only v3 commits reuse the Source rows, keys, typed projection and Action state (77021.639831ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124647.4922
+
+✖ failing tests:
+
+test at tests/native-source-unchanged.integration.test.ts:15:3
+✖ certified metadata-only v3 commits reuse the Source rows, keys, typed projection and Action state (77021.639831ms)
+  Error: models/probe: {"error":"NOT_FOUND"}
+  
+  
+      at ChildProcess.<anonymous> (/qualified/tests/fixtures/native-source-store/projector.ts:156:48)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
