@@ -44,6 +44,12 @@ and the later Source ACL checks. The same instance ran real Agent, local
 model, Evaluation, Pipeline, Search, and Automation work before browser
 sign-in. It verified authorization revocation without provider calls.
 
+The Connector custody file passed all 15 tests in 251.332 seconds under
+its 300-second root deadline. The phase trace measured 30.309 and 34.824
+seconds for the first two publications and 8.094 seconds for independent
+typed readback. It passed Secret reflection, upstream faults, and in-flight
+revocation while retaining the prior head and cursor.
+
 Hosted Linux CI on the integrated revision remains required. The ten-case
 service-dispatched Evaluation still exceeds its original 90-second lifecycle
 barrier and remains under qualification.
