@@ -1,0 +1,14 @@
+{"controller": "moria-quality-b40fe796-4036-49e9-ba77-85c4508485f5", "image": "sha256:253f36e55870ac410a1a72fdd8ad2ba1e9573b04ad2c2eb0dbcd0029351bb250", "scratchPools": ["/tmp/moria-engine-scratch-d3e7cbbc-caba-4ab1-b8d6-615e1ec589a2", "/tmp/moria-engine-scratch-e68f4c9c-e6ea-4c7a-a83e-4f1b052bf3b5", "/tmp/moria-engine-scratch-887c7d7a-57ce-4906-a96e-10264509c437"], "temporary": "/tmp/moria-quality-m7mux4x5"}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (13522.642357ms)
+  ✔ real closed staging collection preserves published aliases and drains expired private rows through native history once (26572.426198ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle) (45937.304945ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"62a41165-8f95-4963-96b7-ad638ea1385c","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"dc5d92de-9411-4019-b3d7-f78f719cd4bf"}]}
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46446.762883

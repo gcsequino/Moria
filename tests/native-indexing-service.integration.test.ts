@@ -17,10 +17,15 @@ import { IcebergIndexer } from '../services/ontology/src/indexer.js';
 import { ObjectStore, type ObjectSchema } from '../services/ontology/src/store.js';
 import { managedDatasetRecovery } from './fixtures/native-recovery/managed.js';
 import { prepareSourceStoreProjector } from './fixtures/native-source-store/projector.js';
+import { sourceStagingCollection } from './fixtures/native-source-store/staging.js';
 
-for (const wide of [false, true])
+for (const [wide, staging] of [
+  [false, false],
+  [true, false],
+  [false, true],
+] as const)
   test(
-    `permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (${wide ? 'maximum width' : 'small rows'})`,
+    `permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (${staging ? 'staging lifecycle' : wide ? 'maximum width' : 'small rows'})`,
     { timeout: 300000 },
     async (t) => {
       const binary = process.env.MORIA_RUNTIME_BINARY ?? '/usr/local/bin/moria-runtime',
@@ -124,7 +129,7 @@ for (const wide of [false, true])
           metadata: { namespace: 'permanent', name },
           spec: { eligibilityGroup: 'fixture', declassifierGroup: 'fixture' },
         });
-      const projector = wide ? undefined : await prepareSourceStoreProjector(write, t);
+      const projector = wide || staging ? undefined : await prepareSourceStoreProjector(write, t);
       await write('data.resource.json', {
         apiVersion: 'moria/v1alpha2',
         kind: 'Dataset',
@@ -693,6 +698,25 @@ for (const wide of [false, true])
           );
         },
       );
+      if (staging) {
+        await t.test(
+          'real closed staging collection preserves published aliases and drains expired private rows through native history once',
+          async () => {
+            await sourceStagingCollection({
+              db,
+              runtime: binary,
+              env,
+              environment,
+              target,
+              source,
+              publishedBuild: acceptedBuild,
+              publish,
+              queryCount,
+            });
+          },
+        );
+        return;
+      }
       if (!wide)
         await t.test(
           'clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication',

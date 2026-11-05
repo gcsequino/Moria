@@ -140,6 +140,7 @@ DECLARE p moria.runtime_projections;
 BEGIN
   SELECT * INTO p FROM moria.runtime_projections WHERE id=projection_id;
   IF NOT FOUND OR p.owner<>worker OR p.fence<>worker_fence OR p.status NOT IN ('building','replaying') THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
+  PERFORM moria.runtime_indexing_staging_shared(p.stage);
   PERFORM moria.indexing_claim_check(p.stage,NULL,worker,worker_fence);
   IF NOT EXISTS(SELECT 1 FROM moria.runtime_projection_bindings b WHERE b.environment=p.environment AND b.resource=p.resource
     AND b.enabled AND b.revision=p.binding_revision AND b.definition=p.definition) THEN RAISE EXCEPTION 'BINDING_CHANGED'; END IF;
@@ -152,6 +153,7 @@ DECLARE b moria.indexing_builds;s moria.source_stages;binding moria.runtime_proj
   cols jsonb:='{}';field_name text;descriptor jsonb;column_name text;side text;n integer;ddl text;kind text;source_schema jsonb;properties jsonb;
   layout jsonb;sort_key jsonb;safe_sql text;key_width integer;role_name text;existing_role oid;base bigint;
 BEGIN
+  PERFORM moria.runtime_indexing_staging_shared(stage_id);
   PERFORM moria.indexing_claim_check(stage_id,NULL,worker,worker_fence);
   SELECT * INTO b FROM moria.indexing_builds WHERE id=stage_id;
   SELECT * INTO s FROM moria.source_stages WHERE id=stage_id;
