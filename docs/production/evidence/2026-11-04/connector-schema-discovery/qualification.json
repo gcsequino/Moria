@@ -1,0 +1,94 @@
+{
+  "sourceBase": "0118a6451db879d415c1ac14c3e445e21865d8a2",
+  "nativeInputsDigest": "cd9210bd2effea769cd0c8034839214b2c5c6dc5b60f8e41eb8c9a717d5b011c",
+  "sourceArchiveSha256": "7916d289725a82b2d2bb6b0eb680c51c66421e030b82d9dba33534f977b0af49",
+  "sourceManifestSha256": "bbb1392a1c20b97342aa4fb5c2b3aa086b314562284815ddc1c21023844f74f7",
+  "nativeImage": "sha256:638160312a2a35e01b384f3f9713c4ddfe5304c8a5ddec7efad6cff57ee63c41",
+  "nativeBuild": {
+    "exitCode": 0,
+    "wallSeconds": 38.81953714800329
+  },
+  "staticAndProvenance": {
+    "exitCode": 0,
+    "wallSeconds": 27.248151143998257,
+    "nativeUnitsPassed": 113,
+    "nativeUnitsIgnored": 0,
+    "artifactsVerified": 9
+  },
+  "artifacts": {
+    "moria-native-transport-test": "5e4e119fa01e85c3ed8068bf87d83079e98ce9fe710a7782a79ccf6fd26d48d5",
+    "moria-native-storage-test": "02a1e10f75de62ef8341a63c670f6edb30c89ea19e09092ebc9607621f9b8e0d",
+    "moria-native-sandbox-test": "7816366ddf73e0cb8925f8ce59e0c4f0857f65b4bd1e1b6ea520743e84779052",
+    "moria-native-retention-test": "2b283d4236dd0bdb8c66192494b4a58ea12d2e16c82901fd16a9b0dafeefcce5",
+    "moria-native-policy-test": "940dbbd6e3800bfd3c7e77fb2e31e34639a910e69f6a63818e345e69b2cc8684",
+    "moria-native-catalog-test": "d7b66479e4438387d3ae1fd645e9249f8f4e17a0cc0348e361037a72686e5bd8",
+    "moria-indexing-tests": "c3dc0554249fc30f7ff70c9c107b88d35f820797568e7c0f9fcf8bf7704f3c11",
+    "moria-indexing": "e9105bdd5aca11c561b6c44b7b53ccd3f3b4a93e387e23902730dead79b44eb3",
+    "moria-runtime": "03ce4a59b9e187586bba28048be47d0b553ee0cd29e4ab00b63f992de954d781"
+  },
+  "rawProofDirectory": "/home/gcseq/moria-proofs/connector-discovery-20261105",
+  "priorRuns": [
+    {
+      "run": "native001",
+      "outcome": "rustc SIGKILL under two compile jobs; no native source diagnostic; superseded by sequential successful all-nine build"
+    },
+    {
+      "run": "trial001-live",
+      "exitCode": 1,
+      "passedSubcases": 13,
+      "failedSubcases": 1,
+      "reason": "Lost acknowledgement setup re-registered the same scratch UUIDs; corrected the caller to a second fresh driver-owned pool."
+    },
+    {
+      "run": "trial002-live",
+      "exitCode": 1,
+      "passedSubcases": 13,
+      "failedSubcases": 1,
+      "reason": "All commit/replay invariants passed; final disabled-approval assertion expected REVOKED but the existing enabled-approval lookup returns REQUIRED. The test now checks exact REQUIRED while disabled and exact REVOKED after a real new operator approval."
+    }
+  ],
+  "limitations": [
+    "Functional qualification does not certify production throughput or capacity.",
+    "Continuous read, writeback and non-replace/full batch modes remain unsupported.",
+    "Combined current-main build and complete independent pnpm check remain required before integration."
+  ],
+  "discoveryIntegration": {
+    "exitCode": 0,
+    "wallSeconds": 106.19715717800136,
+    "tests": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootWallSeconds": 94.858531998,
+    "executionDeadlineSeconds": 120,
+    "rootDeadlineSeconds": 300,
+    "inflightClosureDeadlineSeconds": 10,
+    "image": "sha256:ea66fa89fcef98eec02f15d4ceb2ca4b47765d3ae73cf8bd7c5f0dfc5d424846",
+    "nativeInputsUnchanged": true,
+    "fixtureOverlaySha256": "98c0396147cfbc9e5bc4ce59a12cbf406d02ad85cfa3c8df7d349a7d1ccfdf89",
+    "cleanup": {
+      "controller": "moria-quality-3c06055f-3d1b-4973-b2ab-fa1d36714822",
+      "controllerAbsent": true,
+      "labelsAbsent": true,
+      "pathsAbsent": {
+        "/tmp/moria-engine-scratch-03501367-a0de-4382-ab5c-d501d7872246": true,
+        "/tmp/moria-engine-scratch-29e098c4-c20e-45cb-a575-3efd372be97a": true,
+        "/tmp/moria-engine-scratch-39c76d21-1955-4d55-8ca8-d29144adf9dd": true,
+        "/tmp/moria-quality-qq4bs4ll": true
+      }
+    }
+  },
+  "finalStaticAndProvenance": {
+    "exitCode": 0,
+    "wallSeconds": 29.2742644989994,
+    "nativeUnitsPassed": 113,
+    "nativeUnitsIgnored": 0,
+    "artifactsVerified": 9
+  },
+  "finalNativeInputEquality": {
+    "nativeInputCount": 134,
+    "nativeInputsByteEqual": true,
+    "differences": []
+  }
+}

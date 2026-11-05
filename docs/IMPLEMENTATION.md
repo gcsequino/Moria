@@ -1,5 +1,27 @@
 # Implementation checkpoint
 
+## November 5 bounded Connector schema discovery
+
+The native Connection runtime now implements explicit `schemaDiscovery` alongside
+replace/full `batchRead`. Discovery uses the current Connection and exact Secret
+use grants through the existing approved transport, has a read-only sandbox
+binding and no Dataset IO pins, and returns a typed bounded schema proposal.
+Actual single-task sealing and current authority gate completion and retained
+result release; Dataset schema, head and checkpoint state remain unchanged.
+SDK, CLI and native HTTP entry points select the capability explicitly. Neutral
+readiness requires an executable capability/profile pair. Continuous read,
+writeback and additional batch write modes remain unavailable.
+
+The frozen component based on `0118a645` passes static checks, all nine native
+artifact fingerprints and 113 native units. Its complete real Source/HTTP/OCI/SQL
+file passes 15/15 with no skips or cancellations, including cancellation,
+revocation, typed proposal rejection, identical-key capability isolation, normal
+batch typed publication and lost-COMMIT replay. All original limits remain intact
+and every owned fixture is cleaned. The original Connector custody regression is
+running separately; current-platform integration and independent complete quality
+checks remain required. See
+[discovery evidence](production/evidence/2026-11-04/connector-schema-discovery/README.md).
+
 ## November 4 private-origin repeated validation
 
 Current private credentials now traverse accepted delegation once on successful

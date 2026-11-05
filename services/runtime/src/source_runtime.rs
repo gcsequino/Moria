@@ -942,7 +942,6 @@ pub(crate) fn dataset_schema(columns: &Value) -> Result<(Value, Value)> {
     Ok((json!(columns), schema))
 }
 
-/// Configuration authority creates metadata only. Actual Dataset IO still requires an exact live lease.
 pub(super) async fn retain_classification_in(
     client: &Client,
     session: &VerifiedSession,
@@ -964,6 +963,23 @@ pub(super) async fn retain_classification_in(
     client.execute("INSERT INTO moria.resource_data_labels(environment,resource,marking) SELECT $1,$2,unnest($3::text[]) ON CONFLICT DO NOTHING", &[&session.environment(),&resource.to_string(),&labels]).await?;
     Ok(())
 }
+pub(crate) fn validate_dataset_primary_key(columns: &Value, primary_key: &[String]) -> Result<()> {
+    ensure!(
+        primary_key.len() <= 256
+            && primary_key
+                .iter()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+                == primary_key.len()
+            && primary_key.iter().all(|key| columns
+                .get(key)
+                .is_some_and(|descriptor| descriptor["nullable"] == false)),
+        "DATASET_PRIMARY_KEY_INVALID"
+    );
+    Ok(())
+}
+
+/// Configuration authority creates metadata only. Actual Dataset IO still requires an exact live lease.
 pub(crate) async fn install_dataset_in(
     client: &Client,
     session: &VerifiedSession,
@@ -1015,18 +1031,7 @@ pub(crate) async fn install_dataset_in(
         .unwrap_or_default();
     let write_modes: Vec<String> =
         serde_json::from_value(declaration["spec"]["writeModes"].clone())?;
-    ensure!(
-        primary_key.len() <= 256
-            && primary_key
-                .iter()
-                .collect::<std::collections::BTreeSet<_>>()
-                .len()
-                == primary_key.len()
-            && primary_key.iter().all(|key| columns
-                .get(key)
-                .is_some_and(|descriptor| descriptor["nullable"] == false)),
-        "DATASET_PRIMARY_KEY_INVALID"
-    );
+    validate_dataset_primary_key(&columns, &primary_key)?;
     ensure!(
         !write_modes.is_empty()
             && write_modes.len() <= 4

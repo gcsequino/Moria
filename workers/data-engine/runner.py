@@ -29,6 +29,8 @@ try:
     module_spec.loader.exec_module(program)
     if context.metadata["domain"] == "transform":
         program.transform(context)
+    elif context.metadata.get("capability") == "schemaDiscovery":
+        context.propose_schema(program.discover(context))
     else:
         program.sync(context)
     context.close()

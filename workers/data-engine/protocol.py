@@ -351,6 +351,19 @@ class Context:
             {"method": method, "path": path, "body": body},
         )
 
+    def propose_schema(self, proposal):
+        if (
+            self.metadata.get("capability") != "schemaDiscovery"
+            or type(proposal) is not dict
+            or set(proposal) != {"columns", "primaryKey"}
+        ):
+            raise ValueError("ENGINE_DISCOVERY_INVALID")
+        return json_request(
+            "/api/v1/engine/connector/schema",
+            "POST",
+            {"version": 1, "stream": self.metadata["stream"], **proposal},
+        )
+
     def checkpoint(self, value):
         return json_request("/api/v1/engine/checkpoint", "POST", {"value": value})
 
