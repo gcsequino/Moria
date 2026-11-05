@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import test from 'node:test';
-import type { PoolClient } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -207,43 +207,87 @@ test(
       try {
         const proof = (
           await measured.query(
-            'SELECT moria.runtime_job_session_origin($1) AS origin,moria.runtime_job_delegation_guard($2) AS delegated',
+            'SELECT moria.runtime_job_session_origin($1) AS origin,moria.runtime_job_delegation_guard($2) AS delegated,moria.native_serving_job_delegation($2) AS state',
             [hash, job.id],
           )
         ).rows[0];
         assert.deepEqual(proof.origin, proof.delegated);
-        await measured.query("SET track_functions='pl'");
-        await measured.query(
-          "SELECT pg_stat_reset_single_function_counters('moria.runtime_job_delegation_guard(uuid,boolean)'::regprocedure::oid)",
-        );
+        await measured.query('BEGIN');
+        await measured.query("SET LOCAL track_functions='pl'");
         const current = (
           await measured.query('SELECT moria.native_serving_session($1) AS state', [hash])
         ).rows[0].state;
         assert.equal(current.principal, principal);
         assert.deepEqual([...current.identity.grantedOperations].sort(), [...operations].sort());
-        await measured.query('SELECT pg_stat_force_next_flush()');
-        let calls = 0;
-        for (let attempt = 0; attempt < 30; attempt++) {
-          await measured.query('SELECT pg_stat_clear_snapshot()');
-          calls =
-            (
-              await measured.query(
-                "SELECT calls::int FROM pg_stat_user_functions WHERE funcid='moria.runtime_job_delegation_guard(uuid,boolean)'::regprocedure::oid",
-              )
-            ).rows[0]?.calls ?? 0;
-          if (calls) break;
-          await delay(10);
-        }
-        assert.equal(
-          calls,
-          1,
-          'The current credential check must not repeat its guarded traversal',
-        );
+        assert.deepEqual(current, { ...proof.state, privateValidatedExecution: job.id });
+        const calls = (
+          await measured.query(
+            "SELECT funcname,calls::int FROM pg_stat_xact_user_functions WHERE schemaname='moria' AND funcname=ANY($1) ORDER BY funcname",
+            [['native_serving_accepted_delegation', 'runtime_job_delegation_guard']],
+          )
+        ).rows;
+        assert.deepEqual(calls, [
+          { funcname: 'native_serving_accepted_delegation', calls: 1 },
+          { funcname: 'runtime_job_delegation_guard', calls: 1 },
+        ]);
       } finally {
-        await measured.query("SET track_functions='none'");
+        await measured.query('ROLLBACK');
         measured.release();
       }
     });
+    await t.test(
+      'private state helpers retain the existing database privilege boundary',
+      async () => {
+        const limitedRole = `job_limited_${randomUUID().replaceAll('-', '')}`;
+        const limitedPassword = randomUUID();
+        await db.pool.query(
+          `CREATE ROLE ${limitedRole} LOGIN PASSWORD '${limitedPassword}'; GRANT USAGE ON SCHEMA moria TO ${limitedRole}`,
+        );
+        const trusted = new Pool({ connectionString: connection });
+        const limited = new Pool({
+          ...db.pool.options,
+          user: limitedRole,
+          password: limitedPassword,
+        });
+        try {
+          const { origin, state } = (
+            await trusted.query(
+              'SELECT moria.runtime_job_session_origin($1) origin,moria.native_serving_job_delegation($2) state',
+              [hash, job.id],
+            )
+          ).rows[0];
+          const probes: [string, unknown[], unknown][] = [
+            [
+              'SELECT moria.runtime_binding_authority_state($1,$2,$3,$4) AS value',
+              [registered, state.securityEpoch, state.instanceEpoch, job.id],
+              state,
+            ],
+            ['SELECT moria.runtime_execution_check_state($1) AS value', [job.id], state],
+            [
+              'SELECT moria.runtime_job_session_resolution($1) AS value',
+              [hash],
+              { origin, validatedState: state },
+            ],
+          ];
+          for (const [sql, values, expected] of probes) {
+            assert.deepEqual((await trusted.query(sql, values)).rows[0].value, expected);
+            await assert.rejects(limited.query(sql, values), { code: '42501' });
+          }
+          assert.equal(
+            (
+              await trusted.query(
+                'SELECT moria.runtime_binding_authority_state($1,$2,$3,NULL) AS value',
+                [registered, state.securityEpoch, state.instanceEpoch],
+              )
+            ).rows[0].value,
+            null,
+          );
+        } finally {
+          await Promise.all([trusted.end(), limited.end()]);
+          await db.pool.query(`DROP OWNED BY ${limitedRole}; DROP ROLE ${limitedRole}`);
+        }
+      },
+    );
     await t.test(
       'unregistered legacy bindings and mismatched purposes cannot acquire a service capability',
       async () => {

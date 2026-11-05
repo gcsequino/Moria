@@ -207,17 +207,21 @@ BEGIN
   RETURN moria.native_serving_accepted_delegation(moria.runtime_job_delegation_guard(execution));
 END $$;
 CREATE FUNCTION moria.native_serving_session(token_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE origin jsonb; current_state jsonb;
+DECLARE resolution jsonb; origin jsonb; current_state jsonb;
 BEGIN
   BEGIN
     RETURN moria.native_serving_session_origin(token_hash,false);
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM<>'UNAUTHENTICATED' THEN RAISE; END IF;
   END;
-  IF to_regprocedure('moria.runtime_job_session_origin(text)') IS NULL THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
-  origin:=moria.runtime_job_session_origin(token_hash);
+  IF to_regprocedure('moria.runtime_job_session_resolution(text)') IS NULL THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
+  resolution:=moria.runtime_job_session_resolution(token_hash);
+  origin:=resolution->'origin';
   IF origin IS NULL THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
-  current_state:=moria.native_serving_accepted_delegation(origin);
+  -- An execution credential already resolved the current intersection while checking
+  -- its binding, lease and delegation. Indexing retains its distinct scope admission.
+  current_state:=resolution->'validatedState';
+  IF current_state IS NULL THEN current_state:=moria.native_serving_accepted_delegation(origin); END IF;
   IF current_state->>'environment' IS DISTINCT FROM origin->>'environment'
     OR current_state->>'principal' IS DISTINCT FROM origin->>'principal'
     OR current_state->>'application' IS DISTINCT FROM origin->>'application' THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
@@ -390,12 +394,9 @@ BEGIN
  RETURN moria.native_filesystem_acl_targets_state(state,ARRAY[target_id],operation,include_inactive);
 END $$;
 REVOKE ALL ON FUNCTION moria.native_filesystem_acl_state(jsonb,uuid,text,boolean) FROM PUBLIC;
-CREATE FUNCTION moria.native_serving_filesystem_resource_access_operations_state(state jsonb, resource text, operations text[]) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
+CREATE FUNCTION moria.native_serving_filesystem_resource_entry_state(state jsonb, resource text) RETURNS uuid LANGUAGE plpgsql STABLE AS $$
 DECLARE target record; targets integer;
 BEGIN
-  IF operations IS NULL OR cardinality(operations) NOT BETWEEN 1 AND 3
-    OR array_position(operations,NULL) IS NOT NULL OR NOT operations<@ARRAY['read','write','publish']::text[]
-    THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   SELECT count(*) INTO targets FROM moria.fs_entries e LEFT JOIN moria.fs_resource_bindings b ON b.entry_id=e.id
     WHERE e.environment_id=state->>'environment' AND e.kind='resource' AND NOT e.deleted
       AND (e.resource_id::text=resource OR b.reference=resource);
@@ -407,7 +408,7 @@ BEGIN
         AND (e.resource_id::text=resource OR b.reference=resource OR i.reference=resource)) THEN
       RAISE EXCEPTION 'NOT_FOUND';
     END IF;
-    RETURN jsonb_build_object('labels','[]'::jsonb,'errors','{}'::jsonb);
+    RETURN NULL;
   END IF;
   IF targets<>1 OR state->>'instanceId' IS NULL THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   SELECT e.id,b.active,r.retired INTO target FROM moria.fs_entries e
@@ -415,7 +416,18 @@ BEGIN
     WHERE e.environment_id=state->>'environment' AND e.kind='resource' AND NOT e.deleted
       AND (e.resource_id::text=resource OR b.reference=resource);
   IF target.active IS DISTINCT FROM true OR target.retired THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
-  RETURN moria.native_filesystem_acl_targets_operations_state(state,ARRAY[target.id],operations,false);
+  RETURN target.id;
+END $$;
+REVOKE ALL ON FUNCTION moria.native_serving_filesystem_resource_entry_state(jsonb,text) FROM PUBLIC;
+CREATE FUNCTION moria.native_serving_filesystem_resource_access_operations_state(state jsonb, resource text, operations text[]) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
+DECLARE target uuid;
+BEGIN
+  IF operations IS NULL OR cardinality(operations) NOT BETWEEN 1 AND 3
+    OR array_position(operations,NULL) IS NOT NULL OR NOT operations<@ARRAY['read','write','publish']::text[]
+    THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  target:=moria.native_serving_filesystem_resource_entry_state(state,resource);
+  IF target IS NULL THEN RETURN jsonb_build_object('labels','[]'::jsonb,'errors','{}'::jsonb); END IF;
+  RETURN moria.native_filesystem_acl_targets_operations_state(state,ARRAY[target],operations,false);
 END $$;
 REVOKE ALL ON FUNCTION moria.native_serving_filesystem_resource_access_operations_state(jsonb,text,text[]) FROM PUBLIC;
 CREATE FUNCTION moria.native_serving_filesystem_resource_access_state(state jsonb, resource text, operation text) RETURNS jsonb LANGUAGE plpgsql AS $$

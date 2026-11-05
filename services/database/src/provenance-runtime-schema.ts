@@ -230,7 +230,7 @@ CREATE FUNCTION moria.native_serving_resource_access(token_hash text,resource te
 BEGIN
   RETURN moria.native_serving_resource_access_state(moria.native_serving_session(token_hash),resource,operation);
 END $$;
-CREATE FUNCTION moria.native_resource_filesystem_access_state(state jsonb,resource text,operation text) RETURNS jsonb LANGUAGE plpgsql AS $$
+CREATE FUNCTION moria.native_resource_filesystem_permission_state(state jsonb,resource text,operation text) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE canonical text; permission text; legacy text; kind text;
 BEGIN
   IF operation NOT IN ('read','write','invoke','run','build','sync','index','project','query','publish','use') THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
@@ -249,7 +249,13 @@ BEGIN
   IF NOT ((state->'identity'->'grantedOperations' ? permission) AND (state->'identity'->'applicationScopes' ? permission))
     AND NOT (legacy IS NOT NULL AND (state->'identity'->'grantedOperations' ? legacy)
       AND (state->'identity'->'applicationScopes' ? legacy)) THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
-  RETURN moria.native_serving_resource_access_state(state,canonical,CASE WHEN operation IN('write','publish') THEN operation ELSE 'read' END);
+  RETURN canonical;
+END $$;
+REVOKE ALL ON FUNCTION moria.native_resource_filesystem_permission_state(jsonb,text,text) FROM PUBLIC;
+CREATE FUNCTION moria.native_resource_filesystem_access_state(state jsonb,resource text,operation text) RETURNS jsonb LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN moria.native_serving_resource_access_state(state,moria.native_resource_filesystem_permission_state(state,resource,operation),
+    CASE WHEN operation IN('write','publish') THEN operation ELSE 'read' END);
 END $$;
 REVOKE ALL ON FUNCTION moria.native_resource_filesystem_access_state(jsonb,text,text) FROM PUBLIC;
 CREATE FUNCTION moria.native_resource_filesystem_access(token_hash text,resource text,operation text) RETURNS jsonb
@@ -268,24 +274,70 @@ BEGIN
     OR state->>'application' IS DISTINCT FROM expected_application THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
   RETURN jsonb_build_object('state',state,'labels',moria.native_resource_filesystem_access_state(state,resource,operation));
 END $$;
-CREATE FUNCTION moria.native_resource_release_access_state(state jsonb,resource text,operation text,release_digest text) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE canonical text; target record; file_id uuid; labels text[]; marks jsonb;
+CREATE FUNCTION moria.native_resource_release_proof(canonical text,release_digest text)
+RETURNS TABLE(markings jsonb, files uuid[]) LANGUAGE plpgsql STABLE AS $$
+DECLARE target record;
 BEGIN
-  labels:=ARRAY(SELECT jsonb_array_elements_text(moria.native_resource_filesystem_access_state(state,resource,operation)));
-  canonical:=moria.runtime_data_resource(state->>'environment',resource);
-  SELECT r.root_id,r.markings,i.reference INTO target FROM moria.fs_source_releases r
+  SELECT r.markings,i.reference INTO target FROM moria.fs_source_releases r
     JOIN moria.fs_resource_identities i ON i.root_id=r.root_id AND i.resource_id::text=canonical
     JOIN moria.fs_roles role ON role.entry_id=r.root_id AND NOT role.retired
     WHERE r.digest=release_digest AND r.owned ? i.reference;
-  IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM moria.fs_source_resource_files p WHERE p.digest=release_digest AND p.reference=target.reference)
-    THEN RAISE EXCEPTION 'SOURCE_FILE_PROOF_REQUIRED'; END IF;
-  IF (SELECT count(*) FROM moria.fs_source_resource_files p WHERE p.digest=release_digest AND p.reference=target.reference)>4096
-    THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
-  FOR file_id IN SELECT entry_id FROM moria.fs_source_resource_files p WHERE p.digest=release_digest AND p.reference=target.reference LOOP
-    IF NOT EXISTS(SELECT 1 FROM moria.fs_entries e WHERE e.id=file_id AND e.kind='file' AND NOT e.deleted)
-      THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
-    labels:=labels||ARRAY(SELECT jsonb_array_elements_text(moria.native_filesystem_acl_state(state,file_id,'read',false)));
-  END LOOP;
+  IF NOT FOUND THEN RAISE EXCEPTION 'SOURCE_FILE_PROOF_REQUIRED'; END IF;
+  SELECT array_agg(entry_id) INTO files FROM (
+    SELECT p.entry_id FROM moria.fs_source_resource_files p WHERE p.digest=release_digest AND p.reference=target.reference LIMIT 4097
+  ) bounded;
+  IF files IS NULL THEN RAISE EXCEPTION 'SOURCE_FILE_PROOF_REQUIRED'; END IF;
+  IF cardinality(files)>4096 THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
+  markings:=target.markings;
+  RETURN NEXT;
+END $$;
+REVOKE ALL ON FUNCTION moria.native_resource_release_proof(text,text) FROM PUBLIC;
+CREATE FUNCTION moria.native_resource_release_read_acl_state(state jsonb,canonical text,files uuid[])
+RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
+DECLARE acl jsonb;
+BEGIN
+  -- The general resource resolver retains all operational, upstream, and classification
+  -- checks for derived resources. Only the single unlabelled resource path can batch here.
+  IF EXISTS(SELECT 1 FROM moria.resource_data_edges e WHERE e.environment=state->>'environment' AND e.derived=canonical)
+    OR EXISTS(SELECT 1 FROM moria.resource_data_labels l WHERE l.environment=state->>'environment' AND l.resource=canonical)
+    THEN RETURN NULL; END IF;
+  PERFORM moria.runtime_data_operational(state->>'environment',canonical,'read');
+  IF EXISTS(SELECT 1 FROM unnest(files) file(id)
+    LEFT JOIN moria.fs_entries e ON e.id=file.id AND e.kind='file' AND NOT e.deleted WHERE e.id IS NULL)
+    THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
+  -- Resolve the live entry and evaluate both target sets under this statement snapshot.
+  acl:=moria.native_filesystem_acl_targets_operations_state(state,
+    array_remove(array_prepend(moria.native_serving_filesystem_resource_entry_state(state,canonical),files),NULL::uuid),
+    ARRAY['read'],false);
+  IF acl->'errors' ? 'read' THEN RAISE EXCEPTION '%',acl->'errors'->>'read'; END IF;
+  RETURN acl->'labels';
+END $$;
+REVOKE ALL ON FUNCTION moria.native_resource_release_read_acl_state(jsonb,text,uuid[]) FROM PUBLIC;
+CREATE FUNCTION moria.native_resource_release_access_state(state jsonb,resource text,operation text,release_digest text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE canonical text; target record; acl jsonb; file_id uuid; labels text[]; marks jsonb;
+BEGIN
+  IF operation NOT IN ('write','publish') AND NOT (state ? 'privatePurpose') THEN
+    canonical:=moria.native_resource_filesystem_permission_state(state,resource,operation);
+    BEGIN
+      SELECT * INTO target FROM moria.native_resource_release_proof(canonical,release_digest);
+      acl:=moria.native_resource_release_read_acl_state(state,canonical,target.files);
+      IF acl IS NOT NULL THEN labels:=ARRAY(SELECT jsonb_array_elements_text(acl)); END IF;
+    EXCEPTION WHEN raise_exception THEN
+      IF SQLERRM NOT IN ('FORBIDDEN','NOT_FOUND','RESOURCE_LIMIT','SOURCE_FILE_PROOF_REQUIRED') THEN RAISE; END IF;
+      -- Preserve the original error order and individual limits on the fallback path.
+      labels:=NULL;
+    END;
+  END IF;
+  IF labels IS NULL THEN
+    labels:=ARRAY(SELECT jsonb_array_elements_text(moria.native_resource_filesystem_access_state(state,resource,operation)));
+    canonical:=moria.runtime_data_resource(state->>'environment',resource);
+    SELECT * INTO target FROM moria.native_resource_release_proof(canonical,release_digest);
+    FOREACH file_id IN ARRAY target.files LOOP
+      IF NOT EXISTS(SELECT 1 FROM moria.fs_entries e WHERE e.id=file_id AND e.kind='file' AND NOT e.deleted)
+        THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
+      labels:=labels||ARRAY(SELECT jsonb_array_elements_text(moria.native_filesystem_acl_state(state,file_id,'read',false)));
+    END LOOP;
+  END IF;
   FOR marks IN SELECT value FROM jsonb_array_elements(target.markings) LOOP
     IF marks->>'environment' IS DISTINCT FROM state->>'environment' THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
     labels:=array_append(labels,marks->>'marking');

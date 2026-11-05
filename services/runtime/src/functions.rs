@@ -990,12 +990,16 @@ impl NativeFunctions {
     ) -> Result<ChildProgress> {
         ensure!(milliseconds <= 25000, "FUNCTION_INVALID");
         let until = tokio::time::Instant::now() + Duration::from_millis(milliseconds);
+        let mut delay = Duration::from_millis(50);
         loop {
             let progress = self.child_progress(parent, id).await?;
-            if !progress.is_pending() || tokio::time::Instant::now() >= until {
+            let now = tokio::time::Instant::now();
+            if !progress.is_pending() || now >= until {
                 return Ok(progress);
             }
-            tokio::time::sleep(Duration::from_millis(50)).await;
+            // Pending polls release no data; each check still uses current authority.
+            tokio::time::sleep_until(until.min(now + delay)).await;
+            delay = (delay * 2).min(Duration::from_millis(250));
         }
     }
     pub async fn wait(
