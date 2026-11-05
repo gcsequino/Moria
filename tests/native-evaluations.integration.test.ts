@@ -1140,7 +1140,9 @@ test(
                   worker: worker.error(),
                   agentWorker: agentWorker?.error(),
                   agentExit: agentWorker?.child.exitCode,
-                  result: await native('get', { id: accepted.id }),
+                  result: await native('get', { id: accepted.id }).catch((error: unknown) => ({
+                    error: error instanceof Error ? error.message : String(error),
+                  })),
                   diagnostics: await diagnostics(accepted.id),
                 }),
               ),
