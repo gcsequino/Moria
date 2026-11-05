@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-05",
+  "baseCommit": "23b56eb34892e751b88cc935a78cefc67f0ab5ba",
+  "scope": "Preserve existing Dataset publication contract error precedence before the required immutable journal edge",
+  "change": "Rename the deferred journal constraint trigger after runtime_dataset_head_contract in PostgreSQL trigger-name order; validation function and both enforcement conditions are unchanged.",
+  "image": {
+    "image": "sha256:2c4aabbe40c70952d63d2f5155f8733d886b72c6b6c38a7c3c81f99536fd6935",
+    "tag": "moria-test:mor-bootstrap-060-20261104"
+  },
+  "nativeSourceDigest": "ca9ccd966b7b4f6d627fec74fca8b1a011cbc84c6025dc3930331200e263b2ab",
+  "nativeArtifacts": 9,
+  "nativeUnits": 113,
+  "nativeBuild": {
+    "exitCode": 0,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "network": "none"
+  },
+  "commands": [
+    "pnpm check:static",
+    "pnpm check:indexing",
+    "pnpm test:integration tests/native-dataset-primary-key.integration.test.ts",
+    "pnpm test:integration tests/native-dataset-commit-delta.integration.test.ts"
+  ],
+  "results": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 18.668090685001516
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 10.228166699002031
+    },
+    "primary-key-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 58.24334691299737,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    },
+    "journal-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 55.19070931900205,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    }
+  },
+  "assertions": {
+    "unchangedPrimaryKeyFile": true,
+    "originalRawHeadError": "DATASET_PUBLICATION_CONTRACT_REQUIRED",
+    "publicationRollbackPreservesHead": true,
+    "compositeScalarEqualityAndNullablePayloadPreserved": true,
+    "realReplacementAndMetadataPruneEdgesContiguous": true,
+    "journalRecordingFailureRollsBackPublicationAndCompletion": true,
+    "testRootDeadlinesUnchanged": true
+  },
+  "logSha256": {
+    "prebuild-static.txt": "c09c53d65e5edb8e55c02ddfff75b518694a93d3979cb01b49d7aeb59ea2e762",
+    "static-indexing-check.txt": "3a7cf78bce65d46f089f39ae90293f51f4623af471d1167304ee955f0ff9468b",
+    "primary-key-integration.txt": "8116720a8472dfa58c169c246547e136dadd0db590297bb8b732a92d5030b168",
+    "journal-integration.txt": "396d16f59e959fa7eeef60561f5006b7f9f88d2210ade5064b14bc764013c198"
+  },
+  "limitations": [
+    "Local bounded fixtures do not establish production workload capacity.",
+    "Full independent CI and whole-instance E2E remain separate gates.",
+    "Sparse mutation routing remains disabled; no AWS resources were used."
+  ]
+}
