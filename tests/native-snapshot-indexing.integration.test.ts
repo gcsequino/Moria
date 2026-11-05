@@ -545,6 +545,17 @@ test(
             sessions.authenticate(`Bearer ${privateToken}`),
             /expired or was revoked/,
           );
+          // The live private credential has target:index but can only read its admitted source.
+          // A missing release must never take precedence over this scoped denial.
+          await assert.rejects(
+            db.pool.query('SELECT moria.native_resource_release_access($1,$2,$3,$4)', [
+              privateHash,
+              target,
+              'index',
+              'sha256:' + '0'.repeat(64),
+            ]),
+            { message: 'FORBIDDEN' },
+          );
           const expires = (
             await db.pool.query(
               'SELECT expires_at FROM moria.workload_sessions WHERE token_hash=$1',
