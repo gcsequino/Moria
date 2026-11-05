@@ -547,6 +547,67 @@ for (const group of [
       return result.value;
     };
     const once = () => start(['agents', 'once']);
+    const reportAgentFailure = async (id: string) => {
+      const row = await db.pool
+        .query(
+          `SELECT e.status,e.error,e.deadline,e.finished_at,
+                  t.id AS task,t.status AS task_status,t.attempts,t.owner,t.fence,t.lease_until,
+                  s.state AS sandbox,s.error AS sandbox_error,s.creation_state,s.cleaned,
+                  s.observation_pending IS NOT NULL AS observation_pending,s.observation_blocked,
+                  (SELECT v.payload->'accounting' FROM moria.runtime_execution_events v
+                    WHERE v.execution=e.id AND v.kind='failed' AND v.payload ? 'accounting'
+                    ORDER BY v.sequence DESC LIMIT 1) AS accounting
+             FROM moria.runtime_executions e
+             LEFT JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+             LEFT JOIN moria.runtime_sandbox_attempts s ON s.execution=e.id
+            WHERE e.id=$1 AND e.environment=$2 ORDER BY t.ordinal LIMIT 1`,
+          [id, environment],
+        )
+        .then(
+          ({ rows }) => rows[0],
+          () => undefined,
+        );
+      if (!row) {
+        t.diagnostic(JSON.stringify({ id, diagnosticUnavailable: true }));
+        return;
+      }
+      const { accounting, ...state } = row;
+      const fields = {
+        phase: ['monitorSample', 'resultSample', 'resultInspect'],
+        category: [
+          'statsTimeout',
+          'statsTransport',
+          'statsHttp',
+          'statsJson',
+          'statsProtocol',
+          'statsCpuUnavailable',
+          'statsMemoryUnavailable',
+          'containerNotRunning',
+        ],
+        protocol: [
+          'waitingForResult',
+          'checkingResult',
+          'writingCompletion',
+          'waitingForAck',
+          'acknowledged',
+          'attachClosed',
+        ],
+      };
+      const safe = Object.entries(accounting ?? {}).filter(([key, value]) => {
+        if (
+          typeof value === 'string' &&
+          (key === 'phase' || key === 'category' || key === 'protocol')
+        )
+          return fields[key].includes(value);
+        if (key === 'httpStatus' || key === 'exitCode')
+          return typeof value === 'number' && Number.isSafeInteger(value);
+        return (
+          typeof value === 'boolean' &&
+          ['running', 'oomKilled', 'completionWritten'].includes(key)
+        );
+      });
+      t.diagnostic(JSON.stringify({ id, state, accounting: Object.fromEntries(safe) }));
+    };
     const running = (id: string) =>
       until(
         async () =>
@@ -731,6 +792,9 @@ for (const group of [
                   return false;
                 throw error;
               }
+            }).catch(async (error) => {
+              await reportAgentFailure(accepted.id);
+              throw error;
             });
             assert.equal((await sdk.get(accepted.id)).result?.answer, 'SDK native graph');
             assert.ok(
@@ -2485,8 +2549,13 @@ for (const group of [
                 : definition,
             );
             await publish();
-            await once().done;
-            assert.equal((await get(job.id)).status, 'succeeded');
+            try {
+              await once().done;
+              assert.equal((await get(job.id)).status, 'succeeded');
+            } catch (error) {
+              await reportAgentFailure(job.id);
+              throw error;
+            }
             const replay = await request(
               `/api/v1/agents/${resource}/executions`,
               'POST',
