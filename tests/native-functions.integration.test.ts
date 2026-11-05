@@ -757,7 +757,22 @@ const response=await context.platform.fetch('/api/v1/objects/records/'+input.uid
       async () => {
         const job = await enqueue('write', 'hold'),
           active = start(['functions', 'once']);
-        await running(job.id);
+        // The guest logs once, then waits without another callback. Observe
+        // the committed log and the cleared observation before revoking scope.
+        await until(
+          async () =>
+            (
+              await db.pool.query(
+                `SELECT 1 FROM moria.runtime_sandbox_attempts s
+                WHERE s.execution=$1 AND s.state='running'
+                  AND s.observation_pending IS NULL AND NOT s.observation_blocked
+                  AND EXISTS (SELECT 1 FROM moria.runtime_execution_events e
+                    WHERE e.execution=s.execution AND e.kind='log'
+                      AND e.payload->>'message'='function started')`,
+                [job.id],
+              )
+            ).rowCount === 1,
+        );
         const leased = (
           await db.pool.query(
             'SELECT t.id AS task,t.owner,t.fence::text,t.lease_until::text,i.incarnation,a.security_epoch,a.instance_epoch,f.markings FROM moria.runtime_execution_tasks t JOIN moria.runtime_function_epochs a ON a.execution=t.execution JOIN moria.runtime_function_invocations f ON f.execution=t.execution CROSS JOIN moria.indexing_instance i WHERE t.execution=$1',
@@ -806,10 +821,17 @@ const response=await context.platform.fetch('/api/v1/objects/records/'+input.uid
           [worker],
         );
         try {
+          await assert.rejects(
+            db.pool.query("SELECT moria.runtime_function_worker_check($1,NULL,'standard')", [
+              worker,
+            ]),
+            /FUNCTION_WORKER_NOT_AUTHORIZED/,
+          );
           await active.done;
-          const withheld = await request(`/api/v1/invocations/${job.id}`);
-          assert.equal(withheld.response.status, 409);
-          assert.equal(withheld.value.error.code, 'FUNCTION_OBSERVATION_INCOMPLETE');
+          const failure = await request(`/api/v1/invocations/${job.id}`);
+          assert.equal(failure.response.status, 200, JSON.stringify(failure.value));
+          assert.equal(failure.value.status, 'failed');
+          assert.equal(failure.value.result, undefined);
           assert.equal(
             (
               await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
