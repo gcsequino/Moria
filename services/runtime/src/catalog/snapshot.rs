@@ -11,6 +11,18 @@ pub enum PinnedDatasetSnapshot {
     GraphV3(Arc<NativeSnapshot>),
 }
 impl PinnedDatasetSnapshot {
+    pub fn check_scan_count(&self, actual: u64) -> Result<()> {
+        match self {
+            Self::FlatV2(snapshot) => ensure!(
+                snapshot.proof().physical_rows >= actual,
+                "PARQUET_COUNT_MISMATCH"
+            ),
+            Self::GraphV3(snapshot) => {
+                ensure!(snapshot.row_count() == actual, "PARQUET_COUNT_MISMATCH")
+            }
+        }
+        Ok(())
+    }
     pub async fn schema(&self) -> Result<Arc<iceberg::spec::Schema>> {
         match self {
             Self::FlatV2(snapshot) => {

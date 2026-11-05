@@ -247,6 +247,9 @@ impl NativeSnapshot {
     pub fn metadata(&self) -> &Arc<TableMetadata> {
         &self.metadata
     }
+    pub(crate) fn row_count(&self) -> u64 {
+        self.descriptor.rows
+    }
     pub fn snapshot_id(&self) -> Result<i64> {
         Ok(self.descriptor.snapshot_id.parse()?)
     }

@@ -726,10 +726,17 @@ async fn run() -> Result<()> {
                         .unwrap_or_else(|| vec!["private".into()])
         );
         let pin_revision = loaded.pin.revision.clone();
+        ensure!(
+            loaded.pin.snapshot == source.snapshot_id,
+            "FIXTURE_INPUT_PIN_CHANGED"
+        );
         let loaded = loaded.snapshot;
-        let table = loaded.table().await?.into_table();
         let mut historical_rows = 0usize;
         if let Some(snapshot) = &fixture.retained_snapshot {
+            let moria_runtime::catalog::PinnedDatasetSnapshot::FlatV2(legacy) = &loaded else {
+                anyhow::bail!("FIXTURE_RETAINED_FLAT_SNAPSHOT_REQUIRED")
+            };
+            let table = legacy.table().await?.into_table();
             let scan = table
                 .scan()
                 .snapshot_id(snapshot.parse()?)
@@ -743,12 +750,7 @@ async fn run() -> Result<()> {
             let metadata = table.metadata();
             ensure!(metadata.last_sequence_number() == 2 && metadata.snapshots().count() == 2);
         }
-        let scan = table
-            .scan()
-            .snapshot_id(source.snapshot_id.parse()?)
-            .select_all()
-            .build()?;
-        let mut batches = scan.to_arrow().await?;
+        let mut batches = loaded.scan(1000).await?;
         let mut rows = 0usize;
         let expected_ids: std::collections::BTreeMap<String, Uuid> = if fixture.expected_native_rows
         {
@@ -840,7 +842,8 @@ async fn run() -> Result<()> {
             }
             rows += batch.num_rows();
         }
-        ensure!(rows == expected_count && loaded.proof().physical_rows >= rows as u64);
+        ensure!(rows == expected_count);
+        loaded.check_scan_count(rows as u64)?;
         ensure!(
             expected_typed
                 .as_ref()

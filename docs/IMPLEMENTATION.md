@@ -13,7 +13,6 @@ complete static checks, nine artifact fingerprints and 77 native units pass on t
 frozen component source. Automation still fails child dispatch and remains under
 investigation. See `production/evidence/2026-11-04/job-origin-single-traversal`.
 
-
 ## November 4 filesystem authority and current integration results
 
 The filesystem authority resolver now removes eight redundant inner edge
@@ -38,7 +37,6 @@ image acquisition fails; a real controlled acquisition failure exits promptly.
 An interrupted test run and local Docker bridge recovery remain recorded. See
 `production/evidence/2026-11-04/acl-query-edges` for raw results and exact identities.
 
-
 ## November 4 complete cold baseline and build budget
 
 The complete cold baseline on frozen `54d839e` builds all nine release artifacts,
@@ -52,7 +50,6 @@ Native artifact preparation batches the library and six harnesses in one Cargo
 invocation; actual JSON selection preserves all nine executable hashes. A new
 cold release timing remains unmeasured. See
 `production/evidence/2026-11-04/cold-baseline` for exact source/results/failures.
-
 
 ## November 4 current private-session lock correction
 
@@ -2876,7 +2873,6 @@ Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed
 
 Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.
 
-
 ### Current Source and revocation fixture reconciliation (2026-11-04)
 
 Catalog and filesystem classification fixtures now register, publish and apply
@@ -2890,6 +2886,7 @@ cosine assertions. Focused results and the initial failed expectation are retain
 in `production/evidence/2026-11-04/source-fixture-contracts`. These functional
 checks do not certify production capacity; the complete independent quality gate
 remains required for the integrated revision.
+
 ## November 4 Connector custody implementation checkpoint
 
 Connector acceptance now binds up to eight exact operator credential slots to
@@ -2929,14 +2926,12 @@ retain the failed readback trial and exact artifact/fixture identities. Optional
 capabilities, other write modes, full HTTP/worker fault coverage and scale testing
 remain open; this is not complete N09 qualification.
 
-
 Function cancellation fixture checkpoint (2026-11-04): the real CLI/API test now
 checks the accepted cancellation control receipt and separately verifies terminal
 state through authenticated CLI wait, retaining actual Docker cleanup checks.
 The full file passed 17/17 with zero skips; all nine artifact checks, 79 native
 units and static checks passed. Evidence and the original failed expectation are
 under `production/evidence/2026-11-04/function-cancellation-control`.
-
 
 SQL provenance checkpoint (2026-11-04): external Snow imports preserve durable
 request/configuration/raw-pin audit without presenting audit field names as
@@ -3147,3 +3142,19 @@ root registration, recovery/pruning and actual end-to-end qualification remain
 pending. These edits have formatting/schema generation only; native/static and
 integration checks have not yet run. This checkpoint preserves unfinished source
 before integrating the current Source store/IO changes.
+
+Unactivated v3 foundation checkpoint (2026-11-05): frozen trial025 passes full
+static checks, exact provenance for all nine rebuilt native artifacts and all
+112 library units with no ignored/filtered tests. It compiles strict v2/v3
+reference dispatch, the metadata-independent index-summary binding, actual
+stored-root profile selection and common Catalog/EngineIO/Evaluation bounded
+scan adapters against the integrated Source/store/IO baseline. Legacy unscoped
+readers reject both native formats. The existing FlatV2 retained-snapshot test
+keeps its standard-table/history/count assertions; common scans use the
+format-aware count witness. Failed compiler-memory and adapter trials are
+preserved. Evidence: `production/evidence/2026-11-05/native-v3-catalog-foundation/`.
+
+No v3 head or sparse mode is activated by these checks. Actual stage-bound
+preparation, root qualification/publication, Worker/attestation, recovery/pruning
+and runtime integration remain pending before activation. This is a bounded
+foundation checkpoint rather than completion of N09 or N18.

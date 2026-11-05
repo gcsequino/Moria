@@ -1,0 +1,153 @@
+{
+  "base": "668c2dcce2e65353a80e25570be2f8ebeae96638",
+  "classification": "unactivated v3 Catalog/reference/index-summary and common scan foundation; no v3 candidate publication or runtime integration qualified",
+  "image": "sha256:46f7c4a8cc0d7ffebc90a906e3fe58d128687eb88ea72ae37906096ff622889f",
+  "nativeSourceDigest": "d614bf4f59ecd78b2e0d0cb8035c187bf3bddaaec07cb6eefee79bdb772d7762",
+  "sourceHashes": {
+    "services/catalog/src/storage.ts": "33d9f9060d50c001b760a17b688b1ab0462cab8873d58ad1569b91521c727ab6",
+    "services/database/src/dataset-graph-schema.ts": "5fd42d5fafa22fb8cbd6052e61140fe1c626b3ed4508c0a04d3a95d1be3526b6",
+    "services/runtime/schema.json": "e13c53334aefc46060793d52ed883c57fabfefbad4590724d955592b7fdc7b6e",
+    "services/runtime/src/catalog.rs": "49541ede766700878f55396223423c8dfc7d70dfe377d15d3ddbef6478c6e0c2",
+    "services/runtime/src/catalog/snapshot.rs": "12ff3f0cbd684168a90f295704c0cfd345864292e5990a5091aedc811854f24f",
+    "services/runtime/src/dataset_graph_read.rs": "d4128854c58016d372d984509505436822626a3b6b450acedc934916757b1767",
+    "services/runtime/src/dataset_writer/bootstrap_v2.rs": "8ee60e2a113093b3c3e89f87e59180e1903fca25c7dfef917ba3bf481622742a",
+    "services/runtime/src/engine_io.rs": "3d837eb1128d1d447228a3c30468e094d2802802ccae03cb986a0dbc198285be",
+    "services/runtime/src/evaluations.rs": "28b9e4017496bbff531c2dbdacbdbfb41b2dee85c51ad17c234f0faa9e190c6d",
+    "services/runtime/src/native_snapshot_v3.rs": "0e2709cf2e14f83ff75fc485829c89fef5162f70d574d9fc89d053b99a48ae1a",
+    "services/runtime/src/native_snapshot_v3/index_summary.rs": "13a655611fd8f33577512758e7e518bd3970b7cc52b5ee48456bb862853e4698",
+    "tests/fixtures/native-catalog/harness.rs": "af83f404881040c8730803b48e844c815314df2d5ea44e6d03cdd7e04280a593",
+    "workers/iceberg/stream.ts": "7e0c2a9140811e3197aa3843e47cc8e50e225c5a4f513873852b9e3c81d5ea2e"
+  },
+  "artifacts": {
+    "moria-indexing-tests": {
+      "sha256": "951f31cc694b080724d7763bda3e184ff5ef7424243a32890769858ba0681f09",
+      "bytes": 83239320
+    },
+    "moria-native-transport-test": {
+      "sha256": "915139a36dd915b676d9a288a98bebefffec91b6935d274bc4ec502ed231bed5",
+      "bytes": 26583376
+    },
+    "moria-native-storage-test": {
+      "sha256": "3c59484ae42b6d471abea1fab113c6fb5f088193826db149caca7ca2e7f9dce9",
+      "bytes": 101901600
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "da52b12c63b8aef1b9249825708a391521ca20e791e155bbf7cc35e3cc3a92d5",
+      "bytes": 57589424
+    },
+    "moria-native-retention-test": {
+      "sha256": "fb62cae8b06880a0e3e2fa5942788c3e75fab2db1a383961a5b79d693a254d00",
+      "bytes": 27052848
+    },
+    "moria-native-policy-test": {
+      "sha256": "517be3c693b75c888771bf68d6c694442a7dc5c2013a8dd902e72600f49414e1",
+      "bytes": 22246216
+    },
+    "moria-native-catalog-test": {
+      "sha256": "693e64a625f2a6acc0ed8168fbb40fccedab66ade3d78ef68a8245d530655840",
+      "bytes": 116578120
+    },
+    "moria-indexing": {
+      "sha256": "dca3f78c5f9ce1a62afda2e4493e775573ce1b83dbc4a1e8b378c0989a4a690f",
+      "bytes": 159227808
+    },
+    "moria-runtime": {
+      "sha256": "8e948c57aa968e388c07be60cdd9c69f7e19535e937c8d2d09d866fae3c478db",
+      "bytes": 159227800
+    }
+  },
+  "validation": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 22.652375601006497
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 28.499503496001125,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--cpus",
+        "2",
+        "--memory",
+        "4g",
+        "sha256:46f7c4a8cc0d7ffebc90a906e3fe58d128687eb88ea72ae37906096ff622889f",
+        "sh",
+        "-c",
+        "pnpm check:static && pnpm check:indexing"
+      ]
+    },
+    "build": {
+      "exitCode": 0,
+      "elapsedSeconds": 80.75584071299818,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--cpus",
+        "2",
+        "--memory",
+        "4g",
+        "--user",
+        "1000:1000",
+        "--mount",
+        "type=bind,src=/home/gcseq/moria-proofs/mor-bootstrap-native-025-20261104/source,dst=/work,readonly",
+        "--mount",
+        "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+        "--mount",
+        "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+        "-w",
+        "/work/services/runtime",
+        "moria-indexing-toolchain:local",
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "--test",
+        "native_policy",
+        "--test",
+        "native_storage",
+        "--test",
+        "native_transport",
+        "--test",
+        "native_catalog",
+        "--test",
+        "native_sandbox",
+        "--test",
+        "native_retention",
+        "--no-run",
+        "-j1",
+        "--message-format=json"
+      ]
+    }
+  },
+  "nativeUnits": {
+    "passed": 112,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "failedTrials": {
+    "023": "-j2 compiler process killed by recorded memory-cgroup OOM under4GiB; no Rust type error counted as pass",
+    "024": "exact023 source retry-j1 exposed old native-catalog fixture table/proof calls after common snapshot API change; actual adapter now uses bounded scan and format-aware row-count witness"
+  },
+  "verifiedScope": [
+    "strict distinct v2/v3 canonical reference prefix/version and format-specific root-size bounds",
+    "metadata-independent index-summary reference/descriptor with exact table/snapshot/sequence/schema/key/count/directory agreement",
+    "common Catalog/EngineIO/Evaluation batch-stream API and preserved explicit FlatV2 historical standard-table fixture compiled against merged current Source/store/IO baseline",
+    "legacy unscoped readers explicitly reject both native reference formats",
+    "full static and exact nine-artifact provenance with all112 native units"
+  ],
+  "notVerified": [
+    "v3 head producer, actual stage-bound preparation/registration/publication",
+    "new stored-root profile SQL dispatch runtime integration and legacy runtime regression",
+    "Worker/attestation v3 bridge, graph-root backup/restore/pruning under actual v3 head",
+    "sparse modes, standard position-delete oracle, distributed bootstrap, consumer-chain pins/replay",
+    "full independent current CI and production workload targets"
+  ]
+}

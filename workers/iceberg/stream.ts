@@ -7,7 +7,10 @@ export async function* icebergRows(
   pin: { metadataLocation: string; snapshotId: string },
   options: { batchRows?: number; timeoutMs?: number; signal?: AbortSignal } = {},
 ): AsyncGenerator<unknown> {
-  if (pin.metadataLocation.startsWith('moria-snapshot-v2:'))
+  if (
+    pin.metadataLocation.startsWith('moria-snapshot-v2:') ||
+    pin.metadataLocation.startsWith('moria-snapshot-v3:')
+  )
     throw new MoriaError(
       'UNSUPPORTED_CAPABILITY',
       'Native snapshots require a scoped native reader',
