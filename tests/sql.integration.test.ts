@@ -348,10 +348,14 @@ test('catalog stale second output rolls back first output and checkpoint', async
   assert.deepEqual(
     (
       await pool.query(
-        "SELECT revision FROM moria.dataset_heads WHERE environment='conflict' ORDER BY dataset",
+        "SELECT dataset,revision FROM moria.dataset_heads WHERE environment='conflict' ORDER BY dataset",
       )
     ).rows,
-    [{ revision: '0' }, { revision: '0' }],
+    [
+      { dataset: 'a', revision: '0' },
+      { dataset: 'b', revision: '0' },
+      { dataset: 'input', revision: '0' },
+    ],
   );
   assert.equal(
     (await pool.query("SELECT * FROM moria.checkpoints WHERE environment='conflict'")).rowCount,
@@ -2570,6 +2574,27 @@ test(
     const snow = await createSnowService(catalog, resolve('.local', `snow-test-${randomUUID()}`));
     const first = await snow.sync(snowConfig, snowFixture());
     assert.equal(first.observations, 3);
+    const audit = (
+      await catalog.pool.query('SELECT id,config,plan,result FROM moria.snow_syncs WHERE id=$1', [
+        first.id,
+      ])
+    ).rows[0];
+    assert.equal(audit.id, first.id);
+    assert.deepEqual(audit.config, snowConfig);
+    assert.deepEqual(audit.result.config, snowConfig);
+    assert.equal(audit.plan.pins.length, 3);
+    const auditedStatus = await snow.status();
+    assert.equal(auditedStatus.completed?.id, first.id);
+    assert.deepEqual(auditedStatus.completed?.config, snowConfig);
+    assert.deepEqual(
+      (
+        await catalog.pool.query(
+          'SELECT lineage FROM moria.snapshot_history WHERE environment=$1 AND execution=$2',
+          ['snotel', first.id],
+        )
+      ).rows,
+      [{ lineage: {} }, { lineage: {} }, { lineage: {} }],
+    );
     const initialHeads = await catalog.heads('snotel', [
       'snow-stations-source',
       'snow-observations-source',

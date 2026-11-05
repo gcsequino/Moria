@@ -1,0 +1,7 @@
+{
+  "disposition": "Stopped failed controller after all 48 case events; OIDC setup failure leaked issuer before its cleanup block, keeping Node alive.",
+  "casePassEvents": 46,
+  "caseFailEvents": 2,
+  "ordinaryAggregateCompleted": false,
+  "cleanupVerified": true
+}

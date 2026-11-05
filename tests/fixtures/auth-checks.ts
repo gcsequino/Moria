@@ -25,7 +25,7 @@ export async function checkAuth(catalog: Catalog) {
   const binding = {
     environment,
     application: 'snow',
-    origin: 'http://127.0.0.1:3211',
+    origin: `http://${environment}.localhost`,
     entryPath: '/snow/',
     initialOperations: ['stations:read'],
     recoveryPrincipal: 'recovery',
@@ -42,7 +42,10 @@ export async function checkAuth(catalog: Catalog) {
   ];
   const key = randomBytes(32),
     sessions = new BrowserSessions(authority, binding, providers, key, true);
-  await sessions.initialize();
+  await sessions.initialize().catch(async (error) => {
+    await issuer.close();
+    throw error;
+  });
   async function begin() {
     const flow = await sessions.start('test');
     const response = await fetch(flow.location, { redirect: 'manual' });

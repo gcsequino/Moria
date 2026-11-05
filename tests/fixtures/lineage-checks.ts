@@ -5,6 +5,7 @@ import { readLineage } from '../../services/lineage/src/service.js';
 import { ObjectStore } from '../../services/ontology/src/store.js';
 import { IcebergIndexer } from '../../services/ontology/src/indexer.js';
 import { Authority } from '../../services/security/src/authority.js';
+import { WorkloadSessions } from '../../services/security/src/sessions.js';
 import { Jobs } from '../../services/execution/src/jobs.js';
 import { createWeatherService } from '../../services/weather/src/service.js';
 
@@ -27,13 +28,34 @@ export async function checkLineage(catalog: Catalog) {
   }).migrate();
   await catalog.ensureEnvironment(environment);
   await catalog.ensureDataset(environment, 'source');
+  const authority = new Authority(catalog),
+    operations = ['source:read', 'objects:index'];
+  await authority.syncPrincipal(environment, 'fixture', 'worker', {
+    kind: 'workload',
+    enabled: true,
+    attributes: {},
+    markings: [],
+  });
+  await authority.setApplication(environment, 'fixture', 'indexer', operations);
+  await authority.setGrants(environment, 'fixture', 'worker', 'indexer', operations);
+  const sessions = new WorkloadSessions(authority),
+    credential = await sessions.mint(
+      { environment, principal: 'worker', application: 'indexer' },
+      'fixture',
+    ),
+    context = await sessions.authenticate(`Bearer ${credential.token}`);
+  await catalog.transaction(
+    (client) =>
+      catalog.admitDataProvenance(client, context.sessionHash!, ['objects'], ['source'], 'index'),
+    environment,
+  );
   // Use a high revision so the bounded graph includes the fixture even if the
   // shared integration database already contains many lower-revision resources.
   const revision = '900000000';
   await catalog.pool.query(
     `INSERT INTO moria.snapshot_history(environment,dataset,revision,metadata_location,snapshot_id,execution,lineage)
      VALUES($1,'source',$2,$3,'snapshot-123',$4,$5)`,
-    [environment, revision, privateValue, jobId, JSON.stringify({ secret: privateValue })],
+    [environment, revision, privateValue, jobId, JSON.stringify({ source: privateValue })],
   );
   await catalog.pool.query(
     `INSERT INTO moria.publications(environment,execution,request_hash,receipt) VALUES($1,$2,'hash',$3)`,
