@@ -556,7 +556,7 @@ impl NativeEvaluations {
         );
         let agents = tx
             .query(
-                "SELECT agent_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND agent_execution IS NOT NULL LIMIT 1001",
+                "SELECT agent_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND agent_execution IS NOT NULL ORDER BY case_id,repeat LIMIT 1001",
                 &[&row.get::<_, Uuid>("id")],
             )
             .await?;
@@ -573,6 +573,7 @@ impl NativeEvaluations {
                 crate::sandbox::retained_observations_in(tx.client(), evaluator.get(0)).await?,
             );
         }
+        let marks = union(&[marks], session.environment())?;
         execution::invocation_permission(
             &Authority::current(tx, session).await?.identity,
             row.get("resource"),
@@ -583,17 +584,6 @@ impl NativeEvaluations {
                 .map(|label| label.marking.clone())
                 .collect::<Vec<_>>(),
         )?;
-        let children=tx.query("SELECT agent_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND agent_execution IS NOT NULL ORDER BY case_id,repeat LIMIT 1001",&[&row.get::<_,Uuid>("id")]).await?;
-        ensure!(children.len() <= 1000, "EVALUATION_CASE_LIMIT");
-        for child in children {
-            marks = union(
-                &[
-                    marks,
-                    self.agents.retained_in(tx, session, child.get(0)).await?,
-                ],
-                session.environment(),
-            )?;
-        }
         Ok(marks)
     }
     pub async fn invoke(
