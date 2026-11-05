@@ -3001,3 +3001,15 @@ its actual PostgreSQL blocker while retaining migration fencing assertions.
 All original indexing cases plus actual plan/task/advance failure-isolation
 regressions passed 16/16, with all nine artifacts, 79 native units and static
 checks. Evidence: `production/evidence/2026-11-04/indexing-preclaim-isolation`.
+Native key-index correction (2026-11-04): bounded and streaming partial compaction
+now retain tombstones so untouched older levels cannot resurrect deleted keys.
+The actual v3 root validator permits paired tombstone directories with zero live
+rows while preserving positive-row, pairing and count checks. All three new
+regressions fail on prior behavior (91 existing units pass) and pass after the
+fix; frozen trial009 passes all 94 native units, nine-artifact provenance and
+full static checks. This is library correctness evidence, not an activated
+all-deleted Dataset mutation proof. `production/NATIVE-MOR-INDEX-PROTOCOL.md`
+settles explicit deferred digests, version-three run tags with version-two reads,
+exact touched-row verification and bounded distributed projected-key bootstrap.
+Those remaining APIs, sparse publication and their integration proofs remain
+under implementation. Evidence: `production/evidence/2026-11-04/native-index-tombstones/`.

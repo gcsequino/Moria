@@ -1,0 +1,33 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--cpus",
+    "2",
+    "--memory",
+    "4g",
+    "--user",
+    "1000:1000",
+    "--mount",
+    "type=bind,src=/home/gcseq/moria-proofs/mor-tombstone-empty-red-20261104/source,dst=/work,readonly",
+    "--mount",
+    "type=volume,src=moria-indexing-cargo,dst=/usr/local/cargo",
+    "--mount",
+    "type=volume,src=moria-data-proof-target,dst=/work/services/runtime/target",
+    "-w",
+    "/work/services/runtime",
+    "moria-indexing-toolchain:local",
+    "cargo",
+    "test",
+    "--locked",
+    "--lib",
+    "-j2",
+    "--",
+    "--test-threads=1"
+  ],
+  "exitCode": 101,
+  "elapsedSeconds": 52.745325326919556
+}
