@@ -1817,25 +1817,71 @@ for (const group of [
               true,
             );
             await publish();
-            await install();
-            await tick();
-            await control().done;
-            const withFunction = (await firings())
-              .filter((row) => row.outcome === 'enqueued')
-              .at(-1)!;
-            assert.ok(withFunction.child);
+            assert.equal(JSON.parse(await install()).configured, true);
+            assert.equal(JSON.parse(await tick()).scheduled, 1);
+            assert.equal(JSON.parse(await control().done).worked, true);
+            const added = (await firings()).slice(2);
+            assert.equal(added.length, 1, JSON.stringify(added));
+            const [withFunction] = added;
+            assert.equal(withFunction.outcome, 'enqueued');
+            assert.ok(withFunction.control && withFunction.child, JSON.stringify(withFunction));
+            assert.notEqual(withFunction.child, dispatched.child);
+            const accepted = (
+              await db.pool.query(
+                "SELECT status,input->>'mode'='child-fail' AS expected_input FROM moria.runtime_executions WHERE id=$1 AND resource=$2",
+                [withFunction.child, resource],
+              )
+            ).rows[0];
+            assert.deepEqual(accepted, {
+              status: 'queued',
+              expected_input: true,
+            });
             const parentWorker = once();
             let functionId = '';
-            await until(async () => {
-              functionId =
-                (
-                  await db.pool.query(
-                    'SELECT execution FROM moria.runtime_function_invocations WHERE parent_id=$1',
-                    [withFunction.child],
-                  )
-                ).rows[0]?.execution ?? '';
-              return !!functionId;
-            });
+            try {
+              await until(async () => {
+                functionId =
+                  (
+                    await db.pool.query(
+                      'SELECT execution FROM moria.runtime_function_invocations WHERE parent_id=$1',
+                      [withFunction.child],
+                    )
+                  ).rows[0]?.execution ?? '';
+                if (functionId) return true;
+                assert.equal(
+                  parentWorker.child.exitCode ?? parentWorker.child.signalCode,
+                  null,
+                  'Agent worker exited before Function admission',
+                );
+                return false;
+              });
+            } catch (error) {
+              const state = await db.pool
+                .query(
+                  `SELECT e.status,e.error,t.status AS task,t.attempts,s.state AS sandbox,
+                          s.error AS sandbox_error,s.observation_pending IS NOT NULL AS observation_pending,
+                          s.observation_blocked
+                     FROM moria.runtime_executions e
+                     LEFT JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+                     LEFT JOIN moria.runtime_sandbox_attempts s ON s.execution=e.id
+                    WHERE e.id=$1`,
+                  [withFunction.child],
+                )
+                .then(
+                  ({ rows }) => rows[0],
+                  () => undefined,
+                );
+              t.diagnostic(
+                JSON.stringify({
+                  firing: withFunction,
+                  workerExitCode: parentWorker.child.exitCode,
+                  workerSignal: parentWorker.child.signalCode,
+                  workerWorked: parentWorker.output().match(/^\{"worked":(true|false)\}$/m)?.[1],
+                  state,
+                }),
+              );
+              throw error;
+            }
             const functionWorker = start(['functions', 'once']);
             await Promise.all([parentWorker.done, functionWorker.done]);
             const observed = await get(withFunction.child);
