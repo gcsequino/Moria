@@ -1,0 +1,38 @@
+{"controller": "moria-quality-2bae20f7-9218-4805-ab01-c59463f54e1d", "image": "sha256:0e9d8bbd8b182f77e81fdef62f89745ba3f3a3a5a127bb8c57b19e9d79d1105c", "scratchPools": ["/tmp/moria-engine-scratch-23998164-6ed5-41fb-a3c9-848e42d40db4", "/tmp/moria-engine-scratch-6f471964-37eb-4502-a6cc-5146e875eba6", "/tmp/moria-engine-scratch-fdee2c6a-577a-4452-9a64-b98089f9bfa5"], "temporary": "/tmp/moria-quality-aqwucqof"}
+$ node scripts/test-files.mjs integration tests/native-agents.integration.test.ts
+Running 1 integration test files.
+▶ native Agent admission and model
+  ✔ authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers (4826.646113ms)
+  ✔ SDK and CLI use the persistent native API and the agent worker replaces its Node launcher (6345.122225ms)
+  ✔ a durable model intent commits before gateway admission while public callback data stays withheld (8386.719583ms)
+  ✔ actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects (20257.143897ms)
+  ✔ Agent admission captures approved material before code and a missed approval pulse cannot revive it (10002.610228ms)
+  ✔ exact Agent invocation scope admits required dependencies without filesystem browsing (5133.889061ms)
+✔ native Agent admission and model (79909.809626ms)
+▶ native Agent child isolation and worker lifecycle
+  ✔ a pending child observation blocks parent logs, actions and model dispatch (46383.20277ms)
+  ✔ private child progress crosses a held dependency insertion and resumes after terminal proof (10765.795813ms)
+  ✔ Agent observes actual Function child failure labels before returning a caught outcome (9015.01569ms)
+  ✔ Agent cancellation fences a running Function child without a second attempt (5532.639312ms)
+  ✔ healthy long-running agent work renews the same single-attempt database lease (14479.640947ms)
+  ✔ bound model dispatch stops after real worker-scope revocation and cannot publish a result (5430.172741ms)
+  ✔ cancellation and supervisor SIGKILL fence the graph without re-executing user code (4121.818318ms)
+  ✔ real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death (5601.883995ms)
+  ✔ registered worker class admission is independent of unrelated class ordering (4712.086924ms)
+✔ native Agent child isolation and worker lifecycle (130838.165298ms)
+▶ native Agent service and current authority
+  ✔ Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement (55050.956129ms)
+  ✔ accepted private job authority survives ordinary session expiry while public and stale lease credentials fail (14490.505219ms)
+  ✔ newly granted tool permissions cannot widen an already accepted job capability (8125.292433ms)
+  ✔ postclaim filesystem rejection records no code start after an expired original session (1860.382395ms)
+  ✔ deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active (14093.349398ms)
+  ✔ accepted agent code remains pinned across redeployment and current authority gates retained results (6963.174841ms)
+✔ native Agent service and current authority (125839.194796ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 337171.681257

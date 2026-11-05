@@ -1,0 +1,30 @@
+{"controller": "moria-quality-1e38cbe2-7890-49af-805e-f1d8d4a94c54", "image": "sha256:0e9d8bbd8b182f77e81fdef62f89745ba3f3a3a5a127bb8c57b19e9d79d1105c", "scratchPools": ["/tmp/moria-engine-scratch-ca0204c9-7ce6-4fed-a0af-39b6865f9932", "/tmp/moria-engine-scratch-2de058a7-2428-458e-ba85-cea4ee7c7565", "/tmp/moria-engine-scratch-cff3ca0d-1e76-4082-8942-95c205e0594e"], "temporary": "/tmp/moria-quality-pv5scgwe"}
+$ node scripts/test-files.mjs integration tests/native-functions.integration.test.ts
+Running 1 integration test files.
+▶ native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+  ✔ authenticated admission pins release/actor/input, rejects forged fields and generic function workers (2160.472296ms)
+  ✔ a lost public acceptance response and API process death replay one durable invocation (1909.968307ms)
+  ✔ publication retries only definite transaction aborts without rerunning the guest (6237.497652ms)
+  ✔ deployed code cannot change an accepted release or replay schema (2804.532129ms)
+  ✔ real native broker preserves reads and committed readWrite effects after later code failure (6243.115272ms)
+  ✔ editProposal batch and function receipt commit together; rejection or result failure rolls all edits back (7262.902154ms)
+  ✔ live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation (987.542964ms)
+  ✔ cancellation and supervisor death fence the only attempt and remove local orphans (2099.21894ms)
+  ✔ actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL (3072.287945ms)
+  ✔ a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success (5135.480247ms)
+  ✔ native worker pool supports bounded nested invocations and function-backed action preparation (8907.769898ms)
+  ✔ worker CLI rejects missing native configuration before creating a workspace or Node worker (334.132021ms)
+  ✔ a public function catching a protected missing-object read retains its labels and failed observation (7702.753478ms)
+  ✔ a killed callback with rolled-back private evidence cannot release failure metadata or logs (1525.817536ms)
+  ✔ a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically (6254.132002ms)
+  ✔ exact Function invocation scopes run without filesystem browsing and remain pinned on acceptance (1879.965572ms)
+  ✔ changed read evidence and revoked access withhold retained results and protected logs (2599.240328ms)
+✔ native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts (71515.351199ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72080.77408
