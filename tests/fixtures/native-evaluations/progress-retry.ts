@@ -142,8 +142,14 @@ export async function evaluationProgressRetryFixture(
       }
       await delay(20);
     }
+    const state = (
+      await pool.query(
+        'SELECT target.kind,c.outcome,case_work.status AS case_status,child.status AS agent_status,child.error AS agent_error,task.status AS task_status,sandbox.state AS sandbox_state FROM public.evaluation_progress_targets target JOIN moria.runtime_evaluation_cases c ON c.execution=target.case_execution JOIN moria.runtime_executions case_work ON case_work.id=c.execution JOIN moria.runtime_executions child ON child.id=target.child LEFT JOIN moria.runtime_execution_tasks task ON task.execution=child.id LEFT JOIN moria.runtime_sandbox_attempts sandbox ON sandbox.execution=child.id ORDER BY target.kind',
+      )
+    ).rows;
     assert.fail(
-      'Five intermittent committed progress transactions and the four-conflict boundary must execute on their original Agent UUIDs',
+      'Five intermittent committed progress transactions and the four-conflict boundary must execute on their original Agent UUIDs. ' +
+        JSON.stringify(state),
     );
   })();
   void done.catch(() => {});
