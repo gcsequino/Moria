@@ -336,7 +336,7 @@ END $$;
 -- Read authority is resolved from an actual accepted input/expected head or indexing build.
 -- It never reserves a producer or adds qualifications/admissions.
 CREATE FUNCTION moria.runtime_dataset_graph_read(claims jsonb,path text[]) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
-DECLARE state jsonb;binding jsonb;graph_profile jsonb;execution_state moria.runtime_executions;build moria.indexing_builds;history moria.snapshot_history;origin moria.runtime_dataset_graph_roots;node moria.runtime_dataset_graph_nodes;qualification moria.runtime_dataset_graph_qualifications;resource_id text;env text;instance_inc uuid;physical text;chosen text;table_uuid text;
+DECLARE state jsonb;binding jsonb;graph_profile jsonb;execution_state moria.runtime_executions;build moria.indexing_builds;history moria.snapshot_history;origin moria.runtime_dataset_graph_roots;node moria.runtime_dataset_graph_nodes;qualification moria.runtime_dataset_graph_qualifications;resource_id text;env text;instance_inc uuid;physical text;chosen text;table_uuid text;retained moria.runtime_dataset_roots;catalog_version integer;
 BEGIN
  IF claims->>'kind'='execution' THEN
   state:=moria.runtime_dataset_io_check(claims->>'session',(claims->>'execution')::uuid,(claims->>'task')::uuid,(claims->>'owner')::uuid,(claims->>'fence')::bigint,(claims->>'incarnation')::uuid,claims->>'warehouse',claims->>'table',claims->>'revision',false);
@@ -363,6 +363,14 @@ BEGIN
  IF binding IS NULL OR binding='null'::jsonb THEN RAISE EXCEPTION 'DATASET_WRITE_CAPABILITY_REQUIRED';END IF;
  PERFORM moria.runtime_dataset_root_assert(history.metadata_location);
  physical:=binding->>'physicalBindingFingerprint';
+ catalog_version:=CASE WHEN history.metadata_location LIKE 'moria-snapshot-v3:%' THEN 3 WHEN history.metadata_location LIKE 'moria-snapshot-v2:%' THEN 2 ELSE NULL END;
+ SELECT r.* INTO retained FROM moria.runtime_dataset_roots r
+  WHERE r.key=moria.runtime_dataset_root_key(history.metadata_location) AND r.environment=env AND r.dataset=resource_id
+   AND r.metadata_location=history.metadata_location AND r.snapshot_id=history.snapshot_id AND r.sealed
+   AND r.root->>'version'=catalog_version::text
+   AND r.reader_profile=CASE catalog_version WHEN 2 THEN 'iceberg-v2-cow-flat-bounded-v2' WHEN 3 THEN 'iceberg-v2-native-mor-bounded-v3' ELSE NULL END
+   AND EXISTS(SELECT 1 FROM moria.runtime_dataset_root_locations l WHERE l.root=r.key AND l.sealed AND l.physical_fingerprint=physical AND l.incarnation=instance_inc);
+ IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  graph_profile:=jsonb_build_object('version',3,'readerProfile','iceberg-v2-native-mor-bounded-v3','directoryProfile','sha256-radix16-v1','chunkProfiles',jsonb_build_array('moria-sha256-chunks-1m-v1','moria-sha256-chunks-64k-v1'),'tableUuid',table_uuid,'schemaIdentity',encode(sha256(convert_to((binding->'icebergSchema')::text,'UTF8')),'hex'),'keySchemaHash',binding->>'keySchemaHash');
  SELECT * INTO origin FROM moria.runtime_dataset_graph_roots WHERE root=moria.runtime_dataset_root_key(history.metadata_location) AND physical_fingerprint=physical AND incarnation=instance_inc AND profile=graph_profile;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_WRITE_CAPABILITY_REQUIRED';END IF;
@@ -372,7 +380,7 @@ BEGIN
  SELECT * INTO qualification FROM moria.runtime_dataset_graph_qualifications WHERE runtime_dataset_graph_qualifications.node=chosen AND physical_fingerprint=physical AND incarnation=instance_inc;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  PERFORM moria.runtime_dataset_object_read(node.content->'object'->>'warehouseId',node.content->'object'->>'tableId',node.content->'object'->>'objectId');
- RETURN jsonb_build_object('identity',jsonb_build_object('environment',env,'dataset',resource_id,'revision',history.revision::text,'snapshot',history.snapshot_id,'metadataLocation',history.metadata_location,'root',origin.node,'physicalFingerprint',physical,'incarnation',instance_inc,'profile',graph_profile),
+ RETURN jsonb_build_object('identity',jsonb_build_object('environment',env,'dataset',resource_id,'revision',history.revision::text,'snapshot',history.snapshot_id,'metadataLocation',history.metadata_location,'catalogVersion',catalog_version,'readerProfile',retained.reader_profile,'root',origin.node,'physicalFingerprint',physical,'incarnation',instance_inc,'profile',graph_profile),
   'node',jsonb_build_object('node',chosen,'content',node.content,'physicalVersion',qualification.physical_version,'kind',node.kind,'height',node.height,'entries',node.entries,'logicalBytes',node.logical_bytes,'profile',graph_profile));
 END $$;
 

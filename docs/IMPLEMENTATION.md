@@ -2970,3 +2970,13 @@ missing-backup disabled-dispatch coverage remains green. Evidence:
 This backup precedes metadata pruning; its later unchanged edge is not claimed
 restored. Sparse v3 publication and actual incremental window custody/replay
 remain under implementation.
+
+V3 Catalog foundation work in progress (2026-11-04): strict version-three
+references, a metadata-independent versioned index summary, actual stored-root
+profile dispatch and a common bounded native batch-stream interface are staged
+on the development branch. Catalog/EngineIO/Evaluation wiring is partial. No v3
+head producer or sparse mode is activated; Worker/attestation, staged validation,
+root registration, recovery/pruning and actual end-to-end qualification remain
+pending. These edits have formatting/schema generation only; native/static and
+integration checks have not yet run. This checkpoint preserves unfinished source
+before integrating the current Source store/IO changes.

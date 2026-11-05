@@ -21,7 +21,9 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::{ops::Range, sync::Arc};
 use uuid::Uuid;
+mod index_summary;
 mod point;
+pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef};
 pub use point::VerifiedKeyRow;
 
 pub const PROFILE: &str = "iceberg-v2-native-mor-bounded-v3";
@@ -31,7 +33,7 @@ pub(crate) struct LogicalFile {
     pub name: String,
     pub content: SealedObject,
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct VisibilityIndex {
     pub rows: u64,
@@ -68,6 +70,8 @@ pub(crate) struct RootDescriptor {
     pub metadata: LogicalFile,
     pub files: NodeReference,
     pub visibility: Option<VisibilityIndex>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub index_summary: Option<IndexSummaryRef>,
 }
 #[derive(Clone, Debug)]
 pub struct NativeSnapshot {
@@ -176,6 +180,7 @@ impl NativeSnapshot {
             key_hash == descriptor.key_schema_hash,
             "DATASET_PRIMARY_KEY_INVALID"
         );
+        index_summary::validate_binding(&context, &root, &descriptor, &metadata).await?;
         context.check_node(&root).await?;
         Ok(Self {
             context,
@@ -375,6 +380,13 @@ impl NativeSnapshot {
     pub async fn scan(
         self: Arc<Self>,
     ) -> Result<BoxStream<'static, Result<arrow_array::RecordBatch>>> {
+        self.scan_with_batch_size(1000).await
+    }
+    pub(crate) async fn scan_with_batch_size(
+        self: Arc<Self>,
+        batch_size: usize,
+    ) -> Result<BoxStream<'static, Result<arrow_array::RecordBatch>>> {
+        ensure!((1..=1000).contains(&batch_size), "RESOURCE_LIMIT");
         self.check_current().await?;
         let directory = self.index_directory("selections").await?;
         let files = directory.map_or_else(
@@ -406,6 +418,7 @@ impl NativeSnapshot {
             file_visible: u64,
             total: u64,
             files_seen: u64,
+            batch_size: usize,
         }
         let state = Scan {
             snapshot: self,
@@ -417,6 +430,7 @@ impl NativeSnapshot {
             file_visible: 0,
             total: 0,
             files_seen: 0,
+            batch_size,
         };
         Ok(Box::pin(futures::stream::try_unfold(
             state,
@@ -530,7 +544,7 @@ impl NativeSnapshot {
                     let stream = state
                         .table
                         .reader_builder()
-                        .with_batch_size(1000)
+                        .with_batch_size(state.batch_size)
                         .with_data_file_concurrency_limit(1)
                         .with_range_fetch_concurrency(1)
                         .build()

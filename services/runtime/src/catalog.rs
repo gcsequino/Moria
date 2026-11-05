@@ -18,7 +18,11 @@ use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use uuid::Uuid;
 
+mod snapshot;
+pub use snapshot::PinnedDatasetSnapshot;
+
 const REF_PREFIX: &str = "moria-snapshot-v2:";
+const GRAPH_REF_PREFIX: &str = "moria-snapshot-v3:";
 const PAGE_MAX: usize = 256 * 1024 + 4096;
 
 /// A current Dataset capability constructed from a verified session and a real producer lease.
@@ -272,17 +276,26 @@ impl NativeSnapshotRef {
     pub fn encode(&self) -> Result<String> {
         self.validate()?;
         Ok(format!(
-            "{REF_PREFIX}{}",
+            "{}{}",
+            if self.version == 2 {
+                REF_PREFIX
+            } else {
+                GRAPH_REF_PREFIX
+            },
             crate::canonical::canonical_json(&serde_json::to_value(self)?)?
         ))
     }
     pub fn decode(value: &str) -> Result<Self> {
         ensure!(value.len() <= 4096, "INVALID_NATIVE_SNAPSHOT_REF");
-        let result: Self = serde_json::from_str(
-            value
-                .strip_prefix(REF_PREFIX)
-                .ok_or_else(|| anyhow::anyhow!("INVALID_NATIVE_SNAPSHOT_REF"))?,
-        )?;
+        let (encoded, version) = if let Some(encoded) = value.strip_prefix(REF_PREFIX) {
+            (encoded, 2)
+        } else if let Some(encoded) = value.strip_prefix(GRAPH_REF_PREFIX) {
+            (encoded, 3)
+        } else {
+            anyhow::bail!("INVALID_NATIVE_SNAPSHOT_REF")
+        };
+        let result: Self = serde_json::from_str(encoded)?;
+        ensure!(result.version == version, "INVALID_NATIVE_SNAPSHOT_REF");
         result.validate()?;
         ensure!(
             result.encode()? == value,
@@ -292,7 +305,14 @@ impl NativeSnapshotRef {
     }
     fn validate(&self) -> Result<()> {
         ensure!(
-            self.version == 2 && self.root.size > 0 && self.root.size <= 16384,
+            matches!(self.version, 2 | 3)
+                && self.root.size > 0
+                && self.root.size
+                    <= if self.version == 2 {
+                        16384
+                    } else {
+                        16 * 1024 * 1024
+                    },
             "INVALID_NATIVE_SNAPSHOT_REF"
         );
         validate_object(&self.root)?;
@@ -1037,7 +1057,7 @@ pub(crate) async fn dataset_pin_registered_row(
 
 pub struct PinnedDatasetRead {
     pub pin: DatasetPin,
-    pub snapshot: LoadedSnapshot,
+    pub snapshot: PinnedDatasetSnapshot,
     pub consumed_markings: Vec<String>,
 }
 /// Read only the exact Dataset declared by a live native task/coordinator, through trusted provider configuration.
@@ -1062,6 +1082,29 @@ pub async fn read_pinned_dataset(
     let consumed_markings = grant.consumed_markings()?;
     let reader = crate::storage::configured_reader(&pin.namespace)?;
     grant.validate_store(reader.as_ref())?;
+    let reference = NativeSnapshotRef::decode(&pin.metadata_location)?;
+    if reference.version == 3 {
+        let (context, root) = crate::dataset_graph_read::GraphReadContext::execution(
+            reader,
+            grant.clone(),
+            crate::dataset_graph_read::ReadBasis::Input,
+            cancel,
+        )
+        .await?;
+        let snapshot =
+            Arc::new(crate::native_snapshot_v3::NativeSnapshot::open(context, root).await?);
+        ensure!(
+            snapshot.snapshot_id()?.to_string() == pin.snapshot
+                && snapshot.metadata().uuid() == pin.table_uuid,
+            "SNAPSHOT_PIN_MISMATCH"
+        );
+        grant.validate_schema(snapshot.metadata().current_schema())?;
+        return Ok(PinnedDatasetRead {
+            pin,
+            snapshot: PinnedDatasetSnapshot::GraphV3(snapshot),
+            consumed_markings,
+        });
+    }
     let scratch_root = std::env::var("MORIA_NATIVE_SNAPSHOT_SCRATCH_ROOT")
         .map_err(|_| anyhow::anyhow!("SNAPSHOT_SCRATCH_UNAVAILABLE"))?;
     let scratch = PosixStore::provision(
@@ -1077,7 +1120,6 @@ pub async fn read_pinned_dataset(
         &std::env::var("MORIA_NATIVE_CLOSURE_LIMITS")
             .map_err(|_| anyhow::anyhow!("SNAPSHOT_BUDGET_UNAVAILABLE"))?,
     )?;
-    let reference = NativeSnapshotRef::decode(&pin.metadata_location)?;
     let snapshot = load_snapshot(
         &scratch,
         reader,
@@ -1093,7 +1135,7 @@ pub async fn read_pinned_dataset(
     grant.validate_schema(table.metadata().current_schema().as_ref())?;
     Ok(PinnedDatasetRead {
         pin,
-        snapshot,
+        snapshot: PinnedDatasetSnapshot::FlatV2(snapshot),
         consumed_markings,
     })
 }
@@ -1343,4 +1385,78 @@ async fn load_snapshot_inner(
         reader,
         authority,
     })
+}
+
+#[cfg(test)]
+mod reference_tests {
+    use super::*;
+    fn root(size: u64) -> SealedObject {
+        SealedObject {
+            object: LogicalObject::new("warehouse", "table", "root").unwrap(),
+            size,
+            sha256: format!("sha256:{}", "a".repeat(64)),
+        }
+    }
+    #[test]
+    fn catalog_versions_have_strict_distinct_canonical_prefixes() {
+        for version in [2, 3] {
+            let reference = NativeSnapshotRef {
+                version,
+                root: root(10),
+            };
+            let encoded = reference.encode().unwrap();
+            assert!(encoded.starts_with(if version == 2 {
+                REF_PREFIX
+            } else {
+                GRAPH_REF_PREFIX
+            }));
+            assert_eq!(NativeSnapshotRef::decode(&encoded).unwrap(), reference);
+            let wrong = encoded.replacen(
+                if version == 2 {
+                    REF_PREFIX
+                } else {
+                    GRAPH_REF_PREFIX
+                },
+                if version == 2 {
+                    GRAPH_REF_PREFIX
+                } else {
+                    REF_PREFIX
+                },
+                1,
+            );
+            assert!(NativeSnapshotRef::decode(&wrong).is_err());
+        }
+        assert!(
+            NativeSnapshotRef {
+                version: 2,
+                root: root(16385)
+            }
+            .encode()
+            .is_err()
+        );
+        assert!(
+            NativeSnapshotRef {
+                version: 3,
+                root: root(16 * 1024 * 1024)
+            }
+            .encode()
+            .is_ok()
+        );
+        assert!(
+            NativeSnapshotRef {
+                version: 3,
+                root: root(16 * 1024 * 1024 + 1)
+            }
+            .encode()
+            .is_err()
+        );
+        assert!(
+            NativeSnapshotRef {
+                version: 4,
+                root: root(10)
+            }
+            .encode()
+            .is_err()
+        );
+    }
 }

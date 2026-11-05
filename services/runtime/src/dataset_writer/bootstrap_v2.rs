@@ -542,6 +542,7 @@ pub async fn bootstrap_expected_head(
         metadata,
         files: files.clone(),
         visibility,
+        index_summary: None,
     };
     let mut children = vec![("files".into(), builder.files.qualified_root(&files).await?)];
     for (name, reference, directory) in [

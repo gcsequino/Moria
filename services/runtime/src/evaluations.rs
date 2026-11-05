@@ -1037,14 +1037,7 @@ impl NativeEvaluations {
             Cancellation::default(),
         )
         .await?;
-        let table = loaded.snapshot.table().await?;
-        let scan = table
-            .into_table()
-            .scan()
-            .snapshot_id(loaded.pin.snapshot.parse()?)
-            .select_all()
-            .build()?;
-        let mut batches = scan.to_arrow().await?;
+        let mut batches = loaded.snapshot.scan(1000).await?;
         let mut cases = Vec::new();
         let mut ids = BTreeSet::new();
         while let Some(batch) = batches.try_next().await? {

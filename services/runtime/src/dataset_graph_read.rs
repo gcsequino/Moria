@@ -78,6 +78,24 @@ impl GraphReadContext {
     pub(crate) fn snapshot_id(&self) -> &Value {
         &self.identity["snapshot"]
     }
+    pub(crate) fn catalog_reference(&self) -> Result<crate::catalog::NativeSnapshotRef> {
+        let reference = crate::catalog::NativeSnapshotRef::decode(
+            self.identity["metadataLocation"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("DATASET_GRAPH_ANCESTRY_REQUIRED"))?,
+        )?;
+        ensure!(
+            self.identity["catalogVersion"].as_u64() == Some(u64::from(reference.version))
+                && self.identity["readerProfile"].as_str()
+                    == Some(if reference.version == 2 {
+                        "iceberg-v2-cow-flat-bounded-v2"
+                    } else {
+                        crate::native_snapshot_v3::PROFILE
+                    }),
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        Ok(reference)
+    }
     pub(crate) async fn check_node(&self, node: &ReadableNode) -> Result<()> {
         self.current(node).await
     }
