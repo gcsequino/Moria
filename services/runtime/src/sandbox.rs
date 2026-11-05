@@ -455,6 +455,20 @@ impl SandboxContext {
             fence > 0 && fence.to_string() == self.lease.fence,
             "FUNCTION_LEASE_INVALID"
         );
+        if self.domain == SandboxDomain::Agent
+            && let (Some(task), Some(hash)) = (self.lease.task, self.session_hash.as_deref())
+        {
+            let session = crate::authority::Authority::agent_task_session_in(
+                client,
+                self,
+                task,
+                self.host_id,
+                fence,
+                hash,
+            )
+            .await?;
+            return crate::agents::check_context(client, self, Some(session)).await;
+        }
         client.query_one("SELECT moria.runtime_function_worker_check($1,$2,(SELECT resource_class FROM moria.runtime_executions WHERE id=$3),$4)", &[&self.lease.owner,&self.host_id,&self.lease.execution,&self.domain.name()]).await?;
         ensure!(
             client
@@ -493,7 +507,7 @@ impl SandboxContext {
             ensure!(client.query_opt("SELECT 1 FROM moria.runtime_executions WHERE id=$1 AND owner=$2 AND fence=$3 AND status='preparing' AND lease_until>clock_timestamp()", &[&self.lease.execution,&self.lease.owner,&fence]).await?.is_some(),"FUNCTION_LEASE_INVALID");
         }
         if self.domain == SandboxDomain::Agent {
-            crate::agents::check_context(client, self).await?;
+            crate::agents::check_context(client, self, None).await?;
             return Ok(());
         }
         if self.domain == SandboxDomain::Evaluator {
