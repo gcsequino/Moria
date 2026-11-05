@@ -2233,11 +2233,11 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                   },
                 ],
               });
-              const resolved = inspected
+              const marker = inspected
                 .split('\n')
-                .filter((line) => line.startsWith('{'))
-                .map((line) => JSON.parse(line))
-                .find((value) => value.event === 'resolved');
+                .find((line) => line.includes('"event":"resolved"'));
+              assert(marker, 'Native catalog must emit its resolved Dataset pin');
+              const resolved = JSON.parse(marker.slice(marker.indexOf('{')));
               assert.equal(resolved.pin.resource, instancePipeline.output);
               assert.equal(resolved.pin.revision, head.revision);
               assert.ok(resolved.pin.markings.includes(classification));
