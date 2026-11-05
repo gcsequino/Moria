@@ -27,3 +27,33 @@ Local Linux proof image digest
 ```text
 sha256:ddf51c84cd6e858654f59a9a7ee4a7c1ccb99e536b30640d61dcd09bcb7c14a5
 ```
+
+## Follow-up after hosted Linux
+
+Hosted revision `3f24ad7` passed 64-output admission in 27.094 seconds.
+The 64-input and 64-output case still returned HTTP 504 at 30 seconds.
+[Hosted Linux result](https://github.com/gcsequino/Moria/actions/runs/42111707604)
+
+Revision `33a2266` checks paired service permissions against one current
+protected resource read and reuses the output declaration within admission.
+The requester read batch covers both inputs and outputs. Input namespace
+and physical pin checks still run against the current state. The live
+grant regression verified that removing the output write grant denied the
+pair while preserving the authorized read.
+
+The corrected local run passed all ten tests including the parent. The
+64-output and 64-input/64-output subtests took 11.466 and 22.663 seconds,
+including their assertions and cancellation. Grouped publication passed
+the exact 120-second database deadline, and SDK and CLI replay, independent
+Parquet readback, and scratch reuse passed. The whole test took 597.142
+seconds. All scratch pools and the controller were removed. The first
+trial of this production code missed the grouped publication barrier, so
+the local pass still needs independent hosted confirmation.
+
+The run used nine matching native artifacts and passed static checks,
+126 native unit tests, and seven provenance tests. The final image reused
+the native artifacts after a test-only correction.
+
+```text
+sha256:e589bbe233625d61b5b17cc8d9f81ea2713ca6078c8a5201d357fd03270c4e0b
+```

@@ -9,12 +9,12 @@ and observation to settle before revoking the worker. The Docker compatibility
 test and all 18 Functions tests pass with their original limits.
 [Function evidence](production/evidence/2026-11-05/linux-function-gates.md)
 
-Pipeline batches the current service's ordered provenance checks and verifies
-changed graphs before commit. Full-width admission pinned 64 real Dataset
-heads and accepted 64 outputs in 25.487 seconds against the original
-30-second request deadline. All nine Pipeline subtests and seven provenance
-tests passed, including grouped publication, spill recovery, and revocation
-on replay. [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
+Pipeline batches ordered service provenance, paired service permissions,
+and requester Dataset reads. The follow-up local 64-input and 64-output
+subtest finished in 22.663 seconds, including its assertions, under the
+original 30-second request deadline. The corrected run passed all nine
+Pipeline subtests and seven provenance tests. It verified grouped
+publication, spill recovery, and denial after removal of a live write grant. [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
 · [Pipeline follow-up](https://github.com/gcsequino/Moria/issues/83)
 
 The Dataset v3 readback harness keeps four scalar checks in flight. Its
@@ -57,12 +57,14 @@ SDK worker after queue admission and verified that fixture cleanup cancelled
 the exact queued Agent without starting an attempt. The following Agent cases
 ran successfully with their original deadlines.
 
-The previous hosted Linux run at `e232e11` reported 1,323 passes, 29 failures,
-and two cancellations. Static quality passed on the newer `3f24ad7` run.
-The complete hosted Linux result remains pending. The ten-case service
-Evaluation still exceeds its original 90-second lifecycle barrier in isolation.
-[Previous Linux result](https://github.com/gcsequino/Moria/actions/runs/42097076558)
-· [Current Linux run](https://github.com/gcsequino/Moria/actions/runs/42111707604)
+Hosted Linux at `3f24ad7` reported 1,334 passes, 25 failures, and one
+cancellation. The Function fixes, Dataset bootstrap and replacement, and
+64-output admission passed there. Maximum-width admission and grouped
+publication still failed on that revision. Agent lifecycle, Evaluation
+scheduling, and Connector sandbox accounting also remain open. The
+ten-case service Evaluation exceeds its original 90-second lifecycle
+barrier in isolation. [Hosted Linux result](https://github.com/gcsequino/Moria/actions/runs/42111707604)
+· [Hosted accounting diagnostic](https://github.com/gcsequino/Moria/actions/runs/42126546769)
 · [Linux follow-up](https://github.com/gcsequino/Moria/issues/82)
 
 ## November 5 Agent publication identity reuse
