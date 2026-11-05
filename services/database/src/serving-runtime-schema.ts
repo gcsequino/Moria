@@ -207,17 +207,21 @@ BEGIN
   RETURN moria.native_serving_accepted_delegation(moria.runtime_job_delegation_guard(execution));
 END $$;
 CREATE FUNCTION moria.native_serving_session(token_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE origin jsonb; current_state jsonb;
+DECLARE resolution jsonb; origin jsonb; current_state jsonb;
 BEGIN
   BEGIN
     RETURN moria.native_serving_session_origin(token_hash,false);
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM<>'UNAUTHENTICATED' THEN RAISE; END IF;
   END;
-  IF to_regprocedure('moria.runtime_job_session_origin(text)') IS NULL THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
-  origin:=moria.runtime_job_session_origin(token_hash);
+  IF to_regprocedure('moria.runtime_job_session_resolution(text)') IS NULL THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
+  resolution:=moria.runtime_job_session_resolution(token_hash);
+  origin:=resolution->'origin';
   IF origin IS NULL THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
-  current_state:=moria.native_serving_accepted_delegation(origin);
+  -- An execution credential already resolved the current intersection while checking
+  -- its binding, lease and delegation. Indexing retains its distinct scope admission.
+  current_state:=resolution->'validatedState';
+  IF current_state IS NULL THEN current_state:=moria.native_serving_accepted_delegation(origin); END IF;
   IF current_state->>'environment' IS DISTINCT FROM origin->>'environment'
     OR current_state->>'principal' IS DISTINCT FROM origin->>'principal'
     OR current_state->>'application' IS DISTINCT FROM origin->>'application' THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
