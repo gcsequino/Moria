@@ -1,0 +1,177 @@
+{
+  "frames": 167,
+  "executions": [
+    {
+      "id": "1728a3d8-4397-492a-8d34-459247a40f43",
+      "domain": "agent",
+      "case_id": "pass",
+      "repeat": 0,
+      "renewalLeases": [
+        [
+          "2026-11-05 04:46:20.641079+00",
+          "2026-11-05 04:46:50.31096+00"
+        ],
+        [
+          "2026-11-05 04:46:29.664045+00",
+          "2026-11-05 04:46:59.394983+00"
+        ],
+        [
+          "2026-11-05 04:46:38.68201+00",
+          "2026-11-05 04:47:08.188227+00"
+        ],
+        [
+          "2026-11-05 04:46:56.069965+00",
+          "2026-11-05 04:47:19.127658+00"
+        ]
+      ],
+      "terminal": [
+        {
+          "sampled_at": "2026-11-05 04:47:19.443248+00",
+          "id": "1728a3d8-4397-492a-8d34-459247a40f43",
+          "parent": "54861cd2-8840-4b85-bf58-e14343b4fb8f",
+          "domain": "agent",
+          "status": "failed",
+          "error": "DEADLINE_EXCEEDED",
+          "deadline": "2026-11-05 04:47:19.127658+00",
+          "task": "0f35166c-f0fd-46f7-96b6-8689f6fcc643",
+          "task_status": "cancelled",
+          "task_lease": null,
+          "case_id": "pass",
+          "repeat": 0
+        }
+      ]
+    },
+    {
+      "id": "983b5800-58ed-42c0-9377-b670b572b980",
+      "domain": "agent",
+      "case_id": "pass",
+      "repeat": 1,
+      "renewalLeases": [
+        [
+          "2026-11-05 04:46:20.140255+00",
+          "2026-11-05 04:46:49.925477+00"
+        ],
+        [
+          "2026-11-05 04:46:29.664046+00",
+          "2026-11-05 04:46:59.256561+00"
+        ],
+        [
+          "2026-11-05 04:46:38.181456+00",
+          "2026-11-05 04:47:08.086496+00"
+        ],
+        [
+          "2026-11-05 04:46:52.560699+00",
+          "2026-11-05 04:47:19.320443+00"
+        ]
+      ],
+      "terminal": [
+        {
+          "sampled_at": "2026-11-05 04:47:19.44325+00",
+          "id": "983b5800-58ed-42c0-9377-b670b572b980",
+          "parent": "c687c8c2-056d-423c-8e2d-7c10e573d10f",
+          "domain": "agent",
+          "status": "failed",
+          "error": "DEADLINE_EXCEEDED",
+          "deadline": "2026-11-05 04:47:19.320443+00",
+          "task": "451c5d11-2c25-444d-bd48-3c7abadfadf2",
+          "task_status": "cancelled",
+          "task_lease": null,
+          "case_id": "pass",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "id": "0b4c943c-e6f3-41f6-bda1-51d9b50e009a",
+      "domain": "function",
+      "case_id": null,
+      "repeat": null,
+      "renewalLeases": [
+        [
+          "2026-11-05 04:46:52.5607+00",
+          "2026-11-05 04:47:09.553199+00"
+        ]
+      ],
+      "terminal": [
+        {
+          "sampled_at": "2026-11-05 04:47:11.111142+00",
+          "id": "0b4c943c-e6f3-41f6-bda1-51d9b50e009a",
+          "parent": "1728a3d8-4397-492a-8d34-459247a40f43",
+          "domain": "function",
+          "status": "failed",
+          "error": "DEADLINE_EXCEEDED",
+          "deadline": "2026-11-05 04:47:09.553199+00",
+          "task": "f15ea6c0-47dc-47ab-ac96-2ee16d3c1f06",
+          "task_status": "cancelled",
+          "task_lease": null,
+          "case_id": null,
+          "repeat": null
+        }
+      ]
+    },
+    {
+      "id": "7706f128-3e9a-45b3-a649-183b3c1cb314",
+      "domain": "function",
+      "case_id": null,
+      "repeat": null,
+      "renewalLeases": [
+        [
+          "2026-11-05 04:46:44.043012+00",
+          "2026-11-05 04:47:09.719793+00"
+        ]
+      ],
+      "terminal": [
+        {
+          "sampled_at": "2026-11-05 04:47:12.114506+00",
+          "id": "7706f128-3e9a-45b3-a649-183b3c1cb314",
+          "parent": "983b5800-58ed-42c0-9377-b670b572b980",
+          "domain": "function",
+          "status": "failed",
+          "error": "FUNCTION_TIMEOUT",
+          "deadline": "2026-11-05 04:47:09.719793+00",
+          "task": "bf9816ef-6259-4d9b-8276-51dcf4ed47c9",
+          "task_status": "cancelled",
+          "task_lease": null,
+          "case_id": null,
+          "repeat": null
+        }
+      ]
+    },
+    {
+      "id": "f5a11a62-3f1c-41b6-9bc2-ab51f41d09d7",
+      "domain": "agent",
+      "case_id": "fail",
+      "repeat": 1,
+      "renewalLeases": [
+        [
+          "2026-11-05 04:47:22.451286+00",
+          "2026-11-05 04:47:52.415358+00"
+        ]
+      ],
+      "terminal": []
+    },
+    {
+      "id": "c57aa9e1-c1ba-4f0b-8571-ac2d9b1b3125",
+      "domain": "agent",
+      "case_id": "fail",
+      "repeat": 0,
+      "renewalLeases": [
+        [
+          "2026-11-05 04:47:21.949644+00",
+          "2026-11-05 04:47:51.62619+00"
+        ]
+      ],
+      "terminal": []
+    }
+  ],
+  "failureDiagnosticsKeys": [
+    [
+      "error",
+      "states",
+      "failures",
+      "agentModelCalls",
+      "gatewayCalls",
+      "sandboxObservations"
+    ]
+  ]
+}

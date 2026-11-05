@@ -16,7 +16,7 @@ use std::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering},
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
@@ -139,6 +139,10 @@ impl SandboxDomain {
     }
     fn engine(self) -> bool {
         matches!(self, Self::Transform | Self::Sync)
+    }
+    fn renewal_due(self, renewed: Instant, now: Instant) -> bool {
+        (self == Self::Agent || self.engine())
+            && now.duration_since(renewed) >= Duration::from_secs(8)
     }
 }
 
@@ -1794,19 +1798,21 @@ impl SandboxSupervisor {
         let creation = Arc::new(AtomicU8::new(0));
         let observed = Arc::new(ObservedResources::default());
         let guard = async {
-            let mut checks = 0_u32;
+            let authority = ExecutionAuthority {
+                db: self.db.clone(),
+            };
+            let mut renewed = Instant::now();
             loop {
                 tokio::time::sleep(Duration::from_secs(1)).await;
+                // Slow authority checks must not stretch eight seconds into eight checks.
+                if context.domain.renewal_due(renewed, Instant::now()) {
+                    authority.renew(&context.lease).await?;
+                    renewed = Instant::now();
+                }
                 context.check().await?;
-                checks += 1;
-                if (context.domain == SandboxDomain::Agent || context.domain.engine())
-                    && checks.is_multiple_of(8)
-                {
-                    ExecutionAuthority {
-                        db: self.db.clone(),
-                    }
-                    .renew(&context.lease)
-                    .await?;
+                if context.domain.renewal_due(renewed, Instant::now()) {
+                    authority.renew(&context.lease).await?;
+                    renewed = Instant::now();
                     context.check().await?;
                 }
             }
@@ -2068,6 +2074,38 @@ pub fn error_code(error: &anyhow::Error) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn sandbox_lease_renewal_uses_elapsed_time_before_and_after_slow_checks() {
+        let started = Instant::now();
+        for domain in [
+            SandboxDomain::Agent,
+            SandboxDomain::Transform,
+            SandboxDomain::Sync,
+        ] {
+            let mut renewed = started;
+            let mut now = started;
+            let mut renewals = Vec::new();
+            for _ in 0..8 {
+                now += Duration::from_secs(1);
+                if domain.renewal_due(renewed, now) {
+                    renewals.push(now.duration_since(started).as_secs());
+                    renewed = now;
+                }
+                now += Duration::from_secs(6);
+                if domain.renewal_due(renewed, now) {
+                    renewals.push(now.duration_since(started).as_secs());
+                    renewed = now;
+                }
+            }
+            assert_eq!(renewals, [8, 21, 29, 42, 50]);
+            assert!(renewals.windows(2).all(|pair| pair[1] - pair[0] < 30));
+            assert!(!domain.renewal_due(started, started + Duration::from_millis(7999)));
+            assert!(domain.renewal_due(started, started + Duration::from_secs(8)));
+        }
+        for domain in [SandboxDomain::Function, SandboxDomain::Evaluator] {
+            assert!(!domain.renewal_due(started, started + Duration::from_secs(60)));
+        }
+    }
     #[test]
     fn docker_api_negotiates_a_supported_overlap_without_losing_accounting() {
         for (maximum, minimum, expected) in [

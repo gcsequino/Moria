@@ -1,0 +1,6 @@
+{
+  "scope": "Complete original ten-case service evaluation subcase; original setup/worker startup/assertions/deadlines; committed live resume negatives and actual40001 injection enabled",
+  "sampling": "Read-only500ms execution/task lease/status/IDs, no SQL hooks or production diagnostics",
+  "fixtureSha256": "da6f372f8e51145e14df907a51abbc0f4bca9b713f75e44ae714ca4d709d6c4d",
+  "nativeArtifacts": "All9 exact snapshot sandbox-wallclock-renewal-native-20261105, debugbuild; no native overlay"
+}
