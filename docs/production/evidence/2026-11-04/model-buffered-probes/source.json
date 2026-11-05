@@ -1,0 +1,17 @@
+{
+  "baseHead": "d1fd7f99e6889d4f9c4a2136ddfb4c2c557a7d74",
+  "nativeDigest": "2bce8243afb1e617424d45e847143f4257d0b3229883aa80e66c36d3bd6b07a5",
+  "nativeUnits": 99,
+  "qualifiedFiles": [
+    {
+      "path": "services/runtime/src/models.rs",
+      "sha256": "121f7fdd1eb79e0096389ea108832fb7f08f513d1780f255b43b24404e512fd1"
+    },
+    {
+      "path": "tests/native-models.integration.test.ts",
+      "sha256": "3e1a989abb150b38830f37ced886c8e997f217038bf2c5ca9616d3d066538141"
+    }
+  ],
+  "pendingEvaluationFixIncluded": true,
+  "laterRequestedOperationOptimizationIncluded": false
+}

@@ -3025,3 +3025,15 @@ now receive separate freshly provisioned scratch pools, preserving incarnation
 fencing. Evidence and retained failures are in
 `production/evidence/2026-11-04/connector-decoded-reflection`. Full Pipeline, final
 integrated quality/CI, remaining capability handlers and scale targets stay open.
+
+### Bounded model capability probes
+
+Probes now buffer their bounded provider stream under the existing independent
+live guard and protected completion fence, avoiding duplicate full authorization
+per token. Full Models19/19 and Secret custody11/11 pass, including actual held
+probe revocation; all99 native units/artifact fingerprints and static checks pass.
+The real local Qwen3/Nomic trial now completes all chat/stream/tool/structured and
+embedding probes before a later logic-configuration API failure. Retained failed
+composed trials and exact component proof are in
+`production/evidence/2026-11-04/model-buffered-probes`; full platform and capacity
+qualification remain open.
