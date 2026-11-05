@@ -2101,8 +2101,16 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                 [environment, instanceLogic.cases],
               )
             ).rows[0];
+            const casesStorage = bindings.find(
+              ({ namespace }) =>
+                namespace.warehouseId === casesNamespace.warehouse_id &&
+                namespace.tableId === casesNamespace.table_id &&
+                namespace.revision === casesNamespace.namespace_revision,
+            );
+            assert(casesStorage, 'Use the registered physical Evaluation Dataset store');
             await native({
               mode: 'writer-supplied',
+              root: casesStorage.root,
               binding: await createProducer(
                 instanceLogic.cases,
                 instanceLogic.published.publication.digest,

@@ -82,6 +82,13 @@ def main():
     name = "moria-quality-" + str(uuid.uuid4())
     temporary = Path(tempfile.mkdtemp(prefix="moria-quality-", dir="/tmp"))
     temporary.chmod(0o1777)
+    pool_variables = [
+        "MORIA_ENGINE_SCRATCH_POOL_JSON",
+        "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON",
+        "MORIA_CONNECTOR_SCRATCH_POOL_JSON",
+        "MORIA_CONNECTOR_DISCOVERY_SCRATCH_POOL_JSON",
+        "MORIA_CONNECTOR_DISCOVERY_RESTART_SCRATCH_POOL_JSON",
+    ]
     pools = []
     owned_roots = []
 
@@ -91,7 +98,7 @@ def main():
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGHUP, interrupted)
     try:
-        for _ in range(3):
+        for _ in pool_variables:
             root = Path("/tmp") / ("moria-engine-scratch-" + str(uuid.uuid4()))
             owned_roots.append(root)
             pool = json.loads(
@@ -127,14 +134,7 @@ def main():
             "--env",
             "MORIA_TEST_PROOF_ID=" + name,
         ]
-        for variable, pool in zip(
-            [
-                "MORIA_ENGINE_SCRATCH_POOL_JSON",
-                "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON",
-                "MORIA_CONNECTOR_SCRATCH_POOL_JSON",
-            ],
-            pools,
-        ):
+        for variable, pool in zip(pool_variables, pools, strict=True):
             command += ["--env", variable + "=" + json.dumps(pool)]
             command += ["--mount", f"type=bind,src={pool['root']},dst={pool['root']}"]
             for slot in pool["slots"]:

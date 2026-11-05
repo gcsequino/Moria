@@ -499,7 +499,7 @@ export async function connectorDiscovery(t: TestContext) {
         },
       ],
     });
-    const pool = JSON.parse(process.env.MORIA_CONNECTOR_SCRATCH_POOL_JSON ?? 'null');
+    const pool = JSON.parse(process.env.MORIA_CONNECTOR_DISCOVERY_SCRATCH_POOL_JSON ?? 'null');
     assert.equal(pool?.slots.length, 2);
     engine = await startInstanceEngine({ host, runtimeEnvironment, pool });
     assert.equal((await terminal(accepted.id)).status, 'failed');
@@ -778,7 +778,9 @@ export async function connectorDiscovery(t: TestContext) {
       const proxy = await transactionCommitProxy(Number(url.port));
       url.port = String(proxy.port);
       try {
-        const pool = JSON.parse(process.env.MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON ?? 'null');
+        const pool = JSON.parse(
+          process.env.MORIA_CONNECTOR_DISCOVERY_RESTART_SCRATCH_POOL_JSON ?? 'null',
+        );
         engine = await startInstanceEngine({
           host,
           runtimeEnvironment: { ...runtimeEnvironment, RETENTION_DATABASE: url.href },
