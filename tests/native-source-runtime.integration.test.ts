@@ -2188,7 +2188,6 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
               engineWorker = await startInstanceEngine({
                 host,
                 runtimeEnvironment: engineEnvironment,
-                operatorEnvironment: { ...engineEnvironment, SOURCE_RUNTIME_DATABASE: admin.href },
               });
               const accepted = await request(
                 `/api/v1/pipelines/${instancePipeline.transform}/executions`,

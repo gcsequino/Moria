@@ -163,6 +163,7 @@ pub(crate) async fn owner_metadata_in(
     kind: OwnerKind,
     profile: Uuid,
     consumer: Uuid,
+    secret: Option<Uuid>,
 ) -> Result<(String, String, String)> {
     let (revision, binding) = match kind {
         OwnerKind::Model => {
@@ -170,11 +171,27 @@ pub(crate) async fn owner_metadata_in(
             (row.get::<_, String>(0), row.get::<_, Value>(1))
         }
         OwnerKind::Connector => {
-            let row = client.query_opt("SELECT revision,jsonb_build_object('id',id,'revision',revision,'endpointRef',endpoint_ref,'secretRef',secret_ref,'methods',methods,'paths',paths,'markings',markings,'allowedMarkings',allowed_markings) FROM moria.runtime_pipeline_destinations WHERE id=$1 AND environment=$2 AND resource=$3 AND enabled", &[&profile,&environment,&consumer]).await?.ok_or_else(|| anyhow::anyhow!("SECRET_APPROVAL_REVOKED"))?;
+            let row = client.query_opt("SELECT revision,jsonb_build_object('id',id,'revision',revision,'endpointRef',endpoint_ref,'secretRef',secret_ref,'credentials',credentials,'methods',methods,'paths',paths,'markings',markings,'allowedMarkings',allowed_markings) FROM moria.runtime_pipeline_destinations WHERE id=$1 AND environment=$2 AND resource=$3 AND enabled", &[&profile,&environment,&consumer]).await?.ok_or_else(|| anyhow::anyhow!("SECRET_APPROVAL_REVOKED"))?;
             (row.get::<_, String>(0), row.get::<_, Value>(1))
         }
     };
-    let material = field(&binding, "secretRef")?.to_owned();
+    let material = if kind == OwnerKind::Connector
+        && binding["credentials"]
+            .as_array()
+            .is_some_and(|values| !values.is_empty())
+    {
+        let secret = secret.ok_or_else(|| anyhow::anyhow!("SECRET_BINDING_INVALID"))?;
+        let values = binding["credentials"].as_array().unwrap();
+        ensure!(values.len() <= 8, "SECRET_BINDING_INVALID");
+        let slots = values
+            .iter()
+            .filter(|value| value["secret"] == json!(secret))
+            .collect::<Vec<_>>();
+        ensure!(slots.len() == 1, "SECRET_BINDING_INVALID");
+        field(slots[0], "materialRef")?.to_owned()
+    } else {
+        field(&binding, "secretRef")?.to_owned()
+    };
     reference(&material)?;
     let destination =
         fingerprint(&json!({"binding":binding,"endpoint":endpoint(&binding)?.as_str()}))?;
@@ -308,6 +325,7 @@ async fn definition_hash_in(
         request.owner_kind,
         request.owner_profile,
         request.consumer,
+        Some(request.secret),
     )
     .await?;
     ensure!(
@@ -538,8 +556,15 @@ pub(crate) async fn model_source_in(
     .collect();
     let request = if let Some(secret) = provider["spec"]["secret"].as_str() {
         let secret = resolve(client, &provider_release, secret).await?;
-        let (owner_revision, destination_fingerprint, material_ref) =
-            owner_metadata_in(client, environment, OwnerKind::Model, model_id, consumer).await?;
+        let (owner_revision, destination_fingerprint, material_ref) = owner_metadata_in(
+            client,
+            environment,
+            OwnerKind::Model,
+            model_id,
+            consumer,
+            None,
+        )
+        .await?;
         Some(SecretRequest {
             release,
             consumer,
@@ -672,6 +697,11 @@ pub(crate) async fn cli(db: crate::database::Database, args: Vec<String>) -> Res
             let id: Uuid = field(&input, "id")?.parse()?;
             let row = tx.query_opt("UPDATE moria.native_secret_approvals SET enabled=false WHERE id=$1 RETURNING id,generation::text,incarnation", &[&id]).await?.ok_or_else(|| anyhow::anyhow!("NOT_FOUND"))?;
             json!({"id":row.get::<_,Uuid>(0),"generation":row.get::<_,String>(1),"incarnation":row.get::<_,Uuid>(2),"enabled":false})
+        }
+        Some("inspect-connector") => {
+            let environment = field(&input, "environment")?;
+            let connection: Uuid = field(&input, "connection")?.parse()?;
+            crate::pipelines::inspect_connector_in(tx.client(), environment, connection).await?
         }
         Some("inspect-model") => {
             let environment = field(&input, "environment")?;

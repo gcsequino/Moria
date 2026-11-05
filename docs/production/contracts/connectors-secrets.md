@@ -1,14 +1,40 @@
 # Connector capability and secret contracts
 
-This is the N09 implementation contract. The initial native pipeline profile implements `batchRead` with full coverage and replacement output. It explicitly rejects other capabilities, write modes and nonempty `Connection.secrets`; those rejections are not completion of the accepted Source contract. [Pipelines](pipelines.md) defines supervision and grouped publication. [Engine I/O](engine-io.md) defines the bounded Arrow transport.
+This is the N09 implementation contract. The initial native pipeline profile implements `batchRead` with full coverage and replacement output. It explicitly rejects other capabilities and write modes; those rejections are not completion of the accepted Source contract. [Pipelines](pipelines.md) defines supervision and grouped publication. [Engine I/O](engine-io.md) defines the bounded Arrow transport.
 
 ## Capability admission
+
+The native credential implementation now accepts up to eight declared references
+with exact operator mappings. Its static checks, all nine artifact fingerprints
+and 81 native units pass on a frozen build. The real registered worker/OCI guest
+passes eight focused custody/checkpoint checks, including independent typed row
+readback and in-flight revocation; see [evidence](../evidence/2026-11-04/connector-secret-custody/README.md).
+Other write modes, coverage and capabilities remain unavailable. This checkpoint
+must not be presented as complete N09 qualification.
+
+The operator destination's `credentials` array contains `secret` (resolved UUID),
+`materialRef` (host environment reference), `header` and `scheme` (`raw` or
+`bearer`). It must map every declared secret exactly once, at most eight slots,
+with distinct lower-case `authorization` or `x-` header names. Transport, cookie
+and proxy headers are rejected. Empty mappings retain the existing single bearer
+slot; multiple declared secrets require explicit mappings. These values are
+trusted operator metadata, never guest request fields. `secret inspect-connector`
+returns the exact approval requests without reading material; `secret approve`
+and `secret disable` retain operator-only custody control.
+
+Accepted windows pin every approval identity, generation, incarnation and semantic
+material revision. Ordinary callers and registered services independently need
+all exact use operations. Current checks cover claim, callbacks, in-flight polling,
+publication and result release. A missed disable/reenable pulse cannot revive a
+window. The cursor hashes semantic material revisions and header interpretation,
+excluding current credential bytes and approval generations. Reflected known
+material in a provider response is rejected before any guest response is released.
 
 The released `Connection` selects one immutable `connector/v1` implementation, a validated configuration, stream, coverage, write mode, output Dataset and declared SecretReferences. The accepted execution pins each of those identities, schemas and revisions. Public input cannot select a different implementation, endpoint, secret, mode, destination or actor. Configuration validation uses the same offline trusted schema registry as Source publication; schema references cannot fetch network or local files.
 
 | Source capability | Required operational behavior                                                                                                                                                                                                                    | Current qualification                                                                                |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full engine boundary has functional proof; Sync checkpoint and fault proof remains required. |
+| `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full Sync typed publication, cursor reuse and custody revocation pass; HTTP/acknowledgement/supervisor fault coverage remains required. |
 | `schemaDiscovery` | Read-only bounded discovery through the same fixed transport and current SecretReference grants. Proposed schemas are typed metadata and cannot silently mutate an accepted output schema or publish data.                                       | Rejected before code; implementation and proof required.                                             |
 | `continuousRead`  | Bounded execution windows with durable source cursor/watermark, explicit restart boundary and backpressure. Each window publishes its output and cursor atomically. A worker replacement cannot transparently rerun arbitrary started user code. | Rejected before code; implementation and proof required.                                             |
 | `writeback`       | Explicit external side-effect intents, destination policy, idempotency capability and uncertain-outcome reconciliation. A successful Dataset publication does not prove an external effect occurred exactly once.                                | Rejected before code; implementation and proof required.                                             |

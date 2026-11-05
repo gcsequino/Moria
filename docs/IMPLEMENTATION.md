@@ -2891,3 +2891,41 @@ cosine assertions. Focused results and the initial failed expectation are retain
 in `production/evidence/2026-11-04/source-fixture-contracts`. These functional
 checks do not certify production capacity; the complete independent quality gate
 remains required for the integrated revision.
+## November 4 Connector custody implementation checkpoint
+
+Connector acceptance now binds up to eight exact operator credential slots to
+current caller/service use grants, immutable approval generations and semantic
+cursor revisions. Fresh guards cover claim, callback, in-flight work, publication
+and result release; material remains in the native HTTP host. Known reflected
+material is withheld. The operator can inspect exact Connector approval requests
+without reading credentials. Full replacement remains the supported write profile;
+other modes and capabilities still require implementation and qualification.
+
+The frozen source compiles all nine native artifacts, passes complete static
+checks, provenance and all 79 native units. The new real Sync/Dataset/checkpoint
+fixture is written and typechecks but has not yet run. Runtime proof, latest full
+quality gates and production-scale evidence remain open; this checkpoint does
+not complete N09.
+
+The first composed Connector trial passes custody and generation fencing but
+fails engine setup: the shared instance fixture supplied an administrative DB
+connection to scratch registration, which requires a non-owning runtime role.
+Both fixture callers now use that required role. The next diagnostic exposes
+Secret use incorrectly entering a data-operation-only batch helper. Secret use
+now calls the existing exact Secret-aware filesystem authority helper, retaining
+its kind, operation, markings and current file checks. Expected claim denials are
+classified so one denied job cannot stop the worker. A queued Secret file denial
+and subsequent successful window are added to the real fixture; fresh combined
+native build and runtime qualification are pending. No runtime restriction or
+individual deadline is relaxed.
+
+### Connector custody and checkpoint qualification
+
+The registered native replace/full Sync profile now passes eight focused checks
+with eight exact operator-approved credentials, a real isolated Python/Arrow
+guest, typed Dataset readback, durable semantic cursor reuse and live socket
+revocation. The caller needs exact logical operations without filesystem browsing.
+[Proof and remaining scope](production/evidence/2026-11-04/connector-secret-custody/README.md)
+retain the failed readback trial and exact artifact/fixture identities. Optional
+capabilities, other write modes, full HTTP/worker fault coverage and scale testing
+remain open; this is not complete N09 qualification.

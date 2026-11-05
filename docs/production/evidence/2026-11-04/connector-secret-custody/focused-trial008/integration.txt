@@ -1,0 +1,77 @@
+{"controller": "moria-quality-1c9264c8-50b3-4428-b139-3f3816d6e1b6", "image": "sha256:f95fdd96a5772902cf4fc8b1bcc48c455c09a87b22252408c006aff4a84123da", "scratchPools": ["/tmp/moria-engine-scratch-7b939379-52c0-40ab-acc3-5d49647b2d88", "/tmp/moria-engine-scratch-8bbd69d0-b3ff-47da-bf73-9e5cb24fff24"], "temporary": "/tmp/moria-quality-_81t6wxc"}
+TAP version 13
+# Subtest: native Connector custody and checkpoint publication
+    # Subtest: every declared Secret needs exact operator custody and independent caller/service use before code
+    ok 1 - every declared Secret needs exact operator custody and independent caller/service use before code
+      ---
+      duration_ms: 1731.123069
+      type: 'test'
+      ...
+▶ native Connector custody and checkpoint publication
+  ✔ every declared Secret needs exact operator custody and independent caller/service use before code (1731.123069ms)
+    # Subtest: a missed approval disable/reenable pulse permanently fences an accepted window
+    ok 2 - a missed approval disable/reenable pulse permanently fences an accepted window
+      ---
+      duration_ms: 2250.074593
+      type: 'test'
+      ...
+  ✔ a missed approval disable/reenable pulse permanently fences an accepted window (2250.074593ms)
+    # Subtest: a Secret file denial fences a queued window without stopping its worker
+    ok 3 - a Secret file denial fences a queued window without stopping its worker
+      ---
+      duration_ms: 3030.366762
+      type: 'test'
+      ...
+  ✔ a Secret file denial fences a queued window without stopping its worker (3030.366762ms)
+    # Subtest: the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+    ok 4 - the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+      ---
+      duration_ms: 38736.583834
+      type: 'test'
+      ...
+  ✔ the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically (38736.583834ms)
+    # Subtest: a next window reuses its semantic cursor despite a new execution and head revision
+    ok 5 - a next window reuses its semantic cursor despite a new execution and head revision
+      ---
+      duration_ms: 34397.532689
+      type: 'test'
+      ...
+  ✔ a next window reuses its semantic cursor despite a new execution and head revision (34397.532689ms)
+    # Subtest: reflected material never reaches guest frames or observable events
+    ok 6 - reflected material never reaches guest frames or observable events
+      ---
+      duration_ms: 11781.396707
+      type: 'test'
+      ...
+  ✔ reflected material never reaches guest frames or observable events (11781.396707ms)
+    # Subtest: revocation closes an in-flight Connector socket and preserves the prior head and cursor
+    ok 7 - revocation closes an in-flight Connector socket and preserves the prior head and cursor
+      ---
+      duration_ms: 11647.831534
+      type: 'test'
+      ...
+  ✔ revocation closes an in-flight Connector socket and preserves the prior head and cursor (11647.831534ms)
+    1..7
+ok 1 - native Connector custody and checkpoint publication
+  ---
+  duration_ms: 120337.546684
+  type: 'test'
+  ...
+✔ native Connector custody and checkpoint publication (120337.546684ms)
+1..1
+# tests 8
+ℹ tests 8
+# suites 0
+ℹ suites 0
+# pass 8
+ℹ pass 8
+# fail 0
+ℹ fail 0
+# cancelled 0
+ℹ cancelled 0
+# skipped 0
+ℹ skipped 0
+# todo 0
+ℹ todo 0
+# duration_ms 130986.792947
+ℹ duration_ms 130986.792947
