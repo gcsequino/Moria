@@ -1,5 +1,20 @@
 # Implementation checkpoint
 
+## November 4 complete cold baseline and build budget
+
+The complete cold baseline on frozen `54d839e` builds all nine release artifacts,
+passes static checks and 77 native units, then fails its full functional suite:
+1,196 pass, 67 fail including parent results, zero skips/cancellations. The runner
+is stopped. Independent CI on `4e2b661` passes static/build/bootstrap but reaches
+the outer 45-minute job watchdog before the complete suite finishes. The measured
+preparation plus suite requires about an hour, so aggregate CI/hook budgets now
+allow completion without changing individual test or operation deadlines.
+Native artifact preparation batches the library and six harnesses in one Cargo
+invocation; actual JSON selection preserves all nine executable hashes. A new
+cold release timing remains unmeasured. See
+`production/evidence/2026-11-04/cold-baseline` for exact source/results/failures.
+
+
 ## November 4 current private-session lock correction
 
 A measured Evaluation failure came from repeated private credential issuance
