@@ -1,10 +1,14 @@
-import type { PipelineExecution, PipelineEvent } from '../../contracts/pipelines.js';
+import type {
+  PipelineExecution,
+  PipelineEvent,
+  ConnectorDiscoveryResult,
+} from '../../contracts/pipelines.js';
 import { VALUE_VERSION } from '../../contracts/value-types.js';
 import { checkedCancellation } from './execution.js';
 import { ApiError, type Transport, type ActionOptions, type RequestOptions } from './transport.js';
 
 export function pipelinesClient(transport: Transport) {
-  const checked = (value: PipelineExecution) => {
+  const checked = <Result>(value: PipelineExecution<Result>) => {
     if (value.valueVersion !== VALUE_VERSION)
       throw new ApiError(502, 'UNSUPPORTED_VALUE_VERSION', 'Unsupported pipeline value version');
     return value;
@@ -17,6 +21,18 @@ export function pipelinesClient(transport: Transport) {
           `/api/v1/pipelines/${encodeURIComponent(resource)}/executions`,
           'POST',
           { ...(settings.wait === undefined ? {} : { wait: settings.wait }) },
+          settings,
+        )
+        .then(checked),
+    discover: (resource: string, settings: ActionOptions & { wait?: boolean }) =>
+      transport
+        .request<PipelineExecution<ConnectorDiscoveryResult>>(
+          `/api/v1/pipelines/${encodeURIComponent(resource)}/executions`,
+          'POST',
+          {
+            capability: 'schemaDiscovery',
+            ...(settings.wait === undefined ? {} : { wait: settings.wait }),
+          },
           settings,
         )
         .then(checked),

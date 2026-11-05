@@ -7,6 +7,7 @@ pub mod automations;
 pub mod canonical;
 pub mod catalog;
 pub mod changes;
+pub(crate) mod connector_discovery;
 pub mod database;
 pub(crate) mod dataset_commit_delta;
 pub mod dataset_retention;

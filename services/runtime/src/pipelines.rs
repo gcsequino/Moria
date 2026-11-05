@@ -3,6 +3,7 @@ use crate::{
     authority::{Authority, VerifiedSession},
     authorization::authorize,
     canonical,
+    connector_discovery::Capability,
     database::Database,
     execution::{ExecutionAuthority, ExecutionSpec, Lease},
     functions::Admission,
@@ -28,6 +29,8 @@ use tokio::sync::{Mutex, watch};
 use tokio_postgres::Client;
 use uuid::Uuid;
 
+pub(crate) mod discovery;
+
 pub(crate) fn domain_error_code(error: &anyhow::Error) -> Option<&'static str> {
     let message = error
         .chain()
@@ -50,6 +53,7 @@ pub(crate) fn domain_error_code(error: &anyhow::Error) -> Option<&'static str> {
         "PIPELINE_PROFILE_CONFLICT",
         "PIPELINE_WORKER_UNAVAILABLE",
         "PIPELINE_SCHEMA_UNSUPPORTED",
+        "PIPELINE_DISCOVERY_INVALID",
         "PIPELINE_REFERENCE_INVALID",
         "PIPELINE_INPUT_KIND",
         "PIPELINE_MARKINGS_INVALID",
@@ -170,7 +174,7 @@ pub(crate) async fn install_in(
         domain == "sync" || profile.connector.is_none(),
         "PIPELINE_PROFILE_INVALID"
     );
-    program(client, environment, &release, &declaration, &profile).await?;
+    program(client, environment, &release, &declaration, &profile, None).await?;
     let service = RegisteredService::load_current_in(
         client,
         environment,
@@ -243,7 +247,7 @@ pub(crate) async fn source_readiness_in(
         "PIPELINE_PROFILE_INVALID"
     );
     let (_, release, definition) = source_in(client, environment, resource).await?;
-    let program = program(client, environment, &release, &definition, &profile).await?;
+    let program = program(client, environment, &release, &definition, &profile, None).await?;
     service
         .resource_labels_in(
             client,
@@ -428,12 +432,15 @@ async fn program(
     release: &str,
     definition: &Value,
     profile: &Profile,
+    capability: Option<Capability>,
 ) -> Result<Program> {
     let spec = &definition["spec"];
     let transform = definition["kind"] == "Transform";
     let (artifact, inputs, outputs, configuration, limits, stream, dependency) = if transform {
         ensure!(
-            spec["runtime"] == "python-duckdb-v1" && profile.connector.is_none(),
+            spec["runtime"] == "python-duckdb-v1"
+                && profile.connector.is_none()
+                && capability != Some(Capability::SchemaDiscovery),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
         (
@@ -448,8 +455,8 @@ async fn program(
     } else {
         ensure!(
             definition["kind"] == "Connection"
-                && spec["mode"] == "replace"
-                && spec["coverage"] == "full"
+                && (capability != Some(Capability::BatchRead)
+                    || (spec["mode"] == "replace" && spec["coverage"] == "full"))
                 && spec["secrets"]
                     .as_array()
                     .is_some_and(|values| values.len() <= 8)
@@ -468,9 +475,12 @@ async fn program(
         ensure!(
             implementation["kind"] == "ConnectorImplementation"
                 && implementation["spec"]["abiVersion"] == "connector/v1"
-                && implementation["spec"]["capabilities"]
-                    .as_array()
-                    .is_some_and(|values| values.iter().any(|value| value == "batchRead")),
+                && crate::connector_discovery::capability_supported(
+                    &implementation["spec"]["capabilities"],
+                    &spec["mode"],
+                    &spec["coverage"],
+                    capability,
+                ),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
         crate::filesystem::validate_configuration(
@@ -524,7 +534,11 @@ async fn program(
     Ok(Program {
         artifact,
         inputs,
-        outputs,
+        outputs: if capability == Some(Capability::SchemaDiscovery) {
+            Vec::new()
+        } else {
+            outputs
+        },
         configuration,
         timeout: timeout as i32,
         memory: memory as i32,
@@ -647,6 +661,25 @@ impl NativePipelines {
         resource: Uuid,
         key: &str,
     ) -> Result<Value> {
+        self.invoke_inner(session, resource, key, Capability::BatchRead)
+            .await
+    }
+    pub async fn discover(
+        &self,
+        session: &VerifiedSession,
+        resource: Uuid,
+        key: &str,
+    ) -> Result<Value> {
+        self.invoke_inner(session, resource, key, Capability::SchemaDiscovery)
+            .await
+    }
+    async fn invoke_inner(
+        &self,
+        session: &VerifiedSession,
+        resource: Uuid,
+        key: &str,
+        capability: Capability,
+    ) -> Result<Value> {
         ensure!(
             !key.is_empty()
                 && key.len() <= 128
@@ -662,6 +695,11 @@ impl NativePipelines {
             resource,
             key
         ]))?;
+        let request_key = if capability == Capability::SchemaDiscovery {
+            canonical::fingerprint(&json!([request_key, capability.as_str()]))?
+        } else {
+            request_key
+        };
         let lock = format!("moria/pipeline/request/{request_key}");
         // The provenance prepass mutates authority. Take exclusive admission before BEGIN.
         let mut admission =
@@ -675,6 +713,10 @@ impl NativePipelines {
             Some("Connection") => "sync",
             _ => anyhow::bail!("PIPELINE_SOURCE_INVALID"),
         };
+        ensure!(
+            capability != Capability::SchemaDiscovery || domain == "sync",
+            "PIPELINE_CAPABILITY_UNSUPPORTED"
+        );
         let operation = if domain == "transform" {
             "build"
         } else {
@@ -718,6 +760,7 @@ impl NativePipelines {
             &release,
             &definition,
             &profile,
+            Some(capability),
         )
         .await?;
         let destination = if let Some(id) = profile.connector {
@@ -949,8 +992,17 @@ impl NativePipelines {
                 )
                 .await?
         };
-        tx.execute("INSERT INTO moria.runtime_sandbox_bindings(binding,domain,artifact_uri,artifact_digest,outputs,effect,memory_mib,cpu_millis,timeout_seconds) VALUES($1,$2,$3,$4,$5,'readWrite',$6,$7,$8)",&[&binding.id,&domain,&program.artifact["uri"].as_str().unwrap(),&program.artifact["digest"].as_str().unwrap(),&json!({"complete":{"type":"boolean","nullable":false}}),&program.memory,&program.cpu,&program.timeout]).await?;
-        let checkpoint = if let Some(stream) = &program.stream {
+        let effect = if capability == Capability::SchemaDiscovery {
+            "readOnly"
+        } else {
+            "readWrite"
+        };
+        tx.execute("INSERT INTO moria.runtime_sandbox_bindings(binding,domain,artifact_uri,artifact_digest,outputs,effect,memory_mib,cpu_millis,timeout_seconds) VALUES($1,$2,$3,$4,$5,$9,$6,$7,$8)",&[&binding.id,&domain,&program.artifact["uri"].as_str().unwrap(),&program.artifact["digest"].as_str().unwrap(),&json!({"complete":{"type":"boolean","nullable":false}}),&program.memory,&program.cpu,&program.timeout,&effect]).await?;
+        let checkpoint = if let Some(stream) = program
+            .stream
+            .as_ref()
+            .filter(|_| capability == Capability::BatchRead)
+        {
             let config_revision = checkpoint_revision(
                 &program,
                 &definition,
@@ -979,7 +1031,7 @@ impl NativePipelines {
             )
             .await?
             .get(0);
-        tx.execute("INSERT INTO moria.runtime_pipeline_executions(execution,profile,entry_id,release,definition,inputs,outputs,configuration,checkpoint,destination_fingerprint,requester,markings,code_resource,secret_approvals) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",&[&execution,&registered.get::<_,Uuid>("id"),&entry,&release,&definition,&Value::Object(inputs),&Value::Object(outputs),&program.configuration,&checkpoint,&destination_fingerprint,&json!({"kind":"user","principal":session.principal(),"application":session.application(),"key":key}),&json!(markings(session.environment(),&labels)),&program.dependency,&serde_json::to_value(&accepted_secrets)?]).await?;
+        tx.execute("INSERT INTO moria.runtime_pipeline_executions(execution,profile,entry_id,release,definition,inputs,outputs,configuration,checkpoint,destination_fingerprint,requester,markings,code_resource,secret_approvals,capability) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",&[&execution,&registered.get::<_,Uuid>("id"),&entry,&release,&definition,&Value::Object(inputs),&Value::Object(outputs),&program.configuration,&checkpoint,&destination_fingerprint,&json!({"kind":"user","principal":session.principal(),"application":session.application(),"key":key}),&json!(markings(session.environment(),&labels)),&program.dependency,&serde_json::to_value(&accepted_secrets)?,&capability.as_str()]).await?;
         let result = self.public_in(tx.client(), session, execution).await?;
         tx.commit().await?;
         admission.release().await?;
@@ -1169,7 +1221,11 @@ impl NativePipelines {
         .sandbox_session(context)
         .await?;
         let client = self.db.get().await?;
-        let row=client.query_one("SELECT r.outputs,r.checkpoint,p.profile FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile WHERE r.execution=$1",&[&context.lease().execution]).await?;
+        let row=client.query_one("SELECT r.outputs,r.checkpoint,r.capability,p.profile FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile WHERE r.execution=$1",&[&context.lease().execution]).await?;
+        if row.get::<_, String>("capability") == "schemaDiscovery" {
+            drop(client);
+            return discovery::complete(&self.db, context).await;
+        }
         let profile = profile(&row.get::<_, Value>("profile"))?;
         let sealed=client.query("SELECT id,owner,fence,result FROM moria.runtime_execution_tasks WHERE execution=$1 AND status='sealed' LIMIT 2",&[&context.lease().execution]).await?;
         ensure!(sealed.len() == 1, "PIPELINE_OUTPUT_INVALID");
@@ -1269,6 +1325,7 @@ impl NativePipelines {
         let broker = Arc::new(NativePipelineBroker {
             db: self.db.clone(),
             state: Mutex::new(None),
+            discovery: Mutex::new(None),
             cancel: Cancellation::default(),
         });
         let supervisor = SandboxSupervisor::new(self.db.clone(), host, broker)?;
@@ -1389,6 +1446,20 @@ pub async fn cli(db: Database, args: Vec<String>) -> Result<()> {
         "invoke" => {
             service
                 .invoke(
+                    &session,
+                    value["resource"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?
+                        .parse()?,
+                    value["key"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?,
+                )
+                .await?
+        }
+        "discover" => {
+            service
+                .discover(
                     &session,
                     value["resource"]
                         .as_str()
@@ -1748,6 +1819,7 @@ impl Destination {
 struct NativePipelineBroker {
     db: Database,
     state: Mutex<Option<IoState>>,
+    discovery: Mutex<Option<discovery::State>>,
     cancel: Cancellation,
 }
 impl NativePipelineBroker {
@@ -1801,7 +1873,7 @@ impl PlatformBroker for NativePipelineBroker {
         context.check_in(&client).await?;
         check_context(&client, context).await?;
         let session = Authority::sandbox_session_in(&client, context).await?;
-        let row=client.query_one("SELECT r.inputs,r.outputs,r.configuration,r.checkpoint,r.destination_fingerprint,p.profile,e.resource FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile JOIN moria.runtime_executions e ON e.id=r.execution WHERE r.execution=$1",&[&context.lease().execution]).await?;
+        let row=client.query_one("SELECT r.inputs,r.outputs,r.configuration,r.checkpoint,r.destination_fingerprint,r.capability,r.definition,p.profile,e.resource FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile JOIN moria.runtime_executions e ON e.id=r.execution WHERE r.execution=$1",&[&context.lease().execution]).await?;
         let profile = profile(&row.get::<_, Value>("profile"))?;
         let destination = if let Some(id) = profile.connector {
             let definition =
@@ -1825,6 +1897,31 @@ impl PlatformBroker for NativePipelineBroker {
         } else {
             None
         };
+        if row.get::<_, String>("capability") == "schemaDiscovery" {
+            ensure!(context.domain() == "sync", "PIPELINE_CONTEXT_INVALID");
+            let definition: Value = row.get("definition");
+            let stream = definition["spec"]["stream"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
+                .to_owned();
+            let destination =
+                destination.ok_or_else(|| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?;
+            let mut state = self.discovery.lock().await;
+            ensure!(state.is_none(), "PIPELINE_ALREADY_STARTED");
+            *state = Some(discovery::State::new(
+                context.lease().execution,
+                stream,
+                destination,
+                row.get("configuration"),
+            ));
+            drop(state);
+            drop(client);
+            let mut client = self.db.get().await?;
+            let tx = client.transaction().await?;
+            context.complete_current_observation_in(tx.client()).await?;
+            tx.commit().await?;
+            return Ok(());
+        }
         let input_json: Value = row.get("inputs");
         let output_json: Value = row.get("outputs");
         let inputs = input_json
@@ -1922,6 +2019,22 @@ impl PlatformBroker for NativePipelineBroker {
             parts.len() >= 5 && parts[..4] == ["", "api", "v1", "engine"],
             "PIPELINE_OPERATION_DENIED"
         );
+        {
+            let mut discovery = self.discovery.lock().await;
+            if let Some(state) = discovery.as_mut() {
+                let result = state
+                    .http(&self.db, context, &call, &parts[4..], &body)
+                    .await;
+                drop(discovery);
+                let mut client = self.db.get().await?;
+                let tx = client.transaction().await?;
+                context
+                    .complete_observation_in(tx.client(), &call.id)
+                    .await?;
+                tx.commit().await?;
+                return result;
+            }
+        }
         let mut owned = self.state.lock().await;
         let state = owned
             .as_mut()
@@ -2083,6 +2196,12 @@ impl PlatformBroker for NativePipelineBroker {
             *result == json!({"complete":true}),
             "PIPELINE_OUTPUT_INVALID"
         );
+        {
+            let discovery = self.discovery.lock().await;
+            if let Some(state) = discovery.as_ref() {
+                return state.finish(&self.db, context).await;
+            }
+        }
         let owned = self.state.lock().await;
         let state = owned
             .as_ref()

@@ -4812,6 +4812,7 @@ fn json_response(
                 | "PIPELINE_CHECKPOINT_REQUIRED" => StatusCode::CONFLICT,
                 "PIPELINE_CAPABILITY_UNSUPPORTED"
                 | "PIPELINE_SCHEMA_UNSUPPORTED"
+                | "PIPELINE_DISCOVERY_INVALID"
                 | "PIPELINE_INPUT_KIND" => StatusCode::UNPROCESSABLE_ENTITY,
                 "PIPELINE_WORKER_UNAVAILABLE"
                 | "PIPELINE_PROFILE_REQUIRED"
@@ -5299,20 +5300,26 @@ async fn dispatch(state: &HttpState, remote: SocketAddr, request: Request<Body>)
     }
     if parts[1] == "pipelines" && parts[3] == "executions" {
         ensure!(
-            body.as_object()
-                .is_some_and(|body| body.keys().all(|key| key == "wait")
-                    && body.get("wait").is_none_or(Value::is_boolean)),
+            body.as_object().is_some_and(|body| body
+                .keys()
+                .all(|key| key == "wait" || key == "capability")
+                && body.get("wait").is_none_or(Value::is_boolean)
+                && body.get("capability").is_none_or(|value| matches!(
+                    value.as_str(),
+                    Some("batchRead" | "schemaDiscovery")
+                ))),
             "INPUT_INVALID"
         );
         let pipelines = crate::pipelines::NativePipelines::new(state.serving.db.clone());
-        let mut value = pipelines
-            .invoke(
-                &session,
-                canonical_uid(&parts[2])?,
-                key.as_deref()
-                    .ok_or_else(|| anyhow::anyhow!("IDEMPOTENCY_KEY_INVALID"))?,
-            )
-            .await?;
+        let resource = canonical_uid(&parts[2])?;
+        let key = key
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("IDEMPOTENCY_KEY_INVALID"))?;
+        let mut value = if body["capability"] == "schemaDiscovery" {
+            pipelines.discover(&session, resource, key).await?
+        } else {
+            pipelines.invoke(&session, resource, key).await?
+        };
         if body["wait"] != false {
             let id = canonical_uid(
                 value["id"]
