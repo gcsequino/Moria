@@ -1,0 +1,15 @@
+{
+  "gitBase": "f600a0e5d628526053988ab672610ff8d5f1fba3",
+  "sourceArchiveSha256": "772a780c625f6854f90818cc284c6739ccabc9da255aabbb052e69d943c4674c",
+  "nativeSourceDigest": "4cd624bac9007dc9a79a6346177ada0e79085959ba821510d709614ba5c9ec7f",
+  "schema": {
+    "version": 5,
+    "checksum": "8d5581d29389dcc2545dc6cc09ec736e31d0895cbc297d90e426738bbbe55f1a"
+  },
+  "image": "sha256:8f0f0870a0480c0119192cbf219aa0034dca668e4c99204556489463cbe58a71",
+  "nativeArtifacts": 9,
+  "nativeUnits": 77,
+  "buildProfile": "debug",
+  "counterBefore": 2,
+  "counterAfter": 1
+}

@@ -36,7 +36,10 @@ for (const group of [
 ])
   test(`native Agent ${group}`, { timeout: 300000 }, async (t) => {
     const db = await database();
-    const image = await agentImage();
+    const image = await agentImage().catch(async (error: unknown) => {
+      await db.close();
+      throw error;
+    });
     const children: ChildProcess[] = [];
     const ids = new Set<string>();
     const functionIds = new Set<string>();

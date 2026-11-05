@@ -1,0 +1,13 @@
+▶ function runner uses the versioned pipe ABI and native TypeScript with OSDK transport
+  ✔ completion requires an exact valid challenge before a flushed acknowledgement (208.732721ms)
+✔ function runner uses the versioned pipe ABI and native TypeScript with OSDK transport (394.696675ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 542.145864
+All done! ✨ 🍰 ✨
+1 file would be left unchanged.

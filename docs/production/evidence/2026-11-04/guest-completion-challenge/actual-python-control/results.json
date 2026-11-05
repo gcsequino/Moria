@@ -1,0 +1,163 @@
+[
+  {
+    "case": "valid",
+    "container": "moria-python-ack-3d29c663-a2a9-405d-ac47-1de1b74eb24a",
+    "messages": [
+      {
+        "version": 1,
+        "type": "http",
+        "id": "1",
+        "method": "GET",
+        "path": "/api/v1/engine/metadata",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": null
+      },
+      {
+        "version": 1,
+        "type": "result",
+        "value": {
+          "complete": true
+        }
+      },
+      {
+        "version": 1,
+        "type": "completed",
+        "nonce": "bd441fe9-9824-4983-b768-bbe47a782521"
+      }
+    ],
+    "exitCode": 0,
+    "stderr": "",
+    "cleanupVerified": true,
+    "elapsedSeconds": 0.6280633670012321
+  },
+  {
+    "case": "absent",
+    "container": "moria-python-ack-d532580b-fd90-4bfe-8d06-a1702a63c32e",
+    "messages": [
+      {
+        "version": 1,
+        "type": "http",
+        "id": "1",
+        "method": "GET",
+        "path": "/api/v1/engine/metadata",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": null
+      },
+      {
+        "version": 1,
+        "type": "result",
+        "value": {
+          "complete": true
+        }
+      },
+      {
+        "version": 1,
+        "type": "error"
+      }
+    ],
+    "exitCode": 1,
+    "stderr": "",
+    "cleanupVerified": true,
+    "elapsedSeconds": 0.4782549760002439
+  },
+  {
+    "case": "malformed",
+    "container": "moria-python-ack-bd6f8706-92de-49f6-bc14-119ed18921c6",
+    "messages": [
+      {
+        "version": 1,
+        "type": "http",
+        "id": "1",
+        "method": "GET",
+        "path": "/api/v1/engine/metadata",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": null
+      },
+      {
+        "version": 1,
+        "type": "result",
+        "value": {
+          "complete": true
+        }
+      },
+      {
+        "version": 1,
+        "type": "error"
+      }
+    ],
+    "exitCode": 1,
+    "stderr": "",
+    "cleanupVerified": true,
+    "elapsedSeconds": 0.4756431940004404
+  },
+  {
+    "case": "boolean-version",
+    "container": "moria-python-ack-76f3da42-8a3a-464c-94fe-c1a62edf3cde",
+    "messages": [
+      {
+        "version": 1,
+        "type": "http",
+        "id": "1",
+        "method": "GET",
+        "path": "/api/v1/engine/metadata",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": null
+      },
+      {
+        "version": 1,
+        "type": "result",
+        "value": {
+          "complete": true
+        }
+      },
+      {
+        "version": 1,
+        "type": "error"
+      }
+    ],
+    "exitCode": 1,
+    "stderr": "",
+    "cleanupVerified": true,
+    "elapsedSeconds": 0.4975252650001494
+  },
+  {
+    "case": "extra",
+    "container": "moria-python-ack-4e48b4fc-fee7-45a3-aa88-4ad8f8079d17",
+    "messages": [
+      {
+        "version": 1,
+        "type": "http",
+        "id": "1",
+        "method": "GET",
+        "path": "/api/v1/engine/metadata",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": null
+      },
+      {
+        "version": 1,
+        "type": "result",
+        "value": {
+          "complete": true
+        }
+      },
+      {
+        "version": 1,
+        "type": "error"
+      }
+    ],
+    "exitCode": 1,
+    "stderr": "",
+    "cleanupVerified": true,
+    "elapsedSeconds": 0.47665874300037103
+  }
+]

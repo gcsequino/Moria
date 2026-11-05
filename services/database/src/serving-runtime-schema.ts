@@ -251,8 +251,8 @@ BEGIN
 WITH RECURSIVE origins AS (
     SELECT unnest(target_ids) AS id UNION SELECT edge.source_id FROM origins o CROSS JOIN LATERAL (
       SELECT parent_id AS source_id FROM moria.fs_entries WHERE id=o.id AND parent_id IS NOT NULL
-      UNION SELECT source_id FROM moria.fs_provenance WHERE entry_id=o.id
-      UNION SELECT b.entry_id FROM moria.fs_resource_bindings a
+      UNION ALL SELECT source_id FROM moria.fs_provenance WHERE entry_id=o.id
+      UNION ALL SELECT b.entry_id FROM moria.fs_resource_bindings a
         JOIN moria.fs_resource_dependencies d ON d.environment=a.environment AND d.project_id=a.project_id AND d.reference=a.reference
         JOIN moria.fs_resource_bindings b ON b.environment=d.environment AND b.project_id=d.source_project_id AND b.reference=d.source_reference
         WHERE a.entry_id=o.id
@@ -269,14 +269,14 @@ WITH RECURSIVE origins AS (
   ), closure AS (
     SELECT unnest(target_ids) AS id UNION SELECT edge.source_id FROM closure c CROSS JOIN LATERAL (
       SELECT parent_id AS source_id FROM moria.fs_entries WHERE id=c.id AND parent_id IS NOT NULL
-      UNION SELECT source_id FROM moria.fs_provenance WHERE entry_id=c.id
-      UNION SELECT b.entry_id FROM moria.fs_resource_bindings a
+      UNION ALL SELECT source_id FROM moria.fs_provenance WHERE entry_id=c.id
+      UNION ALL SELECT b.entry_id FROM moria.fs_resource_bindings a
         JOIN moria.fs_resource_dependencies d ON d.environment=a.environment AND d.project_id=a.project_id AND d.reference=a.reference
         JOIN moria.fs_resource_bindings b ON b.environment=d.environment AND b.project_id=d.source_project_id AND b.reference=d.source_reference
         WHERE a.entry_id=c.id
-      UNION SELECT (source_release.snapshot->>'rootId')::uuid FROM releases r
+      UNION ALL SELECT (source_release.snapshot->>'rootId')::uuid FROM releases r
         JOIN moria.fs_source_releases source_release ON source_release.digest=r.digest WHERE r.entry_id=c.id
-      UNION SELECT (file->'entry'->>'id')::uuid FROM releases r
+      UNION ALL SELECT (file->'entry'->>'id')::uuid FROM releases r
         JOIN moria.fs_source_releases source_release ON source_release.digest=r.digest
         CROSS JOIN LATERAL jsonb_array_elements(source_release.snapshot->'files') file WHERE r.entry_id=c.id
     ) edge
@@ -286,10 +286,10 @@ WITH RECURSIVE origins AS (
         SELECT id,parent_id FROM moria.fs_entries WHERE id=c.id
         UNION ALL SELECT e.id,e.parent_id FROM ancestry a JOIN moria.fs_entries e ON e.id=a.parent_id
       ) SELECT p.source_id FROM ancestry a JOIN moria.fs_provenance p ON p.entry_id=a.id
-      UNION SELECT b.entry_id FROM ancestry origin JOIN moria.fs_resource_bindings a ON a.entry_id=origin.id
+      UNION ALL SELECT b.entry_id FROM ancestry origin JOIN moria.fs_resource_bindings a ON a.entry_id=origin.id
         JOIN moria.fs_resource_dependencies d ON d.environment=a.environment AND d.project_id=a.project_id AND d.reference=a.reference
         JOIN moria.fs_resource_bindings b ON b.environment=d.environment AND b.project_id=d.source_project_id AND b.reference=d.source_reference
-      UNION SELECT proof.entry_id FROM moria.fs_resource_bindings b
+      UNION ALL SELECT proof.entry_id FROM moria.fs_resource_bindings b
         JOIN moria.fs_source_resource_files proof ON proof.digest=b.digest AND proof.reference=b.reference
         WHERE b.entry_id=c.id
     ) edge

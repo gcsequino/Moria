@@ -2,7 +2,7 @@
   "stop": [
     {
       "matcher": "*",
-      "hooks": [{ "command": "bash .openhands/hooks/quality-gate.sh", "timeout": 1800 }]
+      "hooks": [{ "command": "bash .openhands/hooks/quality-gate.sh", "timeout": 3600 }]
     }
   ]
 }

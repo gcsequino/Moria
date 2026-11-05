@@ -1,0 +1,73 @@
+{
+  "records": [
+    {
+      "event": "disposable-pipeline-jit-setting",
+      "setting": {
+        "configured": "on",
+        "available": false
+      }
+    },
+    {
+      "event": "disposable-pipeline-exact-geometry-equivalence",
+      "name": "leaf",
+      "allSetsEqual": true,
+      "labelsRequiredProofEqual": true,
+      "counts": {
+        "closure": 212,
+        "origins": 10,
+        "releases": 1,
+        "required": 3
+      }
+    },
+    {
+      "event": "geometry-explain-summary",
+      "variant": "baseline",
+      "executionMs": 20.356,
+      "planningMs": 1.413,
+      "planCost": 99609978536.75
+    },
+    {
+      "event": "geometry-explain-summary",
+      "variant": "edge-union-all",
+      "executionMs": 2.782,
+      "planningMs": 0.9,
+      "planCost": 99387927184.27
+    },
+    {
+      "event": "disposable-pipeline-exact-geometry-equivalence",
+      "name": "maximum-dependencies",
+      "allSetsEqual": true,
+      "labelsRequiredProofEqual": true,
+      "counts": {
+        "closure": 341,
+        "origins": 139,
+        "releases": 129,
+        "required": 258
+      }
+    },
+    {
+      "event": "disposable-pipeline-exact-geometry-equivalence",
+      "name": "overlapping-targets",
+      "allSetsEqual": true,
+      "labelsRequiredProofEqual": true,
+      "counts": {
+        "closure": 342,
+        "origins": 140,
+        "releases": 130,
+        "required": 260
+      }
+    },
+    {
+      "event": "disposable-pipeline-first-group-complete",
+      "heads": 16,
+      "configuredInputs": 67,
+      "deadlineSeconds": 120
+    }
+  ],
+  "phaseSampleCounts": {
+    "source-setup": 62,
+    "native-seeding": 110
+  },
+  "aclSelfAverageMs": 3.965714642582629,
+  "nativeGroupScope": "first complete16heads only, all67physicalinputs retained; no Pipelineacceptancecases"
+}

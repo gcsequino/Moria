@@ -280,8 +280,12 @@ test(
       { length: 64 },
       (_, index) => `Fanin${index.toString().padStart(2, '0')}`,
     );
-    for (const name of fanout) columns[name] = { id: long, total: long };
-    for (const name of fanin) columns[name] = { id: long, total: long };
+    const maximumOutputs = Array.from(
+      { length: 64 },
+      (_, index) => `Maximum${index.toString().padStart(2, '0')}`,
+    );
+    for (const name of [...fanout, ...fanin, ...maximumOutputs])
+      columns[name] = { id: long, total: long };
     const definitions: Resource[] = Object.entries(columns).map(([name, columns]) => ({
       apiVersion: 'moria/v1alpha2',
       kind: 'Dataset',
@@ -304,7 +308,7 @@ test(
           inputs: ['inputA', 'inputB', 'inputC'],
           outputs: fanout,
         },
-        { name: 'Maximum', artifact: image.artifact, inputs: fanin, outputs: fanout },
+        { name: 'Maximum', artifact: image.artifact, inputs: fanin, outputs: maximumOutputs },
       ].map((item) => ({
         apiVersion: 'moria/v1alpha2' as const,
         kind: 'Transform' as const,
@@ -642,7 +646,7 @@ test(
           ['Verify', ['Proof']],
           ['Confirm', ['Confirmed']],
           ['Fanout', fanout],
-          ['Maximum', fanout],
+          ['Maximum', maximumOutputs],
         ] as const) {
           await db.pool.query(
             "INSERT INTO moria.runtime_service_targets(environment,resource,domain,binding_revision,resource_class,authority) VALUES($1,$2,'transform','v1','engine-spill',$3)",

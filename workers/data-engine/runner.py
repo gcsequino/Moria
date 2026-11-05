@@ -5,6 +5,7 @@ import json
 import signal
 import sys
 import traceback
+import uuid
 
 sys.path.insert(0, "/runtime")
 from protocol import Context, ProtectedOutput, receive, send
@@ -33,8 +34,19 @@ try:
     context.close()
     context = None
     send({"type": "result", "value": {"complete": True}})
-    if receive().get("type") != "complete":
+    completion = receive()
+    nonce = completion.get("nonce")
+    if (
+        set(completion) != {"version", "type", "nonce"}
+        or type(completion["version"]) is not int
+        or completion["type"] != "complete"
+        or type(nonce) is not str
+    ):
         raise ValueError("ENGINE_PROTOCOL")
+    challenge = uuid.UUID(nonce)
+    if str(challenge) != nonce or challenge.version != 4:
+        raise ValueError("ENGINE_PROTOCOL")
+    send({"type": "completed", "nonce": nonce})
 except BaseException as error:
     if context is not None:
         print(

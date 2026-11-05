@@ -364,9 +364,38 @@ test(
         try {
           await writeFile(
             join(directory, 'guest.mjs'),
-            `import readline from 'node:readline';import {writeFile} from 'node:fs/promises';
-let mode;const send=(value=4)=>process.stdout.write(JSON.stringify({version:1,type:'result',value:{value}})+'\\n');
-readline.createInterface({input:process.stdin}).on('line',async line=>{const m=JSON.parse(line);if(m.type==='start'){mode=m.input.mode;if(mode==='missing')process.exit(0);if(mode==='rootfs'){try{await writeFile('/world-writable','escape');send(0);}catch(error){send(error.code==='EROFS'?1:0);}return;}send();if(mode==='premature')process.exit(0);}else if(m.type==='complete'){if(mode==='rootfs')process.exit(0);if(mode==='nonzero')process.exit(7);send();process.exit(0);}});
+            String.raw`import readline from 'node:readline';
+import {writeFile} from 'node:fs/promises';
+let mode;
+const emit=(message,done)=>process.stdout.write(JSON.stringify({version:1,...message})+'\n',done);
+const result=(value=4,done)=>emit({type:'result',value:{value}},done);
+const acknowledge=(nonce,done)=>emit({type:'completed',nonce},done);
+const preempted='00000000-0000-4000-8000-000000000000';
+readline.createInterface({input:process.stdin}).on('line',async line=>{
+  const m=JSON.parse(line);
+  if(m.type==='start'){
+    mode=m.input.mode;
+    if(mode==='missing')process.exit(0);
+    if(mode==='early'){acknowledge(preempted);return;}
+    if(mode==='rootfs'){
+      try{await writeFile('/world-writable','escape');result(0);}
+      catch(error){result(error.code==='EROFS'?1:0);}
+      return;
+    }
+    result();
+    if(mode==='preemitted')acknowledge(preempted);
+    if(mode==='premature')process.exit(0);
+  }else if(m.type==='complete'){
+    if(mode==='unacknowledged')process.exit(0);
+    const nonce=mode==='wrong'?(m.nonce[0]==='0'?'1':'0')+m.nonce.slice(1):m.nonce;
+    acknowledge(nonce,()=>{
+      if(mode==='nonzero')process.exit(7);
+      if(mode==='duplicate')acknowledge(nonce,()=>process.exit(0));
+      else if(mode==='trailing')result(4,()=>process.exit(0));
+      else process.exit(0);
+    });
+  }
+});
 `,
           );
           await writeFile(
@@ -383,7 +412,17 @@ readline.createInterface({input:process.stdin}).on('line',async line=>{const m=J
           assert.equal(protectedResult.ok, true, JSON.stringify(protectedResult));
           assert.equal(protectedResult.output.result.value, 1);
           await absent(protectedRoot.id);
-          for (const mode of ['missing', 'premature', 'nonzero', 'trailing']) {
+          for (const mode of [
+            'missing',
+            'premature',
+            'unacknowledged',
+            'early',
+            'preemitted',
+            'wrong',
+            'duplicate',
+            'nonzero',
+            'trailing',
+          ]) {
             const { id, lease } = await request(mode, bad),
               result = await harness(lease).done;
             assert.equal(result.ok, false, mode);
