@@ -566,7 +566,38 @@ for (const group of [
       ).rows[0].count;
 
     if (group === 'admission and model') {
-      await t.test(
+      const sdk = agentsClient(
+        createTransport({
+          baseUrl: api,
+          fetch: (url, options) =>
+            fetch(url, {
+              ...options,
+              headers: { ...options?.headers, authorization: `Bearer ${user.token}` },
+            }),
+        }),
+      );
+      const admissionCase = (name: string, run: () => Promise<void>) =>
+        t.test(name, async (caseTest) => {
+          const prior = new Set(ids);
+          try {
+            await run();
+          } catch (error) {
+            const accepted = [...ids].filter((id) => !prior.has(id));
+            if (accepted.length) {
+              const active = (
+                await db.pool.query(
+                  "SELECT id,status FROM moria.runtime_executions WHERE id=ANY($1::uuid[]) AND status IN ('queued','running','preparing') ORDER BY created_at,id",
+                  [accepted],
+                )
+              ).rows;
+              if (active.length)
+                caseTest.diagnostic(JSON.stringify({ activeAgentExecutions: active }));
+              for (const { id } of active) await sdk.cancel(id);
+            }
+            throw error;
+          }
+        });
+      await admissionCase(
         'authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers',
         async () => {
           const accepted = await enqueue('normal', 'agent-original');
@@ -635,7 +666,7 @@ for (const group of [
           );
         },
       );
-      await t.test(
+      await admissionCase(
         'SDK and CLI use the persistent native API and the agent worker replaces its Node launcher',
         async () => {
           const binary =
@@ -680,16 +711,6 @@ for (const group of [
               });
             });
             assert.equal(await readlink(`/proc/${child.pid}/exe`), await realpath(binary));
-            const sdk = agentsClient(
-              createTransport({
-                baseUrl: api,
-                fetch: (url, options) =>
-                  fetch(url, {
-                    ...options,
-                    headers: { ...options?.headers, authorization: `Bearer ${user.token}` },
-                  }),
-              }),
-            );
             const accepted = await sdk.invoke(
               resource,
               { mode: 'normal', prompt: 'SDK native graph', uid },
@@ -736,7 +757,7 @@ for (const group of [
           }
         },
       );
-      await t.test(
+      await admissionCase(
         'a durable model intent commits before gateway admission while public callback data stays withheld',
         async () => {
           const control = await db.pool.connect();
@@ -817,7 +838,7 @@ for (const group of [
           }
         },
       );
-      await t.test(
+      await admissionCase(
         'actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects',
         async () => {
           const before = calls;
@@ -926,7 +947,7 @@ for (const group of [
           );
         },
       );
-      await t.test(
+      await admissionCase(
         'Agent admission captures approved material before code and a missed approval pulse cannot revive it',
         async () => {
           const before = calls;
@@ -1023,7 +1044,7 @@ for (const group of [
             );
         },
       );
-      await t.test(
+      await admissionCase(
         'exact Agent invocation scope admits required dependencies without filesystem browsing',
         async () => {
           const scoped = [`${resource}:invoke`, `${model}:invoke`, `${secret}:use`];
