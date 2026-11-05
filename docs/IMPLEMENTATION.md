@@ -1,5 +1,30 @@
 # Implementation checkpoint
 
+## November 4 filesystem authority and current integration results
+
+The filesystem authority resolver now removes eight redundant inner edge
+deduplications while retaining recursive UNION cycle/duplicate elimination.
+Actual graph sets, labels and required proofs agree across three dependency
+geometries; the measured leaf plan falls from 20.356 ms to 2.782 ms. The complete
+filesystem/Source suite passes 19/19 including duplicate paths, cycles, live deny
+and marking changes. Static checks, exact nine artifacts and 77 native units pass.
+
+The repaired four-file runtime run executes all 52 results with zero skips or
+cancellations: 46 pass and six fail including parent results. Full Functions pass
+18/18, including lost-COMMIT cases; Agent passes 20/21 subcases. Evaluation's
+first ten-case run passes, but repeat/version comparison and service Automation
+composition remain open. Pipeline setup expires during its first 16-head producer
+at 14 completed heads, before Pipeline subcases. Its widths and original producer
+deadline remain unchanged. The earlier exact first-group diagnostic passed; it
+is insufficient qualification of the full file.
+
+The Pipeline fixture gives its two producers separate output Datasets while
+retaining 64-input/64-output admission. Agent setup now closes its database when
+image acquisition fails; a real controlled acquisition failure exits promptly.
+An interrupted test run and local Docker bridge recovery remain recorded. See
+`production/evidence/2026-11-04/acl-query-edges` for raw results and exact identities.
+
+
 ## November 4 complete cold baseline and build budget
 
 The complete cold baseline on frozen `54d839e` builds all nine release artifacts,

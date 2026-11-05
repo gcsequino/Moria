@@ -123,6 +123,38 @@ test(
       );
       return receipt.entries.find((entry) => entry.name === name)!;
     }
+    await t.test('ACL graph duplicates and cycles retain live markings and denies', async () => {
+      const origin = await directory(project.id, 'acl-origin'),
+        target = await directory(origin.id, 'acl-target');
+      await db.pool.query(
+        'INSERT INTO moria.fs_provenance(entry_id,source_id) VALUES($1,$2),($2,$1)',
+        [target.id, origin.id],
+      );
+      const hash = createHash('sha256').update(token.token).digest('hex');
+      const labels = () =>
+        db.pool.query(
+          "SELECT moria.native_filesystem_acl_targets_state(moria.native_serving_session($1),$2,'read',false) labels",
+          [hash, [target.id, origin.id, target.id]],
+        );
+      assert.deepEqual((await labels()).rows[0].labels, []);
+      await security.setPolicy('operator', origin.id, '0', {
+        markings: [{ environment, marking: 'protected' }],
+        grants: [],
+      });
+      assert.deepEqual((await labels()).rows[0].labels, ['protected']);
+      await security.setPolicy('operator', origin.id, '1', {
+        markings: [{ environment, marking: 'protected' }],
+        grants: [
+          {
+            subject: { kind: 'principal', id: instanceId },
+            operations: ['read'],
+            inherit: true,
+            effect: 'deny',
+          },
+        ],
+      });
+      await assert.rejects(labels(), { message: 'FORBIDDEN' });
+    });
     const properties = { id: { type: 'uid', nullable: false } };
     const dataset: Resource = {
       apiVersion: 'moria/v1alpha2',

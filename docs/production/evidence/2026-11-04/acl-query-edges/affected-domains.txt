@@ -1,0 +1,70 @@
+▶ native Agent admission and model
+  ✔ authenticated Agent admission replays pinned inputs and rejects generic/unregistered workers (5206.882548ms)
+  ✔ SDK and CLI use the persistent native API and the agent worker replaces its Node launcher (7302.855019ms)
+  ✔ a durable model intent commits before gateway admission while public callback data stays withheld (9604.882093ms)
+  ✔ actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects (21533.745753ms)
+  ✔ Agent admission captures approved material before code and a missed approval pulse cannot revive it (11623.385675ms)
+  ✔ exact Agent invocation scope admits required dependencies without filesystem browsing (5610.283799ms)
+✔ native Agent admission and model (73607.592896ms)
+▶ native Agent child isolation and worker lifecycle
+  ✔ a pending child observation blocks parent logs, actions and model dispatch (43867.032995ms)
+  ✔ private child progress crosses a held dependency insertion and resumes after terminal proof (12013.016106ms)
+  ✔ Agent observes actual Function child failure labels before returning a caught outcome (11683.321498ms)
+  ✔ Agent cancellation fences a running Function child without a second attempt (8212.71624ms)
+  ✔ healthy long-running agent work renews the same single-attempt database lease (14887.691472ms)
+  ✔ bound model dispatch stops after real worker-scope revocation and cannot publish a result (6028.914867ms)
+  ✔ cancellation and supervisor SIGKILL fence the graph without re-executing user code (5288.349965ms)
+  ✔ real result COMMIT acknowledgement loss preserves one Agent receipt after supervisor death (6324.522597ms)
+  ✔ registered worker class admission is independent of unrelated class ordering (5381.678187ms)
+✔ native Agent child isolation and worker lifecycle (127171.950591ms)
+▶ native Agent service and current authority
+  ✖ Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement (36555.586325ms)
+  ✔ accepted private job authority survives ordinary session expiry while public and stale lease credentials fail (14752.080774ms)
+  ✔ newly granted tool permissions cannot widen an already accepted job capability (9222.626781ms)
+  ✔ postclaim filesystem rejection records no code start after an expired original session (6034.65222ms)
+  ✔ deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active (16358.194547ms)
+  ✔ accepted agent code remains pinned across redeployment and current authority gates retained results (9951.644211ms)
+✖ native Agent service and current authority (105398.546686ms)
+▶ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ✔ admission requires a dedicated environment and pins the suite, Agent and real native Dataset (69461.244363ms)
+  ✖ repeats stay separate and comparison rejects a different evaluator version (62592.794326ms)
+  ✔ public SDK and CLI inspect the same native receipt and preserve logical replay (16461.550492ms)
+  ✔ cancelling a run fences every accepted descendant and stops live model and OCI work (45606.895389ms)
+  ✔ a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL (65810.409077ms)
+  ✔ direct Agent results retain the actual private fixture input authority (701.796253ms)
+  ✖ a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes (89246.052756ms)
+  ✔ current clearance and registration protect retained case scores, summaries and events (487.739699ms)
+✖ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts (367527.05811ms)
+▶ native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts
+  ✔ authenticated admission pins release/actor/input, rejects forged fields and generic function workers (2846.853299ms)
+  ✔ a lost public acceptance response and API process death replay one durable invocation (2212.656688ms)
+  ✔ publication retries only definite transaction aborts without rerunning the guest (8180.208808ms)
+  ✔ deployed code cannot change an accepted release or replay schema (3769.497231ms)
+  ✔ real native broker preserves reads and committed readWrite effects after later code failure (8002.657165ms)
+  ✔ editProposal batch and function receipt commit together; rejection or result failure rolls all edits back (9781.85071ms)
+  ✔ live function leases reject generic sealing, out-of-admission epoch acknowledgement and worker-scope revocation (1390.054405ms)
+  ✔ cancellation and supervisor death fence the only attempt and remove local orphans (2690.530767ms)
+  ✔ actual publication COMMIT response loss preserves one result and one proposal batch after SIGKILL (4078.96802ms)
+  ✔ a permanently lost COMMIT response releases admission at its DB deadline and preserves committed success (5180.485468ms)
+  ✔ native worker pool supports bounded nested invocations and function-backed action preparation (11362.408743ms)
+  ✔ worker CLI rejects missing native configuration before creating a workspace or Node worker (259.148129ms)
+  ✔ a public function catching a protected missing-object read retains its labels and failed observation (8633.275789ms)
+  ✔ a killed callback with rolled-back private evidence cannot release failure metadata or logs (1652.533751ms)
+  ✔ a real guest filesystem move commits retained labels and its own epoch acknowledgement atomically (7152.31053ms)
+  ✔ exact Function invocation scopes run without filesystem browsing and remain pinned on acceptance (2290.636982ms)
+  ✔ changed read evidence and revoked access withhold retained results and protected logs (2418.449184ms)
+✔ native public functions compose authenticated admission, real sandboxes and atomic result/effect receipts (87798.229576ms)
+✖ native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs (177453.516339ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 46
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 546018.806655
+✖ failing tests:
+✖ Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement (36555.586325ms)
+✖ repeats stay separate and comparison rejects a different evaluator version (62592.794326ms)
+✖ a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes (89246.052756ms)
+✖ native pipelines stream three pinned Iceberg sources through isolated DuckDB and atomically publish two outputs (177453.516339ms)
