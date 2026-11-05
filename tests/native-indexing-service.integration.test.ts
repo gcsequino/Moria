@@ -18,14 +18,16 @@ import { ObjectStore, type ObjectSchema } from '../services/ontology/src/store.j
 import { managedDatasetRecovery } from './fixtures/native-recovery/managed.js';
 import { prepareSourceStoreProjector } from './fixtures/native-source-store/projector.js';
 import { sourceStagingCollection } from './fixtures/native-source-store/staging.js';
+import { sourceStagingWidth } from './fixtures/native-source-store/width.js';
 
-for (const [wide, staging] of [
-  [false, false],
-  [true, false],
-  [false, true],
+for (const [wide, staging, nearCap] of [
+  [false, false, false],
+  [true, false, false],
+  [false, true, false],
+  [true, false, true],
 ] as const)
   test(
-    `permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (${staging ? 'staging lifecycle' : wide ? 'maximum width' : 'small rows'})`,
+    `permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (${nearCap ? 'near-cap storage' : staging ? 'staging lifecycle' : wide ? 'maximum width' : 'small rows'})`,
     { timeout: 300000 },
     async (t) => {
       const binary = process.env.MORIA_RUNTIME_BINARY ?? '/usr/local/bin/moria-runtime',
@@ -107,10 +109,22 @@ for (const [wide, staging] of [
       const sourceProperty = wide ? 'v'.repeat(100) : 'value',
         population = wide ? 2 : 300,
         declaredKeys = wide ? [] : ['tenant', sourceProperty];
-      const sourceColumns = {
+      const sourceColumns: Record<string, ObjectSchema['properties'][string]> = {
           uid: { type: 'uid', nullable: false },
           [sourceProperty]: { type: 'string', nullable: false },
           tenant: { type: 'string', nullable: false },
+          ...(nearCap
+            ? Object.fromEntries(
+                Array.from({ length: 21 }, (_, i) => [
+                  `samples_${String(i).padStart(2, '0')}`,
+                  {
+                    type: 'array',
+                    items: { type: 'float64', nullable: false },
+                    nullable: false,
+                  } as const,
+                ]),
+              )
+            : {}),
         } as const,
         schema: ObjectSchema = {
           primaryKey: 'uid',
@@ -256,7 +270,7 @@ for (const [wide, staging] of [
               'tests/fixtures/native-indexing-service/generate.py',
               physical,
               lookup,
-              ...(wide ? ['--wide'] : []),
+              ...(nearCap ? ['--near-cap'] : wide ? ['--wide'] : []),
             ])
           ).stdout,
         ),
@@ -532,7 +546,7 @@ for (const [wide, staging] of [
           });
           assert.equal(batches.length, 1);
           assert.ok(batches.every((item) => Number(item.maxWireBytes) <= 16 * 1024 * 1024));
-          if (wide) {
+          if (wide && !nearCap) {
             assert.ok(Number(batches[0].maxWireBytes) > 8 * 1024 * 1024);
             assert.equal(batches[0].batches, '2');
           }
@@ -550,7 +564,7 @@ for (const [wide, staging] of [
           ).rows;
           assert.equal(rows.length, population);
           assert.equal(await queryCount(), population / 2);
-          if (wide) {
+          if (wide && !nearCap) {
             const actual = (
               await db.pool.query(
                 'SELECT max(octet_length(r.value::text)+octet_length(r.source_value::text))::text AS bytes FROM moria.staged_source_rows r JOIN moria.source_generations g ON g.stage=r.stage WHERE g.environment=$1 AND g.object_type=$2',
@@ -698,6 +712,24 @@ for (const [wide, staging] of [
           );
         },
       );
+      if (nearCap) {
+        await t.test(
+          'accepted decoded-boundary typed arrays expose physical amplification and defer a controlled legacy layout without poisoning another real build',
+          async () => {
+            await sourceStagingWidth({
+              db,
+              runtime: binary,
+              env,
+              environment,
+              target,
+              publishedBuild: acceptedBuild,
+              publish,
+              diagnostic: (value) => t.diagnostic(JSON.stringify(value)),
+            });
+          },
+        );
+        return;
+      }
       if (staging) {
         await t.test(
           'real closed staging collection preserves published aliases and drains expired private rows through native history once',

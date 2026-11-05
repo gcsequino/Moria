@@ -1,0 +1,53 @@
+{
+  "result": "passed",
+  "tests": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "controllerSeconds": 42.20753562799655,
+  "testSeconds": 40.569241698,
+  "image": "sha256:691320d08e4de429d08aa6484c76d694542504de559a9997e389713710b148df",
+  "nativeSourceDigest": "5bb2eff5e41bdac8eb4442647d705268dcbc7ad61fc834889da35f8a35c3c9af",
+  "nativeUnitsPassed": 106,
+  "allNineArtifacts": "exact reused trial011 cohort",
+  "static": "passed",
+  "decodedValueBytes": 4194273,
+  "perArrayElements": 99862,
+  "arrays": 21,
+  "rowGroupRows": 1,
+  "ordinaryStoredBytes": 471656,
+  "wireBytes": 6291882,
+  "inlineSourceBytes": 25165867,
+  "controlledLegacyStoredBytes": 25165933,
+  "limitsUnchanged": {
+    "decodedRowBytes": 4194304,
+    "mappedObjectBytes": 4194304,
+    "collectionActualStorageBytes": 16777216,
+    "rootTimeoutSeconds": 300
+  },
+  "proved": [
+    "native accepted typed-array near-cap row",
+    "separate identical-content EXTERNAL physical-layout fault",
+    "bounded operatorBlocked diagnostic with exact closure/cursor/actual storage size",
+    "payload and canonical rows unchanged on block",
+    "another real cancelled build collected despite blocked row",
+    "controller and three scratch pools and temporary directory absent"
+  ],
+  "notProved": [
+    "universal maximum physical width of accepted ordinary rows",
+    "automatic reclamation of oversized legacy-layout rows",
+    "production capacity"
+  ],
+  "retainedFailures": [
+    {
+      "trial": 11,
+      "reason": "DECODED_ROW_LIMIT invalidates 12MiB raw string candidate"
+    },
+    {
+      "trial": 12,
+      "reason": "two near-cap rows exceeded unchanged64MiB conservative Parquet row-group allocation bound"
+    }
+  ]
+}

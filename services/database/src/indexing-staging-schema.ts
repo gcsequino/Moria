@@ -54,6 +54,7 @@ CREATE TABLE moria.runtime_indexing_staging_pending (
   observed_at timestamptz,
   state text NOT NULL DEFAULT 'ready' CHECK(state IN ('ready','deferred')),
   retry_at timestamptz,
+  last_block jsonb CHECK(last_block IS NULL OR jsonb_typeof(last_block)='object'),
   CHECK((closure IS NULL)=(observed_at IS NULL)),
   CHECK((state='deferred')=(retry_at IS NOT NULL))
 );
@@ -66,6 +67,8 @@ WHERE state='ready' AND observed_at IS NULL;
 CREATE INDEX runtime_indexing_staging_due
 ON moria.runtime_indexing_staging_pending(environment,retry_at,build)
 WHERE state='deferred';
+CREATE INDEX runtime_indexing_staging_blocked_sample
+ON moria.runtime_indexing_staging_pending(environment,build) WHERE last_block IS NOT NULL;
 CREATE TRIGGER runtime_indexing_staging_pending_owner
 BEFORE INSERT OR UPDATE OR DELETE ON moria.runtime_indexing_staging_pending
 FOR EACH ROW EXECUTE FUNCTION moria.runtime_indexing_staging_owner();
@@ -112,7 +115,7 @@ BEGIN
     INSERT INTO moria.runtime_indexing_staging_pending(build,environment,closure,observed_at)
     VALUES(NEW.id,NEW.environment,previous.id,previous.observed_at)
     ON CONFLICT(build) DO UPDATE SET environment=EXCLUDED.environment,
-      closure=EXCLUDED.closure,observed_at=EXCLUDED.observed_at,state='ready',retry_at=NULL;
+      closure=EXCLUDED.closure,observed_at=EXCLUDED.observed_at,state='ready',retry_at=NULL,last_block=NULL;
   END IF;
   RETURN NEW;
 END $$;
@@ -365,12 +368,21 @@ BEGIN
         WHERE r.build=build_row.id AND r.partition=k.partition AND r.uid=k.uid
           AND r.task=k.task AND r.fence=k.fence RETURNING 1)
       SELECT (SELECT count(*) FROM candidates),(SELECT count(*) FROM deleted),
-        COALESCE((SELECT sum(bytes) FROM chosen),0),
-        (SELECT jsonb_build_object('partition',partition,'uid',uid,'task',task,'fence',fence::text)
-          FROM chosen ORDER BY partition DESC,uid DESC,task DESC,fence DESC LIMIT 1)
+        COALESCE((SELECT sum(bytes) FROM chosen),(SELECT bytes FROM candidates ORDER BY partition,uid,task,fence LIMIT 1),0),
+        COALESCE((SELECT jsonb_build_object('partition',partition,'uid',uid,'task',task,'fence',fence::text)
+          FROM chosen ORDER BY partition DESC,uid DESC,task DESC,fence DESC LIMIT 1),
+          (SELECT jsonb_build_object('partition',partition,'uid',uid,'task',task,'fence',fence::text) FROM candidates ORDER BY partition,uid,task,fence LIMIT 1))
       INTO scanned,removed,stored_bytes,next_position;
       IF scanned>0 AND removed=0 THEN
-        RAISE EXCEPTION 'RESOURCE_LIMIT';
+        UPDATE moria.runtime_indexing_staging_pending SET state='deferred',retry_at=clock_timestamp()+interval '1 minute',
+          last_block=jsonb_build_object('reason','rowStorageBudget','closure',closed.id,
+            'policy',input_policy,'incarnation',policy.incarnation,'scopeHash',closed.scope_hash,
+            'owner',closed.owner,'fence',closed.fence::text,'phase',work.phase,'cursor',work.position,
+            'candidate',next_position,'storageBytes',stored_bytes::text,'limitBytes','16777216','observedAt',clock_timestamp())
+        WHERE build=build_row.id RETURNING * INTO queued;
+        RETURN jsonb_build_object('state','operatorBlocked','worked',false,'pending',discovery_pending
+          OR moria.runtime_indexing_staging_ready(policy.environment,eligible_cutoff,step_time),
+          'build',build_row.id,'closure',closed.id,'block',queued.last_block,'nextRetryAt',queued.retry_at);
       END IF;
       IF scanned=0 AND EXISTS(SELECT 1 FROM moria.indexing_rows r WHERE r.build=build_row.id) THEN
         next_position:='{}'::jsonb;
@@ -397,11 +409,20 @@ BEGIN
       deleted AS(DELETE FROM moria.native_source_key_map m USING chosen k
         WHERE m.store=build_row.id AND m.uid=k.uid RETURNING 1)
       SELECT (SELECT count(*) FROM candidates),(SELECT count(*) FROM deleted),
-        COALESCE((SELECT sum(bytes) FROM chosen),0),
-        (SELECT jsonb_build_object('uid',uid) FROM chosen ORDER BY uid DESC LIMIT 1)
+        COALESCE((SELECT sum(bytes) FROM chosen),(SELECT bytes FROM candidates ORDER BY uid LIMIT 1),0),
+        COALESCE((SELECT jsonb_build_object('uid',uid) FROM chosen ORDER BY uid DESC LIMIT 1),
+          (SELECT jsonb_build_object('uid',uid) FROM candidates ORDER BY uid LIMIT 1))
       INTO scanned,removed,stored_bytes,next_position;
       IF scanned>0 AND removed=0 THEN
-        RAISE EXCEPTION 'RESOURCE_LIMIT';
+        UPDATE moria.runtime_indexing_staging_pending SET state='deferred',retry_at=clock_timestamp()+interval '1 minute',
+          last_block=jsonb_build_object('reason','rowStorageBudget','closure',closed.id,
+            'policy',input_policy,'incarnation',policy.incarnation,'scopeHash',closed.scope_hash,
+            'owner',closed.owner,'fence',closed.fence::text,'phase',work.phase,'cursor',work.position,
+            'candidate',next_position,'storageBytes',stored_bytes::text,'limitBytes','16777216','observedAt',clock_timestamp())
+        WHERE build=build_row.id RETURNING * INTO queued;
+        RETURN jsonb_build_object('state','operatorBlocked','worked',false,'pending',discovery_pending
+          OR moria.runtime_indexing_staging_ready(policy.environment,eligible_cutoff,step_time),
+          'build',build_row.id,'closure',closed.id,'block',queued.last_block,'nextRetryAt',queued.retry_at);
       END IF;
       IF scanned=0 AND EXISTS(SELECT 1 FROM moria.native_source_key_map m WHERE m.store=build_row.id) THEN
         next_position:='{}'::jsonb;
@@ -424,11 +445,20 @@ BEGIN
       deleted AS(DELETE FROM moria.staged_source_rows r USING chosen k
         WHERE r.stage=build_row.id AND r.uid=k.uid RETURNING 1)
       SELECT (SELECT count(*) FROM candidates),(SELECT count(*) FROM deleted),
-        COALESCE((SELECT sum(bytes) FROM chosen),0),
-        (SELECT jsonb_build_object('uid',uid) FROM chosen ORDER BY uid DESC LIMIT 1)
+        COALESCE((SELECT sum(bytes) FROM chosen),(SELECT bytes FROM candidates ORDER BY uid LIMIT 1),0),
+        COALESCE((SELECT jsonb_build_object('uid',uid) FROM chosen ORDER BY uid DESC LIMIT 1),
+          (SELECT jsonb_build_object('uid',uid) FROM candidates ORDER BY uid LIMIT 1))
       INTO scanned,removed,stored_bytes,next_position;
       IF scanned>0 AND removed=0 THEN
-        RAISE EXCEPTION 'RESOURCE_LIMIT';
+        UPDATE moria.runtime_indexing_staging_pending SET state='deferred',retry_at=clock_timestamp()+interval '1 minute',
+          last_block=jsonb_build_object('reason','rowStorageBudget','closure',closed.id,
+            'policy',input_policy,'incarnation',policy.incarnation,'scopeHash',closed.scope_hash,
+            'owner',closed.owner,'fence',closed.fence::text,'phase',work.phase,'cursor',work.position,
+            'candidate',next_position,'storageBytes',stored_bytes::text,'limitBytes','16777216','observedAt',clock_timestamp())
+        WHERE build=build_row.id RETURNING * INTO queued;
+        RETURN jsonb_build_object('state','operatorBlocked','worked',false,'pending',discovery_pending
+          OR moria.runtime_indexing_staging_ready(policy.environment,eligible_cutoff,step_time),
+          'build',build_row.id,'closure',closed.id,'block',queued.last_block,'nextRetryAt',queued.retry_at);
       END IF;
       IF scanned=0 AND EXISTS(SELECT 1 FROM moria.staged_source_rows r WHERE r.stage=build_row.id) THEN
         next_position:='{}'::jsonb;
@@ -489,6 +519,7 @@ BEGIN
     ELSE
       CONTINUE;
     END IF;
+    UPDATE moria.runtime_indexing_staging_pending SET last_block=NULL WHERE build=build_row.id;
     SELECT * INTO work FROM moria.runtime_indexing_staging_work w WHERE w.closure=closed.id;
     IF work.phase='complete' THEN
       DELETE FROM moria.runtime_indexing_staging_pending WHERE build=build_row.id;
