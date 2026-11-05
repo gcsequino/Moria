@@ -1,0 +1,26 @@
+{
+  "scope": "indexed staging queue focused correctness",
+  "image": "sha256:253f36e55870ac410a1a72fdd8ad2ba1e9573b04ad2c2eb0dbcd0029351bb250",
+  "nativeSourceDigest": "73c737a92bf1773e091258151e9f4924728df93f3aa1c595f44a1f72bf3c3324",
+  "static": "passed",
+  "nativeArtifacts": 9,
+  "nativeUnitsPassed": 106,
+  "compilerSeconds": 14.45,
+  "packaging": "Initial root-owned directory denied extraction; corrected external permission and extracted retained exact Cargo output without recompiling.",
+  "focused": {
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "exitCode": 0,
+    "elapsedSeconds": 48.45766305199504
+  },
+  "fullOriginalFile": "running separately; not yet qualified",
+  "remaining": [
+    "full original 20-case file",
+    "accepted near-cap physical JSONB width vs16MiB storage budget",
+    "explicit operator-blocked width deferral",
+    "independent CI and capacity ladder"
+  ]
+}

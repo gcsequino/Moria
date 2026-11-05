@@ -61,8 +61,12 @@ export async function sourceStagingCollection(input: Input) {
       child.stdin.end(JSON.stringify(value));
     });
   };
-  const history = async (command: string, id: string) =>
-    JSON.parse(await cli(['history-retention', command], { id }, true));
+  const history = async (command: string, id: string) => {
+    const result = JSON.parse(await cli(['history-retention', command], { id }, true));
+    assert.ok(Number(result.indexingStaging?.discovered ?? 0) <= 8);
+    assert.ok(Number(result.indexingStaging?.promoted ?? 0) <= 8);
+    return result;
+  };
   const approve = async (key: string) =>
     JSON.parse(
       await cli(
@@ -111,6 +115,9 @@ export async function sourceStagingCollection(input: Input) {
     await fault.query(
       'ALTER TABLE moria.runtime_indexing_stage_closures DISABLE TRIGGER runtime_indexing_closure_immutable',
     );
+    await fault.query('DELETE FROM moria.runtime_indexing_staging_pending WHERE build=$1', [
+      publishedBuild,
+    ]);
     await fault.query('DELETE FROM moria.runtime_indexing_stage_closures WHERE build=$1', [
       publishedBuild,
     ]);
@@ -241,6 +248,10 @@ export async function sourceStagingCollection(input: Input) {
         [build],
       );
       await age.query(
+        'UPDATE moria.runtime_indexing_staging_pending q SET observed_at=c.observed_at FROM moria.runtime_indexing_stage_closures c WHERE q.closure=c.id AND q.build=$1',
+        [build],
+      );
+      await age.query(
         'ALTER TABLE moria.runtime_indexing_stage_closures ENABLE TRIGGER runtime_indexing_closure_immutable',
       );
       await age.query('COMMIT');
@@ -280,6 +291,7 @@ export async function sourceStagingCollection(input: Input) {
       ).rows[0].count,
       '0',
     );
+    await delay(1100);
     const first = await history('once', policyA);
     assert.equal(first.indexingStaging.mode, 'unpublished');
     assert.equal(first.indexingStaging.removedSpills, '300');
@@ -302,6 +314,10 @@ export async function sourceStagingCollection(input: Input) {
       );
       await aging.query(
         "UPDATE moria.runtime_indexing_stage_closures SET observed_at=observed_at-interval '3 days' WHERE build=$1",
+        [publishedBuild],
+      );
+      await aging.query(
+        'UPDATE moria.runtime_indexing_staging_pending q SET observed_at=c.observed_at FROM moria.runtime_indexing_stage_closures c WHERE q.closure=c.id AND q.build=$1',
         [publishedBuild],
       );
       await aging.query(
@@ -346,7 +362,7 @@ export async function sourceStagingCollection(input: Input) {
     let publishedComplete = false;
     for (let i = 0; i < 12; i++) {
       const held = await history('once', policyB);
-      assert.equal(held.indexingStaging.state, 'backupBusy');
+      assert.ok(['backupBusy', 'idle'].includes(held.indexingStaging.state));
       publishedComplete =
         (
           await db.pool.query(
@@ -357,6 +373,7 @@ export async function sourceStagingCollection(input: Input) {
       if (publishedComplete) break;
     }
     assert.ok(publishedComplete, 'published history lane must complete independently');
+    await delay(1100);
     const held = await history('once', policyB);
     assert.equal(held.indexingStaging.state, 'backupBusy');
     assert.equal(held.indexingStaging.pending, true);
@@ -368,6 +385,7 @@ export async function sourceStagingCollection(input: Input) {
     await gate.query(
       "SELECT pg_advisory_unlock_shared(hashtextextended('moria/recovery-retention/v1',0))",
     );
+    await delay(1100);
     let last: any;
     for (let i = 0; i < 30; i++) {
       last = await history('once', policyB);
@@ -427,6 +445,95 @@ export async function sourceStagingCollection(input: Input) {
       )
     ).rows[0];
     assert.deepEqual(b, c);
+    assert.equal(
+      (
+        await db.pool.query(
+          'SELECT count(*)::text FROM moria.runtime_indexing_staging_pending WHERE build=ANY($1::uuid[])',
+          [[build, publishedBuild]],
+        )
+      ).rows[0].count,
+      '0',
+    );
+    // Reconcile genuine completed closures again; their immutable completed work must not re-enqueue them.
+    await db.pool.query(
+      'DELETE FROM moria.runtime_indexing_staging_discovery WHERE environment=$1',
+      [environment],
+    );
+    const reconciled = await history('once', policyB);
+    assert.ok(reconciled.indexingStaging.discovered > 0);
+    assert.equal(reconciled.indexingStaging.pending, false);
+    assert.equal(
+      (
+        await db.pool.query(
+          'SELECT count(*)::text FROM moria.runtime_indexing_staging_pending WHERE build=ANY($1::uuid[])',
+          [[build, publishedBuild]],
+        )
+      ).rows[0].count,
+      '0',
+    );
+    const explain = await db.pool.connect();
+    try {
+      await explain.query('BEGIN');
+      await explain.query(
+        'SET LOCAL enable_seqscan=off; SET LOCAL plan_cache_mode=force_generic_plan',
+      );
+      const plans: [string, string, unknown[], string[]][] = [
+        [
+          'runtime_indexing_staging_ready_unknown',
+          "SELECT build FROM moria.runtime_indexing_staging_pending WHERE environment=$1 AND state='ready' AND observed_at IS NULL ORDER BY build LIMIT 8",
+          [environment],
+          ['environment'],
+        ],
+        [
+          'runtime_indexing_staging_ready_age',
+          "SELECT build FROM moria.runtime_indexing_staging_pending WHERE environment=$1 AND state='ready' AND observed_at IS NOT NULL AND observed_at<=$2::timestamptz ORDER BY observed_at,build LIMIT 8",
+          [environment, new Date()],
+          ['environment', 'observed_at'],
+        ],
+        [
+          'runtime_indexing_staging_due',
+          "SELECT build FROM moria.runtime_indexing_staging_pending WHERE environment=$1 AND state='deferred' AND retry_at<=$2::timestamptz ORDER BY retry_at,build LIMIT 8",
+          [environment, new Date()],
+          ['environment', 'retry_at'],
+        ],
+        [
+          'indexing_closed_builds',
+          "SELECT id,created_at FROM moria.indexing_builds WHERE environment=$1 AND status IN ('active','failed','cancelled','superseded','conflicted') AND (created_at,id)>($2::timestamptz,$3::uuid) ORDER BY created_at,id LIMIT 8",
+          [environment, '-infinity', build],
+          ['environment', 'created_at', 'id'],
+        ],
+        [
+          'runtime_indexing_staging_published_stage',
+          'SELECT stage FROM moria.source_generations WHERE stage=$1 LIMIT 1',
+          [publishedBuild],
+          ['stage'],
+        ],
+        [
+          'runtime_indexing_staging_search_stage',
+          'SELECT generation FROM moria.native_search_rebuilds WHERE source_stage=$1 LIMIT 1',
+          [publishedBuild],
+          ['source_stage'],
+        ],
+      ];
+      for (const [index, text, values, conditions] of plans) {
+        const plan = (
+          await explain.query({ name: index, text: 'EXPLAIN (FORMAT JSON) ' + text, values })
+        ).rows[0]['QUERY PLAN'];
+        const found: any[] = [];
+        const visit = (node: any) => {
+          if (node['Index Name'] === index) found.push(node);
+          for (const child of node.Plans ?? []) visit(child);
+        };
+        visit(plan[0].Plan);
+        assert.equal(found.length, 1, JSON.stringify({ index, plan }));
+        for (const condition of conditions)
+          assert.ok(found[0]['Index Cond'].includes(condition), JSON.stringify({ index, plan }));
+      }
+      await explain.query('ROLLBACK');
+    } finally {
+      await explain.query('ROLLBACK').catch(() => {});
+      explain.release();
+    }
   } finally {
     await gate.query('SELECT pg_advisory_unlock_all()').catch(() => {});
     gate.release();
