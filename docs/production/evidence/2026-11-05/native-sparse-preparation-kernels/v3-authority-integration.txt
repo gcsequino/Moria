@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-authority.integration.test.ts
+Running 1 integration test files.
+✔ a warmed native key-run reader rejects revoked current authority (43375.133709ms)
+ℹ {"readerWarmed":true,"revocationObserved":true,"noResultReleased":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43901.99362

@@ -121,6 +121,42 @@ impl RunReader {
         self.file.check_current().await?;
         Ok(result)
     }
+    /// Resolve one admitted key batch with one range read per distinct relevant block.
+    /// Full keys, including hash-collision candidates, are compared after block decoding.
+    pub(crate) async fn lookup_batch(&self, keys: &[Vec<u8>]) -> Result<Vec<Option<RunValue>>> {
+        use std::collections::BTreeMap;
+        self.file.check_current().await?;
+        ensure!(keys.len() <= 1000, "RESOURCE_LIMIT");
+        let mut bytes = 0usize;
+        let mut wanted = BTreeMap::<&[u8], Vec<usize>>::new();
+        let mut blocks = BTreeMap::new();
+        for (index, key) in keys.iter().enumerate() {
+            bytes = bytes
+                .checked_add(key.len())
+                .filter(|bytes| *bytes <= 8 * 1024 * 1024)
+                .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))?;
+            wanted.entry(key.as_slice()).or_default().push(index);
+            for block in point_blocks(&self.descriptor, key)? {
+                if let Some(previous) = blocks.insert((block.start, block.end), block) {
+                    ensure!(previous == block, "DATASET_KEY_INDEX_INVALID");
+                }
+            }
+        }
+        let mut result = vec![None; keys.len()];
+        for block in blocks.values() {
+            let encoded = self.file.range(block.start..block.end).await?;
+            for entry in decode_block(&self.descriptor, block, &encoded)? {
+                if let Some(indices) = wanted.get(entry.key.as_slice()) {
+                    for index in indices {
+                        ensure!(result[*index].is_none(), "DATASET_PRIMARY_KEY_DUPLICATE");
+                        result[*index] = Some(entry.value.clone());
+                    }
+                }
+            }
+        }
+        self.file.check_current().await?;
+        Ok(result)
+    }
     pub(crate) fn stream_partition(
         &self,
         bucket: u8,

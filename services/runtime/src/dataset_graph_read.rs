@@ -388,6 +388,9 @@ impl GraphFile {
     pub fn content(&self) -> &SealedObject {
         self.authority.node.content()
     }
+    pub(crate) fn physical_version(&self) -> &ObjectVersion {
+        &self.authority.node.state.physical_version
+    }
     pub async fn range(&self, range: Range<u64>) -> Result<Bytes> {
         self.reader
             .range(

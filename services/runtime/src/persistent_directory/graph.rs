@@ -24,6 +24,7 @@ pub struct GraphDirectory {
     graph: NativeGraph,
     expected_path: Vec<String>,
     source_task: Option<uuid::Uuid>,
+    source_root: Option<QualifiedNode>,
 }
 impl GraphDirectory {
     pub(crate) fn new(graph: NativeGraph, expected_path: Vec<String>) -> Result<Self> {
@@ -32,6 +33,7 @@ impl GraphDirectory {
             graph,
             expected_path,
             source_task: None,
+            source_root: None,
         })
     }
     pub(crate) fn sealed_task(
@@ -43,7 +45,31 @@ impl GraphDirectory {
         directory.source_task = Some(task);
         Ok(directory)
     }
+    /// Reuse descendants of a root already admitted by the current producer. Each edge is
+    /// re-admitted through the receiver; the supplied node is not new read authority.
+    pub(crate) async fn rooted(graph: NativeGraph, root: QualifiedNode) -> Result<Self> {
+        ensure!(root.kind() == "directory", "INVALID_NATIVE_DIRECTORY");
+        let admitted = graph
+            .known_node(root.content())
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("DATASET_GRAPH_ANCESTRY_REQUIRED"))?;
+        ensure!(
+            admitted.id() == root.id(),
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        let mut directory = Self::new(graph, vec![])?;
+        directory.source_root = Some(admitted);
+        Ok(directory)
+    }
     async fn admit(&self, path: &[String], content: &SealedObject) -> Result<QualifiedNode> {
+        if let Some(root) = &self.source_root {
+            let mut node = root.clone();
+            for label in path {
+                node = self.graph.child(&node, label).await?;
+            }
+            ensure!(node.content() == content, "DATASET_GRAPH_ANCESTRY_REQUIRED");
+            return Ok(node);
+        }
         match self.source_task {
             Some(task) => self.graph.admit_task(task, path, content).await,
             None => self.graph.admit_head(path, content).await,

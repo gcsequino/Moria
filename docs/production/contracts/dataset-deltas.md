@@ -19,7 +19,7 @@ DatasetCommitDelta {
   unchangedReason?: metadataPrune | compaction | noOp,
   equivalenceReceipt?,
   completeRowsRoot?, deleteKeysRoot?,
-  insertedKeys, replacedKeys, deletedKeys,
+  mutationFootprint?: { version: 1, node: NodeReference },
   producer: { kind: execution, execution, candidate }
           | { kind: maintenance, run, policy },
   sealedReceipt
@@ -31,6 +31,29 @@ Roots are opaque descriptors of actual sealed, producer-owned native output. Rec
 The key index binds the exact resulting snapshot/file visibility, schema/key profile and current key count. Standard position deletes bind exact receiver-qualified old data-file paths and physical row ordinals, with inclusive data-sequence applicability; replacement rows live in new ordinary data files and do not match those prior locators. This explicitly replaces the earlier equality-delete proposal while preserving accepted typed array primary keys. `datasetSchemaHash` is SHA-256 over the native canonical JSON of the actual Iceberg Schema descriptor stored in `datasetSchema`, matching the native task-partset schema hash. The actual table schema must equal the accepted binding after decoding both through the installed Iceberg Schema codec; default spellings such as an absent versus empty identifier-field list are normalized by that codec. The record also binds the exact current immutable binding revision, which commits to its accepted raw schema and key declaration. It is distinct from the Source store's composite object/layout schema hash. Ordered key descriptors retain the existing normalized key hash and complete key bytes.
 
 Compaction changes physical layout while preserving logical rows; its event explicitly records that verified property, rather than asking consumers to infer it from matching counts. Metadata pruning is a different `unchanged` edge: it preserves the exact current snapshot descriptor and non-history table metadata, while a real Dataset revision advances to its qualified new metadata root. Its receipt binds both actual root keys and a digest of that preserved current snapshot descriptor. Maintenance edges have `mode: null` only with `producer.kind: maintenance`, `changeKind: unchanged`, an actual unchanged reason and equivalence receipt; they never fabricate or inherit a Dataset write mode. Execution edges keep their exact accepted write mode even for a certified no-op. A non-advancing maintenance result produces no Dataset edge. Other no-op or compaction receipts require their own actual producer proof; snapshot IDs, matching row counts or guest assertions alone are insufficient.
+
+## Mutation footprint version one
+
+This protocol is agreed for sparse production; activation still requires the actual writer, receiver and standard-reader proofs. A mutation uses one bounded descriptor under the result graph's fixed `mutation` edge. The outer RootDescriptor stores the identical `mutationFootprint: { version: 1, node: NodeReference }`. The immutable publication journal binds that reference to its real qualified result root. A subset of changed rows or keys is never presented as a complete NativeSnapshot. The existing completeRowsRoot remains the complete result root for a replacement boundary; both legacy subset-root columns are null for mutation edges.
+
+The footprint descriptor binds:
+
+- Version one, table UUID, actual Dataset schema hash, normalized key-schema hash and ordered primary key.
+- The accepted append, upsert or delete mode; actual basis revision, snapshot, metadata pointer and root key; predetermined result snapshot and expected basis revision plus one.
+- The real execution, coordinator owner/fence/incarnation, predetermined stage UUID and bounded directory of actual sealed task-input receipts.
+- Exact inserted, replaced and deleted row counts, and optional completeRows/deleteKeys directory references. For declared keys these are also exact key counts; no implicit key is invented for a multiset Dataset.
+
+It excludes the outer result root's own hash/key and the later allocated environment revision. The result root includes the footprint, so embedding that result root in its child would create a hash cycle. Atomic candidate publication instead binds both directions through the actual journal edge and sealed publication receipt. Input receipt summaries name actual sealed task identities and result hashes; they grant no reads of task inputs. The native coordinator verifies their accepted execution/schema/mode and actual task custody before sealing its derived output.
+
+The fixed `completeRows` child is a persistent directory of receiver-qualified full-schema data files. Each entry binds its actual immutable file certificate, row count, data sequence and one operation, `insert` or `replacement`. Files containing both operations must be separated into bounded producer streams or carry a separately specified exact per-row operation witness; the version-one producer uses separate streams. The replacement count excludes inserted rows. A changed key whose Source mapping changes its Object UID is still a complete replacement row, so the consumer removes the prior mapped UID through its actual key map.
+
+The fixed `deleteKeys` child is a persistent directory of qualified native key runs. Each run uses the existing version-three full-key codec and tombstone values, bound to the same key-schema hash and predetermined result sequence. Runs contain exactly the complete encoded keys actually removed from the current result. Requested missing keys and keys superseded by complete upsert replacement rows are excluded. Standard position-delete files also cover superseded old physical rows, but those physical tombstones do not turn a replacement into a logical key removal.
+
+Absent directories mean zero corresponding rows and must agree with the descriptor's counts and actual producer receipts. Counts, node references, task declarations and guest checksums alone never qualify output. The mutation receiver verifies current full-key equality, qualified immutable old file/version membership, physical row ordinal and data sequence before admitting physical deletion, and proves the final standard snapshot, selection/index roots and footprint counts agree. Byte/row/route bounds apply before IO; large changed sets use bounded task partitions, spill and path copying.
+
+The consumer obtains a real GraphReadContext from each accepted captured journal-window member, opens the actual result root and follows only the fixed typed mutation descendants. It verifies the reference against that result root and immutable edge, including basis/result identity, schema/key profile and producer receipt. A passed NodeReference or Locator never creates IO authority. Every intermediate real result root remains pinned until the consumer commits or releases its window; journal records create no permanent historical pin. Recovery and graph collection follow the existing qualified result-root closure, including footprint directories/files/runs and bounded receipt descriptors.
+
+An empty append or all-missing delete completes under a certified no-effect output receipt without advancing the Dataset revision or creating a journal edge. Grouped output coverage, exact expected-head checks, checkpoint CAS, receipt and execution completion remain atomic. A mixture containing real changes publishes only the actual changed output. A no-key append can preserve Dataset multiset semantics, but a consumer requiring stable Dataset keys must explicitly bootstrap rather than invent row identities.
 
 ## Acceptance and custody
 
