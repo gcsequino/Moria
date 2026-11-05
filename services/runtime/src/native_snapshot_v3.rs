@@ -23,8 +23,10 @@ use std::{ops::Range, sync::Arc};
 use uuid::Uuid;
 mod index_summary;
 mod point;
+mod scan;
 pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef};
 pub use point::VerifiedKeyRow;
+pub(crate) use scan::GraphScanFile;
 
 pub const PROFILE: &str = "iceberg-v2-native-mor-bounded-v3";
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -247,6 +249,9 @@ impl NativeSnapshot {
     pub fn metadata(&self) -> &Arc<TableMetadata> {
         &self.metadata
     }
+    pub(crate) fn data_file_count(&self) -> u64 {
+        self.descriptor.data_files
+    }
     pub(crate) fn row_count(&self) -> u64 {
         self.descriptor.rows
     }
@@ -389,178 +394,19 @@ impl NativeSnapshot {
         self: Arc<Self>,
         batch_size: usize,
     ) -> Result<BoxStream<'static, Result<arrow_array::RecordBatch>>> {
-        ensure!((1..=1000).contains(&batch_size), "RESOURCE_LIMIT");
-        self.check_current().await?;
-        let directory = self.index_directory("selections").await?;
-        let files = directory.map_or_else(
-            || {
-                Box::pin(futures::stream::empty())
-                    as BoxStream<
-                        'static,
-                        Result<(String, crate::persistent_directory::read::ReadEntry)>,
-                    >
-            },
-            |directory| directory.entries(),
-        );
-        let table = Arc::new(
-            iceberg::table::StaticTable::from_metadata(
-                (*self.metadata).clone(),
-                iceberg::TableIdent::from_strs(["moria", "qualified"])?,
-                self.file_io(),
-            )
-            .await?,
-        );
-        struct Scan {
-            snapshot: Arc<NativeSnapshot>,
-            table: Arc<iceberg::table::StaticTable>,
-            files:
-                BoxStream<'static, Result<(String, crate::persistent_directory::read::ReadEntry)>>,
-            batches: Option<BoxStream<'static, Result<arrow_array::RecordBatch>>>,
-            selection: Option<crate::dataset_writer::row_selection::ReadSelection>,
-            physical: u64,
-            file_visible: u64,
-            total: u64,
-            files_seen: u64,
-            batch_size: usize,
-        }
-        let state = Scan {
-            snapshot: self,
-            table,
-            files,
-            batches: None,
-            selection: None,
-            physical: 0,
-            file_visible: 0,
-            total: 0,
-            files_seen: 0,
-            batch_size,
-        };
-        Ok(Box::pin(futures::stream::try_unfold(
-            state,
-            |mut state| async move {
-                loop {
-                    state.snapshot.check_current().await?;
-                    if let Some(batches) = state.batches.as_mut() {
-                        if let Some(batch) = batches.next().await {
-                            let batch = batch?;
-                            let selection = state.selection.as_ref().unwrap();
-                            let selected =
-                                selection.selected(state.physical, batch.num_rows()).await?;
-                            state.physical += batch.num_rows() as u64;
-                            let indices = selected
-                                .iter()
-                                .enumerate()
-                                .filter_map(|(index, selected)| selected.then_some(index as u32))
-                                .collect::<Vec<_>>();
-                            state.file_visible += indices.len() as u64;
-                            state.total += indices.len() as u64;
-                            if indices.is_empty() {
-                                continue;
-                            }
-                            let batch = if indices.len() == batch.num_rows() {
-                                batch
-                            } else {
-                                let indices = arrow_array::UInt32Array::from(indices);
-                                let arrays = batch
-                                    .columns()
-                                    .iter()
-                                    .map(|array| {
-                                        arrow_select::take::take(array.as_ref(), &indices, None)
-                                    })
-                                    .collect::<std::result::Result<Vec<_>, _>>()?;
-                                arrow_array::RecordBatch::try_new(batch.schema(), arrays)?
-                            };
-                            crate::snapshot::validate_batch(
-                                &batch,
-                                &crate::snapshot::columns(&serde_json::to_value(
-                                    state.snapshot.metadata.current_schema().as_ref(),
-                                )?)?,
-                            )?;
-                            state.snapshot.check_current().await?;
-                            return Ok(Some((batch, state)));
-                        }
-                        let selection = state.selection.as_ref().unwrap();
-                        ensure!(
-                            state.physical == selection.physical_rows()
-                                && state.file_visible == selection.selected_rows(),
-                            "PARQUET_COUNT_MISMATCH"
-                        );
-                        state.batches = None;
-                        state.selection = None;
-                    }
-                    let Some((name, entry)) = state.files.next().await.transpose()? else {
-                        ensure!(
-                            state.total == state.snapshot.descriptor.rows
-                                && state.files_seen == state.snapshot.descriptor.data_files,
-                            "PARQUET_COUNT_MISMATCH"
-                        );
-                        state.snapshot.check_current().await?;
-                        return Ok(None);
-                    };
-                    #[derive(Deserialize)]
-                    #[serde(deny_unknown_fields)]
-                    struct Name {
-                        name: String,
-                    }
-                    let named: Name = serde_json::from_value(entry.value.clone())?;
-                    ensure!(
-                        named.name == name && entry.link_count() == 1,
-                        "DATASET_KEY_INDEX_INVALID"
-                    );
-                    let selection = crate::dataset_writer::row_selection::ReadSelection::open(
-                        state.snapshot.context.clone(),
-                        entry.link(0).await?,
-                    )
-                    .await?;
-                    ensure!(
-                        selection.name() == name
-                            && state.snapshot.file(&name).await?.content() == selection.content(),
-                        "DATASET_GRAPH_ANCESTRY_REQUIRED"
-                    );
-                    state.files_seen += 1;
-                    if selection.selected_rows() == 0 {
-                        continue;
-                    }
-                    let content = selection.content();
-                    let task = iceberg::scan::FileScanTask::builder()
-                        .with_file_size_in_bytes(content.size)
-                        .with_start(0)
-                        .with_length(content.size)
-                        .with_record_count(Some(selection.physical_rows()))
-                        .with_data_file_path(name)
-                        .with_data_file_format(iceberg::spec::DataFileFormat::Parquet)
-                        .with_schema(state.snapshot.metadata.current_schema().clone())
-                        .with_project_field_ids(
-                            state
-                                .snapshot
-                                .metadata
-                                .current_schema()
-                                .as_struct()
-                                .fields()
-                                .iter()
-                                .map(|field| field.id)
-                                .collect(),
-                        )
-                        .with_case_sensitive(true)
-                        .build();
-                    use futures::TryStreamExt;
-                    let stream = state
-                        .table
-                        .reader_builder()
-                        .with_batch_size(state.batch_size)
-                        .with_data_file_concurrency_limit(1)
-                        .with_range_fetch_concurrency(1)
-                        .build()
-                        .read(Box::pin(futures::stream::iter([Ok(task)])))?
-                        .stream()
-                        .map_err(anyhow::Error::from);
-                    state.batches = Some(Box::pin(stream));
-                    state.selection = Some(selection);
-                    state.physical = 0;
-                    state.file_visible = 0;
-                }
-            },
-        )))
+        scan::all(self, batch_size).await
+    }
+    pub(crate) async fn scan_plans(
+        self: Arc<Self>,
+    ) -> Result<BoxStream<'static, Result<GraphScanFile>>> {
+        scan::plans(self).await
+    }
+    pub(crate) async fn scan_planned_file(
+        self: Arc<Self>,
+        plan: &GraphScanFile,
+        batch_size: usize,
+    ) -> Result<BoxStream<'static, Result<arrow_array::RecordBatch>>> {
+        scan::one(self, plan, batch_size).await
     }
     pub(crate) fn file_io(self: &Arc<Self>) -> FileIO {
         FileIOBuilder::new(Arc::new(GraphFiles(self.clone()))).build()

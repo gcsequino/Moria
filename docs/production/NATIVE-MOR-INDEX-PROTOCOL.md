@@ -202,3 +202,28 @@ two real publication/rollback cases.
 the exact scope. Sparse changed-row/delete-key roots, standard position-delete
 readback, actual distributed bootstrap and indexing-window custody/consumption
 remain unactivated.
+
+## Qualified graph scan task contract
+
+A graph source task remains an indexing `scan` task and uses a closed version-one
+plan with `readerProfile=iceberg-v2-native-mor-bounded-v3`. Its `file` witness binds
+the exact logical name, sealed immutable content, physical row count, selected
+row count and data sequence. The witness grants no IO. Each task reopens the
+actual immutable indexing-build root, checks its stored catalog/reader profile
+and current namespace binding, resolves the file's qualified selection through
+that root, and compares every witness field before scanning only that file.
+Physical ordinals advance before visibility filtering. Row counts use selected
+rows; physical file and row counts remain separate.
+
+An explicit `file: null` task is valid only when that actual qualified root has
+zero data files and zero visible rows. Missing wire bytes or an absent file field
+never establish an empty source. Graph plans cannot select the flat reader, and
+flat plans retain their existing native FileScanTask wire ABI. Both paths feed
+the same canonical Source mapping, UID derivation, payload budgets, staged rows
+and sealed-task pipeline. Coordinator planning streams bounded per-file witnesses
+and validates complete root file/visible-row counts at EOF before dispatch.
+
+This reader bridge does not create a v3 Dataset head or qualify a v3 writer.
+Actual v3 root preparation, standard metadata/index agreement, stage validation,
+atomic publication, recovery/pruning and sparse position-delete production remain
+separate required integration gates.

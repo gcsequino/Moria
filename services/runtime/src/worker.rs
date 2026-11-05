@@ -11,6 +11,7 @@ use sha2::{Digest, Sha256};
 use std::time::Duration;
 use tokio_postgres::Row;
 use uuid::Uuid;
+mod source;
 
 #[derive(Clone)]
 pub struct Worker {
@@ -382,23 +383,16 @@ impl Worker {
             owner: self.owner,
             fence,
         };
-        let table = self
-            .table(row, scope.clone())
+        let source = self
+            .source(row, scope.clone())
             .await
             .context("INDEXING_PLAN_TABLE")?;
         let snapshot: i64 = row.get::<_, String>("snapshot_id").parse()?;
-        let actual_columns = crate::snapshot::columns(&serde_json::to_value(
-            table.metadata().current_schema().as_ref(),
-        )?)?;
+        let actual_columns =
+            crate::snapshot::columns(&serde_json::to_value(source.schema().as_ref())?)?;
         let layout =
             SourceLayout::new(&definition, &actual_columns).context("INDEXING_PLAN_SCHEMA")?;
-        let scan = table
-            .scan()
-            .snapshot_id(snapshot)
-            .select(layout.columns.keys().map(String::as_str))
-            .build()
-            .context("INDEXING_PLAN_SCAN")?;
-        let mut tasks = scan.plan_files().await.context("INDEXING_PLAN_FILES")?;
+        let mut tasks = source.plans(snapshot, &layout).await?;
         let mut ordinal = 0_i32;
         {
             let mut client = self.db.get().await?;
@@ -415,26 +409,8 @@ impl Worker {
                 .await?;
             tx.commit().await?;
         }
-        while let Some(mut task) = tasks.try_next().await.context("INDEXING_PLAN_NEXT_FILE")? {
+        while let Some((plan, wire)) = tasks.try_next().await.context("INDEXING_PLAN_NEXT_FILE")? {
             ensure!(ordinal < 1_000_000, "Task planning budget exceeded");
-            ensure!(
-                task.deletes.is_empty(),
-                "Iceberg delete files are unsupported by this reader release"
-            );
-            // Persisting these optional native values is not supported by the pinned reader ABI.
-            ensure!(
-                task.partition.as_ref().is_none_or(|p| p.iter().len() == 0)
-                    && task
-                        .partition_spec
-                        .as_ref()
-                        .is_none_or(|p| p.is_unpartitioned())
-                    && task.name_mapping.is_none(),
-                "Unsupported Iceberg partition/name mapping"
-            );
-            task.partition = None;
-            task.partition_spec = None;
-            let plan = json!({"kind":"scan"});
-            let wire = crate::wire::scan_plan(task).context("INDEXING_PLAN_WIRE")?;
             let mut client = self.db.get().await?;
             let tx = client.transaction().await?;
             tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
@@ -493,10 +469,14 @@ impl Worker {
             fence,
         };
         let result = match plan["kind"].as_str() {
-            Some("scan") => match row.get::<_, Option<Vec<u8>>>("wire") {
-                Some(wire) => self.scan(scope, &wire).await,
-                None => Err(anyhow::anyhow!("Missing scan protocol")),
-            },
+            Some("scan") => {
+                self.scan(
+                    scope,
+                    &plan,
+                    row.get::<_, Option<Vec<u8>>>("wire").as_deref(),
+                )
+                .await
+            }
             Some("reduce") => match plan["partition"]
                 .as_i64()
                 .and_then(|n| i32::try_from(n).ok())
@@ -520,8 +500,7 @@ impl Worker {
         Ok(true)
     }
 
-    async fn scan(&self, scope: Scope, wire: &[u8]) -> Result<()> {
-        let scan: FileScanTask = crate::wire::read_scan(wire)?;
+    async fn scan(&self, scope: Scope, plan: &Value, wire: Option<&[u8]>) -> Result<()> {
         let task = scope.task.unwrap();
         let row = self
             .db
@@ -533,25 +512,12 @@ impl Worker {
             )
             .await?;
         let definition: Value = row.get("definition");
-        let table = self.table(&row, scope.clone()).await?;
-        ensure!(
-            scan.deletes.is_empty() && scan.partition.is_none() && scan.name_mapping.is_none(),
-            "Unsupported persisted task"
-        );
-        let expected = scan.record_count;
-        let mut batches = table
-            .reader_builder()
-            .with_batch_size(1000)
-            .with_data_file_concurrency_limit(1)
-            .with_range_fetch_concurrency(1)
-            .build()
-            .read(Box::pin(stream::iter([Ok(scan)])))?
-            .stream();
+        let source = self.source(&row, scope.clone()).await?;
         let schema = &definition["schema"];
-        let actual_columns = crate::snapshot::columns(&serde_json::to_value(
-            table.metadata().current_schema().as_ref(),
-        )?)?;
+        let actual_columns =
+            crate::snapshot::columns(&serde_json::to_value(source.schema().as_ref())?)?;
         let layout = SourceLayout::new(&definition, &actual_columns)?;
+        let (expected, mut batches) = source.batches(plan, wire).await?;
         let key = schema["primaryKey"].as_str().unwrap();
         let environment = Uuid::parse_str(definition["environmentId"].as_str().unwrap())?;
         let target = Uuid::parse_str(definition["targetId"].as_str().unwrap())?;
