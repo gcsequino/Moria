@@ -1,0 +1,10 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 164.3131893589998,
+  "tests": 7,
+  "passed": 7,
+  "failed": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "scope": "All six original Agent service/current-authority subcases and their root; the other two original Agent groups are outside this focused entrypoint."
+}

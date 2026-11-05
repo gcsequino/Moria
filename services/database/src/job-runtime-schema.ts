@@ -495,7 +495,7 @@ BEGIN
    OR binding.context->>'parentExecution' IS DISTINCT FROM binding.context->>'serviceParentExecution' THEN RAISE EXCEPTION 'SERVICE_PURPOSE_REVOKED'; END IF;
  SELECT * INTO selected FROM moria.runtime_execution_services s WHERE s.binding=binding_id;
  PERFORM moria.runtime_service_binding_guard(binding_id);
- SELECT * INTO child FROM moria.runtime_executions WHERE binding=binding_id;
+ SELECT e.* INTO child FROM moria.runtime_executions e WHERE e.binding=binding_id;
  IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM moria.runtime_job_delegations WHERE execution=child.id) THEN
    proof:=moria.runtime_sandbox_service_child_metadata(binding.context->>'serviceParentHash',binding.resource);
    IF proof IS NULL OR ROW(proof->>'parent',proof->>'task',proof->>'owner',proof->>'fence',proof->>'incarnation',proof->>'authority',proof->>'revision')

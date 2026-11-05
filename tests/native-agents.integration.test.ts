@@ -1970,8 +1970,14 @@ for (const group of [
             await authority.setGrants(environment, 'fixture', inspectorPrincipal, inspectorApp, [
               `${automation}:run`,
             ]);
-            const policy = await fs.management.policy(author.context, root.id);
-            await fs.management.setPolicy(author.context, root.id, policy.revision, {
+            const deniedPlacement = await fetch(`${api}/api/v1/automations/${automation}/firings`, {
+              headers: { authorization: `Bearer ${inspection.token}` },
+            });
+            assert.equal(deniedPlacement.status, 403, await deniedPlacement.text());
+            const inspectionRoot = source.parentId;
+            assert.ok(inspectionRoot);
+            const policy = await fs.management.policy(author.context, inspectionRoot);
+            await fs.management.setPolicy(author.context, inspectionRoot, policy.revision, {
               markings: policy.markings,
               grants: [
                 ...policy.grants,
@@ -2039,11 +2045,16 @@ for (const group of [
                 'Historical private firings cannot be released to an inspector without their retained clearance',
               );
             } finally {
-              const currentPolicy = await fs.management.policy(author.context, root.id);
-              await fs.management.setPolicy(author.context, root.id, currentPolicy.revision, {
-                markings: policy.markings,
-                grants: policy.grants,
-              });
+              const currentPolicy = await fs.management.policy(author.context, inspectionRoot);
+              await fs.management.setPolicy(
+                author.context,
+                inspectionRoot,
+                currentPolicy.revision,
+                {
+                  markings: policy.markings,
+                  grants: policy.grants,
+                },
+              );
               await authority.syncPrincipal(environment, 'fixture', inspectorPrincipal, {
                 kind: 'workload',
                 enabled: false,
