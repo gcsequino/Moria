@@ -106,6 +106,7 @@ CREATE FUNCTION moria.runtime_dataset_io_check(session_hash text,execution_id uu
 DECLARE state jsonb; e moria.runtime_executions; b moria.runtime_execution_bindings; n moria.native_storage_namespaces;
   inherited text[]:='{}'; labels text[]; input jsonb; input_bindings jsonb:='[]'; output_target boolean;
   access_requests jsonb;access_results jsonb;label_index integer:=0;
+  accepted_generation bigint;
 BEGIN
   -- Publication IO has no task fence to lock; retain a shared execution fence.
   IF task_id IS NULL THEN
@@ -131,7 +132,24 @@ BEGIN
   IF task_id IS NOT NULL THEN
     IF NOT EXISTS(SELECT 1 FROM moria.runtime_execution_tasks WHERE id=task_id AND execution=execution_id)
       THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
-    PERFORM moria.runtime_task_check(task_id,worker,worker_fence);
+    IF NOT for_write AND state->>'privateValidatedExecution'=execution_id::text
+      AND EXISTS(SELECT 1 FROM moria.runtime_job_sessions s WHERE s.token_hash=session_hash AND s.execution=execution_id
+        AND s.task=task_id AND s.owner=worker AND s.fence=worker_fence AND s.incarnation=instance_incarnation) THEN
+      -- The exact private session already validated this execution under the lock above.
+      -- Keep the task and worker fence locks and recheck their live expiry.
+      IF e.deadline<=clock_timestamp() THEN RAISE EXCEPTION 'EXECUTION_INACTIVE'; END IF;
+      SELECT t.worker_generation INTO accepted_generation FROM moria.runtime_execution_tasks t
+        WHERE t.id=task_id AND t.execution=execution_id AND t.owner=worker AND t.fence=worker_fence
+          AND t.status='running' AND t.lease_until>clock_timestamp() FOR UPDATE;
+      IF NOT FOUND THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
+      IF accepted_generation IS NOT NULL THEN
+        PERFORM 1 FROM moria.runtime_workers w WHERE w.owner=worker AND w.generation=accepted_generation
+          AND w.enabled AND w.expires_at>clock_timestamp() FOR SHARE;
+        IF NOT FOUND THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
+      END IF;
+    ELSE
+      PERFORM moria.runtime_task_check(task_id,worker,worker_fence);
+    END IF;
   ELSIF e.status<>'preparing' OR e.owner IS DISTINCT FROM worker OR e.fence<>worker_fence OR e.lease_until<=clock_timestamp()
     THEN RAISE EXCEPTION 'LEASE_LOST';
   END IF;

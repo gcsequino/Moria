@@ -451,6 +451,12 @@ async fn run() -> Result<()> {
         Some(host) => moria_runtime::execution::job_session(&db, &task.lease, host).await?,
         None => session,
     };
+    if fixture.mode == "dataset-io-held" {
+        ensure!(registered.is_some(), "REGISTERED_WORKER_REQUIRED");
+        event(json!({"event":"dataset_io_held","lease":task.lease}));
+        proceed();
+        return Ok(());
+    }
     if matches!(
         fixture.mode.as_str(),
         "graph-bootstrap" | "graph-bootstrap-held" | "graph-read" | "graph-read-held"

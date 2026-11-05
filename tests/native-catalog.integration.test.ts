@@ -600,6 +600,156 @@ test(
       },
     );
     await t.test(
+      'private Dataset task reads validate the execution once and keep the live task fences',
+      async (t) => {
+        const before = await heads();
+        const owner = randomUUID(),
+          host = randomUUID();
+        await db.pool.query(
+          "INSERT INTO moria.runtime_workers(owner,host_id,incarnation,resource_classes,domains,expires_at) SELECT $1,$2,incarnation,ARRAY['standard'],ARRAY['sync'],clock_timestamp()+interval '1 hour' FROM moria.indexing_instance",
+          [owner, host],
+        );
+        const run = start({
+          binding: await binding(),
+          mode: 'dataset-io-held',
+          registeredOwner: owner,
+          registeredHost: host,
+        });
+        const { lease } = await run.event('dataset_io_held');
+        const privateHash = (
+          await db.pool.query(
+            'SELECT token_hash FROM moria.runtime_job_sessions WHERE execution=$1 AND task=$2',
+            [lease.execution, lease.task],
+          )
+        ).rows[0].token_hash as string;
+        const check = (
+          client: Pick<typeof db.pool, 'query'>,
+          hash = privateHash,
+          task = lease.task,
+          worker = lease.owner,
+          fence = lease.fence,
+        ) =>
+          client.query(
+            'SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,false) AS state',
+            [
+              hash,
+              lease.execution,
+              task,
+              worker,
+              fence,
+              lease.incarnation,
+              'inputwarehouse',
+              'inputtable',
+              'v1',
+            ],
+          );
+        let grantsChanged = false;
+        try {
+          const measure = async (hash: string) => {
+            const client = await db.pool.connect();
+            try {
+              await client.query('BEGIN');
+              await client.query("SET LOCAL track_functions='all'");
+              const result = (await check(client, hash)).rows[0].state;
+              const calls = Number(
+                (
+                  await client.query(
+                    "SELECT COALESCE(sum(calls),0)::text AS calls FROM pg_stat_xact_user_functions WHERE funcid='moria.runtime_execution_check(uuid)'::regprocedure::oid",
+                  )
+                ).rows[0].calls,
+              );
+              if (hash === privateHash) {
+                await assert.rejects(
+                  db.pool.query(
+                    'SELECT id FROM moria.runtime_executions WHERE id=$1 FOR SHARE NOWAIT',
+                    [lease.execution],
+                  ),
+                  { code: '55P03' },
+                );
+                await assert.rejects(
+                  db.pool.query(
+                    'SELECT id FROM moria.runtime_execution_tasks WHERE id=$1 FOR SHARE NOWAIT',
+                    [lease.task],
+                  ),
+                  { code: '55P03' },
+                );
+              }
+              return { result, calls };
+            } finally {
+              await client.query('ROLLBACK');
+              client.release();
+            }
+          };
+          const privateRead = await measure(privateHash);
+          const ordinaryRead = await measure(sessionHash);
+          assert.deepEqual(privateRead.result, ordinaryRead.result);
+          assert.equal(privateRead.result.resource, input);
+          assert.equal(privateRead.calls, 1);
+          assert.equal(ordinaryRead.calls, 2);
+          await assert.rejects(check(db.pool, privateHash, randomUUID()), /AUTHORIZATION_CHANGED/);
+          await assert.rejects(
+            check(db.pool, privateHash, lease.task, randomUUID()),
+            /AUTHORIZATION_CHANGED/,
+          );
+          await assert.rejects(
+            check(db.pool, privateHash, lease.task, lease.owner, String(BigInt(lease.fence) + 1n)),
+            /AUTHORIZATION_CHANGED/,
+          );
+          const denyMutation = async (sql: string, error: RegExp) => {
+            const client = await db.pool.connect();
+            try {
+              await client.query('BEGIN');
+              assert.equal((await client.query(sql, [lease.task])).rowCount, 1);
+              await assert.rejects(check(client), error);
+            } finally {
+              await client.query('ROLLBACK');
+              client.release();
+            }
+          };
+          await denyMutation(
+            "UPDATE moria.runtime_execution_tasks SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
+            /JOB_LEASE_LOST/,
+          );
+          await denyMutation(
+            'UPDATE moria.runtime_execution_tasks SET worker_generation=worker_generation+1 WHERE id=$1',
+            /LEASE_LOST/,
+          );
+          const epoch = (await authority.current(environment, 'pipeline', 'native-catalog')).epoch;
+          grantsChanged = true;
+          await authority.setGrants(
+            environment,
+            'fixture',
+            'pipeline',
+            'native-catalog',
+            operations.filter((operation) => operation !== input + ':read'),
+          );
+          assert.notEqual(
+            (await authority.current(environment, 'pipeline', 'native-catalog')).epoch,
+            epoch,
+          );
+          await assert.rejects(check(db.pool), /AUTHORIZATION_CHANGED/);
+          t.diagnostic(
+            JSON.stringify({
+              privateExecutionChecks: privateRead.calls,
+              ordinaryExecutionChecks: ordinaryRead.calls,
+              exactScopeAndLiveFences: true,
+            }),
+          );
+        } finally {
+          run.child.stdin!.end('continue\n');
+          await run.done;
+          await authority.setGrants(
+            environment,
+            'fixture',
+            'pipeline',
+            'native-catalog',
+            operations,
+          );
+        }
+        await assertUnchanged(before, lease.execution);
+      },
+    );
+    await t.test(
       'a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied',
       async (t) => {
         const owner = randomUUID(),
