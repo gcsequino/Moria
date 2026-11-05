@@ -164,7 +164,16 @@ BEGIN
         AND s.target_revision=b.context->>'serviceTargetRevision'
         AND d.environment=b.environment AND d.target=b.target AND d.target_id::text=b.definition->>'targetId'
         AND d.source=b.source AND d.definition=b.definition) THEN RAISE EXCEPTION 'INDEXING_AUTHORITY_CHANGED'; END IF;
-    IF left(b.metadata_location,18)<>'moria-snapshot-v2:' THEN RAISE EXCEPTION 'UNSUPPORTED_DATASET_BINDING'; END IF;
+    IF left(b.metadata_location,18) NOT IN ('moria-snapshot-v2:','moria-snapshot-v3:')
+      OR NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_roots r
+        JOIN moria.native_dataset_bindings d ON d.environment=r.environment AND d.resource::text=r.dataset AND d.enabled
+        JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.sealed
+          AND l.physical_fingerprint=d.physical_binding_fingerprint AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance)
+        WHERE r.key=moria.runtime_dataset_root_key(b.metadata_location) AND r.environment=b.environment AND r.dataset=b.source
+          AND r.metadata_location=b.metadata_location AND r.snapshot_id=b.snapshot_id AND r.sealed
+          AND r.root->>'version'=CASE left(b.metadata_location,18) WHEN 'moria-snapshot-v2:' THEN '2' WHEN 'moria-snapshot-v3:' THEN '3' END
+          AND r.reader_profile=CASE left(b.metadata_location,18) WHEN 'moria-snapshot-v2:' THEN 'iceberg-v2-cow-flat-bounded-v2' WHEN 'moria-snapshot-v3:' THEN 'iceberg-v2-native-mor-bounded-v3' END)
+    THEN RAISE EXCEPTION 'UNSUPPORTED_DATASET_BINDING'; END IF;
   ELSE
     IF b.context->>'sessionHash' IS NULL THEN RAISE EXCEPTION 'INDEXING_ACCEPTANCE_REQUIRED'; END IF;
     state:=moria.native_serving_session_origin(b.context->>'sessionHash',false);

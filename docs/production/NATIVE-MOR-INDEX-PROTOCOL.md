@@ -372,3 +372,30 @@ The separate accepted ObjectType/permanent service profile must qualify its
 complete declared-key map and service authority. Its v3 service-origin admission
 restriction remains unchanged pending that actual red/green gate. Production
 writer and sparse-window activation remain closed.
+
+## Permanent Source service-origin v3 reads
+
+Permanent indexing accepts only the supported native v2/v3 Catalog families
+with the matching stored reader profile and an actual sealed root/location for
+the current physical provider and incarnation. The enabled Dataset binding,
+environment, Dataset, snapshot and metadata identity must agree. This acceptance
+check does not supply IO authority; normal Scope/GraphReadContext validation
+still guards bounded reads. Existing materialized Source/Object reads do not
+replay Dataset bytes through this admission path.
+
+The real dependent ObjectType fixture uses normal Source compilation/import
+verification, publication and plan/apply, plus the existing operator-approved
+service authority/target configuration. Its worker receives no registrar token.
+Trial056 records the prior v2-only restriction as an exact blocked intent for
+the valid v3 head without changing that Dataset. Trial058 creates the actual
+managed Source store and complete ordered array-key map, verifies every typed
+Object row through the payload-backed reader, revokes the real registrar token,
+then qualifies fresh service admission for an actual empty v3 head. Current
+empty and retained populated generations coexist. The original complete v2
+Source file passes 20/20 on the same exact image with all root deadlines
+unchanged, alongside static checks, nine matching artifacts and 113 units. Evidence:
+[qualification](evidence/2026-11-05/native-v3-permanent-source/summary.json).
+
+This enables the qualified permanent reader path. Production Dataset writer
+selection, graph metadata pruning, sparse mutations, position-delete proof and
+incremental Source windows remain separate required gates.

@@ -1,0 +1,116 @@
+{
+  "base": "2667dfb7982df2b95a342d72d0db67ddc73936da",
+  "classification": "Actual permanent Source service-origin v3 admission, managed complete key map and registrar-independent readmission. Production Dataset writer selection and sparse windows remain unchanged.",
+  "image": "sha256:61ef790087ec9cfa858cf1117b5ee552d7ec60517344bbf4dab2f70ad3cd63bc",
+  "nativeSourceDigest": "9701d2ac728c8b72e45148ff34ff1899bc6cb7a0acc40c4bce27281f2906f428",
+  "sourceHashes": {
+    "services/database/src/indexing-job-runtime-schema.ts": "f53a5ef7248a9c60c0083931b578337d9785db9108525f3a27450785b62dbaf0",
+    "services/runtime/schema.json": "e1a5b44f855bde6d52eba643e3f557de599320f15f7b1917529dd508342b88eb",
+    "tests/fixtures/native-retention/dataset.ts": "5260ad15c675107d7d998c4956ce9c11ab6c7d58db87c9cf8667831fe1b90d45",
+    "tests/native-dataset-v3-service.integration.test.ts": "25f56605858663dba8605c37639a6e6d82911ad04df8046e5419861a0a79ffa4"
+  },
+  "nativeBuild": {
+    "trial": "057",
+    "exitCode": 0,
+    "seconds": 22.041204667002603,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "jobs": 1,
+    "executables": 9
+  },
+  "nativeReuse": {
+    "baseTrial": "057",
+    "nativeInputsIdentical": true,
+    "executables": 9,
+    "verifiedBinaryHashes": {
+      "moria-native-transport-test": "004b4759334b8ca5e8c36fe199f98ff189f1dba787bfd052b23a5606a052649a",
+      "moria-native-storage-test": "597c1375e0c0f12061be459b8d8a4fa2dde78793c4c4f079152d9bdbb913c892",
+      "moria-native-sandbox-test": "aea4fa230e3729b294c839c5a58158567f61e054bf3ac6c835a8828dc13ffe77",
+      "moria-native-retention-test": "890f2d103de874a7aa6e89a0e48785187d4c2e10fa8af162d0ff345878484794",
+      "moria-native-policy-test": "05b52ff8964df1ad6c596e2bc068263e86519e24f0690ac2e1abdd5af939bccc",
+      "moria-native-catalog-test": "2d424e083935d927d8099e40911b4f650e3d1626c1a1f1fc0ecb151051cee20b",
+      "moria-indexing-tests": "dd6d729b48478cb20354091f0ee7a41d00641a4e2a371743bdda4cd5b9bd386a",
+      "moria-indexing": "fd01cc616532d18bf55e4e2352bd4dbdb30347676fcf0b68e71a8e90164a864e",
+      "moria-runtime": "d14e9072bf15249a8c9b3aa0939f601a6bff5ccc34844d7f0f83da23c9d762f7"
+    }
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 18.550423779000994
+  },
+  "exactNativeProvenanceAndUnits": {
+    "exitCode": 0,
+    "seconds": 10.074892572003591,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "actualPermanentV3Source": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootDeadlineSeconds": 300,
+    "rootSeconds": 50.760588774,
+    "controllerSeconds": 52.03263406299811,
+    "assertions": [
+      "Real dependent ObjectType Source imports existing published Dataset; normal compilation/publication and plan/apply",
+      "Existing operator-approved authority/target configuration is validated by actual service admission/install",
+      "Source context has real execution binding/service authority and no registrar session hash",
+      "Native worker drain receives no registrar token; actual service delegation origin_session_hash is NULL",
+      "Complete16-entry ordered array-key map matches independent UID/input-key oracle and exact SHA-256 key bytes",
+      "Typed public Object get verifies every UID/array/nullable row through payload-backed reader",
+      "Actual registrar revocation then real empty v3 publication triggers fresh service readmission without revoked token",
+      "Empty current Object query and retained populated generation; Dataset head unchanged by indexing"
+    ],
+    "controllerAbsent": true,
+    "externalHostScratchCreated": false,
+    "ownedLabelContainersAbsent": true
+  },
+  "failedPredecessors": {
+    "055": {
+      "reason": "Fixture used generic resource filename for ObjectType; real compiler required .object.json",
+      "seconds": 32.412123784997675
+    },
+    "056": {
+      "reason": "Actual permanent service installation succeeds but exact v3 head is blocked by old service-only v2 prefix guard",
+      "blockedError": "UNSUPPORTED_DATASET_BINDING",
+      "activeManagedBuilds": 0,
+      "datasetHeadUnchanged": true,
+      "seconds": 29.555942082995898
+    },
+    "057": {
+      "reason": "Service admission/build/key-map checks pass; fixture dereferenced nullable hot raw-row cache instead of supported payload-backed typed reader",
+      "seconds": 30.053174934000708
+    }
+  },
+  "review": "Independent read-only review found no concrete enqueue-ordering, legacy-v2, restored-qualification or materialized-read authority defect. Runtime compatibility remains covered by the original full Source file.",
+  "remaining": [
+    "V3 graph metadata pruning and production writer activation",
+    "Actual v3 EngineIO/Evaluation integration as required",
+    "Sparse standard position-delete producer and independent reader oracle",
+    "Distributed bootstrap, actual mutation journal roots and incremental Source windows",
+    "Production workload qualification and independent full CI"
+  ],
+  "originalV2SourceCompatibility": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "controllerSeconds": 302.86341533499944,
+    "originalRootDeadlinesUnchanged": true,
+    "assertions": [
+      "Native registration and mapped canonical/raw data",
+      "Clean-host recovery followed by real publication",
+      "Unrelated epoch metadata refresh and explicit changed-definition blocks",
+      "Real Action overlays/tombstones across replacement and historical reads",
+      "Classified Dataset head remains writable while index floor blocks",
+      "Disabled permanent purpose stays blocked",
+      "Maximum-width batching and native closed-staging cleanup preserve current/Search aliases"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  }
+}

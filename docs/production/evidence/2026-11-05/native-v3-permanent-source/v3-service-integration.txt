@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-service.integration.test.ts
+Running 1 integration test files.
+✔ accepted permanent Source indexes v3 heads independently of its registrar and retains exact array keys (50760.588774ms)
+ℹ {"realDependentSourceCompilation":true,"actualOperatorApproval":true,"actualServiceAdmissionAndDelegation":true,"noRegistrarTokenInWorker":true,"exactArrayKeyMap":true,"typedObjectGet":true,"registrarRevocationThenFreshServiceReadmission":true,"emptyCurrentAndRetainedHistory":true,"datasetHeadUnchangedByIndexing":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51249.549928

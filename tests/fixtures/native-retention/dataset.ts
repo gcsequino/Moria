@@ -439,6 +439,7 @@ export async function managedRetentionDataset(
       snapshot,
       publish,
       read,
+      start,
       close,
     };
   } catch (error) {

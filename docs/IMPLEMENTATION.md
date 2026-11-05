@@ -3224,3 +3224,16 @@ v3 admission remain separate pending runtime gates. This is a test-only
 checkpoint with all nine binaries reused byte-for-byte from qualified trial046,
 full static checks and 113 native units. Evidence:
 [qualification](production/evidence/2026-11-05/native-v3-legacy-source-reader/summary.json).
+
+Permanent Source v3 reader (2026-11-05): trial058 passes actual dependent
+ObjectType Source compilation/imports, operator-approved service admission,
+token-free native indexing and exact complete array-key maps. Typed Object
+get verifies every populated row. Revoking the actual registrar token then
+publishing an empty v3 head triggers fresh permanent-service admission; empty
+current and populated retained Source history pass. Admission now requires an
+actual sealed native2/3 root with matching stored profile and current
+physical/incarnation qualification. Normal IO authority and production writer
+selection remain unchanged. The original complete v2 Source file passes 20/20
+with zero skips or cancellations under its unchanged root deadlines. Static,
+all nine matching rebuilt artifacts and 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-permanent-source/summary.json).
