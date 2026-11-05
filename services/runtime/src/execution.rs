@@ -801,6 +801,28 @@ impl ExecutionAuthority {
     }
 
     pub async fn renew(&self, lease: &Lease) -> Result<()> {
+        for retry in 0..4 {
+            let result = self.renew_once(lease).await;
+            let locked = result.as_ref().is_err_and(|error| {
+                error.chain().any(|cause| {
+                    cause
+                        .downcast_ref::<tokio_postgres::Error>()
+                        .and_then(tokio_postgres::Error::as_db_error)
+                        .is_some_and(|error| {
+                            error.code() == &tokio_postgres::error::SqlState::LOCK_NOT_AVAILABLE
+                        })
+                })
+            });
+            if locked && retry < 3 {
+                tokio::time::sleep(std::time::Duration::from_millis(10 << retry)).await;
+            } else {
+                return result;
+            }
+        }
+        unreachable!()
+    }
+
+    async fn renew_once(&self, lease: &Lease) -> Result<()> {
         let mut client = self.db.get().await?;
         let tx = client.transaction().await?;
         Self::check(&tx, lease).await?;

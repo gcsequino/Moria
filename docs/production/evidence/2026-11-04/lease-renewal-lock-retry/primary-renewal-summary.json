@@ -1,0 +1,152 @@
+{
+  "nativeDigest": "02768b64872595196d39501244b3a1b2221e90b304f37bf4256c64174a3e7b05",
+  "image": "sha256:69c233a3e0199ad55ead0950267edf13bb2218b64499bc31fcf036da432cac66",
+  "result": {
+    "exitCode": 1,
+    "wallSeconds": 98.37968105100299
+  },
+  "primaryFailure": {
+    "id": "9a2e5a6c-c64a-4136-87bf-3dd4981bf3ad",
+    "domain": "evaluation",
+    "created_at": "2026-11-05 07:12:10.249435+00",
+    "kind": "failed",
+    "payload": {
+      "code": "EVALUATION_FAILED",
+      "cause": "RESOURCE_BUSY",
+      "sqlstate": "55P03"
+    }
+  },
+  "renewalStatement": "ExecutionAuthority::check task=None SELECT 1 FROM runtime_executions by actual lease owner/fence/preparing/current lease FOR UPDATE",
+  "exactTupleMapping": [
+    {
+      "waiter": {
+        "sampled_at": "2026-11-05 07:12:02.755696+00",
+        "pid": 487,
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          401
+        ],
+        "query_start": "2026-11-05 07:12:02.67108+00",
+        "xact_start": "2026-11-05 07:12:02.670299+00",
+        "statement": "publication_lease_check",
+        "locks": [
+          {
+            "mode": "AccessExclusiveLock",
+            "page": 3,
+            "type": "tuple",
+            "tuple": 11,
+            "granted": true,
+            "relation": "moria.runtime_executions",
+            "transaction": null
+          },
+          {
+            "mode": "ShareLock",
+            "page": null,
+            "type": "transactionid",
+            "tuple": null,
+            "granted": false,
+            "relation": null,
+            "transaction": "39583"
+          }
+        ]
+      },
+      "root": {
+        "sampled_at": "2026-11-05 07:12:02.488817+00",
+        "id": "9a2e5a6c-c64a-4136-87bf-3dd4981bf3ad",
+        "parent": null,
+        "domain": "evaluation",
+        "status": "preparing",
+        "error": null,
+        "deadline": "2026-11-05 08:11:01.061543+00",
+        "execution_lease": "2026-11-05 07:12:24.584188+00",
+        "execution_tuple": "(3,11)",
+        "task": "9d09fbb8-3e4b-4cec-b8f6-a1a9bd2ad546",
+        "task_status": "sealed",
+        "task_lease": null,
+        "case_id": null,
+        "repeat": null
+      },
+      "blockers": [
+        {
+          "sampled_at": "2026-11-05 07:12:02.75535+00",
+          "pid": 401,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query_start": "2026-11-05 07:12:02.743296+00",
+          "xact_start": "2026-11-05 07:12:02.562497+00",
+          "statement": "native_serving_resource_access"
+        }
+      ]
+    },
+    {
+      "waiter": {
+        "sampled_at": "2026-11-05 07:12:07.624394+00",
+        "pid": 487,
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          401
+        ],
+        "query_start": "2026-11-05 07:12:02.67108+00",
+        "xact_start": "2026-11-05 07:12:02.670299+00",
+        "statement": "publication_lease_check",
+        "locks": [
+          {
+            "mode": "AccessExclusiveLock",
+            "page": 3,
+            "type": "tuple",
+            "tuple": 11,
+            "granted": true,
+            "relation": "moria.runtime_executions",
+            "transaction": null
+          },
+          {
+            "mode": "ShareLock",
+            "page": null,
+            "type": "transactionid",
+            "tuple": null,
+            "granted": false,
+            "relation": null,
+            "transaction": "39583"
+          }
+        ]
+      },
+      "root": {
+        "sampled_at": "2026-11-05 07:12:07.500878+00",
+        "id": "9a2e5a6c-c64a-4136-87bf-3dd4981bf3ad",
+        "parent": null,
+        "domain": "evaluation",
+        "status": "preparing",
+        "error": null,
+        "deadline": "2026-11-05 08:11:01.061543+00",
+        "execution_lease": "2026-11-05 07:12:24.584188+00",
+        "execution_tuple": "(3,11)",
+        "task": "9d09fbb8-3e4b-4cec-b8f6-a1a9bd2ad546",
+        "task_status": "sealed",
+        "task_lease": null,
+        "case_id": null,
+        "repeat": null
+      },
+      "blockers": [
+        {
+          "sampled_at": "2026-11-05 07:12:07.623613+00",
+          "pid": 401,
+          "state": "active",
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query_start": "2026-11-05 07:12:07.581316+00",
+          "xact_start": "2026-11-05 07:12:02.562497+00",
+          "statement": "native_serving_session"
+        }
+      ]
+    }
+  ],
+  "sampleCount": 25,
+  "interpretation": "Root renewal failed on5000ms transient lock timeout while its actual publication lease and absolute deadline remained valid. Child failures followed. No production retry/guard/TTL/deadline changes yet."
+}
