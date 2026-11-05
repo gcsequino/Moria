@@ -1526,12 +1526,84 @@ for (const group of [
             ),
             delay(10000).then(() => assert.fail('Real provider was not reached')),
           ]);
-          const began = Date.now();
-          await db.pool.query(
-            "UPDATE moria.runtime_function_workers SET resource_classes=ARRAY['unassigned'] WHERE owner=$1",
-            [owner],
-          );
           try {
+            const credential = (
+              await db.pool.query(
+                "SELECT s.token_hash,s.task,s.owner,s.fence::text,s.host_id,s.incarnation FROM moria.runtime_job_sessions s JOIN moria.runtime_execution_tasks t ON t.id=s.task AND t.execution=s.execution AND t.owner=s.owner AND t.fence=s.fence WHERE s.execution=$1 AND t.status='running'",
+                [job.id],
+              )
+            ).rows[0];
+            assert.ok(credential);
+            const checks = await db.pool.connect();
+            const lease = [
+              credential.task,
+              job.id,
+              credential.owner,
+              credential.fence,
+              credential.host_id,
+              credential.incarnation,
+            ];
+            const authoritySql =
+              'SELECT moria.runtime_agent_task_session_check($1,$2,$3,$4,$5,$6,$7) AS state';
+            const guardCalls = async () =>
+              (
+                await checks.query(
+                  "SELECT calls::int FROM pg_stat_xact_user_functions WHERE schemaname='moria' AND funcname='runtime_job_delegation_guard'",
+                )
+              ).rows[0]?.calls;
+            try {
+              await checks.query('BEGIN');
+              await checks.query("SET LOCAL track_functions='pl'");
+              await checks.query('SELECT moria.runtime_task_check($1,$2,$3)', [
+                credential.task,
+                credential.owner,
+                credential.fence,
+              ]);
+              const prior = (
+                await checks.query('SELECT moria.native_serving_session($1) AS state', [
+                  credential.token_hash,
+                ])
+              ).rows[0].state;
+              assert.equal(await guardCalls(), 2);
+              await checks.query('ROLLBACK');
+              await checks.query('BEGIN');
+              await checks.query("SET LOCAL track_functions='pl'");
+              const reused = (await checks.query(authoritySql, [...lease, credential.token_hash]))
+                .rows[0].state;
+              assert.deepEqual(reused, prior);
+              assert.equal(await guardCalls(), 1);
+              await checks.query('ROLLBACK');
+              const ordinary = createHash('sha256').update(user.token).digest('hex');
+              assert.deepEqual(
+                (await checks.query(authoritySql, [...lease, ordinary])).rows[0].state,
+                (await checks.query('SELECT moria.native_serving_session($1) AS state', [ordinary]))
+                  .rows[0].state,
+              );
+              const wrong = [...lease, credential.token_hash];
+              wrong[3] = (BigInt(credential.fence) + 1n).toString();
+              await assert.rejects(checks.query(authoritySql, wrong), { message: 'LEASE_LOST' });
+              wrong[3] = credential.fence;
+              wrong[4] = randomUUID();
+              await assert.rejects(checks.query(authoritySql, wrong), {
+                message: 'FUNCTION_WORKER_NOT_AUTHORIZED',
+              });
+              console.log(
+                JSON.stringify({
+                  event: 'agent_task_session_reuse',
+                  priorChecks: 2,
+                  reusedChecks: 1,
+                  ordinaryParity: true,
+                }),
+              );
+            } finally {
+              await checks.query('ROLLBACK');
+              checks.release();
+            }
+            const began = Date.now();
+            await db.pool.query(
+              "UPDATE moria.runtime_function_workers SET resource_classes=ARRAY['unassigned'] WHERE owner=$1",
+              [owner],
+            );
             await worker.done;
             assert.ok(Date.now() - began < 10000);
             await until(async () => providerClosed);
