@@ -1,0 +1,2 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+error: could not compile `moria-runtime` (test "native_catalog") due to 5 previous errors; 6 warnings emitted

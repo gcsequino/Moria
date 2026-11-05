@@ -1,21 +1,17 @@
 //! Explicit bounded bootstrap from an independently verified native v2 snapshot.
 //! This path scans standard data files, never an imported accelerator, before minting a v3 sidecar.
+use super::graph_builder::GraphBuilder as Builder;
 use super::{
-    key_run::{Locator, RunEntry, RunKind, RunValue, RunWriter},
-    key_run_io::{QualifiedRun, write_run},
-    key_run_set, row_selection, rows,
+    row_selection, rows,
     visibility::{BootstrapBudget, VisibilityBootstrap, VisibleRow},
 };
 use crate::{
     catalog::{DatasetIoGrant, NativeSnapshotRef, load_qualified_snapshot},
-    dataset_graph::{NativeGraph, QualifiedNode},
+    dataset_graph::NativeGraph,
     native_snapshot_v3::{LogicalFile, PROFILE, RootDescriptor, VisibilityIndex},
-    persistent_directory::{
-        NodeReference,
-        graph::{GraphDirectory, GraphValue},
-    },
+    persistent_directory::graph::{GraphDirectory, GraphValue},
     snapshot::{columns, preflight_avro},
-    storage::{Cancellation, ClosureLimits, ClosureSpool, ObjectStore, PosixStore, SealedObject},
+    storage::{Cancellation, ClosureLimits, ClosureSpool, ObjectStore, PosixStore},
 };
 use anyhow::{Result, ensure};
 use futures::TryStreamExt;
@@ -37,217 +33,6 @@ pub struct BootstrapReceipt {
     pub root: String,
     pub graph_node: String,
     pub rows: u64,
-}
-struct Builder {
-    graph: NativeGraph,
-    files: GraphDirectory,
-    selections: GraphDirectory,
-    files_root: Option<NodeReference>,
-    selections_root: Option<NodeReference>,
-    spool: ClosureSpool,
-    runs_table: String,
-    hashes: GraphDirectory,
-    locations: GraphDirectory,
-    hashes_root: Option<NodeReference>,
-    locations_root: Option<NodeReference>,
-    sequence: u64,
-    key_hash: String,
-}
-impl Builder {
-    async fn file(&mut self, name: &str, content: SealedObject) -> Result<QualifiedNode> {
-        self.graph.check_current().await?;
-        let proof = self.graph.certify_retained_member(content.clone()).await?;
-        let certificate = self.graph.register_certificate(&proof).await?;
-        let value = GraphValue::new(
-            serde_json::to_value(LogicalFile {
-                name: name.into(),
-                content,
-            })?,
-            vec![certificate.clone()],
-        )?;
-        self.files_root = self
-            .files
-            .apply(
-                self.files_root.as_ref(),
-                BTreeMap::from([(name.into(), Some(value))]),
-            )
-            .await?;
-        Ok(certificate)
-    }
-    async fn record_run(&self, kind: RunKind, run: QualifiedRun) -> Result<()> {
-        self.graph.check_current().await?;
-        let db = self.spool.database()?;
-        self.spool.assert_scope(&db)?;
-        for slice in &run.descriptor().partitions {
-            let segment = key_run_set::segment(&run, slice.partition)?;
-            db.execute(
-                &format!(
-                    "INSERT INTO {}(kind,partition,minimum,segment,content)VALUES(?1,?2,?3,?4,?5)",
-                    self.runs_table
-                ),
-                params![
-                    match kind {
-                        RunKind::Hashes => "hashes",
-                        RunKind::Locations => "locations",
-                    },
-                    slice.partition,
-                    run.descriptor()
-                        .blocks
-                        .iter()
-                        .find(|block| block.partition == slice.partition)
-                        .unwrap()
-                        .minimum
-                        .as_slice(),
-                    serde_json::to_string(&segment)?,
-                    serde_json::to_string(run.node().content())?
-                ],
-            )?;
-        }
-        Ok(())
-    }
-    async fn index(&mut self, visible: &VisibilityBootstrap) -> Result<()> {
-        let mut after = None;
-        let mut hash_rows = Vec::new();
-        let mut location_rows = Vec::new();
-        let mut sizing = RunWriter::new(RunKind::Locations, &self.key_hash, self.sequence)?;
-        loop {
-            let page = visible.route_page(after.as_deref()).await?;
-            if page.is_empty() {
-                break;
-            }
-            for row in &page {
-                let location = RunEntry {
-                    key: row.key.clone(),
-                    value: RunValue::Location(Locator {
-                        file: row.file.clone(),
-                        row: row.row,
-                        data_sequence: row.data_sequence,
-                        row_hash: row.row_hash,
-                    }),
-                };
-                if !sizing.would_fit(&location) {
-                    ensure!(!location_rows.is_empty(), "RESOURCE_LIMIT");
-                    self.flush_runs(&hash_rows, &location_rows).await?;
-                    hash_rows.clear();
-                    location_rows.clear();
-                    sizing = RunWriter::new(RunKind::Locations, &self.key_hash, self.sequence)?;
-                }
-                sizing.push(&location)?;
-                hash_rows.push(RunEntry {
-                    key: row.key.clone(),
-                    value: row.row_hash.map_or(RunValue::DeferredHash, RunValue::Hash),
-                });
-                location_rows.push(location);
-            }
-            after = page.last().map(|row| row.key.clone());
-        }
-        if !location_rows.is_empty() {
-            self.flush_runs(&hash_rows, &location_rows).await?;
-        }
-        // Each bucket contains only finite run descriptors; the full population remains spill-backed.
-        for kind in [RunKind::Hashes, RunKind::Locations] {
-            let mut mutations = BTreeMap::new();
-            for partition in 0..=255u8 {
-                let records = {
-                    let db = self.spool.database()?;
-                    self.spool.assert_scope(&db)?;
-                    let mut statement=db.prepare(&format!("SELECT segment,content FROM {} WHERE kind=?1 AND partition=?2 ORDER BY minimum,content LIMIT 113",self.runs_table))?;
-                    statement
-                        .query_map(
-                            params![
-                                match kind {
-                                    RunKind::Hashes => "hashes",
-                                    RunKind::Locations => "locations",
-                                },
-                                partition
-                            ],
-                            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
-                        )?
-                        .collect::<rusqlite::Result<Vec<_>>>()?
-                };
-                if records.is_empty() {
-                    continue;
-                }
-                self.graph.check_current().await?;
-                ensure!(records.len() <= 112, "RESOURCE_LIMIT");
-                let mut nodes = Vec::with_capacity(records.len());
-                for (segment, content) in records {
-                    let content: SealedObject = serde_json::from_str(&content)?;
-                    let node = self
-                        .graph
-                        .known_node(&content)
-                        .await?
-                        .ok_or_else(|| anyhow::anyhow!("DATASET_GRAPH_ANCESTRY_REQUIRED"))?;
-                    nodes.push((serde_json::from_str(&segment)?, node));
-                }
-                let value = key_run_set::bootstrap_value(
-                    &self.graph,
-                    kind,
-                    &self.key_hash,
-                    partition,
-                    nodes,
-                )
-                .await?;
-                mutations.insert(format!("{partition:02x}"), Some(value));
-                // Bound temporary metadata while avoiding a new immutable root for every bucket.
-                if mutations.len() == 16 {
-                    self.apply_index(kind, std::mem::take(&mut mutations))
-                        .await?;
-                }
-            }
-            if !mutations.is_empty() {
-                self.apply_index(kind, mutations).await?;
-            }
-        }
-        Ok(())
-    }
-    async fn apply_index(
-        &mut self,
-        kind: RunKind,
-        mutations: BTreeMap<String, Option<GraphValue>>,
-    ) -> Result<()> {
-        match kind {
-            RunKind::Hashes => {
-                self.hashes_root = self
-                    .hashes
-                    .apply(self.hashes_root.as_ref(), mutations)
-                    .await?
-            }
-            RunKind::Locations => {
-                self.locations_root = self
-                    .locations
-                    .apply(self.locations_root.as_ref(), mutations)
-                    .await?
-            }
-        }
-        Ok(())
-    }
-    async fn flush_runs(&self, hashes: &[RunEntry], locations: &[RunEntry]) -> Result<()> {
-        self.record_run(
-            RunKind::Hashes,
-            write_run(
-                &self.graph,
-                RunKind::Hashes,
-                &self.key_hash,
-                self.sequence,
-                hashes,
-            )
-            .await?,
-        )
-        .await?;
-        self.record_run(
-            RunKind::Locations,
-            write_run(
-                &self.graph,
-                RunKind::Locations,
-                &self.key_hash,
-                self.sequence,
-                locations,
-            )
-            .await?,
-        )
-        .await
-    }
 }
 /// Actual accepted producer and expected head are required; no bootstrap lease or issuance is invented.
 pub async fn bootstrap_expected_head(
@@ -542,6 +327,7 @@ pub async fn bootstrap_expected_head(
         metadata,
         files: files.clone(),
         visibility,
+        index_summary: None,
     };
     let mut children = vec![("files".into(), builder.files.qualified_root(&files).await?)];
     for (name, reference, directory) in [

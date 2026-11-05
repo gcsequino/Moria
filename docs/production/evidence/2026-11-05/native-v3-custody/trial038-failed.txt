@@ -1,0 +1,24 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-retention.integration.test.ts
+Running 1 integration test files.
+✖ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (39892.651758ms)
+ℹ {"phase":"backupPinnedVersionDespiteCurrentCopy","requests":[{"method":"GET","requestVersion":"307f91c7-a90f-4984-b81a-a7569134b16c","status":206,"responseVersion":"307f91c7-a90f-4984-b81a-a7569134b16c"},{"method":"GET","requestVersion":"307f91c7-a90f-4984-b81a-a7569134b16c","status":206,"responseVersion":"307f91c7-a90f-4984-b81a-a7569134b16c"},{"method":"GET","requestVersion":"307f91c7-a90f-4984-b81a-a7569134b16c","status":206,"responseVersion":"307f91c7-a90f-4984-b81a-a7569134b16c"}]}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40401.852297
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-retention.integration.test.ts:1:100
+✖ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (39892.651758ms)
+  Error: dataset-retention/approve: {"error":"GC_UNTRACKED_ROOT"}
+  
+      at ChildProcess.<anonymous> (/app/tests/fixtures/native-retention/dataset.ts:189:39)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+[ELIFECYCLE] Command failed with exit code 1.

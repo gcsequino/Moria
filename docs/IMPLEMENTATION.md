@@ -3133,8 +3133,120 @@ This backup precedes metadata pruning; its later unchanged edge is not claimed
 restored. Sparse v3 publication and actual incremental window custody/replay
 remain under implementation.
 
+V3 Catalog foundation work in progress (2026-11-04): strict version-three
+references, a metadata-independent versioned index summary, actual stored-root
+profile dispatch and a common bounded native batch-stream interface are staged
+on the development branch. Catalog/EngineIO/Evaluation wiring is partial. No v3
+head producer or sparse mode is activated; Worker/attestation, staged validation,
+root registration, recovery/pruning and actual end-to-end qualification remain
+pending. These edits have formatting/schema generation only; native/static and
+integration checks have not yet run. This checkpoint preserves unfinished source
+before integrating the current Source store/IO changes.
+
+Unactivated v3 foundation checkpoint (2026-11-05): frozen trial025 passes full
+static checks, exact provenance for all nine rebuilt native artifacts and all
+112 library units with no ignored/filtered tests. It compiles strict v2/v3
+reference dispatch, the metadata-independent index-summary binding, actual
+stored-root profile selection and common Catalog/EngineIO/Evaluation bounded
+scan adapters against the integrated Source/store/IO baseline. Legacy unscoped
+readers reject both native formats. The existing FlatV2 retained-snapshot test
+keeps its standard-table/history/count assertions; common scans use the
+format-aware count witness. Failed compiler-memory and adapter trials are
+preserved. Evidence: `production/evidence/2026-11-05/native-v3-catalog-foundation/`.
+
+No v3 head or sparse mode is activated by these checks. Actual stage-bound
+preparation, root qualification/publication, Worker/attestation, recovery/pruning
+and runtime integration remain pending before activation. This is a bounded
+foundation checkpoint rather than completion of N09 or N18.
+
+V3 custody checkpoint (2026-11-05): trial039 qualifies two actual v3 published
+heads through backup, non-advancing expiry, exact source root-version collection
+and fresh-prefix restore. Capture, full byte/hash copy and post-copy validation
+use persisted receiver-qualified versions; an identical newer current version
+cannot replace them. A missing selected version yields the exact enumeration
+failure with no sealed capture or head change. Fresh restore qualifications,
+typed current/retained graph reads, journal root remapping, original successor
+policy/propagation behavior and dispatch-disabled failure cases are exercised.
+The original v2 sidecar custody regression uses the same exact image. Static
+checks and all 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-custody/summary.json).
+
+Production output selection remains unchanged. V3 expiry retains current
+standard metadata/history files until graph metadata pruning is implemented;
+it fabricates neither a revision nor a delta edge. The closed unpublished attached-candidate expiry/retirement origin mismatch is
+qualified separately below. V3 reader integration, sparse position-delete writes,
+distributed bootstrap, incremental Source chains, production scale qualification
+and full independent CI remain required.
+
+Private v3 candidate cleanup (2026-11-05): trial044 genuinely prepares/attaches
+a second candidate, cancels its actual execution and runs normal retention
+planning. The stage becomes abandoned, its references/queue drain, and the
+private root expires and becomes a garbage candidate. The published baseline
+head, immutable journal and typed read remain unchanged. Private expiry retains
+its real GC-plan origin; no maintenance lease, run or history retirement is
+invented. The existing published-history path remains separate. Exact pointer
+checks now use a fixed-size canonical root-key index and preserve conservative
+protection by any published history. Static checks, all nine rebuilt artifacts
+and 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-private-expiry/summary.json).
+
 ## Native Source bootstrap and staging lifecycle
 
 The managed full-build Source bootstrap checkpoint publishes immutable generation aliases and complete declared-key maps over the existing staged population. Static checks, all nine matching native artifacts, 99 units and the full 17-case real indexing service file passed, including compound Dataset keys, maximum-width unkeyed rows, Action tombstones, registered FullObjectSource/Search access, fresh-backend recovery and published-history cleanup. The scoped contract and retained evidence are in `docs/production/NATIVE-SOURCE-STORES.md` and `docs/production/evidence/2026-11-04/source-store-bootstrap/`.
 
 Closed-build staging core correctness passed the focused 3/3 real native lifecycle with all nine artifacts, 106 units and full static checks: published builds retain all aliased data while temporary spills are removed; expired unpublished builds require real closure/policy/reference checks and write barriers before bounded payload/projection cleanup. Actual policy successor, write/backup barriers, private payload/orphan cleanup and published-data preservation assertions passed; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-core/`. Indexed pending discovery with bounded legacy reconciliation passed focused 3/3 with six index access-path checks; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-queue/`. The full 20-case indexing service file passed with zero skips or cancellations in 309.67 seconds and all original root deadlines unchanged. Accepted near-cap physical-width proof and explicit width-blocked deferral remain required before complete collector qualification. Sparse Source/Dataset delta activation remains closed. No production capacity certification is inferred from the local correctness populations.
+
+Native journal/Source integration (2026-11-05): trial046 combines the committed
+Source staging/renewal baseline with v3 C04/C08 work. The first complete Source
+run exposed an overly strict journal basis check at a logical namespace
+revision change. Results still require the current namespace; retained bases
+now derive from their actual Catalog revision and exact sealed current
+physical/incarnation qualification, with expired/mismatched identities rejected
+and the helper denied to ordinary callers. The original complete Source file
+passes 20/20, including classified-head/disabled-purpose behavior, recovery,
+real Action history and native staging collection. The two original journal
+cases pass with additional historical-root negatives and atomic rollback, and
+the actual v3 replacement/empty path passes on the same nine-artifact image.
+Static checks and 113 units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-journal-source-qualification/summary.json).
+
+No v3 production writer or sparse Source window is enabled by this checkpoint.
+Actual v3 Source reader integration and graph metadata pruning remain pending,
+along with sparse standard position-delete production, distributed bootstrap,
+production workload qualification and independent full CI.
+
+Retained full-build v3 reader (2026-11-05): trial054 passes actual native graph
+scan/reduction over array-key and nullable-row v3 heads with real registered
+identities. Empty current and populated historical Source generations pass;
+indexing does not mutate Dataset head or journal. The retained legacy contract
+is tested explicitly; managed complete key maps and permanent service-origin
+v3 admission remain separate pending runtime gates. This is a test-only
+checkpoint with all nine binaries reused byte-for-byte from qualified trial046,
+full static checks and 113 native units. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-legacy-source-reader/summary.json).
+
+Permanent Source v3 reader (2026-11-05): trial058 passes actual dependent
+ObjectType Source compilation/imports, operator-approved service admission,
+token-free native indexing and exact complete array-key maps. Typed Object
+get verifies every populated row. Revoking the actual registrar token then
+publishing an empty v3 head triggers fresh permanent-service admission; empty
+current and populated retained Source history pass. Admission now requires an
+actual sealed native2/3 root with matching stored profile and current
+physical/incarnation qualification. Normal IO authority and production writer
+selection remain unchanged. The original complete v2 Source file passes 20/20
+with zero skips or cancellations under its unchanged root deadlines. Static,
+all nine matching rebuilt artifacts and 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-permanent-source/summary.json).
+
+Native v3 metadata pruning (2026-11-05): expiration now uses its actual fenced
+maintenance producer to preserve retained standard snapshots and path-copy the
+exact file directory without a Parquet scan. Current snapshot/summary and all
+key/selection/index identities stay unchanged. Qualified ready stages transfer
+to history only with the atomic head, expiry, receipt and metadataPrune journal
+commit. Non-advancing expiry emits no edge; old physical heads continue to
+protect bytes until their actual graph retirement drains. The focused proof
+includes real retained-pin custody, deferred commit rollback, exact source GC,
+pruned-current/retained fresh-prefix recovery and the existing recovery
+negatives. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
+Production writer/sparse activation and production capacity remain unqualified.

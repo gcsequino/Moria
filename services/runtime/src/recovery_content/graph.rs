@@ -38,11 +38,12 @@ impl Capture {
             .await?
             .get(0);
         let mut after = None::<String>;
+        let mut root_count = 0usize;
         loop {
             self.lease.check().await?;
             let roots = snapshot.query(
-                "SELECT g.node FROM moria.runtime_dataset_graph_roots g JOIN moria.runtime_dataset_roots r ON r.key=g.root JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.physical_fingerprint=g.physical_fingerprint AND l.incarnation=g.incarnation AND l.sealed WHERE g.root=moria.runtime_dataset_root_key($1) AND g.physical_fingerprint=$2 AND g.incarnation=$3 AND ($4::text IS NULL OR g.node>$4) ORDER BY g.node LIMIT 128",
-                &[&metadata, &physical, &incarnation, &after],
+                "SELECT g.node FROM moria.runtime_dataset_graph_roots g JOIN moria.runtime_dataset_graph_nodes n ON n.id=g.node JOIN moria.runtime_dataset_roots r ON r.key=g.root JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.physical_fingerprint=g.physical_fingerprint AND l.incarnation=g.incarnation AND l.sealed WHERE g.root=moria.runtime_dataset_root_key($1) AND r.metadata_location=$1 AND r.root->'root'=$5 AND r.root->>'version'=$6::text AND r.sealed AND n.environment=r.environment AND n.dataset=r.dataset AND n.profile=g.profile AND n.kind='root' AND g.physical_fingerprint=$2 AND g.incarnation=$3 AND ($4::text IS NULL OR g.node>$4) AND (($6='2' AND r.reader_profile='iceberg-v2-cow-flat-bounded-v2') OR ($6='3' AND r.reader_profile='iceberg-v2-native-mor-bounded-v3' AND n.content=$5 AND g.profile->>'readerProfile'=r.reader_profile)) ORDER BY g.node LIMIT 128",
+                &[&metadata,&physical,&incarnation,&after,&serde_json::to_value(&reference.root)?,&reference.version.to_string()],
             ).await?;
             if roots.is_empty() {
                 break;
@@ -51,9 +52,14 @@ impl Capture {
                 .iter()
                 .map(|row| row.get::<_, String>(0))
                 .collect::<Vec<_>>();
+            root_count += nodes.len();
             self.graph_admit(&nodes, &physical, incarnation).await?;
             after = nodes.last().cloned();
         }
+        ensure!(
+            reference.version != 3 || root_count == 1,
+            "RECOVERY_CONTENT_MISMATCH"
+        );
         loop {
             self.cancel.check()?;
             self.lease.check().await?;
@@ -77,13 +83,17 @@ impl Capture {
                 let profile: Value = row.get(4);
                 let height: i32 = row.get(5);
                 self.member(&content).await?;
-                ensure!(
-                    reader
-                        .version(&content.object, self.source.as_ref(), &self.cancel)
-                        .await?
-                        == expected,
-                    "RECOVERY_CONTENT_MISMATCH"
-                );
+                ensure!(expected.size == content.size, "RECOVERY_CONTENT_MISMATCH");
+                // Existence and bytes are checked at the exact qualified version; current HEAD may be newer.
+                reader
+                    .range_at_version(
+                        &content.object,
+                        0..content.size.min(1),
+                        &expected,
+                        self.source.as_ref(),
+                        &self.cancel,
+                    )
+                    .await?;
                 let edges = snapshot.query(
                     "SELECT e.child,c.environment,c.dataset,c.profile,c.height,q.node IS NOT NULL FROM moria.runtime_dataset_graph_edges e JOIN moria.runtime_dataset_graph_nodes c ON c.id=e.child LEFT JOIN moria.runtime_dataset_graph_qualifications q ON q.node=c.id AND q.physical_fingerprint=$2 AND q.incarnation=$3 WHERE e.parent=$1 ORDER BY e.label LIMIT 257",
                     &[&node, &physical, &incarnation],

@@ -1,0 +1,25 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-retention.integration.test.ts
+Running 1 integration test files.
+✖ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (35435.596236ms)
+ℹ {"phase":"captureVersionTraceOnExit","pinnedVersion":"0f724112-d385-4858-bb42-aaf2549d0faf","currentVersion":"81e2ef36-4ae7-4a05-80d7-adc1a3d2517b","requests":[{"method":"GET","requestVersion":"0f724112-d385-4858-bb42-aaf2549d0faf","status":206,"responseVersion":"0f724112-d385-4858-bb42-aaf2549d0faf"},{"method":"HEAD","requestVersion":null,"status":200,"responseVersion":"81e2ef36-4ae7-4a05-80d7-adc1a3d2517b"}]}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35897.404219
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-retention.integration.test.ts:1:100
+✖ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (35435.596236ms)
+  Error: recovery/capture: {"category":"other","event":"recovery_phase_failure","phase":"RECOVERY_COPY_FAILED","sqlstate":null}
+  {"databaseCode":null,"error":"RECOVERY_COPY_FAILED"}
+  
+      at ChildProcess.<anonymous> (/app/tests/fixtures/native-retention/dataset.ts:189:39)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+[ELIFECYCLE] Command failed with exit code 1.

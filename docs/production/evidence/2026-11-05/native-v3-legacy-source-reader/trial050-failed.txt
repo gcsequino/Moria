@@ -1,0 +1,24 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-source.integration.test.ts
+Running 1 integration test files.
+✖ native indexing consumes actual v3 array-key heads and preserves immutable empty-generation history (11296.260332ms)
+ℹ {"phase":"identityDomainSetup","environmentDomainExists":false,"existingOwnerMatchesFixture":false}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11786.905142
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-source.integration.test.ts:1:489
+✖ native indexing consumes actual v3 array-key heads and preserves immutable empty-generation history (11296.260332ms)
+  Error: identity/register-domain: {"error":"INDEXING_FAILED"}
+  
+      at ChildProcess.<anonymous> (/app/tests/fixtures/native-retention/dataset.ts:189:39)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+[ELIFECYCLE] Command failed with exit code 1.

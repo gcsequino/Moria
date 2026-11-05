@@ -1,0 +1,25 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-retention.integration.test.ts
+Running 1 integration test files.
+✖ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (36153.297059ms)
+ℹ {"phase":"captureVersionTraceOnExit","pinnedVersion":"83387ebf-af46-4e6e-83bf-4a9c70bbfb4d","currentVersion":"e2459f14-375e-4d00-b76e-ed282da9000a","requests":[{"method":"GET","requestVersion":"83387ebf-af46-4e6e-83bf-4a9c70bbfb4d","status":206,"responseVersion":"83387ebf-af46-4e6e-83bf-4a9c70bbfb4d"},{"method":"GET","requestVersion":"83387ebf-af46-4e6e-83bf-4a9c70bbfb4d","status":206,"responseVersion":"83387ebf-af46-4e6e-83bf-4a9c70bbfb4d"},{"method":"HEAD","requestVersion":null,"status":200,"responseVersion":"e2459f14-375e-4d00-b76e-ed282da9000a"}]}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36663.962024
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-retention.integration.test.ts:1:100
+✖ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (36153.297059ms)
+  Error: recovery/capture: {"category":"other","event":"recovery_phase_failure","phase":"RECOVERY_COPY_FAILED","sqlstate":null}
+  {"databaseCode":null,"error":"RECOVERY_COPY_FAILED"}
+  
+      at ChildProcess.<anonymous> (/app/tests/fixtures/native-retention/dataset.ts:189:39)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+[ELIFECYCLE] Command failed with exit code 1.

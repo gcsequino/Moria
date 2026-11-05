@@ -1,0 +1,140 @@
+{
+  "base": "f7bc9b166592c21293bf09a7bd5bf54200daae6c",
+  "classification": "Qualified actual v3 whole-replacement C04 publication/readback and existing v2 graph regression; production output dispatch remains unchanged pending v3 custody/reader/pruning gates. Sparse writes and distributed bootstrap are not qualified.",
+  "image": "sha256:ffefed9d7839fa8d36a5713e6dec9ff74e6e860bdaec12f06583596f76444d9d",
+  "nativeSourceDigest": "f1ba5e22cee1b722ba9c2f8185ed0942772b4909e222c89838ed13453ce0a0ed",
+  "sourceHashes": {
+    "services/database/src/dataset-graph-schema.ts": "fa8ac61471f8d160ef4f9561196aacfaf68c85efb482b77bf655f57906ce5fc9",
+    "services/runtime/schema.json": "29c221eadad3741cac293f870db0887a593544609c0fcadd1e648fd85fd41cb6",
+    "services/runtime/src/dataset_writer.rs": "b0d555d857706c3d81fecfc684bddae0bcdeb00678b10e2ba46b4869caab6d84",
+    "tests/fixtures/native-catalog/harness.rs": "fc42ea8c1d398353ad440d17ffcba7441022f5bdb2068eb2637f376b1f015f2d",
+    "tests/native-dataset-v3.integration.test.ts": "a5b348b0f10f447d4f14000b9630f84a5dfe69f87d7dec34a8f6703056c35d23"
+  },
+  "nativeBuild": {
+    "exitCode": 0,
+    "seconds": 21.198064502001216,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "executables": 9
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 18.531065100003616
+  },
+  "exactStaticAndIndexing": {
+    "exitCode": 0,
+    "seconds": 27.205182739999145,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "actualV3C04": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 300,
+    "internalJobAndHarnessDeadlineSeconds": 120,
+    "rootSeconds": 85.590909504,
+    "controllerSeconds": 86.87054392899881,
+    "assertions": [
+      "Actual v3 first head with 64 typed rows, array PK and nullable non-key",
+      "Actual C04 receipt replay for both writes",
+      "Common pinned typed read and complete key/point-digest lookups",
+      "Actual empty replacement second head and empty current read",
+      "Retained first revision typed read",
+      "Published ready stage and one root member for second head",
+      "Two immutable execution replacement journal edges with actual qualified result roots"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "existingGraphCore": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 120,
+    "rootSeconds": 66.52781505,
+    "controllerSeconds": 67.79706823200104,
+    "assertions": [
+      "All 64 array keys and exact duplicate/order semantics",
+      "Deferred bootstrap digests and verified touched row",
+      "Nullable non-key and unchanged head",
+      "Standard v2 typed readback"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "failedPredecessors": {
+    "030": {
+      "exitCode": 1,
+      "seconds": 13.884352014996693,
+      "reason": "SPOOL_UNSEALED while allocating auxiliary visibility spill",
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "031": {
+      "exitCode": 1,
+      "seconds": 51.534358241995506,
+      "reason": "Ambiguous origin column in private staged-read queue check",
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "032": {
+      "exitCode": 1,
+      "seconds": 84.8773164430022,
+      "reason": "Empty expected result rejected by common native fixture batch helper",
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    }
+  },
+  "remaining": [
+    "Actual v3 backup/source-GC/new-prefix restore and negatives",
+    "V3 pruning and production writer dispatch",
+    "EngineIO/Evaluation/Indexing integration against actual v3 heads",
+    "Sparse standard position-delete producer and independent reader oracle",
+    "Distributed bootstrap, mutation journal roots and incremental Source chain pins",
+    "Production workload qualification"
+  ],
+  "artifacts": {
+    "moria-native-sandbox-test": {
+      "sha256": "59148ba3a4e5593e734831a94357b2c028534eee90dd7272f28d6f58c98fcd16",
+      "bytes": 57628816
+    },
+    "moria-native-retention-test": {
+      "sha256": "0a8dfe51681c688b7108c36292ccfd1f546e7a2579648af58d28b63fe9e3e90e",
+      "bytes": 27092680
+    },
+    "moria-native-policy-test": {
+      "sha256": "15b2464c88b6ed313196c7fe26390126353f433196d6ca2e130610c9d2b52244",
+      "bytes": 22285864
+    },
+    "moria-native-catalog-test": {
+      "sha256": "0ee68beb426541bfc2888d9313348f19799f129808d121b0a04f6cef10051eda",
+      "bytes": 117318680
+    },
+    "moria-indexing-tests": {
+      "sha256": "92450260e79da0ff3c6cf0bc0bf11489df3eb5711092810d2480aac5617c1272",
+      "bytes": 83338488
+    },
+    "moria-native-transport-test": {
+      "sha256": "513d3c4a33611dcb8db4395b8ecfec516eaedbdf3ac6a4678859b1814895e43b",
+      "bytes": 26623080
+    },
+    "moria-native-storage-test": {
+      "sha256": "9c2ad0afef6d8d0dfc6a87310a234f7366c7c62d6d8b1adecfc31bc4b0409843",
+      "bytes": 101941272
+    },
+    "moria-indexing": {
+      "sha256": "d2beb1ce22286b0fc4371174bdf8ff7c9b844226f0899f31c6464fa7656fd659",
+      "bytes": 161292200
+    },
+    "moria-runtime": {
+      "sha256": "ea335cb56babbaf18bef7e79c652f8fb32d4ea9bfce4924afd7cecf5c3817b1a",
+      "bytes": 161292128
+    }
+  }
+}

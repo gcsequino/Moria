@@ -78,6 +78,24 @@ impl GraphReadContext {
     pub(crate) fn snapshot_id(&self) -> &Value {
         &self.identity["snapshot"]
     }
+    pub(crate) fn catalog_reference(&self) -> Result<crate::catalog::NativeSnapshotRef> {
+        let reference = crate::catalog::NativeSnapshotRef::decode(
+            self.identity["metadataLocation"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("DATASET_GRAPH_ANCESTRY_REQUIRED"))?,
+        )?;
+        ensure!(
+            self.identity["catalogVersion"].as_u64() == Some(u64::from(reference.version))
+                && self.identity["readerProfile"].as_str()
+                    == Some(if reference.version == 2 {
+                        "iceberg-v2-cow-flat-bounded-v2"
+                    } else {
+                        crate::native_snapshot_v3::PROFILE
+                    }),
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        Ok(reference)
+    }
     pub(crate) async fn check_node(&self, node: &ReadableNode) -> Result<()> {
         self.current(node).await
     }
@@ -94,6 +112,42 @@ impl GraphReadContext {
         let ns = grant.namespace();
         let claims = json!({"kind":"execution","basis":match basis {ReadBasis::Input=>"input",ReadBasis::ExpectedHead=>"expectedHead"},"session":grant.session().session_hash(),"execution":lease.execution,"task":lease.task,"owner":lease.owner,"fence":lease.fence,"incarnation":lease.incarnation,"warehouse":ns.warehouse_id,"table":ns.table_id,"revision":ns.revision});
         Self::open(grant.database().clone(), inner, claims, cancel).await
+    }
+    /// Private candidate verification view: a real ready coordinator stage, never a published input pin.
+    pub(crate) async fn staged(
+        inner: Arc<dyn ObjectReader>,
+        grant: Arc<DatasetIoGrant>,
+        stage: Uuid,
+        cancel: Cancellation,
+    ) -> Result<(Self, ReadableNode)> {
+        grant.check_current().await?;
+        grant.validate_store(inner.as_ref())?;
+        ensure!(grant.lease().task.is_none(), "COORDINATOR_REQUIRED");
+        let lease = grant.lease();
+        let ns = grant.namespace();
+        let claims = json!({"kind":"execution","basis":"stage","stage":stage,"session":grant.session().session_hash(),"execution":lease.execution,"task":lease.task,"owner":lease.owner,"fence":lease.fence,"incarnation":lease.incarnation,"warehouse":ns.warehouse_id,"table":ns.table_id,"revision":ns.revision});
+        Self::open(grant.database().clone(), inner, claims, cancel).await
+    }
+    /// Read only the real maintenance run's current expected head, without inventing an execution.
+    pub(crate) async fn maintenance(
+        inner: Arc<dyn ObjectReader>,
+        db: Database,
+        run: Uuid,
+        owner: Uuid,
+        fence: i64,
+        incarnation: Uuid,
+        cancel: Cancellation,
+    ) -> Result<(Self, ReadableNode)> {
+        let claims = json!({"kind":"maintenance","basis":"expectedHead","run":run,"owner":owner,"fence":fence.to_string(),"incarnation":incarnation});
+        Self::open(db, inner, claims, cancel).await
+    }
+    pub(crate) async fn staged_maintenance(
+        inner: Arc<dyn ObjectReader>,
+        grant: Arc<crate::dataset_retention::operator::Grant>,
+        stage: Uuid,
+    ) -> Result<(Self, ReadableNode)> {
+        let claims = json!({"kind":"maintenance","basis":"stage","stage":stage,"run":grant.id,"owner":grant.owner,"fence":grant.fence.to_string(),"incarnation":grant.incarnation});
+        Self::open(grant.db.clone(), inner, claims, grant.cancel.clone()).await
     }
     /// Uses the exact immutable source revision/snapshot/root of a real live indexing build.
     pub async fn indexing(

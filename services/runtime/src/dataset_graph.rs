@@ -65,10 +65,163 @@ impl QualifiedNode {
 #[derive(Clone)]
 pub struct NativeGraph {
     store: Arc<dyn ObjectStore>,
-    grant: Arc<DatasetIoGrant>,
+    grant: Arc<GraphGrant>,
     claims: Value,
     scope: Value,
     cancel: Cancellation,
+}
+pub(crate) enum GraphGrant {
+    Execution(Arc<DatasetIoGrant>),
+    Maintenance(Arc<crate::dataset_retention::operator::Grant>),
+}
+impl std::fmt::Debug for GraphGrant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("DatasetGraphGrant")
+    }
+}
+impl GraphGrant {
+    fn execution(&self) -> Result<Arc<DatasetIoGrant>> {
+        match self {
+            Self::Execution(grant) => Ok(grant.clone()),
+            Self::Maintenance(_) => anyhow::bail!("EXECUTION_REQUIRED"),
+        }
+    }
+    pub(crate) fn database(&self) -> &crate::database::Database {
+        match self {
+            Self::Execution(g) => g.database(),
+            Self::Maintenance(g) => &g.db,
+        }
+    }
+    pub(crate) fn namespace(&self) -> &crate::storage::IndexNamespace {
+        match self {
+            Self::Execution(g) => g.namespace(),
+            Self::Maintenance(g) => &g.namespace,
+        }
+    }
+    pub(crate) fn maintenance_basis(&self) -> Option<&str> {
+        match self {
+            Self::Execution(_) => None,
+            Self::Maintenance(g) => g.state["oldMetadata"].as_str(),
+        }
+    }
+    pub(crate) fn incarnation(&self) -> Uuid {
+        match self {
+            Self::Execution(g) => g.lease().incarnation,
+            Self::Maintenance(g) => g.incarnation,
+        }
+    }
+    pub(crate) fn coordinator(&self) -> bool {
+        match self {
+            Self::Execution(g) => g.is_managed() && g.lease().task.is_none(),
+            Self::Maintenance(_) => true,
+        }
+    }
+    pub(crate) fn environment(&self) -> &str {
+        match self {
+            Self::Execution(g) => g.session().environment(),
+            Self::Maintenance(g) => g.state["environment"].as_str().unwrap(),
+        }
+    }
+    pub(crate) fn resource(&self) -> &str {
+        match self {
+            Self::Execution(g) => g.resource(),
+            Self::Maintenance(g) => g.state["dataset"].as_str().unwrap(),
+        }
+    }
+    pub(crate) fn table_uuid(&self) -> Result<Uuid> {
+        match self {
+            Self::Execution(g) => g.table_uuid(),
+            Self::Maintenance(g) => Ok(g.state["tableUuid"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?
+                .parse()?),
+        }
+    }
+    pub(crate) fn key_schema_hash(&self) -> Result<&str> {
+        match self {
+            Self::Execution(g) => g.key_schema_hash(),
+            Self::Maintenance(g) => g.state["keySchemaHash"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED")),
+        }
+    }
+    pub(crate) fn primary_key(&self) -> Result<Vec<String>> {
+        match self {
+            Self::Execution(g) => g.primary_key(),
+            Self::Maintenance(g) => Ok(serde_json::from_value(g.state["primaryKey"].clone())?),
+        }
+    }
+    async fn check_current(&self) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.check_current().await,
+            Self::Maintenance(g) => g.check().await,
+        }
+    }
+    fn validate_store(&self, store: &dyn ObjectStore) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.validate_store(store),
+            Self::Maintenance(g) => {
+                ensure!(
+                    g.state["physicalFingerprint"] == store.physical_fingerprint()?,
+                    "GC_PROVIDER_CHANGED"
+                );
+                Ok(())
+            }
+        }
+    }
+}
+#[async_trait::async_trait]
+impl crate::storage::ReadAuthority for GraphGrant {
+    async fn check_read(&self, object: &LogicalObject) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.check_read(object).await,
+            Self::Maintenance(g) => g.check_read(object).await,
+        }
+    }
+}
+#[async_trait::async_trait]
+impl crate::storage::WriteAuthority for GraphGrant {
+    fn scope_key(&self) -> String {
+        match self {
+            Self::Execution(g) => g.scope_key(),
+            Self::Maintenance(g) => g.scope(),
+        }
+    }
+    async fn check_write(&self, object: &LogicalObject) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.check_write(object).await,
+            Self::Maintenance(g) => g.check_write(object).await,
+        }
+    }
+    async fn prepare_multipart(&self, object: &LogicalObject, physical: &str) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.prepare_multipart(object, physical).await,
+            Self::Maintenance(g) => g.prepare_multipart(object, physical).await,
+        }
+    }
+    async fn record_multipart(
+        &self,
+        object: &LogicalObject,
+        upload_id: &str,
+        physical: &str,
+    ) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.record_multipart(object, upload_id, physical).await,
+            Self::Maintenance(g) => g.record_multipart(object, upload_id, physical).await,
+        }
+    }
+    async fn admit_write(
+        &self,
+        object: &LogicalObject,
+        size: u64,
+        sha256: &str,
+        physical: &str,
+    ) -> Result<()> {
+        match self {
+            Self::Execution(g) => g.admit_write(object, size, sha256, physical).await,
+            Self::Maintenance(g) => g.admit_write(object, size, sha256, physical).await,
+        }
+    }
 }
 struct NewNode {
     content: SealedObject,
@@ -79,7 +232,7 @@ struct NewNode {
     children: Vec<(String, QualifiedNode)>,
 }
 impl NativeGraph {
-    pub(crate) fn grant(&self) -> &Arc<DatasetIoGrant> {
+    pub(crate) fn grant(&self) -> &Arc<GraphGrant> {
         &self.grant
     }
     pub(crate) fn profile(&self) -> &Value {
@@ -121,11 +274,48 @@ impl NativeGraph {
             .get(0);
         Ok(Self {
             store,
-            grant,
+            grant: Arc::new(GraphGrant::Execution(grant)),
             claims,
             scope,
             cancel,
         })
+    }
+    pub(crate) async fn maintenance(
+        store: Arc<dyn ObjectStore>,
+        grant: Arc<crate::dataset_retention::operator::Grant>,
+    ) -> Result<Self> {
+        grant.check().await?;
+        let claims = json!({"kind":"maintenance","run":grant.id,"owner":grant.owner,"fence":grant.fence.to_string(),"incarnation":grant.incarnation});
+        let scope: Value = grant
+            .db
+            .get()
+            .await?
+            .query_one("SELECT moria.runtime_dataset_graph_scope($1)", &[&claims])
+            .await?
+            .get(0);
+        let cancel = grant.cancel.clone();
+        let graph = Self {
+            store,
+            grant: Arc::new(GraphGrant::Maintenance(grant)),
+            claims,
+            scope,
+            cancel,
+        };
+        graph.grant.validate_store(graph.store.as_ref())?;
+        graph.check_current().await?;
+        Ok(graph)
+    }
+    pub(crate) async fn certify_new_file(&self, content: SealedObject) -> Result<QualifiedNode> {
+        self.check_current().await?;
+        let proof = crate::authenticated_file::certify_graph_file(
+            self.store.clone(),
+            self.grant.clone(),
+            &self.claims,
+            content,
+            self.cancel.clone(),
+        )
+        .await?;
+        self.register_certificate(&proof).await
     }
     pub async fn check_current(&self) -> Result<()> {
         self.cancel.check()?;
@@ -150,7 +340,7 @@ impl NativeGraph {
                 && node.dataset == self.scope["resource"]
                 && node.profile == self.scope["graphProfile"]
                 && node.physical_fingerprint == self.scope["physicalFingerprint"]
-                && node.incarnation == self.grant.lease().incarnation,
+                && node.incarnation == self.grant.incarnation(),
             "DATASET_GRAPH_ANCESTRY_REQUIRED"
         );
         Ok(())
@@ -195,7 +385,7 @@ impl NativeGraph {
                 .as_str()
                 .unwrap()
                 .to_owned(),
-            incarnation: self.grant.lease().incarnation,
+            incarnation: self.grant.incarnation(),
         })
     }
     /// The byte proof must have been constructed by an actual native issued-file read.
@@ -206,7 +396,7 @@ impl NativeGraph {
         self.check_current().await?;
         crate::authenticated_file::certify_retained_member(
             self.store.clone(),
-            self.grant.clone(),
+            self.grant.execution()?,
             content,
             &self.claims,
             self.cancel.clone(),
@@ -216,7 +406,7 @@ impl NativeGraph {
     pub async fn register_file(&self, file: &QualifiedFile) -> Result<QualifiedNode> {
         ensure!(
             file.physical_fingerprint() == self.scope["physicalFingerprint"].as_str().unwrap()
-                && file.incarnation() == self.grant.lease().incarnation,
+                && file.incarnation() == self.grant.incarnation(),
             "BINDING_MISMATCH"
         );
         self.register(NewNode {
@@ -311,7 +501,7 @@ impl NativeGraph {
         let content = writer.seal().await?;
         let file = crate::authenticated_file::certify_new_index_file(
             self.store.clone(),
-            self.grant.clone(),
+            self.grant.execution()?,
             content,
             self.cancel.clone(),
         )
@@ -459,7 +649,7 @@ impl NativeGraph {
             logical_bytes: serde_json::from_value(value["logicalBytes"].clone())?,
             profile: value["profile"].clone(),
             physical_fingerprint: self.scope["physicalFingerprint"].as_str().unwrap().into(),
-            incarnation: self.grant.lease().incarnation,
+            incarnation: self.grant.incarnation(),
         })
     }
     pub(crate) async fn known_node(&self, wanted: &SealedObject) -> Result<Option<QualifiedNode>> {
@@ -525,6 +715,47 @@ impl NativeGraph {
         self.check_current().await?;
         Ok(node)
     }
+    pub(crate) async fn child(&self, parent: &QualifiedNode, label: &str) -> Result<QualifiedNode> {
+        self.check_node(parent)?;
+        self.check_current().await?;
+        let value: Value = self
+            .grant
+            .database()
+            .get()
+            .await?
+            .query_one(
+                "SELECT moria.runtime_dataset_graph_child($1,$2,$3)",
+                &[&self.claims, &parent.id(), &label],
+            )
+            .await?
+            .get(0);
+        let child = self.admitted_node(value)?;
+        self.check_current().await?;
+        Ok(child)
+    }
+    pub(crate) async fn file_proof(
+        &self,
+        certificate: &QualifiedNode,
+    ) -> Result<ProducerFileProof> {
+        self.check_node(certificate)?;
+        ensure!(
+            certificate.kind() == "certificate",
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        let proof: crate::authenticated_file::FileCertificate =
+            serde_json::from_value(self.read_descriptor(certificate).await?)?;
+        let file = self.child(certificate, "file").await?;
+        ensure!(
+            file.kind() == "content" && file.content() == proof.content(),
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        Ok(ProducerFileProof {
+            certificate: proof,
+            physical_version: file.physical_version,
+            physical_fingerprint: file.physical_fingerprint,
+            incarnation: file.incarnation,
+        })
+    }
     pub async fn register_task_root(&self, node: &QualifiedNode) -> Result<()> {
         self.check_node(node)?;
         self.check_current().await?;
@@ -539,10 +770,36 @@ impl NativeGraph {
             .await?;
         self.check_current().await
     }
+    pub(crate) async fn attach_maintenance(
+        &self,
+        tx: &tokio_postgres::Transaction<'_>,
+        stage: Uuid,
+        location: &str,
+    ) -> Result<()> {
+        tx.query_one(
+            "SELECT moria.runtime_dataset_graph_attach_maintenance($1,$2,$3)",
+            &[&self.claims, &stage, &location],
+        )
+        .await?;
+        Ok(())
+    }
+    pub(crate) async fn attach_candidate(
+        &self,
+        tx: &tokio_postgres::Transaction<'_>,
+        stage: Uuid,
+        candidate: Uuid,
+    ) -> Result<()> {
+        tx.query_one(
+            "SELECT moria.runtime_dataset_graph_attach($1,$2,$3)",
+            &[&self.claims, &stage, &candidate],
+        )
+        .await?;
+        Ok(())
+    }
     pub(crate) async fn begin_stage(&self, id: Uuid, node: &QualifiedNode) -> Result<()> {
         self.check_node(node)?;
         self.check_current().await?;
-        ensure!(self.grant.lease().task.is_none(), "COORDINATOR_REQUIRED");
+        ensure!(self.grant.coordinator(), "COORDINATOR_REQUIRED");
         self.grant
             .database()
             .get()
@@ -572,6 +829,30 @@ impl NativeGraph {
     }
 }
 
+/// Constructed only from an actual admitted parent and its immutable, qualified file edge.
+pub(crate) struct ProducerFileProof {
+    certificate: crate::authenticated_file::FileCertificate,
+    physical_version: ObjectVersion,
+    physical_fingerprint: String,
+    incarnation: Uuid,
+}
+impl ProducerFileProof {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        crate::authenticated_file::FileCertificate,
+        ObjectVersion,
+        String,
+        Uuid,
+    ) {
+        (
+            self.certificate,
+            self.physical_version,
+            self.physical_fingerprint,
+            self.incarnation,
+        )
+    }
+}
 #[async_trait::async_trait]
 impl crate::storage::VerifiedVersionAuthority for NativeGraph {
     async fn verified_version(&self, content: &SealedObject) -> Result<ObjectVersion> {
@@ -592,7 +873,7 @@ impl crate::storage::VerifiedVersionAuthority for NativeGraph {
         ensure!(
             state["content"] == wanted
                 && state["physicalFingerprint"] == self.store.physical_fingerprint()?
-                && state["incarnation"] == self.grant.lease().incarnation.to_string(),
+                && state["incarnation"] == self.grant.incarnation().to_string(),
             "DATASET_GRAPH_ANCESTRY_REQUIRED"
         );
         let version: ObjectVersion = serde_json::from_value(state["physicalVersion"].clone())?;

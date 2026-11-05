@@ -1,0 +1,105 @@
+{
+  "base": "06d69dc2470c91d4e1711b71c096fa940e1ed952",
+  "classification": "Qualified graph scan refactor and unactivated v3 Worker bridge. Existing graph sidecar oracle is qualified; actual v3 Catalog head/indexing publication remains unqualified.",
+  "image": "sha256:07e31300b6ecb907fbf11de5f22c92cbf4e651af52e57282b521f7ca795ae66a",
+  "nativeSourceDigest": "144c1d09bebbd9379f40947a043d68de8623f8c83044cf570b0f2a8d6d1eae48",
+  "sourceHashes": {
+    "services/runtime/src/native_snapshot_v3.rs": "a1ec38eec1bbecf1132889d73fc34c2e975e68e66f323dfeb23baaed743a30dc",
+    "services/runtime/src/native_snapshot_v3/scan.rs": "43f14f5f0c9a8fb6016702a6c3b513dabae9825c29228cc21a3ee0646563a442",
+    "services/runtime/src/worker.rs": "fcb8437cf6b2553f62efff8428fcca8be06dabbafc1099582202e4b9cf803a99",
+    "services/runtime/src/worker/source.rs": "2b35e8376df86c1830b1d54cad7681c68e8cd18cd28816de3ff2496c85bc75dc"
+  },
+  "artifacts": {
+    "moria-indexing-tests": {
+      "sha256": "b263d694e9fbc2c9a217f076d7042e6d911278cc90fd261d33c312cffbb064c6",
+      "bytes": 83306320
+    },
+    "moria-native-transport-test": {
+      "sha256": "26bdef6b48972534def0ef18bfb6f3177d8943588e8267d155de19fdae603d04",
+      "bytes": 26593056
+    },
+    "moria-native-storage-test": {
+      "sha256": "3814db8f47961c005f79f5a50e1ba9e8e3768d381402b452fd7f4845d9929c6c",
+      "bytes": 101911504
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "17ad7aebd82f2000ed309d6e4c1d6da19d0348b5464e4a5443d7017adee076eb",
+      "bytes": 57599112
+    },
+    "moria-native-retention-test": {
+      "sha256": "13c3858ae980e3bb6b2c52aeb22d6a8b2bc63165f68c768bfc4ce54bbe6a0f5a",
+      "bytes": 27062784
+    },
+    "moria-native-policy-test": {
+      "sha256": "43ff4e13a70311f196c6fa0b34412e111d04c6ff15f468a0721691ff58a0ddd1",
+      "bytes": 22256032
+    },
+    "moria-native-catalog-test": {
+      "sha256": "0d637f53d4d5c315470280dd572926e327f922929e0d0e8743647e533060addb",
+      "bytes": 116772840
+    },
+    "moria-indexing": {
+      "sha256": "3b941f229c8d5244fc0b17968654de6ab701ab2f0e46e0a977e8ab33aa47c402",
+      "bytes": 159457120
+    },
+    "moria-runtime": {
+      "sha256": "6dc0217a1e53a89977680200d157f236df0eb5149787647ad8267ec3fae33b47",
+      "bytes": 159457112
+    }
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "seconds": 19.653115588997025
+  },
+  "nativeBuild": {
+    "exitCode": 0,
+    "seconds": 74.08487307000178,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "jobs": 1,
+    "executables": 9
+  },
+  "exactStaticAndIndexing": {
+    "exitCode": 0,
+    "seconds": 29.61599460299476,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "graphCore": {
+    "file": "tests/native-dataset-graph.integration.test.ts",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 120,
+    "rootSeconds": 70.394150111,
+    "controllerSeconds": 71.67106323700136,
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false,
+    "oracle": [
+      "64 typed rows",
+      "all full keys",
+      "array order and duplicates",
+      "nullable non-key",
+      "unchanged head",
+      "standard v2 readback"
+    ]
+  },
+  "predecessor026": {
+    "staticExitCode": 0,
+    "buildExitCode": 101,
+    "buildSeconds": 23.61188672800199,
+    "diagnostic": "E0515 borrowed schema from temporary StaticTable metadata Arc",
+    "correction": "Return a cloned immutable Arc<Schema>."
+  },
+  "remaining": [
+    "Actual v3 head creation and standard metadata/index summary agreement",
+    "Private stage-bound root validation and atomic candidate publication",
+    "Actual v3 Catalog/EngineIO/Evaluation/Indexing integration",
+    "Actual v3 backup, source GC, new-prefix restore and pruning",
+    "Sparse position deletes and independent standard-engine oracle",
+    "Distributed bootstrap and incremental Source consumer chain pins"
+  ]
+}

@@ -1,0 +1,10 @@
+error[E0515]: cannot return value referencing temporary value
+  --> src/worker/source.rs:48:9
+   |
+48 | /         match self {
+49 | |             Self::Table(t) => t.metadata().current_schema(),
+   | |                               ------------ temporary value created here
+50 | |             Self::Graph(g) => g.metadata().current_schema(),
+51 | |         }
+   | |_________^ returns a value referencing data owned by the current function
+

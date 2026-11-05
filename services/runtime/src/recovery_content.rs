@@ -470,87 +470,92 @@ impl Capture {
                 .await?;
             self.member(&reference.root).await?;
             let reader = storage::configured_reader(&namespace)?;
-            let root = snapshot_root(
-                reader.as_ref(),
-                self.source.clone(),
-                &reference,
-                self.cancel.clone(),
-            )
-            .await?;
-            self.member(&root.proof.metadata).await?;
-            self.graph(snapshot, descriptor.as_str().unwrap(), reader.as_ref())
-                .await?;
-            ensure!(
-                root.proof.closure.entries <= self.limits.members
-                    && root.proof.closure.referenced_bytes <= self.limits.bytes,
-                "RECOVERY_CONTENT_LIMIT"
-            );
-            let mut page = root.last_page;
-            let mut count = 0u64;
-            for ordinal in (0..root.pages).rev() {
-                let object = page.ok_or_else(|| anyhow::anyhow!("RECOVERY_CONTENT_INVALID"))?;
-                self.member(&object).await?;
-                let value = snapshot_page(
+            if reference.version == 3 {
+                self.graph(snapshot, descriptor.as_str().unwrap(), reader.as_ref())
+                    .await?;
+            } else {
+                let root = snapshot_root(
                     reader.as_ref(),
                     self.source.clone(),
-                    &object,
-                    ordinal,
+                    &reference,
                     self.cancel.clone(),
                 )
                 .await?;
-                for entry in &value.entries {
-                    let prefix =
-                        format!("moria://{}/{}/", namespace.warehouse_id, namespace.table_id);
-                    ensure!(
-                        entry.name.starts_with(&prefix) && entry.name.len() <= 512,
-                        "RECOVERY_CONTENT_INVALID"
-                    );
-                    self.member(&entry.content).await?;
-                    let mut client = self.db.get().await?;
-                    let tx = client.transaction().await?;
-                    self.lease.check_in(tx.client()).await?;
-                    if tx.execute("INSERT INTO moria.runtime_recovery_closure_members VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING",&[&self.lease.set_id(),&root_id,&entry.name,&entry.content.object.warehouse_id,&entry.content.object.table_id,&entry.content.object.object_id]).await?==1{charge_state(tx.client(),self.lease.set_id(),serde_json::to_vec(entry)?.len()).await?;}
-                    ensure!(tx.query_one("SELECT warehouse_id=$4 AND table_id=$5 AND object_id=$6 FROM moria.runtime_recovery_closure_members WHERE recovery_set=$1 AND root_id=$2 AND name=$3",&[&self.lease.set_id(),&root_id,&entry.name,&entry.content.object.warehouse_id,&entry.content.object.table_id,&entry.content.object.object_id]).await?.get::<_,bool>(0),"RECOVERY_CONTENT_CONFLICT");
-                    tx.commit().await?;
-                    count = count
-                        .checked_add(1)
-                        .ok_or_else(|| anyhow::anyhow!("RECOVERY_CONTENT_LIMIT"))?;
+                self.member(&root.proof.metadata).await?;
+                self.graph(snapshot, descriptor.as_str().unwrap(), reader.as_ref())
+                    .await?;
+                ensure!(
+                    root.proof.closure.entries <= self.limits.members
+                        && root.proof.closure.referenced_bytes <= self.limits.bytes,
+                    "RECOVERY_CONTENT_LIMIT"
+                );
+                let mut page = root.last_page;
+                let mut count = 0u64;
+                for ordinal in (0..root.pages).rev() {
+                    let object = page.ok_or_else(|| anyhow::anyhow!("RECOVERY_CONTENT_INVALID"))?;
+                    self.member(&object).await?;
+                    let value = snapshot_page(
+                        reader.as_ref(),
+                        self.source.clone(),
+                        &object,
+                        ordinal,
+                        self.cancel.clone(),
+                    )
+                    .await?;
+                    for entry in &value.entries {
+                        let prefix =
+                            format!("moria://{}/{}/", namespace.warehouse_id, namespace.table_id);
+                        ensure!(
+                            entry.name.starts_with(&prefix) && entry.name.len() <= 512,
+                            "RECOVERY_CONTENT_INVALID"
+                        );
+                        self.member(&entry.content).await?;
+                        let mut client = self.db.get().await?;
+                        let tx = client.transaction().await?;
+                        self.lease.check_in(tx.client()).await?;
+                        if tx.execute("INSERT INTO moria.runtime_recovery_closure_members VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING",&[&self.lease.set_id(),&root_id,&entry.name,&entry.content.object.warehouse_id,&entry.content.object.table_id,&entry.content.object.object_id]).await?==1{charge_state(tx.client(),self.lease.set_id(),serde_json::to_vec(entry)?.len()).await?;}
+                        ensure!(tx.query_one("SELECT warehouse_id=$4 AND table_id=$5 AND object_id=$6 FROM moria.runtime_recovery_closure_members WHERE recovery_set=$1 AND root_id=$2 AND name=$3",&[&self.lease.set_id(),&root_id,&entry.name,&entry.content.object.warehouse_id,&entry.content.object.table_id,&entry.content.object.object_id]).await?.get::<_,bool>(0),"RECOVERY_CONTENT_CONFLICT");
+                        tx.commit().await?;
+                        count = count
+                            .checked_add(1)
+                            .ok_or_else(|| anyhow::anyhow!("RECOVERY_CONTENT_LIMIT"))?;
+                    }
+                    page = value.previous;
                 }
-                page = value.previous;
+                ensure!(
+                    page.is_none() && count == root.proof.closure.entries,
+                    "RECOVERY_CONTENT_INVALID"
+                );
+                let mut digest = storage::closure_digest_start();
+                let mut after: Option<String> = None;
+                let mut bytes = 0u64;
+                let mut observed = 0u64;
+                loop {
+                    self.lease.check().await?;
+                    let rows=self.db.get().await?.query("SELECT c.name,m.content FROM moria.runtime_recovery_closure_members c JOIN moria.runtime_recovery_members m ON m.recovery_set=c.recovery_set AND m.warehouse_id=c.warehouse_id AND m.table_id=c.table_id AND m.object_id=c.object_id WHERE c.recovery_set=$1 AND c.root_id=$2 AND ($3::text IS NULL OR c.name>$3 COLLATE \"C\") ORDER BY c.name LIMIT 128",&[&self.lease.set_id(),&root_id,&after]).await?;
+                    if rows.is_empty() {
+                        break;
+                    }
+                    for row in &rows {
+                        let entry = ClosureEntry {
+                            name: row.get(0),
+                            content: serde_json::from_value(row.get(1))?,
+                        };
+                        storage::closure_digest_entry(&mut digest, &entry)?;
+                        bytes = bytes
+                            .checked_add(entry.content.size)
+                            .ok_or_else(|| anyhow::anyhow!("RECOVERY_CONTENT_LIMIT"))?;
+                        observed += 1;
+                    }
+                    after = Some(rows.last().unwrap().get(0));
+                }
+                ensure!(
+                    observed == root.proof.closure.entries
+                        && bytes == root.proof.closure.referenced_bytes
+                        && format!("sha256:{:x}", digest.finalize()) == root.proof.closure.sha256,
+                    "RECOVERY_CONTENT_INVALID"
+                );
             }
-            ensure!(
-                page.is_none() && count == root.proof.closure.entries,
-                "RECOVERY_CONTENT_INVALID"
-            );
-            let mut digest = storage::closure_digest_start();
-            let mut after: Option<String> = None;
-            let mut bytes = 0u64;
-            let mut observed = 0u64;
-            loop {
-                self.lease.check().await?;
-                let rows=self.db.get().await?.query("SELECT c.name,m.content FROM moria.runtime_recovery_closure_members c JOIN moria.runtime_recovery_members m ON m.recovery_set=c.recovery_set AND m.warehouse_id=c.warehouse_id AND m.table_id=c.table_id AND m.object_id=c.object_id WHERE c.recovery_set=$1 AND c.root_id=$2 AND ($3::text IS NULL OR c.name>$3 COLLATE \"C\") ORDER BY c.name LIMIT 128",&[&self.lease.set_id(),&root_id,&after]).await?;
-                if rows.is_empty() {
-                    break;
-                }
-                for row in &rows {
-                    let entry = ClosureEntry {
-                        name: row.get(0),
-                        content: serde_json::from_value(row.get(1))?,
-                    };
-                    storage::closure_digest_entry(&mut digest, &entry)?;
-                    bytes = bytes
-                        .checked_add(entry.content.size)
-                        .ok_or_else(|| anyhow::anyhow!("RECOVERY_CONTENT_LIMIT"))?;
-                    observed += 1;
-                }
-                after = Some(rows.last().unwrap().get(0));
-            }
-            ensure!(
-                observed == root.proof.closure.entries
-                    && bytes == root.proof.closure.referenced_bytes
-                    && format!("sha256:{:x}", digest.finalize()) == root.proof.closure.sha256,
-                "RECOVERY_CONTENT_INVALID"
-            );
         }
         let mut client = self.db.get().await?;
         let tx = client.transaction().await?;
@@ -660,17 +665,15 @@ impl Capture {
                     reader.physical_fingerprint()? == row.get::<_, String>("physical_fingerprint"),
                     "RECOVERY_NAMESPACE_CHANGED"
                 );
-                let version = reader
-                    .version(&source.object, self.source.as_ref(), &self.cancel)
-                    .await?;
+                let admitted: Option<Value> = row.get("source_version");
+                let version = if let Some(admitted) = admitted {
+                    serde_json::from_value::<storage::ObjectVersion>(admitted)?
+                } else {
+                    reader
+                        .version(&source.object, self.source.as_ref(), &self.cancel)
+                        .await?
+                };
                 ensure!(version.size == source.size, "CONTENT_MISMATCH");
-                let old: Option<Value> = row.get("source_version");
-                if let Some(old) = old {
-                    ensure!(
-                        old == serde_json::to_value(&version)?,
-                        "STORAGE_VERSION_CHANGED"
-                    );
-                }
                 {
                     let mut client = self.db.get().await?;
                     let tx = client.transaction().await?;
@@ -736,13 +739,15 @@ impl Capture {
                         && format!("sha256:{:x}", hash.finalize()) == source.sha256,
                     "CONTENT_MISMATCH"
                 );
-                ensure!(
-                    reader
-                        .version(&source.object, self.source.as_ref(), &self.cancel)
-                        .await?
-                        == version,
-                    "STORAGE_VERSION_CHANGED"
-                );
+                reader
+                    .range_at_version(
+                        &source.object,
+                        0..source.size.min(1),
+                        &version,
+                        self.source.as_ref(),
+                        &self.cancel,
+                    )
+                    .await?;
                 let copied = match upload {
                     Some(upload) => upload.seal().await?,
                     None => existing.unwrap(),

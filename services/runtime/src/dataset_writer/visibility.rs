@@ -42,7 +42,6 @@ struct Tables {
 pub struct VisibilityBootstrap {
     spool: ClosureSpool,
     authority: Arc<dyn ReadAuthority>,
-    db: Connection,
     tables: Tables,
     budget: BootstrapBudget,
     data_rows: u64,
@@ -76,7 +75,6 @@ impl VisibilityBootstrap {
         Ok(Self {
             spool,
             authority,
-            db,
             tables,
             budget,
             data_rows: 0,
@@ -88,7 +86,7 @@ impl VisibilityBootstrap {
     }
     async fn current(&self) -> Result<()> {
         self.spool.check_current(self.authority.as_ref()).await?;
-        self.spool.assert_scope(&self.db)
+        self.spool.assert_scope(&self.spool.database()?)
     }
     pub async fn data_page(&mut self, rows: &[VisibleRow]) -> Result<()> {
         ensure!(!self.failed, "WRITER_FAILED");
@@ -115,38 +113,41 @@ impl VisibilityBootstrap {
                 .is_some_and(|rows| rows <= self.budget.maximum_data_rows),
             "RESOURCE_LIMIT"
         );
-        let tx = self.db.transaction()?;
         {
-            let mut insert = tx.prepare(&format!(
+            let mut db = self.spool.database()?;
+            let tx = db.transaction()?;
+            {
+                let mut insert = tx.prepare(&format!(
                 "INSERT INTO {}(key,key_hash,file,ordinal,data_sequence,row_hash)VALUES(?1,?2,?3,?4,?5,?6)",
                 self.tables.data
             ))?;
-            for row in rows {
-                ensure!(
-                    !row.key.is_empty()
-                        && row.key.len() <= KEY_MAX
-                        && !row.file.is_empty()
-                        && row.file.len() <= 4096
-                        && row.file.starts_with("moria://")
-                        && row.row <= 9_007_199_254_740_991
-                        && row.data_sequence <= 9_007_199_254_740_991,
-                    "DATASET_KEY_INDEX_INVALID"
-                );
-                self.spool.cancellation().check()?;
-                map_sql(
-                    insert.execute(params![
-                        row.key,
-                        super::key_run::key_route(&row.key).as_slice(),
-                        row.file,
-                        row.row as i64,
-                        row.data_sequence as i64,
-                        row.row_hash.as_ref().map(|hash| hash.as_slice())
-                    ]),
-                    "DATASET_KEY_INDEX_INVALID",
-                )?;
+                for row in rows {
+                    ensure!(
+                        !row.key.is_empty()
+                            && row.key.len() <= KEY_MAX
+                            && !row.file.is_empty()
+                            && row.file.len() <= 4096
+                            && row.file.starts_with("moria://")
+                            && row.row <= 9_007_199_254_740_991
+                            && row.data_sequence <= 9_007_199_254_740_991,
+                        "DATASET_KEY_INDEX_INVALID"
+                    );
+                    self.spool.cancellation().check()?;
+                    map_sql(
+                        insert.execute(params![
+                            row.key,
+                            super::key_run::key_route(&row.key).as_slice(),
+                            row.file,
+                            row.row as i64,
+                            row.data_sequence as i64,
+                            row.row_hash.as_ref().map(|hash| hash.as_slice())
+                        ]),
+                        "DATASET_KEY_INDEX_INVALID",
+                    )?;
+                }
             }
+            tx.commit()?;
         }
-        tx.commit()?;
         self.data_rows += rows.len() as u64;
         self.current().await
     }
@@ -172,27 +173,30 @@ impl VisibilityBootstrap {
                     .is_some_and(|rows| rows <= self.budget.maximum_delete_rows),
             "RESOURCE_LIMIT"
         );
-        let tx = self.db.transaction()?;
         {
-            let mut insert = tx.prepare(&format!(
-                "INSERT OR IGNORE INTO {}(key,data_sequence)VALUES(?1,?2)",
-                self.tables.deletes
-            ))?;
-            for key in keys {
-                ensure!(
-                    !key.key.is_empty()
-                        && key.key.len() <= KEY_MAX
-                        && key.data_sequence <= 9_007_199_254_740_991,
-                    "DATASET_KEY_INDEX_INVALID"
-                );
-                self.spool.cancellation().check()?;
-                map_sql(
-                    insert.execute(params![key.key, key.data_sequence as i64]),
-                    "DATASET_KEY_INDEX_INVALID",
-                )?;
+            let mut db = self.spool.database()?;
+            let tx = db.transaction()?;
+            {
+                let mut insert = tx.prepare(&format!(
+                    "INSERT OR IGNORE INTO {}(key,data_sequence)VALUES(?1,?2)",
+                    self.tables.deletes
+                ))?;
+                for key in keys {
+                    ensure!(
+                        !key.key.is_empty()
+                            && key.key.len() <= KEY_MAX
+                            && key.data_sequence <= 9_007_199_254_740_991,
+                        "DATASET_KEY_INDEX_INVALID"
+                    );
+                    self.spool.cancellation().check()?;
+                    map_sql(
+                        insert.execute(params![key.key, key.data_sequence as i64]),
+                        "DATASET_KEY_INDEX_INVALID",
+                    )?;
+                }
             }
+            tx.commit()?;
         }
-        tx.commit()?;
         self.delete_rows += keys.len() as u64;
         self.current().await
     }
@@ -218,29 +222,32 @@ impl VisibilityBootstrap {
                     .is_some_and(|n| n <= self.budget.maximum_delete_rows),
             "RESOURCE_LIMIT"
         );
-        let tx = self.db.transaction()?;
         {
-            let mut insert = tx.prepare(&format!(
-                "INSERT OR IGNORE INTO {}(file,ordinal,data_sequence)VALUES(?1,?2,?3)",
-                self.tables.positions
-            ))?;
-            for row in rows {
-                ensure!(
-                    !row.file.is_empty()
-                        && row.file.starts_with("moria://")
-                        && row.file.len() <= 4096
-                        && row.row <= 9_007_199_254_740_991
-                        && row.data_sequence <= 9_007_199_254_740_991,
-                    "DATASET_KEY_INDEX_INVALID"
-                );
-                self.spool.cancellation().check()?;
-                map_sql(
-                    insert.execute(params![row.file, row.row as i64, row.data_sequence as i64]),
-                    "DATASET_KEY_INDEX_INVALID",
-                )?;
+            let mut db = self.spool.database()?;
+            let tx = db.transaction()?;
+            {
+                let mut insert = tx.prepare(&format!(
+                    "INSERT OR IGNORE INTO {}(file,ordinal,data_sequence)VALUES(?1,?2,?3)",
+                    self.tables.positions
+                ))?;
+                for row in rows {
+                    ensure!(
+                        !row.file.is_empty()
+                            && row.file.starts_with("moria://")
+                            && row.file.len() <= 4096
+                            && row.row <= 9_007_199_254_740_991
+                            && row.data_sequence <= 9_007_199_254_740_991,
+                        "DATASET_KEY_INDEX_INVALID"
+                    );
+                    self.spool.cancellation().check()?;
+                    map_sql(
+                        insert.execute(params![row.file, row.row as i64, row.data_sequence as i64]),
+                        "DATASET_KEY_INDEX_INVALID",
+                    )?;
+                }
             }
+            tx.commit()?;
         }
-        tx.commit()?;
         self.delete_rows += rows.len() as u64;
         self.current().await
     }
@@ -261,32 +268,35 @@ impl VisibilityBootstrap {
         let mut count = 0u64;
         loop {
             self.current().await?;
-            let page = raw_visible_page(&self.db, &self.tables, after.as_ref())?;
+            let page = raw_visible_page(&self.spool.database()?, &self.tables, after.as_ref())?;
             if page.is_empty() {
                 break;
             }
-            let tx = self.db.transaction()?;
             {
-                let mut insert = tx.prepare(&format!(
+                let mut db = self.spool.database()?;
+                let tx = db.transaction()?;
+                {
+                    let mut insert = tx.prepare(&format!(
                     "INSERT INTO {}(key,key_hash,file,ordinal,data_sequence,row_hash)VALUES(?1,?2,?3,?4,?5,?6)",
                     self.tables.visible
                 ))?;
-                for row in &page {
-                    self.spool.cancellation().check()?;
-                    map_sql(
-                        insert.execute(params![
-                            row.key,
-                            super::key_run::key_route(&row.key).as_slice(),
-                            row.file,
-                            row.row as i64,
-                            row.data_sequence as i64,
-                            row.row_hash.as_ref().map(|hash| hash.as_slice())
-                        ]),
-                        "DATASET_PRIMARY_KEY_DUPLICATE",
-                    )?;
+                    for row in &page {
+                        self.spool.cancellation().check()?;
+                        map_sql(
+                            insert.execute(params![
+                                row.key,
+                                super::key_run::key_route(&row.key).as_slice(),
+                                row.file,
+                                row.row as i64,
+                                row.data_sequence as i64,
+                                row.row_hash.as_ref().map(|hash| hash.as_slice())
+                            ]),
+                            "DATASET_PRIMARY_KEY_DUPLICATE",
+                        )?;
+                    }
                 }
+                tx.commit()?;
             }
-            tx.commit()?;
             count += page.len() as u64;
             after = page.last().cloned();
         }
@@ -309,14 +319,17 @@ impl VisibilityBootstrap {
                 ""
             }
         );
-        let mut statement = self.db.prepare(&query)?;
-        let rows = match after {
-            Some(key) => {
-                statement.query(params![super::key_run::key_route(key).as_slice(), key])?
-            }
-            None => statement.query([])?,
+        let output = {
+            let db = self.spool.database()?;
+            let mut statement = db.prepare(&query)?;
+            let rows = match after {
+                Some(key) => {
+                    statement.query(params![super::key_run::key_route(key).as_slice(), key])?
+                }
+                None => statement.query([])?,
+            };
+            bounded_rows(rows)?
         };
-        let output = bounded_rows(rows)?;
         self.current().await?;
         Ok(output)
     }
@@ -331,12 +344,15 @@ impl VisibilityBootstrap {
             self.tables.visible,
             if after.is_some() { " WHERE key>?1" } else { "" }
         );
-        let mut statement = self.db.prepare(&query)?;
-        let rows = match after {
-            Some(key) => statement.query([key])?,
-            None => statement.query([])?,
+        let output = {
+            let db = self.spool.database()?;
+            let mut statement = db.prepare(&query)?;
+            let rows = match after {
+                Some(key) => statement.query([key])?,
+                None => statement.query([])?,
+            };
+            bounded_rows(rows)?
         };
-        let output = bounded_rows(rows)?;
         self.current().await?;
         Ok(output)
     }
@@ -413,10 +429,9 @@ fn raw_visible_page(
 }
 impl Drop for VisibilityBootstrap {
     fn drop(&mut self) {
-        let _ = self.db.execute_batch(&format!(
-            "DROP TABLE IF EXISTS {};DROP TABLE IF EXISTS {};DROP TABLE IF EXISTS {};DROP TABLE IF EXISTS {};",
-            self.tables.visible, self.tables.positions, self.tables.deletes, self.tables.data
-        ));
+        if let Ok(db) = self.spool.database() {
+            let _=db.execute_batch(&format!("DROP TABLE IF EXISTS {};DROP TABLE IF EXISTS {};DROP TABLE IF EXISTS {};DROP TABLE IF EXISTS {};",self.tables.visible,self.tables.positions,self.tables.deletes,self.tables.data));
+        }
     }
 }
 

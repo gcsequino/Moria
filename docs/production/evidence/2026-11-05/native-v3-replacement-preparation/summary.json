@@ -1,0 +1,104 @@
+{
+  "base": "02ba1bf7a13d799c33d1426720dd222af05c3d09",
+  "classification": "WIP: actual v3 replacement preparation and private staged validation compile; SQL/runtime candidate, publication, recovery, indexing and sparse qualification pending. Production output entry remains flat until required integration gates pass.",
+  "image": "sha256:4e99e43084cec6ade7a6092ef5e063305e8ae9a4540b34413ed317f756bfcbca",
+  "nativeSourceDigest": "6c63301e7a6e2c5ce0b899c62011c1be15d4d21b1169bb5e28297a3090bb990b",
+  "sourceHashes": {
+    "services/database/src/dataset-graph-schema.ts": "d1caf5950573993d9194f7d98bfad48b96573a25e14222a8bd58e890f3f9d69d",
+    "services/database/src/snapshot-runtime-schema.ts": "c917cc3eb37fed2e93201e2dbc34de250c7ca307daaf67ca15ca1b0430cece9b",
+    "services/runtime/schema.json": "6cffc2f4894e33a0f3898037b9724e560f8144ca54d63c27e9bd32d07bd5c461",
+    "services/runtime/src/authenticated_file.rs": "cc92337c596137722c3755c8134ccbe3fdf2e53419a31541a662eb89c3748a52",
+    "services/runtime/src/catalog.rs": "44d301c85cc96fc8b4404561d29c426822b8217e2748b69c086c14aeca9e0417",
+    "services/runtime/src/dataset_graph.rs": "d89ddf821a676da7fbf220b65abd4af9a71e7f49f548aba4297c604059815bf2",
+    "services/runtime/src/dataset_graph_read.rs": "b7832b560812626d9815052e5ad64276b453d179fd3349819aa91311aa62a464",
+    "services/runtime/src/dataset_retention.rs": "4f816692348dd5886ff580b0f1cadace8e8ca61f6e2f943134a40aab6f481a42",
+    "services/runtime/src/dataset_writer.rs": "f7db6455ed7ae5f1e7d32deceef2a83260af520ecf890b72e7d4ca7470af7c8e",
+    "services/runtime/src/dataset_writer/bootstrap_v2.rs": "e61369c1387b2a65e6b38ba471d883ac855aa08286e75c40931d129caf9befd9",
+    "services/runtime/src/dataset_writer/visibility.rs": "48bf75c93159ec18572a33e7ebeecdbfcdf707d58a5c85bef67ee2300f318335",
+    "services/runtime/src/native_snapshot_v3.rs": "2b0026f12ecad860430014d640055fe589801cee1dc2acd2805448837d273a42",
+    "services/runtime/src/native_snapshot_v3/point.rs": "6cd8e9d51c1bd99134316759988f463ab600e06da9cff23d3d0a18c4b82c6b36",
+    "services/runtime/src/persistent_directory/graph.rs": "2c7095ebd6fbfe3ccd9fe44dc13199501f0e62874573671d69685955e03e4b9b",
+    "services/runtime/src/snapshot.rs": "4f04ea1febc95b5c20598ae13b7587030e3ce393e577982966677a6c2e7bb033",
+    "tests/fixtures/native-catalog/harness.rs": "75d93d98468b6250bb53eb01c54453e9c231878fddaec767d3a1b05e2cb97917",
+    "tests/fixtures/native-retention/dataset.ts": "5f161a8dcc9a32f41cdcc260af6c3b75c18edc227746efa11d94c387b9471a52",
+    "services/runtime/src/dataset_writer/graph_builder.rs": "90faa0fd1a30cbd95bb060d4351f8535786c0326476fdfc9e242ffd9f05d8dd9",
+    "services/runtime/src/dataset_writer/graph_output.rs": "c7c6eac531fc1185f2a3c5d5c9cc4b407437a0fb433db564b0ba54d31a007e3d",
+    "services/runtime/src/dataset_writer/replace_graph.rs": "4c1f2281f4d8b8a4101bfb525b2fca82e4c7bfbb1215777a14825e0975f4cf6e",
+    "services/runtime/src/native_snapshot_v3/validate.rs": "71294704f25cdbdd91fe53288a55da93757970c67df7c4fafeeb79a128869a85",
+    "services/runtime/src/snapshot_parquet_read.rs": "58f63a9094048a7644cfdb63208da9c4c9d62416e5ab82300426a103752abc20",
+    "tests/native-dataset-v3.integration.test.ts": "6fc3fbca18f33ae0709ac8d0c16abaa8e2a67ea42ff9617077dac00bab41b49d"
+  },
+  "nativeBuild": {
+    "exitCode": 0,
+    "seconds": 44.55878775299789,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "executables": 9
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 18.702720840999973
+  },
+  "exactStaticAndIndexing": {
+    "exitCode": 0,
+    "seconds": 27.80287522800063,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "runtimeIntegration": "not run; awaiting scheduled file slot",
+  "predecessors": {
+    "028": {
+      "buildExitCode": 101,
+      "seconds": 17.29721155200241,
+      "reason": "rusqlite Connection/Statement retained across async boundaries in shared VisibilityBootstrap; production Pipeline future not Send",
+      "correction": "Use bounded operation-local connections and end statements/transactions before await, without unsafe Send or serialization locks."
+    },
+    "029": {
+      "buildExitCode": 101,
+      "seconds": 54.65832409399445,
+      "reason": "Point-reader unit still required test-local bytes::Bytes after bounded reader extraction",
+      "correction": "Restore test-local import; production library had passed Send compilation."
+    }
+  },
+  "artifacts": {
+    "moria-indexing-tests": {
+      "sha256": "2c7d2d8636f449718cbd5209fc57f35e264697dba49e346e2d5a0b61e0130ead",
+      "bytes": 83338360
+    },
+    "moria-native-transport-test": {
+      "sha256": "55988ac66734dd489b6fc45cadd6332f50c10c6b2fddf37303aeb1cf53436569",
+      "bytes": 26622952
+    },
+    "moria-native-storage-test": {
+      "sha256": "c0cafb317db63a39b77973ad56de19a3dec9b2fdda7a3b270b9d4c0a1d7c05f1",
+      "bytes": 101941208
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "c74485307765048e08a4683d1987989bf72e39eda4babbede5d0d988e25d99a5",
+      "bytes": 57628688
+    },
+    "moria-native-retention-test": {
+      "sha256": "5301256d1af3503c6a84d6c0f785d3e84ff7c0d5ccf369f9cb0618485e97da20",
+      "bytes": 27092552
+    },
+    "moria-native-policy-test": {
+      "sha256": "bd5a196201cee9532c44f112ff1bd0a818f06a3e64fa081b997c38b4b44e1789",
+      "bytes": 22285736
+    },
+    "moria-native-catalog-test": {
+      "sha256": "e466c48dd3c63375c6c94466977e13705ff760ab44fadafc948b78dbe4eacd0a",
+      "bytes": 117317368
+    },
+    "moria-indexing": {
+      "sha256": "f95cd5f27b46c82e6bdd09def3e8f325b3a84022a3a2b1f221e802015eb76a54",
+      "bytes": 161291144
+    },
+    "moria-runtime": {
+      "sha256": "e0967285b991ef4ba5027c03614cc7f04066c4260094b37410e9da9ba9f1719a",
+      "bytes": 161291136
+    }
+  }
+}

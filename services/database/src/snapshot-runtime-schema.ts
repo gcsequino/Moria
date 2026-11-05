@@ -47,7 +47,7 @@ CREATE TABLE moria.runtime_snapshot_candidates (
   execution uuid NOT NULL REFERENCES moria.runtime_executions(id), resource text NOT NULL,
   expected_revision bigint NOT NULL CHECK(expected_revision>=0), namespace_state jsonb NOT NULL,
   session_hash text NOT NULL, owner uuid NOT NULL, fence bigint NOT NULL, incarnation uuid NOT NULL,
-  metadata_location text NOT NULL CHECK(left(metadata_location,18)='moria-snapshot-v2:'),
+  metadata_location text NOT NULL CHECK(left(metadata_location,18) IN ('moria-snapshot-v2:','moria-snapshot-v3:')),
   snapshot_id text NOT NULL,write_mode text NOT NULL DEFAULT 'replace' CHECK(write_mode IN ('replace','append','upsert','delete')), proof jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 CREATE FUNCTION moria.runtime_snapshot_candidate_immutable() RETURNS trigger LANGUAGE plpgsql AS $$

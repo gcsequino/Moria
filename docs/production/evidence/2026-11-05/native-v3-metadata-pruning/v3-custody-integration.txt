@@ -1,0 +1,15 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-retention.integration.test.ts
+Running 1 integration test files.
+✔ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (131819.973219ms)
+ℹ {"phase":"backupPinnedVersionDespiteCurrentCopy","requests":[{"method":"GET","requestVersion":"9bd85c64-9ab9-4d02-a1d0-2f228ff0e60e","status":206,"responseVersion":"9bd85c64-9ab9-4d02-a1d0-2f228ff0e60e"},{"method":"GET","requestVersion":"9bd85c64-9ab9-4d02-a1d0-2f228ff0e60e","status":206,"responseVersion":"9bd85c64-9ab9-4d02-a1d0-2f228ff0e60e"},{"method":"GET","requestVersion":"9bd85c64-9ab9-4d02-a1d0-2f228ff0e60e","status":206,"responseVersion":"9bd85c64-9ab9-4d02-a1d0-2f228ff0e60e"}]}
+ℹ {"heads":2,"allGraphBytesBackedUp":true,"sourceGraphRootExactVersionRemoved":true,"nativeCatalogHead":true,"backupPinnedVersionDespiteNewCurrent":true,"actualMetadataPruneAdvancedUnchangedSnapshotAndJournal":true,"liveRetainedPinProtectedDuringPrune":true,"prunedCurrentAndRetainedHeadRestoredAfterSourceGc":true,"oldStandardDataCollectedAfterPhysicalHeadRetirement":true,"expiredNativeHeadRejected":true,"noFabricatedDeltaForSecondNonAdvancingExpiry":true,"orphanGracePreserved":true,"freshPhysicalQualification":true,"independentTypedGraphReadback":true,"immutableReplacementJournalRestored":true,"journalRootsResolveFreshProviderVersions":true,"oldProducerReplayRejected":true,"incrementalReplayActivated":false,"successorPolicyDrainsOriginalWork":true,"pendingPropagationProtectsGraphObjects":true,"conflictingTargetVersionRejected":true,"reusedTargetRejected":true,"missingGraphBackupChildRejectedWithDispatchDisabled":true}
+✔ native v3 metadata pruning rolls back an actual failed publication atomically (52389.920457ms)
+ℹ {"deferredCommitFailureRolledBackHeadHistoryExpiryReceiptAndJournal":true,"realMaintenanceStageRemainedUnpublished":true,"freshRunCommitted":true}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 184703.550121

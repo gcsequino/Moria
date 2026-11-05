@@ -32,7 +32,7 @@ pub(crate) struct EngineInput {
 struct Input {
     scan: Uuid,
     _retained: PinnedDatasetRead,
-    stream: iceberg::scan::ArrowRecordBatchStream,
+    stream: futures::stream::BoxStream<'static, Result<arrow_array::RecordBatch>>,
     schema: arrow_schema::SchemaRef,
     schema_prefix: Vec<u8>,
     fields: Vec<engine_ipc::Field>,
@@ -188,17 +188,9 @@ impl NativeEngineIo {
                 .all(|m| self.markings.contains(m)),
             "AUTHORIZATION_CHANGED"
         );
-        let table = loaded.snapshot.table().await?.into_table();
-        let schema =
-            crate::dataset_writer::arrow_schema(table.metadata().current_schema().as_ref())?;
+        let schema = crate::dataset_writer::arrow_schema(loaded.snapshot.schema().await?.as_ref())?;
         let prefix = engine_ipc::encode_schema(&schema)?;
-        let scan = table
-            .scan()
-            .snapshot_id(loaded.pin.snapshot.parse()?)
-            .select_all()
-            .with_batch_size(Some(1))
-            .build()?;
-        let stream = scan.to_arrow().await?;
+        let stream = loaded.snapshot.scan(1).await?;
         let id = Uuid::new_v4();
         self.check().await?;
         self.opened.insert(

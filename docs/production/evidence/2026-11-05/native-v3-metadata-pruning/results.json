@@ -1,0 +1,28 @@
+{
+  "prebuild-static": {
+    "exitCode": 0,
+    "elapsedSeconds": 19.711144813998544
+  },
+  "static-indexing-check": {
+    "exitCode": 0,
+    "elapsedSeconds": 9.47973320500023
+  },
+  "v3-custody-integration": {
+    "exitCode": 0,
+    "elapsedSeconds": 185.47658190400398,
+    "controllerAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "v2-custody-integration": {
+    "exitCode": 0,
+    "elapsedSeconds": 114.17643523299921,
+    "controllerAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "v2-metadata-integration": {
+    "exitCode": 0,
+    "elapsedSeconds": 29.154887629003497,
+    "controllerAbsent": true,
+    "externalHostScratchCreated": false
+  }
+}

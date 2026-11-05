@@ -85,6 +85,22 @@ impl QualifiedFile {
             incarnation,
         })
     }
+    pub(crate) fn from_producer_graph(
+        proof: crate::dataset_graph::ProducerFileProof,
+    ) -> Result<Self> {
+        let (certificate, physical_version, physical_fingerprint, incarnation) = proof.into_parts();
+        certificate.validate()?;
+        ensure!(
+            physical_version.size == certificate.content.size,
+            "CONTENT_MISMATCH"
+        );
+        Ok(Self {
+            certificate,
+            physical_version,
+            physical_fingerprint,
+            incarnation,
+        })
+    }
     pub fn certificate(&self) -> &FileCertificate {
         &self.certificate
     }
@@ -156,7 +172,8 @@ async fn certify_file_profile(
     ensure!(physical_version.size == content.size, "CONTENT_MISMATCH");
     certify_versioned_bytes(
         store,
-        grant,
+        grant.clone(),
+        grant.lease().incarnation,
         content,
         physical_version,
         cancel,
@@ -165,9 +182,51 @@ async fn certify_file_profile(
     )
     .await
 }
+pub(crate) async fn certify_graph_file(
+    store: Arc<dyn ObjectStore>,
+    grant: Arc<crate::dataset_graph::GraphGrant>,
+    claims: &serde_json::Value,
+    content: SealedObject,
+    cancel: Cancellation,
+) -> Result<QualifiedFile> {
+    grant.check_read(&content.object).await?;
+    ensure!(
+        content.size > 0 && content.size <= MAX_FILE_BYTES,
+        "DATASET_WRITE_CAPABILITY_REQUIRED"
+    );
+    let scope: serde_json::Value = grant
+        .database()
+        .get()
+        .await?
+        .query_one("SELECT moria.runtime_dataset_graph_scope($1)", &[claims])
+        .await?
+        .get(0);
+    let physical = store.physical_fingerprint()?;
+    ensure!(scope["physicalFingerprint"] == physical, "BINDING_MISMATCH");
+    let owned: bool = grant.database().get().await?.query_one(
+        "SELECT EXISTS(SELECT 1 FROM moria.runtime_dataset_issued_objects i JOIN moria.runtime_dataset_producers p ON p.scope=i.producer WHERE i.producer=$1 AND p.tombstoned_at IS NULL AND i.physical_fingerprint=$2 AND i.warehouse_id=$3 AND i.table_id=$4 AND i.object_id=$5 AND i.expected_size=$6 AND i.expected_sha256=$7)",
+        &[&scope["producer"].as_str().unwrap(),&physical,&content.object.warehouse_id,&content.object.table_id,&content.object.object_id,&i64::try_from(content.size)?,&content.sha256]).await?.get(0);
+    ensure!(owned, "DATASET_PUBLICATION_CONTRACT_REQUIRED");
+    let version = store
+        .version(&content.object, grant.as_ref(), &cancel)
+        .await?;
+    let incarnation = grant.incarnation();
+    certify_versioned_bytes(
+        store,
+        grant,
+        incarnation,
+        content,
+        version,
+        cancel,
+        PROFILE,
+        CHUNK_BYTES,
+    )
+    .await
+}
 async fn certify_versioned_bytes(
     store: Arc<dyn ObjectStore>,
-    grant: Arc<DatasetIoGrant>,
+    grant: Arc<dyn ReadAuthority>,
+    incarnation: Uuid,
     content: SealedObject,
     physical_version: ObjectVersion,
     cancel: Cancellation,
@@ -175,7 +234,6 @@ async fn certify_versioned_bytes(
     chunk_bytes: u64,
 ) -> Result<QualifiedFile> {
     let physical = store.physical_fingerprint()?;
-    let incarnation = grant.lease().incarnation;
     let mut stream = versioned_stream(
         store,
         content.object.clone(),
@@ -213,7 +271,7 @@ async fn certify_versioned_bytes(
         total == content.size && format!("sha256:{:x}", whole.finalize()) == content.sha256,
         "CONTENT_MISMATCH"
     );
-    grant.check_current().await?;
+    grant.check_read(&content.object).await?;
     let certificate = FileCertificate {
         version: 1,
         reader_profile: profile.into(),
@@ -265,6 +323,7 @@ pub(crate) async fn certify_retained_member(
     let file = certify_versioned_bytes(
         store,
         grant.clone(),
+        grant.lease().incarnation,
         content,
         version,
         cancel,

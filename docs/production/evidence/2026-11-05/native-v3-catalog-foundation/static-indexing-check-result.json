@@ -1,0 +1,19 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 28.499503496001125,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--cpus",
+    "2",
+    "--memory",
+    "4g",
+    "sha256:46f7c4a8cc0d7ffebc90a906e3fe58d128687eb88ea72ae37906096ff622889f",
+    "sh",
+    "-c",
+    "pnpm check:static && pnpm check:indexing"
+  ]
+}

@@ -202,3 +202,243 @@ two real publication/rollback cases.
 the exact scope. Sparse changed-row/delete-key roots, standard position-delete
 readback, actual distributed bootstrap and indexing-window custody/consumption
 remain unactivated.
+
+## Qualified graph scan task contract
+
+A graph source task remains an indexing `scan` task and uses a closed version-one
+plan with `readerProfile=iceberg-v2-native-mor-bounded-v3`. Its `file` witness binds
+the exact logical name, sealed immutable content, physical row count, selected
+row count and data sequence. The witness grants no IO. Each task reopens the
+actual immutable indexing-build root, checks its stored catalog/reader profile
+and current namespace binding, resolves the file's qualified selection through
+that root, and compares every witness field before scanning only that file.
+Physical ordinals advance before visibility filtering. Row counts use selected
+rows; physical file and row counts remain separate.
+
+An explicit `file: null` task is valid only when that actual qualified root has
+zero data files and zero visible rows. Missing wire bytes or an absent file field
+never establish an empty source. Graph plans cannot select the flat reader, and
+flat plans retain their existing native FileScanTask wire ABI. Both paths feed
+the same canonical Source mapping, UID derivation, payload budgets, staged rows
+and sealed-task pipeline. Coordinator planning streams bounded per-file witnesses
+and validates complete root file/visible-row counts at EOF before dispatch.
+
+This reader bridge does not create a v3 Dataset head or qualify a v3 writer.
+Actual v3 root preparation, standard metadata/index agreement, stage validation,
+atomic publication, recovery/pruning and sparse position-delete production remain
+separate required integration gates.
+
+## Staged v3 replacement protocol
+
+The native v3 replacement task emits version-three partsets. Its actual sealed
+task output is the registered graph partset node itself. Bounded file and page
+directories bind file certificates and all page descriptors; page references
+retain their existing ordinal/previous checks without linear graph-height
+growth. Coordinator admission derives the task, owner and fence from the actual
+sealed execution report and resolves every selected file/page through that
+registered task root. Imported nodes, paths, counts and versions grant nothing.
+
+Whole replacement validates newly written typed rows in bounded batches, checks
+complete ordered-key uniqueness in private spill and builds exact physical
+locators, row selections and canonical row digests. It shares standard Iceberg
+manifest and metadata generation with the existing replacement writer. An
+index-summary node excludes metadata/file-tree roots; the same canonical sealed
+summary reference is embedded in the current standard snapshot summary and
+the outer graph descriptor. This removes a hash cycle.
+
+A ready graph stage supplies the private verification view. Its identity carries
+the actual stage and expected-head basis revision with no fabricated published
+revision. Registration retains one root member; graph edges and exact receiver
+qualifications retain descendants. Final validation enumerates
+the actual current standard manifests, rejects deletes in this whole-replacement
+profile and checks exact file/row counts, data sequences and full selections.
+Candidate insertion and stage attachment share one transaction; existing C04
+head/checkpoint/completion/journal publication remains atomic.
+
+The native service entry is staged for qualification. Existing production output
+selection is unchanged. Trial030 builds nine executables and passes static plus
+113 units; no actual v3 Catalog publication or recovery proof is claimed at this
+checkpoint. Runtime gates, standard-engine position deletes, sparse mutations,
+distributed bootstrap and incremental Source chains remain required.
+
+## Actual v3 whole-replacement publication checkpoint
+
+Trial033 qualifies the staged replacement path through actual C04 publication.
+A 64-row result with array primary keys and nullable payloads publishes as a v3
+head, replays the same receipt and passes common typed readback, complete-key
+lookups and exact point-row digest verification. A second actual empty
+replacement publishes/replays, reads as empty and preserves the first revision's
+typed read. Both immutable replacement journal edges resolve their actual
+qualified result roots; the empty head's ready stage is published and its root
+registry contains one member. This is whole replacement, not sparse mutation.
+
+The same exact nine-artifact image passes static checks, 113 units and the
+existing 64-row v2 standard-read/projected-bootstrap/deferred-digest regression
+under its original 120-second root. Evidence preserves the initial unsealed
+auxiliary-spill failure, the staged-read SQL name collision with head 0/candidate 0/
+journal 0 assertions, and the empty expected-row fixture failure. Corrections
+retain admission checks and proof deadlines. See
+[evidence](evidence/2026-11-05/native-v3-replacement-publication/summary.json).
+
+Production output selection remains unchanged while actual v3 custody,
+pruning and remaining reader integrations are qualified. This checkpoint does
+not certify position deletes, sparse writes, distributed bootstrap, incremental
+Source consumption or production throughput.
+
+## V3 custody and non-advancing expiry
+
+V3 backup starts only from the actual retained Catalog root, its matching stored
+reader profile and exact receiver qualification. Its durable bounded graph walk
+copies every reachable node once and records each original immutable provider
+version. A newer current provider version does not substitute for the selected
+receipt version. Restore must derive fresh root and descendant qualifications
+from actual copied bytes, the target mapping and new incarnation before enabling
+dispatch. V2 flat closure capture remains separate.
+
+A maintenance read derives only the actual run's current expected head, owner,
+fence and incarnation. It does not issue an execution or accept a supplied root
+as authority. The initial v3 expiry path retires selected expired Catalog roots
+without changing the current head. Current standard metadata and its historical
+file references remain retained. Such an operation has no Dataset revision or
+commit-delta edge; headChanged is false. This is not metadata pruning or row-file
+compaction. V3 graph metadata pruning remains a required gate before production
+output activation.
+
+Trial039 qualifies actual v3 backup, non-advancing expiry, exact source root
+version collection and fresh-prefix restore under the original 300-second root.
+A request trace proves capture, full copy and final revalidation all use the
+qualified old version despite an identical newer current copy. Deleting that
+qualified version causes the exact enumeration failure and leaves capture
+unsealed; the newer copy is never substituted. The original v2 sidecar custody
+regression runs on the same nine-artifact image. See
+[evidence](evidence/2026-11-05/native-v3-custody/summary.json).
+
+Closed unpublished attached candidates expire through the actual closed
+producer's GC plan and stage reference queue. Before adding a maintenance
+retirement, expiry checks both the complete published-history pointer and the
+exact physical/incarnation history reference. A private root with neither is
+already owned by stage cleanup and receives no fabricated maintenance record.
+A fixed-size canonical root-key index bounds the history lookup; the exact
+metadata pointer is still rechecked and any published history protects it.
+
+Trial044 prepares and attaches a real second graph candidate, cancels its
+actual execution, and exercises normal policy planning. Stage references and
+their propagation queue drain, the private root expires and becomes a garbage
+candidate, while the published baseline head, journal and typed rows remain
+unchanged. The failed predecessor preserves transaction rollback evidence.
+Published v3 custody runs on the same exact rebuilt image. See
+[evidence](evidence/2026-11-05/native-v3-private-expiry/summary.json).
+
+Sparse mutations, independent standard position-delete proof, distributed
+bootstrap and incremental Source chains remain unqualified.
+
+## Journal qualification across namespace revision changes
+
+The journal separates a new result's current binding/namespace qualification
+from its actual immutable prior Catalog basis. A retained basis may keep its
+original logical namespace revision while preserving exact current physical
+provider and receiver incarnation, warehouse/table, metadata pointer and
+snapshot. The trusted publisher supplies the actual historical revision;
+ordinary database callers cannot invoke the private helper. Expired roots and
+mismatched historical identities fail before an edge is recorded.
+
+Trial046 integrates the committed Source staging/renewal baseline and passes
+the original complete 20-case Source file, including classification changes
+that save a valid Dataset head while an older indexing purpose remains blocked.
+It also passes the existing two journal cases with additional historical-root
+negatives and actual publication rollback, and actual v3 replacement/empty
+publication. All nine rebuilt artifacts, static checks and 113 native units
+match. Evidence:
+[qualification](evidence/2026-11-05/native-journal-source-qualification/summary.json).
+
+V3 Source graph-reader integration remains a separate pending runtime gate.
+Production output activation, graph metadata pruning, standard position-delete
+proof, sparse writes and distributed bootstrap remain closed.
+
+## Retained full-build Source graph reads
+
+Trial054 qualifies the retained legacy full-build indexing contract against
+actual v3 heads. Real native identity allocation precedes publication; native
+graph planning/scan/reduction produces canonical rows for array-key data with
+nullable payloads. A second actual empty v3 head emits the explicit empty scan
+witness, publishes an empty current Source generation and retains the populated
+historical generation. Dataset head and journal remain unchanged by indexing.
+All nine binaries are byte-identical to trial046; static, provenance and
+113 units pass. Evidence:
+[qualification](evidence/2026-11-05/native-v3-legacy-source-reader/summary.json).
+
+This retained target contract intentionally has no managed Source row/key store.
+The separate accepted ObjectType/permanent service profile must qualify its
+complete declared-key map and service authority. Its v3 service-origin admission
+restriction remains unchanged pending that actual red/green gate. Production
+writer and sparse-window activation remain closed.
+
+## Permanent Source service-origin v3 reads
+
+Permanent indexing accepts only the supported native v2/v3 Catalog families
+with the matching stored reader profile and an actual sealed root/location for
+the current physical provider and incarnation. The enabled Dataset binding,
+environment, Dataset, snapshot and metadata identity must agree. This acceptance
+check does not supply IO authority; normal Scope/GraphReadContext validation
+still guards bounded reads. Existing materialized Source/Object reads do not
+replay Dataset bytes through this admission path.
+
+The real dependent ObjectType fixture uses normal Source compilation/import
+verification, publication and plan/apply, plus the existing operator-approved
+service authority/target configuration. Its worker receives no registrar token.
+Trial056 records the prior v2-only restriction as an exact blocked intent for
+the valid v3 head without changing that Dataset. Trial058 creates the actual
+managed Source store and complete ordered array-key map, verifies every typed
+Object row through the payload-backed reader, revokes the real registrar token,
+then qualifies fresh service admission for an actual empty v3 head. Current
+empty and retained populated generations coexist. The original complete v2
+Source file passes 20/20 on the same exact image with all root deadlines
+unchanged, alongside static checks, nine matching artifacts and 113 units. Evidence:
+[qualification](evidence/2026-11-05/native-v3-permanent-source/summary.json).
+
+This enables the qualified permanent reader path. Production Dataset writer
+selection, graph metadata pruning, sparse mutations, position-delete proof and
+incremental Source windows remain separate required gates.
+
+## Native v3 metadata pruning
+
+Expiration derives its graph producer from the actual maintenance run, owner,
+fence and incarnation. The maintenance reader admits only that run's expected
+head or qualified ready stage. Missing or unsupported read bases are rejected.
+No execution or lease is allocated for pruning.
+
+Pruning keeps the current snapshot, every unselected live historical root,
+unmapped imported snapshots and standard branch/tag references. Catalog
+lookups are paged over snapshot IDs already present in authenticated metadata.
+Standard manifest references populate a spill-backed retained-name set;
+directory descriptors stream through bounded path-copy mutations without
+reading Parquet bytes. The current snapshot descriptor, including its standard
+summary reference, stays byte-for-byte equivalent. Table, schema, ordered-key,
+selection, hash, location and metadata-independent IndexSummary identities
+remain unchanged.
+
+The new metadata receives an issued-file certificate and strict staged typed
+qualification. Its actual current snapshot/key certificate is transferred from
+the qualified prior root. The head CAS, history, expiry markers, maintenance
+receipt and unchanged/metadataPrune journal edge commit atomically. A deferred
+head constraint transfers the real ready maintenance stage's reference into
+history only for the matching committed run and receipt. Non-advancing expiry
+records no edge. Selection always excludes the actual current physical head,
+even when the requested revision bound is ahead of that head.
+
+Logical pruning does not immediately free bytes retained by an older physical
+head. Those bytes become collectible only after that root is expired and its
+real graph retirement propagates. Existing pending-work exclusion, orphan
+grace, policy succession and exact provider-version collection still apply.
+
+The focused qualification covers a live historical graph reader, preserved
+retained standard snapshot descriptors, unchanged current rows/index/summary,
+actual deferred-publication rollback, source collection and fresh-prefix
+restore of both pruned current and retained heads. Original backup-version,
+missing-child/disabled-dispatch and conflicting/reused-target checks remain.
+See [qualification](evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
+
+This bounded local gate does not establish production workload capacity.
+Production Dataset writer selection, sparse mutations, standard position-delete
+proof, distributed bootstrap and incremental Source windows remain separate
+required gates. Independent PR CI and human review remain required.

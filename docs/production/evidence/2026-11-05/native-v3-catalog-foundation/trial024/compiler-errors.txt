@@ -1,0 +1,60 @@
+error[E0599]: no method named `table` found for enum `PinnedDatasetSnapshot` in the current scope
+    --> ../../tests/fixtures/native-catalog/harness.rs:730:28
+     |
+ 730 |         let table = loaded.table().await?.into_table();
+     |                            ^^^^^ method not found in `PinnedDatasetSnapshot`
+     |
+note: the method `table` exists on the type `LoadedSnapshot`
+    --> src/catalog.rs:1153:5
+     |
+1153 |     pub async fn table(&self) -> Result<iceberg::table::StaticTable> {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+error[E0599]: no method named `into_table` found for type `_` in the current scope
+   --> ../../tests/fixtures/native-catalog/harness.rs:730:43
+    |
+730 |         let table = loaded.table().await?.into_table();
+    |                                           ^^^^^^^^^^
+    |
+help: there is a method `to_be` with a similar name
+    |
+730 -         let table = loaded.table().await?.into_table();
+730 +         let table = loaded.table().await?.to_be();
+    |
+
+
+error[E0599]: the method `try_next` exists for type `!`, but its trait bounds were not satisfied
+   --> ../../tests/fixtures/native-catalog/harness.rs:739:45
+    |
+739 |             while let Some(batch) = batches.try_next().await? {
+    |                                             ^^^^^^^^ method cannot be called on `!` due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `!: TryStream`
+            which is required by `!: futures::TryStreamExt`
+
+
+error[E0599]: the method `try_next` exists for type `!`, but its trait bounds were not satisfied
+   --> ../../tests/fixtures/native-catalog/harness.rs:789:41
+    |
+789 |         while let Some(batch) = batches.try_next().await? {
+    |                                         ^^^^^^^^ method cannot be called on `!` due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `!: TryStream`
+            which is required by `!: futures::TryStreamExt`
+
+
+error[E0599]: no method named `proof` found for enum `PinnedDatasetSnapshot` in the current scope
+    --> ../../tests/fixtures/native-catalog/harness.rs:843:50
+     |
+ 843 |         ensure!(rows == expected_count && loaded.proof().physical_rows >= rows as u64);
+     |                                                  ^^^^^ method not found in `PinnedDatasetSnapshot`
+     |
+note: the method `proof` exists on the type `LoadedSnapshot`
+    --> src/catalog.rs:1149:5
+     |
+1149 |     pub fn proof(&self) -> &SnapshotProof {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

@@ -270,7 +270,7 @@ pub(super) async fn plan(db: &Database, input: Plan) -> Result<Value> {
         }
         tx.execute("UPDATE moria.runtime_dataset_producers SET tombstoned_at=clock_timestamp() WHERE scope=$1 AND tombstoned_at IS NULL",&[&producer]).await?;
         // Only unpublished preparations from a permanently closed producer can lose this reference.
-        let private=tx.query("SELECT r.key FROM moria.runtime_dataset_roots r JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) AND l.sealed WHERE l.producer=$1 AND r.created_at+make_interval(secs=>$2::bigint::double precision)<=clock_timestamp() AND NOT EXISTS(SELECT 1 FROM moria.snapshot_history h WHERE h.metadata_location=r.metadata_location) AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_expired_roots e WHERE e.root=r.key) ORDER BY r.key LIMIT 64",&[&producer,&state["retainSeconds"].as_str().unwrap().parse::<i64>()?]).await?;
+        let private=tx.query("SELECT r.key FROM moria.runtime_dataset_roots r JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) AND l.sealed WHERE l.producer=$1 AND r.created_at+make_interval(secs=>$2::bigint::double precision)<=clock_timestamp() AND NOT EXISTS(SELECT 1 FROM moria.snapshot_history h WHERE moria.runtime_dataset_root_key(h.metadata_location)=r.key AND h.metadata_location=r.metadata_location) AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_expired_roots e WHERE e.root=r.key) ORDER BY r.key LIMIT 64",&[&producer,&state["retainSeconds"].as_str().unwrap().parse::<i64>()?]).await?;
         for root in private {
             let key: String = root.get(0);
             if !tx

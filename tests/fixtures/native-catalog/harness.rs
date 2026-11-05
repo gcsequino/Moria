@@ -57,6 +57,10 @@ struct Fixture {
     expected_rows: Option<usize>,
     expected_markings: Option<Vec<String>>,
     #[serde(default)]
+    graph_output: bool,
+    #[serde(default)]
+    prepare_only: bool,
+    #[serde(default)]
     s3_bindings: Vec<S3Binding>,
     allocation: Option<capacity::Allocation>,
     closure_limits: Option<ClosureLimits>,
@@ -552,8 +556,8 @@ async fn run() -> Result<()> {
             ensure!(count == fixture.expected_rows.unwrap_or(64), "FIXTURE_READBACK_MISMATCH");
             if let Some(expected) = fixture.writer_rows.get(&source.resource) {
                 let schema = snapshot.metadata().current_schema();
-                let batch = supplied_batch(schema.as_ref(), expected, &columns)?;
-                for row in typed_rows(&batch, &columns)? {
+                let expected_rows=if expected.is_empty(){Vec::new()}else{typed_rows(&supplied_batch(schema.as_ref(),expected,&columns)?,&columns)?};
+                for row in expected_rows {
                     let value = actual.get_mut(&row).ok_or_else(|| anyhow::anyhow!("FIXTURE_READBACK_MISMATCH"))?;
                     ensure!(*value > 0, "FIXTURE_READBACK_MISMATCH");
                     *value -= 1;
@@ -726,10 +730,17 @@ async fn run() -> Result<()> {
                         .unwrap_or_else(|| vec!["private".into()])
         );
         let pin_revision = loaded.pin.revision.clone();
+        ensure!(
+            loaded.pin.snapshot == source.snapshot_id,
+            "FIXTURE_INPUT_PIN_CHANGED"
+        );
         let loaded = loaded.snapshot;
-        let table = loaded.table().await?.into_table();
         let mut historical_rows = 0usize;
         if let Some(snapshot) = &fixture.retained_snapshot {
+            let moria_runtime::catalog::PinnedDatasetSnapshot::FlatV2(legacy) = &loaded else {
+                anyhow::bail!("FIXTURE_RETAINED_FLAT_SNAPSHOT_REQUIRED")
+            };
+            let table = legacy.table().await?.into_table();
             let scan = table
                 .scan()
                 .snapshot_id(snapshot.parse()?)
@@ -743,12 +754,7 @@ async fn run() -> Result<()> {
             let metadata = table.metadata();
             ensure!(metadata.last_sequence_number() == 2 && metadata.snapshots().count() == 2);
         }
-        let scan = table
-            .scan()
-            .snapshot_id(source.snapshot_id.parse()?)
-            .select_all()
-            .build()?;
-        let mut batches = scan.to_arrow().await?;
+        let mut batches = loaded.scan(1000).await?;
         let mut rows = 0usize;
         let expected_ids: std::collections::BTreeMap<String, Uuid> = if fixture.expected_native_rows
         {
@@ -777,9 +783,13 @@ async fn run() -> Result<()> {
             let schema: iceberg::spec::Schema =
                 serde_json::from_value(definition.get("iceberg_schema"))?;
             let columns: Value = definition.get("columns");
-            let batch = supplied_batch(&schema, expected, &columns)?;
+            let expected_rows = if expected.is_empty() {
+                Vec::new()
+            } else {
+                typed_rows(&supplied_batch(&schema, expected, &columns)?, &columns)?
+            };
             let mut rows = BTreeMap::new();
-            for row in typed_rows(&batch, &columns)? {
+            for row in expected_rows {
                 *rows.entry(row).or_insert(0) += 1;
             }
             Some((columns, rows))
@@ -840,7 +850,8 @@ async fn run() -> Result<()> {
             }
             rows += batch.num_rows();
         }
-        ensure!(rows == expected_count && loaded.proof().physical_rows >= rows as u64);
+        ensure!(rows == expected_count);
+        loaded.check_scan_count(rows as u64)?;
         ensure!(
             expected_typed
                 .as_ref()
@@ -909,13 +920,23 @@ async fn run() -> Result<()> {
                         },
                     )?),
                 };
-            let mut writer = moria_runtime::dataset_writer::StreamingDatasetWriter::open(
-                store,
-                grant,
-                selected_schema.clone(),
-                Cancellation::default(),
-            )
-            .await
+            let mut writer = if fixture.graph_output {
+                moria_runtime::dataset_writer::StreamingDatasetWriter::open_graph(
+                    store,
+                    grant,
+                    selected_schema.clone(),
+                    Cancellation::default(),
+                )
+                .await
+            } else {
+                moria_runtime::dataset_writer::StreamingDatasetWriter::open(
+                    store,
+                    grant,
+                    selected_schema.clone(),
+                    Cancellation::default(),
+                )
+                .await
+            }
             .context("WRITER_OPEN")?;
             if fixture.mode == "writer-supplied" {
                 let rows = fixture
@@ -1111,23 +1132,43 @@ async fn run() -> Result<()> {
                 event(json!({"event":"denied","error":"OUTPUT_INVALID","execution":id}));
                 return Ok(());
             }
-            let candidate = moria_runtime::dataset_writer::prepare_replacement(
-                store.clone(),
-                &scratch,
-                grant.clone(),
-                native_schemas
-                    .get(&fixture_snapshot.resource)
-                    .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
-                    .clone(),
-                std::slice::from_ref(partset),
-                ClosureLimits {
-                    max_entries: 10000,
-                    max_referenced_bytes: 1024 * 1024 * 1024,
-                    max_spool_bytes: 32 * 1024 * 1024,
-                },
-                cancel,
-            )
-            .await
+            let candidate = if fixture.graph_output {
+                moria_runtime::dataset_writer::prepare_graph_replacement(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    native_schemas
+                        .get(&fixture_snapshot.resource)
+                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
+                        .clone(),
+                    std::slice::from_ref(partset),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    cancel,
+                )
+                .await
+            } else {
+                moria_runtime::dataset_writer::prepare_replacement(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    native_schemas
+                        .get(&fixture_snapshot.resource)
+                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
+                        .clone(),
+                    std::slice::from_ref(partset),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    cancel,
+                )
+                .await
+            }
             .context("WRITER_PREPARE")?;
             candidates.push(candidate);
             continue;
@@ -1238,6 +1279,13 @@ async fn run() -> Result<()> {
         candidates.push(candidate);
     }
     event(json!({"event":"prepared","candidates":candidates,"lease":claim.lease}));
+    if fixture.prepare_only {
+        ensure!(
+            fixture.graph_output && fixture.mode == "writer-supplied",
+            "FIXTURE_MODE_INVALID"
+        );
+        return Ok(());
+    }
     if fixture.mode != "valid" && fixture.mode != "valid-s3" && !fixture.mode.starts_with("writer")
     {
         proceed();
