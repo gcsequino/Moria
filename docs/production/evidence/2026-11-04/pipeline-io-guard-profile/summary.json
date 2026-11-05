@@ -1,0 +1,144 @@
+{
+  "scope": "First16-head real producer only; all67input fixtures retained; no Pipeline acceptance subcases.",
+  "elapsedMs": 117594,
+  "heads": 16,
+  "allConfiguredInputs": 67,
+  "deadlineSeconds": 120,
+  "registeredCandidates": 16,
+  "exitCode": 0,
+  "walRecordsDelta": 57735,
+  "walBytesDelta": 3819777,
+  "clientWalDelta": {
+    "writes": 14499,
+    "fsyncs": 14498,
+    "write_time": 102.83000000000001,
+    "fsync_time": 23370.743000000002,
+    "write_bytes": 122044416
+  },
+  "waitSamples": [
+    {
+      "type": "None",
+      "wait": "None",
+      "samples": 62
+    },
+    {
+      "type": "IO",
+      "wait": "WalSync",
+      "samples": 25
+    }
+  ],
+  "topFunctions": [
+    {
+      "schemaname": "moria",
+      "funcname": "native_filesystem_acl_targets_state",
+      "calls": "10408",
+      "total_time": 35298.38,
+      "self_time": 35298.38
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_accepted_delegation",
+      "calls": "15672",
+      "total_time": 14236.326,
+      "self_time": 11031.715
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_session_origin",
+      "calls": "15674",
+      "total_time": 3207.868,
+      "self_time": 2767.996
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_filesystem_resource_access_state",
+      "calls": "10408",
+      "total_time": 37851.041,
+      "self_time": 2534.06
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_binding_authority",
+      "calls": "10442",
+      "total_time": 13566.188,
+      "self_time": 2461.603
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_delegation_guard",
+      "calls": "10459",
+      "total_time": 1718.46,
+      "self_time": 1718.46
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_operational",
+      "calls": "10408",
+      "total_time": 995.16,
+      "self_time": 995.16
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_session_origin",
+      "calls": "5215",
+      "total_time": 8357.922,
+      "self_time": 912.464
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_io_check",
+      "calls": "5196",
+      "total_time": 62217.886,
+      "self_time": 821.124
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_kind",
+      "calls": "5212",
+      "total_time": 806.507,
+      "self_time": 806.507
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_resource_access_batch_state",
+      "calls": "5196",
+      "total_time": 39790.149,
+      "self_time": 690.42
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_check",
+      "calls": "10441",
+      "total_time": 14472.72,
+      "self_time": 639.256
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_recovery_check",
+      "calls": "26115",
+      "total_time": 355.546,
+      "self_time": 355.546
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_connection_admit",
+      "calls": "9192",
+      "total_time": 424.131,
+      "self_time": 333.815
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_session",
+      "calls": "5217",
+      "total_time": 13520.394,
+      "self_time": 264.67
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_environment_cell_check",
+      "calls": "26115",
+      "total_time": 614.552,
+      "self_time": 258.884
+    }
+  ]
+}

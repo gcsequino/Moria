@@ -1,0 +1,4 @@
+{
+  "image": "sha256:a7d89bc0918adfc4d9bd5429121c26269e425bc2b0e95dc7e76320897ed59114",
+  "scope": "SQL regression only; native binaries unchanged and not invoked"
+}

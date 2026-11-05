@@ -233,11 +233,16 @@ CREATE FUNCTION moria.native_source_file_proof_immutable() RETURNS trigger LANGU
 BEGIN RAISE EXCEPTION 'IMMUTABLE_SOURCE_FILE_PROOF'; END $$;
 CREATE TRIGGER fs_source_resource_files_immutable BEFORE UPDATE OR DELETE ON moria.fs_source_resource_files
   FOR EACH ROW EXECUTE FUNCTION moria.native_source_file_proof_immutable();
-CREATE FUNCTION moria.native_filesystem_acl_targets_state(state jsonb, target_ids uuid[], operation text, include_inactive boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE node record; label jsonb;
+CREATE FUNCTION moria.native_filesystem_acl_targets_operations_state(state jsonb, target_ids uuid[], operations text[], include_inactive boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
+DECLARE node record;
   labels jsonb; label_names text[]; required_ids uuid[]; missing_proof boolean;
+  operation text; failure text; errors jsonb:='{}';
 BEGIN
-  IF operation NOT IN ('read','list','create','write','move','delete','export','publish','register','administer') THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  IF operations IS NULL OR cardinality(operations) NOT BETWEEN 1 AND 10
+    OR array_position(operations,NULL) IS NOT NULL
+    OR NOT operations<@ARRAY['read','list','create','write','move','delete','export','publish','register','administer']::text[]
+    THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  operations:=ARRAY(SELECT DISTINCT value FROM unnest(operations) value);
   IF state->>'instanceId' IS NULL THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   IF target_ids IS NULL OR cardinality(target_ids)=0 OR cardinality(target_ids)>4096
     OR array_position(target_ids,NULL) IS NOT NULL THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
@@ -306,22 +311,25 @@ WITH RECURSIVE origins AS (
   IF cardinality(required_ids)>4096 THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
   IF EXISTS(SELECT 1 FROM unnest(required_ids) AS required(entry_id) LEFT JOIN moria.fs_entries e ON e.id=required.entry_id WHERE e.id IS NULL OR e.deleted)
     THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
-  IF missing_proof AND operation<>'publish' THEN RAISE EXCEPTION 'SOURCE_FILE_PROOF_REQUIRED'; END IF;
   IF EXISTS(SELECT 1 FROM unnest(required_ids) origin JOIN moria.fs_resource_bindings b ON b.entry_id=origin
     JOIN moria.fs_roles role ON role.entry_id=b.root_id
-    WHERE (NOT(origin=ANY(target_ids)) OR NOT include_inactive) AND (NOT b.active OR role.retired)) THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
+    WHERE (NOT(origin=ANY(target_ids)) OR NOT include_inactive) AND (NOT b.active OR role.retired)) THEN failure:='NOT_FOUND'; END IF;
   label_names:=ARRAY(SELECT value->>'marking' FROM jsonb_array_elements(labels));
-  FOR label IN SELECT value FROM jsonb_array_elements(labels) LOOP
-    IF label->>'environment' IS DISTINCT FROM state->>'environment' THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
-  END LOOP;
-  IF EXISTS(SELECT 1 FROM unnest(label_names) name WHERE NOT (state->'identity'->'markings' ? name)) THEN
-    RAISE EXCEPTION 'FORBIDDEN';
+  IF failure IS NULL AND (EXISTS(SELECT 1 FROM jsonb_array_elements(labels) label
+      WHERE label->>'environment' IS DISTINCT FROM state->>'environment')
+    OR EXISTS(SELECT 1 FROM unnest(label_names) name WHERE NOT (state->'identity'->'markings' ? name))) THEN
+    failure:='FORBIDDEN';
   END IF;
+  FOREACH operation IN ARRAY operations LOOP
+    IF missing_proof AND operation<>'publish' THEN
+      errors:=jsonb_set(errors,ARRAY[operation],to_jsonb('SOURCE_FILE_PROOF_REQUIRED'::text));
+    ELSIF failure IS NOT NULL THEN errors:=jsonb_set(errors,ARRAY[operation],to_jsonb(failure)); END IF;
+  END LOOP;
   FOR node IN WITH RECURSIVE ancestry AS (
     SELECT e.id AS root,e.id,e.parent_id,e.environment_id FROM moria.fs_entries e WHERE e.id=ANY(required_ids)
     UNION ALL SELECT a.root,e.id,e.parent_id,e.environment_id FROM ancestry a JOIN moria.fs_entries e ON e.id=a.parent_id
   ), applicable AS (
-    SELECT a.root,a.environment_id,
+    SELECT a.root,a.environment_id,op.operation,
       grant_value->>'effect' AS effect,
       CASE grant_value->'subject'->>'kind'
         WHEN 'administrators' THEN (state->'identity'->'grantedOperations' ? 'instance:manage') AND (state->'identity'->'applicationScopes' ? 'instance:manage')
@@ -330,16 +338,29 @@ WITH RECURSIVE origins AS (
           AND jsonb_typeof(state->'attributes'->'groups')='array' AND (state->'attributes'->'groups' ? (grant_value->'subject'->>'id'))
         ELSE false END
       AND (a.id=a.root OR (grant_value->>'inherit')::boolean)
-      AND (grant_value->'operations' ? CASE WHEN a.root=ANY(target_ids) THEN operation ELSE 'read' END) AS matches
-    FROM ancestry a LEFT JOIN moria.fs_policies p ON p.entry_id=a.id
+      AND (grant_value->'operations' ? CASE WHEN a.root=ANY(target_ids) THEN op.operation ELSE 'read' END) AS matches
+    FROM ancestry a CROSS JOIN unnest(operations) op(operation)
+      LEFT JOIN moria.fs_policies p ON p.entry_id=a.id
       LEFT JOIN LATERAL jsonb_array_elements(COALESCE(p.grants,'[]')) grant_value ON true
-  ) SELECT root,COALESCE(bool_or(matches AND effect='allow'),false) AS allowed,
+    WHERE NOT (errors ? op.operation)
+  ) SELECT root,applicable.operation,COALESCE(bool_or(matches AND effect='allow'),false) AS allowed,
       COALESCE(bool_or(matches AND effect='deny'),false) AS denied,
       COALESCE(bool_or(environment_id IS NOT NULL AND environment_id<>state->>'environment'),false) AS wrong_environment
-    FROM applicable GROUP BY root LOOP
-    IF NOT node.allowed OR node.denied OR node.wrong_environment THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+    FROM applicable GROUP BY root,applicable.operation LOOP
+    IF NOT node.allowed OR node.denied OR node.wrong_environment THEN
+      errors:=jsonb_set(errors,ARRAY[node.operation],to_jsonb('FORBIDDEN'::text));
+    END IF;
   END LOOP;
-  RETURN to_jsonb(ARRAY(SELECT DISTINCT unnest(label_names) ORDER BY 1));
+  RETURN jsonb_build_object('labels',to_jsonb(ARRAY(SELECT DISTINCT unnest(label_names) ORDER BY 1)),'errors',errors);
+END $$;
+REVOKE ALL ON FUNCTION moria.native_filesystem_acl_targets_operations_state(jsonb,uuid[],text[],boolean) FROM PUBLIC;
+CREATE FUNCTION moria.native_filesystem_acl_targets_state(state jsonb, target_ids uuid[], operation text, include_inactive boolean DEFAULT false)
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE result jsonb;
+BEGIN
+  result:=moria.native_filesystem_acl_targets_operations_state(state,target_ids,ARRAY[operation],include_inactive);
+  IF result->'errors' ? operation THEN RAISE EXCEPTION '%',result->'errors'->>operation; END IF;
+  RETURN result->'labels';
 END $$;
 REVOKE ALL ON FUNCTION moria.native_filesystem_acl_targets_state(jsonb,uuid[],text,boolean) FROM PUBLIC;
 CREATE FUNCTION moria.native_filesystem_acl_state(state jsonb,target_id uuid,operation text,include_inactive boolean DEFAULT false)
@@ -348,10 +369,12 @@ BEGIN
  RETURN moria.native_filesystem_acl_targets_state(state,ARRAY[target_id],operation,include_inactive);
 END $$;
 REVOKE ALL ON FUNCTION moria.native_filesystem_acl_state(jsonb,uuid,text,boolean) FROM PUBLIC;
-CREATE FUNCTION moria.native_serving_filesystem_resource_access_state(state jsonb, resource text, operation text) RETURNS jsonb LANGUAGE plpgsql AS $$
+CREATE FUNCTION moria.native_serving_filesystem_resource_access_operations_state(state jsonb, resource text, operations text[]) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
 DECLARE target record; targets integer;
 BEGIN
-  IF operation NOT IN ('read','write','publish') THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  IF operations IS NULL OR cardinality(operations) NOT BETWEEN 1 AND 3
+    OR array_position(operations,NULL) IS NOT NULL OR NOT operations<@ARRAY['read','write','publish']::text[]
+    THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   SELECT count(*) INTO targets FROM moria.fs_entries e LEFT JOIN moria.fs_resource_bindings b ON b.entry_id=e.id
     WHERE e.environment_id=state->>'environment' AND e.kind='resource' AND NOT e.deleted
       AND (e.resource_id::text=resource OR b.reference=resource);
@@ -363,7 +386,7 @@ BEGIN
         AND (e.resource_id::text=resource OR b.reference=resource OR i.reference=resource)) THEN
       RAISE EXCEPTION 'NOT_FOUND';
     END IF;
-    RETURN '[]'::jsonb;
+    RETURN jsonb_build_object('labels','[]'::jsonb,'errors','{}'::jsonb);
   END IF;
   IF targets<>1 OR state->>'instanceId' IS NULL THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   SELECT e.id,b.active,r.retired INTO target FROM moria.fs_entries e
@@ -371,7 +394,15 @@ BEGIN
     WHERE e.environment_id=state->>'environment' AND e.kind='resource' AND NOT e.deleted
       AND (e.resource_id::text=resource OR b.reference=resource);
   IF target.active IS DISTINCT FROM true OR target.retired THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
-  RETURN moria.native_filesystem_acl_state(state,target.id,operation,false);
+  RETURN moria.native_filesystem_acl_targets_operations_state(state,ARRAY[target.id],operations,false);
+END $$;
+REVOKE ALL ON FUNCTION moria.native_serving_filesystem_resource_access_operations_state(jsonb,text,text[]) FROM PUBLIC;
+CREATE FUNCTION moria.native_serving_filesystem_resource_access_state(state jsonb, resource text, operation text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE result jsonb;
+BEGIN
+  result:=moria.native_serving_filesystem_resource_access_operations_state(state,resource,ARRAY[operation]);
+  IF result->'errors' ? operation THEN RAISE EXCEPTION '%',result->'errors'->>operation; END IF;
+  RETURN result->'labels';
 END $$;
 REVOKE ALL ON FUNCTION moria.native_serving_filesystem_resource_access_state(jsonb,text,text) FROM PUBLIC;
 CREATE FUNCTION moria.native_serving_resource_access(token_hash text,resource text,operation text) RETURNS jsonb
