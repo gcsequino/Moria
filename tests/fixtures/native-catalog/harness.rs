@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, ensure};
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use moria_runtime::{
     authority::Authority,
     canonical::canonical_json,
@@ -1070,14 +1070,23 @@ async fn run() -> Result<()> {
         None => session,
     };
     let _renewal = capacity::Renewal::start(db.clone(), claim.lease.clone());
-    let mut candidates = Vec::new();
-    for fixture_snapshot in &fixture.snapshots {
+    // Keep special fault modes serial; valid grouped producers use bounded preparation.
+    let parallel = if fixture.mode == "valid" && fixture.closure_limits.is_none() {
+        2
+    } else {
+        1
+    };
+    let prepared = futures::stream::iter(&fixture.snapshots)
+        .map(|fixture_snapshot| {
+            let (db, fixture, session, lease, native_parts, native_schemas) =
+                (&db, &fixture, &session, &claim.lease, &native_parts, &native_schemas);
+            async move {
         let started = std::time::Instant::now();
         let grant = Arc::new(
             DatasetIoGrant::acquire(
                 db.clone(),
                 session.clone(),
-                claim.lease.clone(),
+                lease.clone(),
                 IndexNamespace {
                     warehouse_id: fixture_snapshot.warehouse_id.clone(),
                     table_id: fixture_snapshot.table_id.clone(),
@@ -1130,7 +1139,7 @@ async fn run() -> Result<()> {
                     .is_err()
                 );
                 event(json!({"event":"denied","error":"OUTPUT_INVALID","execution":id}));
-                return Ok(());
+                return Ok(None);
             }
             let candidate = if fixture.graph_output {
                 moria_runtime::dataset_writer::prepare_graph_replacement(
@@ -1170,8 +1179,7 @@ async fn run() -> Result<()> {
                 .await
             }
             .context("WRITER_PREPARE")?;
-            candidates.push(candidate);
-            continue;
+            return Ok(Some(candidate));
         }
         let spool_object = LogicalObject::new(
             &fixture_snapshot.warehouse_id,
@@ -1212,7 +1220,7 @@ async fn run() -> Result<()> {
             json!({"event":"closure_hashed","elapsedMillis":started.elapsed().as_millis().to_string()}),
         );
         if fixture.mode == "reader-window" {
-            return reader_window::probe(
+            reader_window::probe(
                 &db,
                 store.clone(),
                 grant.clone(),
@@ -1222,7 +1230,8 @@ async fn run() -> Result<()> {
                 cancel.clone(),
                 id,
             )
-            .await;
+            .await?;
+            return Ok(None);
         }
         let candidate = prepare_snapshot(
             store.clone(),
@@ -1276,6 +1285,15 @@ async fn run() -> Result<()> {
         ensure!(
             NativeSnapshotRef::decode(&format!("moria-snapshot-v2:{}", "x".repeat(4096))).is_err()
         );
+                Ok::<_, anyhow::Error>(Some(candidate))
+            }
+        }).buffered(parallel);
+    futures::pin_mut!(prepared);
+    let mut candidates = Vec::new();
+    while let Some(candidate) = prepared.try_next().await? {
+        let Some(candidate) = candidate else {
+            return Ok(());
+        };
         candidates.push(candidate);
     }
     event(json!({"event":"prepared","candidates":candidates,"lease":claim.lease}));

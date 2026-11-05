@@ -1,0 +1,142 @@
+{"controller": "moria-quality-0ad66fa0-3d51-426e-b240-554b92c5108a", "image": "sha256:68aa705c9e7b6e687879939ec2aa7453c4c8a3c8415cabb8a2865179baf33da8", "scratchPools": ["/tmp/moria-engine-scratch-6c6ea15a-85ef-4569-92e7-f8e65fa239fb", "/tmp/moria-engine-scratch-50287e78-9092-4110-88a4-0901f4f213c4", "/tmp/moria-engine-scratch-4ae73c3e-070f-4fff-b33a-c2d31d42db0e"], "temporary": "/tmp/moria-quality-vswkxao5"}
+TAP version 13
+# Subtest: native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+    # Subtest: reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+    ok 1 - reader-local byte windows bound actual SQL guard and provider reads and cannot seal after revocation
+      ---
+      duration_ms: 9757.814455
+      type: 'test'
+      ...
+    # Subtest: real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+    ok 2 - real protected writes and semantic preparation publish grouped heads, lineage, checkpoint, receipt and completion once
+      ---
+      duration_ms: 4027.455773
+      type: 'test'
+      ...
+    # Subtest: a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+    ok 3 - a read-only producer consumes the persisted native page chain through private scratch and actual Arrow scan
+      ---
+      duration_ms: 2724.177141
+      type: 'test'
+      ...
+    # Subtest: pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+    ok 4 - pre-admission resolves the current pin while a real leased reader retains an older declared immutable snapshot
+      ---
+      duration_ms: 5807.112836
+      type: 'test'
+      ...
+    # Subtest: a live producer lease cannot read an undeclared Dataset
+    ok 5 - a live producer lease cannot read an undeclared Dataset
+      ---
+      duration_ms: 138.542798
+      type: 'test'
+      ...
+    # Subtest: Dataset IO validates a matching private execution once and keeps ordinary and mismatched checks
+    ok 6 - Dataset IO validates a matching private execution once and keeps ordinary and mismatched checks
+      ---
+      duration_ms: 6981.5954
+      type: 'test'
+      ...
+    # Subtest: a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+    ok 7 - a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied
+      ---
+      duration_ms: 6666.404104
+      type: 'test'
+      ...
+    # {"event":"registered_publication_phases","phases":[{"elapsedMillis":"1698","event":"closure_hashed"},{"elapsedMillis":"1836","event":"closure_hashed"},{"elapsedMillis":"6273","event":"candidate_registered"},{"elapsedMillis":"6290","event":"candidate_registered"}]}
+    # {"event":"native_guard_function_counts","rows":[{"funcname":"runtime_dataset_io_check","calls":"4576","total_time":5047.296,"self_time":693.48},{"funcname":"runtime_execution_check","calls":"6357","total_time":2273.674,"self_time":273.259},{"funcname":"runtime_binding_authority","calls":"6365","total_time":1886.54,"self_time":472.793},{"funcname":"native_serving_session","calls":"5548","total_time":1712.827,"self_time":122.757},{"funcname":"native_serving_resource_access_batch_state","calls":"5490","total_time":1671.605,"self_time":595.791},{"funcname":"native_serving_job_delegation","calls":"6357","total_time":1413.713,"self_time":9.962},{"funcname":"native_serving_accepted_delegation","calls":"8247","total_time":1121.993,"self_time":533.607},{"funcname":"native_serving_session_origin","calls":"11907","total_time":1020.465,"self_time":703.503},{"funcname":"runtime_job_session_origin","calls":"1888","total_time":929.14,"self_time":107.619},{"funcname":"runtime_data_operational","calls":"26654","total_time":550.58,"self_time":550.58},{"funcname":"runtime_job_delegation_guard","calls":"6363","total_time":497.284,"self_time":497.284},{"funcname":"runtime_connection_admit","calls":"10149","total_time":467.782,"self_time":114.354},{"funcname":"runtime_environment_cell_check","calls":"18264","total_time":388.018,"self_time":174.153},{"funcname":"runtime_dispatch_bootstrap_approved","calls":"28413","total_time":363.727,"self_time":363.727},{"funcname":"runtime_data_origins","calls":"15667","total_time":287.839,"self_time":240.79},{"funcname":"runtime_task_check","calls":"819","total_time":230.815,"self_time":14.969},{"funcname":"runtime_recovery_check","calls":"18264","total_time":213.824,"self_time":100.48},{"funcname":"runtime_dataset_kind","calls":"10987","total_time":182.219,"self_time":182.219},{"funcname":"native_serving_filesystem_resource_access_operations_state","calls":"10994","total_time":178.708,"self_time":178.708},{"funcname":"runtime_data_resource","calls":"31370","total_time":114.958,"self_time":114.958},{"funcname":"runtime_dataset_admit_write","calls":"97","total_time":108.273,"self_time":1.592},{"funcname":"runtime_dataset_issue","calls":"97","total_time":106.674,"self_time":2.57},{"funcname":"runtime_schema_admit","calls":"10149","total_time":102.941,"self_time":102.941},{"funcname":"runtime_dataset_object_read","calls":"3636","total_time":91.787,"self_time":91.787}]}
+    # Subtest: SIGKILL before authority commit leaves immutable candidates invisible
+    ok 8 - SIGKILL before authority commit leaves immutable candidates invisible
+      ---
+      duration_ms: 9746.035355
+      type: 'test'
+      ...
+    # Subtest: one output conflict rolls back the whole group and execution completion
+    ok 9 - one output conflict rolls back the whole group and execution completion
+      ---
+      duration_ms: 15349.028619
+      type: 'test'
+      ...
+    # Subtest: checkpoint CAS failure rolls back both output heads and completion
+    ok 10 - checkpoint CAS failure rolls back both output heads and completion
+      ---
+      duration_ms: 9680.330022
+      type: 'test'
+      ...
+    # Subtest: namespace revision changes revoke already prepared candidates
+    ok 11 - namespace revision changes revoke already prepared candidates
+      ---
+      duration_ms: 10747.466295
+      type: 'test'
+      ...
+    # Subtest: stale coordinator fences cannot publish prepared candidates
+    ok 12 - stale coordinator fences cannot publish prepared candidates
+      ---
+      duration_ms: 9292.69326
+      type: 'test'
+      ...
+    # Subtest: loss of a commit acknowledgement replays the durable receipt without duplicate publication
+    ok 13 - loss of a commit acknowledgement replays the durable receipt without duplicate publication
+      ---
+      duration_ms: 12373.333873
+      type: 'test'
+      ...
+    # Subtest: output writes require explicit read and write and complete inherited marking coverage
+    ok 14 - output writes require explicit read and write and complete inherited marking coverage
+      ---
+      duration_ms: 534.948707
+      type: 'test'
+      ...
+    # Subtest: native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+    ok 15 - native S3 multipart source writes, immutable closure publication and read-only native scans use real MinIO
+      ---
+      duration_ms: 18474.023796
+      type: 'test'
+      ...
+    # Subtest: native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+        # Subtest: posix
+        ok 1 - posix
+          ---
+          duration_ms: 21816.138033
+          type: 'test'
+          ...
+        # Subtest: s3
+        ok 2 - s3
+          ---
+          duration_ms: 26805.612089
+          type: 'test'
+          ...
+        1..2
+    ok 16 - native Arrow replace outputs stream into protected Parquet and Iceberg on POSIX and MinIO
+      ---
+      duration_ms: 49608.944297
+      type: 'test'
+      ...
+    # Subtest: current session and security revocation deny commit after preparation
+    ok 17 - current session and security revocation deny commit after preparation
+      ---
+      duration_ms: 9733.076364
+      type: 'test'
+      ...
+    # Subtest: namespace policy revisions cannot be reused after disable, replacement or deletion
+    ok 18 - namespace policy revisions cannot be reused after disable, replacement or deletion
+      ---
+      duration_ms: 53.249025
+      type: 'test'
+      ...
+    1..18
+ok 1 - native Dataset publication prepares protected Iceberg closure pages and atomically commits domain execution
+  ---
+  duration_ms: 184229.247188
+  type: 'test'
+  ...
+# {"event":"reader_window_actual_counts","decoderReads":128,"baseline":{"counts":{"providerBytes":128,"providerRanges":128,"providerVersions":128},"elapsedMillis":"7797","event":"reader_window_baseline"},"buffered":{"counts":{"providerBytes":4938,"providerRanges":1,"providerVersions":1},"elapsedMillis":"66","event":"reader_window_buffered","privateWindowBytesMaximum":1048576},"baselineGuards":[{"funcname":"runtime_dataset_io_check","calls":"768"},{"funcname":"runtime_dataset_object_read","calls":"768"}],"windowGuards":[{"funcname":"runtime_dataset_io_check","calls":"6"},{"funcname":"runtime_dataset_object_read","calls":"6"}]}
+1..1
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 184678.503442

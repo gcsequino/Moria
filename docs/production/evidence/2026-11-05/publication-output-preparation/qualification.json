@@ -1,0 +1,8 @@
+{
+  "image": "sha256:68aa705c9e7b6e687879939ec2aa7453c4c8a3c8415cabb8a2865179baf33da8",
+  "nativeDigest": "14168fb72b8ecc7845bd2a7ec54d96be2a8bf1451a307eca215815e2a1354254",
+  "nativeUnits": 117,
+  "artifacts": 9,
+  "catalogCases": 21,
+  "scope": "Current publication fence and Catalog regression. Full Pipeline and composed backend remain separate gates."
+}

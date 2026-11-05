@@ -20,7 +20,7 @@ use crate::{
 use anyhow::{Context, Result, ensure};
 use async_trait::async_trait;
 use base64::{Engine, engine::general_purpose::STANDARD};
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
@@ -1236,10 +1236,13 @@ impl NativePipelines {
             let value:Value=client.query_opt("SELECT value FROM moria.runtime_pipeline_checkpoints WHERE execution=$1 AND task=$2 AND owner=$3 AND fence=$4",&[&context.lease().execution,&task.get::<_,Uuid>("id"),&task.get::<_,Option<Uuid>>("owner"),&task.get::<_,i64>("fence")]).await?.ok_or_else(||anyhow::anyhow!("PIPELINE_CHECKPOINT_REQUIRED"))?.get(0);
             checkpoint["value"] = value;
         }
-        let outputs: Value = row.get("outputs");
+        let Value::Object(outputs) = row.get("outputs") else {
+            anyhow::bail!("PIPELINE_BINDING_INVALID")
+        };
         drop(client);
         let root = std::env::var("MORIA_NATIVE_SNAPSHOT_SCRATCH_ROOT")
             .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
+        let spool_budget = 1024 * 1024 * 1024;
         let limits: crate::storage::ClosureLimits = std::env::var("MORIA_NATIVE_CLOSURE_LIMITS")
             .ok()
             .map(|value| serde_json::from_str(&value))
@@ -1247,53 +1250,59 @@ impl NativePipelines {
             .unwrap_or(crate::storage::ClosureLimits {
                 max_entries: 1_000_000,
                 max_referenced_bytes: profile.limits.output_bytes.saturating_mul(4),
-                max_spool_bytes: 1024 * 1024 * 1024,
+                max_spool_bytes: spool_budget,
             });
-        let mut candidates = Vec::new();
-        for output in outputs
-            .as_object()
-            .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
-            .values()
-        {
-            context.check().await?;
-            let namespace: IndexNamespace = serde_json::from_value(output["namespace"].clone())?;
-            let resource = output["resource"]
-                .as_str()
-                .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
-            let partset: SealedObject =
-                serde_json::from_value(result["datasetOutputs"][resource].clone())?;
-            let grant = Arc::new(
-                crate::catalog::DatasetIoGrant::acquire(
-                    self.db.clone(),
-                    session.clone(),
-                    context.lease().clone(),
-                    namespace.clone(),
-                )
-                .await?,
-            );
-            let (store, _) = crate::storage::configured_store_with_fingerprint(&namespace)?;
-            let scratch = crate::storage::PosixStore::provision(
-                std::path::Path::new(&root),
-                &namespace.warehouse_id,
-                &namespace.table_id,
-                crate::storage::StorageLimits {
-                    max_object_bytes: 128 * 1024 * 1024,
-                    chunk_bytes: 1024 * 1024,
-                },
-            )?;
-            candidates.push(
-                crate::dataset_writer::prepare_output(
-                    store,
-                    &scratch,
-                    grant,
-                    serde_json::from_value(output["schema"].clone())?,
-                    &[partset],
-                    limits,
-                    Cancellation::default(),
-                )
-                .await?,
-            );
-        }
+        let parallel = if limits.max_spool_bytes <= spool_budget / 2 {
+            2
+        } else {
+            1
+        };
+        let candidates: Vec<Uuid> = futures::stream::iter(outputs.into_iter())
+            .map(|(_, output)| {
+                let (root, result, session) = (&root, &result, &session);
+                async move {
+                    context.check().await?;
+                    let namespace: IndexNamespace =
+                        serde_json::from_value(output["namespace"].clone())?;
+                    let resource = output["resource"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+                    let partset: SealedObject =
+                        serde_json::from_value(result["datasetOutputs"][resource].clone())?;
+                    let grant = Arc::new(
+                        crate::catalog::DatasetIoGrant::acquire(
+                            self.db.clone(),
+                            session.clone(),
+                            context.lease().clone(),
+                            namespace.clone(),
+                        )
+                        .await?,
+                    );
+                    let (store, _) = crate::storage::configured_store_with_fingerprint(&namespace)?;
+                    let scratch = crate::storage::PosixStore::provision(
+                        std::path::Path::new(&root),
+                        &namespace.warehouse_id,
+                        &namespace.table_id,
+                        crate::storage::StorageLimits {
+                            max_object_bytes: 128 * 1024 * 1024,
+                            chunk_bytes: 1024 * 1024,
+                        },
+                    )?;
+                    crate::dataset_writer::prepare_output(
+                        store,
+                        &scratch,
+                        grant,
+                        serde_json::from_value(output["schema"].clone())?,
+                        &[partset],
+                        limits,
+                        Cancellation::default(),
+                    )
+                    .await
+                }
+            })
+            .buffered(parallel)
+            .try_collect()
+            .await?;
         let mut admission = Admission::begin(&self.db, context.environment(), true, None).await?;
         let tx = admission.client.as_mut().unwrap().transaction().await?;
         context.check_in(tx.client()).await?;

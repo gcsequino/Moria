@@ -107,8 +107,13 @@ DECLARE state jsonb; e moria.runtime_executions; b moria.runtime_execution_bindi
   inherited text[]:='{}'; labels text[]; input jsonb; input_bindings jsonb:='[]'; output_target boolean;
   access_requests jsonb;access_results jsonb;label_index integer:=0;
 BEGIN
-  -- The accepted-job guard reads this row FOR SHARE; take the later task fence lock first.
-  PERFORM 1 FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
+  -- Publication IO has no task fence to lock; retain a shared execution fence.
+  IF task_id IS NULL THEN
+    PERFORM 1 FROM moria.runtime_executions WHERE id=execution_id FOR SHARE;
+  ELSE
+    -- Take the later task fence lock before resolving the accepted job.
+    PERFORM 1 FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
+  END IF;
   state:=moria.native_serving_session(session_hash);
   IF state->>'privateValidatedExecution' IS DISTINCT FROM execution_id::text THEN
     PERFORM moria.runtime_execution_check(execution_id);

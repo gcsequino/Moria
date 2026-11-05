@@ -1,0 +1,11 @@
+{
+  "indexTree": "fc5b9a723ba5eef940e205b967a5b2236df61822",
+  "head": "0c36f771d0488e3a683831626b88cf1c4c88253d",
+  "paths": [
+    "services/database/src/snapshot-runtime-schema.ts",
+    "services/runtime/schema.json",
+    "services/runtime/src/pipelines.rs",
+    "tests/fixtures/native-catalog/harness.rs",
+    "tests/native-catalog.integration.test.ts"
+  ]
+}

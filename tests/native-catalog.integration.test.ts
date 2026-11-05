@@ -558,6 +558,25 @@ test(
                 1,
                 'one fresh execution validation per IO check',
               );
+              if (hash === privateHash) {
+                assert.equal(
+                  (
+                    await db.pool.query(
+                      'SELECT id FROM moria.runtime_executions WHERE id=$1 FOR SHARE NOWAIT',
+                      [args[0]],
+                    )
+                  ).rowCount,
+                  1,
+                  'the live publication IO check permits a concurrent shared reader',
+                );
+                await assert.rejects(
+                  db.pool.query(
+                    'SELECT id FROM moria.runtime_executions WHERE id=$1 FOR UPDATE NOWAIT',
+                    [args[0]],
+                  ),
+                  { code: '55P03' },
+                );
+              }
               return state;
             } finally {
               await client.query('ROLLBACK');
