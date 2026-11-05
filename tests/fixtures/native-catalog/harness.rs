@@ -20,6 +20,7 @@ use std::{
 use uuid::Uuid;
 mod capacity;
 mod reader_window;
+mod standard_export;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -69,6 +70,7 @@ struct Fixture {
     registered_host: Option<Uuid>,
     registered_owner: Option<Uuid>,
     header_probe: Option<reader_window::HeaderProbe>,
+    standard_export: Option<String>,
 }
 fn event(value: Value) {
     println!("{}", value);
@@ -521,6 +523,14 @@ async fn run() -> Result<()> {
             )
             .await
             .context("native graph rooted read")?;
+            let export = if let Some(directory) = fixture.standard_export.as_deref() {
+                let descriptor = context.descriptor(&root).await?;
+                let metadata = descriptor["metadata"]["name"].as_str()
+                    .ok_or_else(||anyhow::anyhow!("FIXTURE_METADATA_REQUIRED"))?;
+                Some((directory, metadata.to_owned()))
+            } else {
+                None
+            };
             let snapshot = Arc::new(
                 moria_runtime::native_snapshot_v3::NativeSnapshot::open(context, root)
                     .await
@@ -586,6 +596,10 @@ async fn run() -> Result<()> {
                         }
                     }
                 }
+            }
+            if let Some((directory, metadata)) = export {
+                let members = standard_export::write(snapshot.as_ref(), directory, &metadata).await?;
+                event(json!({"event":"standard_iceberg_export","members":members}));
             }
             event(json!({"event":"graph_bootstrap_read","execution":id,"rows":count,"headUnchanged":true}));
             Ok::<_, anyhow::Error>(())

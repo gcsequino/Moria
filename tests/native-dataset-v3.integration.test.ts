@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { promisify } from 'node:util';
 import test from 'node:test';
 import { managedRetentionDataset } from './fixtures/native-retention/dataset.js';
 
@@ -64,17 +69,47 @@ test(
       ],
       {},
     );
+    const standardExport = await mkdtemp(join(tmpdir(), 'moria-v3-iceberg-export-'));
+    t.after(() => rm(standardExport, { recursive: true, force: true }));
     const graph = await fixture.invoke({
       root: fixture.db.root,
       token: fixture.token,
       binding: reader,
       mode: 'graph-read',
+      standardExport,
       expectedRows: rows.length,
       writerRows: { [fixture.dataset]: rows },
       snapshots: [{ ...fixture.snapshot, snapshotId: first.head.snapshotId }],
       s3Bindings: [fixture.datasetStorage],
     });
     assert.match(graph, /"event":"graph_bootstrap_read"/);
+    assert.match(graph, /"event":"standard_iceberg_export"/);
+    const { stdout } = await promisify(execFile)(resolve('.venv/bin/python'), [
+      resolve('tests/fixtures/native-retention/iceberg_oracle.py'),
+      join(standardExport, 'export.json'),
+    ]);
+    const oracle = JSON.parse(stdout) as {
+      pyiceberg: string;
+      pyarrow: string;
+      snapshot: string;
+      sequence: string;
+      positionDeleteFiles: number;
+      matchedDeletePairs: number;
+      rows: typeof rows;
+    };
+    assert.equal(oracle.snapshot, first.head.snapshotId);
+    assert.equal(oracle.sequence, '1');
+    assert.equal(oracle.positionDeleteFiles, 0);
+    assert.equal(oracle.matchedDeletePairs, 0);
+    const byId = (a: (typeof rows)[number], b: (typeof rows)[number]) => a.id.localeCompare(b.id);
+    assert.deepEqual(oracle.rows.toSorted(byId), rows.toSorted(byId));
+    t.diagnostic(
+      JSON.stringify({
+        independentIceberg: oracle.pyiceberg,
+        pyarrow: oracle.pyarrow,
+        rows: rows.length,
+      }),
+    );
     t.diagnostic(JSON.stringify({ phase: 'arrayKeysAndPointDigestVerified', rows: rows.length }));
     const second = await fixture.publish([], { graph: true });
     t.diagnostic(JSON.stringify({ phase: 'emptyPublished', revision: second.head.revision }));

@@ -81,7 +81,7 @@ impl NativeSnapshot {
         );
         self.check_current().await
     }
-    async fn metadata_bytes(&self, name: &str) -> Result<Vec<u8>> {
+    pub(crate) async fn metadata_bytes(&self, name: &str) -> Result<Vec<u8>> {
         let file = self.file(name).await?;
         ensure!(file.content().size <= 8 * 1024 * 1024, "RESOURCE_LIMIT");
         let mut stream = file.stream().await?;

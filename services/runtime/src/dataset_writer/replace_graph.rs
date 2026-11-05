@@ -25,6 +25,7 @@ use parquet::arrow::async_reader::ParquetRecordBatchStreamBuilder;
 pub(super) struct Basis {
     pub raw: Option<Value>,
     pub files: Option<NodeReference>,
+    pub snapshot: Option<NativeSnapshot>,
 }
 pub(super) async fn basis(
     store: Arc<dyn ObjectStore>,
@@ -42,6 +43,7 @@ pub(super) async fn basis(
         return Ok(Basis {
             raw: None,
             files: None,
+            snapshot: None,
         });
     }
     // A legacy flat head needs its explicit, already qualified bootstrap; no hidden scan fallback.
@@ -75,6 +77,7 @@ pub(super) async fn basis(
     Ok(Basis {
         raw: Some(raw),
         files: Some(snapshot.files_reference().clone()),
+        snapshot: Some(snapshot),
     })
 }
 pub(super) struct ReplacementGraph {
@@ -151,20 +154,7 @@ impl ReplacementGraph {
     }
     pub(super) async fn task_root(&self, reference: &SealedObject) -> Result<PartRoot> {
         let task:Uuid=self.grant.database().get().await?.query_one("SELECT id FROM moria.runtime_execution_tasks WHERE execution=$1 AND status='sealed' AND result->'datasetOutputs'->$2=$3",&[&self.grant.lease().execution,&self.grant.resource(),&serde_json::to_value(reference)?]).await?.get(0);
-        let node = self.graph.admit_task(task, &[], reference).await?;
-        let root: PartRoot = serde_json::from_value(self.graph.read_descriptor(&node).await?)?;
-        ensure!(
-            root.version == 3
-                && root.task == task
-                && (root.parts == 0) == root.graph_files.is_none()
-                && (root.pages == 0) == root.graph_pages.is_none()
-                && root.graph_files.as_ref().map_or(0, |node| node.entries) == root.parts
-                && root.graph_pages.as_ref().map_or(0, |node| node.entries) == root.pages
-                && (root.parts == 0) == (root.pages == 0)
-                && (root.parts != 0 || root.rows == 0),
-            "OUTPUT_INVALID"
-        );
-        Ok(root)
+        super::task_graph::root(&self.graph, task, reference).await
     }
     pub(super) async fn task_page(
         &self,
@@ -172,44 +162,11 @@ impl ReplacementGraph {
         ordinal: u64,
         reference: &SealedObject,
     ) -> Result<PartPage> {
-        let directory =
-            GraphDirectory::sealed_task(self.graph.clone(), vec!["pages".into()], root.task)?;
-        let pages = root
-            .graph_pages
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
-        let (value, mut links) = directory
-            .lookup_with_links(pages, &format!("{ordinal:016x}"))
-            .await?
-            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
-        ensure!(
-            value == json!({"ordinal":ordinal}) && links.len() == 1,
-            "OUTPUT_INVALID"
-        );
-        let node = links.remove(0);
-        ensure!(
-            node.kind() == "partset" && node.content() == reference,
-            "OUTPUT_INVALID"
-        );
-        serde_json::from_value(self.graph.read_descriptor(&node).await?).map_err(Into::into)
+        super::task_graph::page(&self.graph, root, ordinal, reference).await
     }
     pub(super) async fn task_file(&mut self, root: &PartRoot, part: &Part) -> Result<()> {
-        let directory =
-            GraphDirectory::sealed_task(self.graph.clone(), vec!["files".into()], root.task)?;
-        let reference = root
-            .graph_files
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
-        let (value, mut links) = directory
-            .lookup_with_links(reference, &part.name)
-            .await?
-            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
-        let file: LogicalFile = serde_json::from_value(value)?;
-        ensure!(
-            file.name == part.name && file.content == part.content && links.len() == 1,
-            "OUTPUT_INVALID"
-        );
-        self.data(part, links.remove(0)).await
+        let certificate = super::task_graph::certificate(&self.graph, root, part).await?;
+        self.data(part, certificate).await
     }
     async fn data(&mut self, part: &Part, certificate: QualifiedNode) -> Result<()> {
         self.builder
