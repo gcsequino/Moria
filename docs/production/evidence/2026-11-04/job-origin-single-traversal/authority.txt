@@ -1,0 +1,24 @@
+{"controller": "moria-quality-afe30269-4c30-4aae-b772-2302113b60b4", "image": "sha256:8f0f0870a0480c0119192cbf219aa0034dca668e4c99204556489463cbe58a71", "scratchPools": ["/tmp/moria-engine-scratch-034ccbec-5967-4977-b14d-d29321b7ecf2", "/tmp/moria-engine-scratch-28f97249-b5d1-4064-a18c-70b69d697589"], "temporary": "/tmp/moria-quality-9plxi_3c"}
+$ node scripts/test-files.mjs integration tests/native-job-authority.integration.test.ts
+Running 1 integration test files.
+▶ registered service jobs require immutable purpose and a current registered lease
+  ✔ registered service admission has no ordinary session and cannot mint before an actual lease (139.729484ms)
+  ✔ current private credentials traverse accepted delegation once (20.90569ms)
+  ✔ unregistered legacy bindings and mismatched purposes cannot acquire a service capability (178.473868ms)
+  ✔ private service descendants remain inside the exact registered target and parent capability (1626.66506ms)
+  ✔ a generic operator claim cannot mint a registered private worker credential (276.60907ms)
+  ✔ missed registry disable pulses cannot be repaired by acknowledging current authorization epochs (420.409087ms)
+  ✔ current target, application, grants, clearance, worker scope and actor disable revoke private authority (1440.024142ms)
+  ✔ missed principal, application and instance disable pulses require explicit fresh service reapproval (1669.770155ms)
+  ✔ an unobserved worker disable and restore cannot revive a live lease or private credential (348.405715ms)
+  ✔ a genuinely expired worker registration remains fenced after its expiry is extended (2503.045591ms)
+  ✔ lease takeover invalidates the old private credential and replacement capabilities remain bounded (412.883499ms)
+✔ registered service jobs require immutable purpose and a current registered lease (10827.372269ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11165.852187

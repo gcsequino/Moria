@@ -344,8 +344,20 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
   ELSIF e.status<>'preparing' OR e.owner IS DISTINCT FROM s.owner OR e.fence<>s.fence OR e.lease_until IS NULL OR e.lease_until<=clock_timestamp()
     THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
-  proof:=moria.runtime_job_delegation_guard(e.id);
-  PERFORM moria.runtime_execution_check(e.id);
+  -- Execution validation traverses the same immutable delegation before this payload is returned.
+  SELECT jsonb_build_object('execution',d.execution,'originKind',d.origin_kind,'originSessionHash',d.origin_session_hash,
+    'serviceAuthority',d.service_authority,'originBinding',d.origin_binding,
+    'environment',d.environment,'principal',d.principal,'application',d.application,
+    'acceptedGrants',to_jsonb(d.accepted_grants),'acceptedScopes',to_jsonb(d.accepted_scopes),
+    'acceptedMarkings',to_jsonb(d.accepted_markings)) INTO proof FROM moria.runtime_job_delegations d WHERE d.execution=e.id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
+  BEGIN
+    PERFORM moria.runtime_execution_check(e.id);
+  EXCEPTION WHEN raise_exception THEN
+    -- Keep purpose revocation ahead of execution epoch errors on denied credentials.
+    PERFORM moria.runtime_job_delegation_guard(e.id);
+    RAISE;
+  END;
   RETURN proof;
 END $$;
 

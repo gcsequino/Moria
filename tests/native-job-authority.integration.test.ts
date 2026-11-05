@@ -200,6 +200,48 @@ test(
         );
       },
     );
+    await t.test('current private credentials traverse accepted delegation once', async () => {
+      const measured = await db.pool.connect();
+      try {
+        const proof = (
+          await measured.query(
+            'SELECT moria.runtime_job_session_origin($1) AS origin,moria.runtime_job_delegation_guard($2) AS delegated',
+            [hash, job.id],
+          )
+        ).rows[0];
+        assert.deepEqual(proof.origin, proof.delegated);
+        await measured.query("SET track_functions='pl'");
+        await measured.query(
+          "SELECT pg_stat_reset_single_function_counters('moria.runtime_job_delegation_guard(uuid,boolean)'::regprocedure::oid)",
+        );
+        const current = (
+          await measured.query('SELECT moria.native_serving_session($1) AS state', [hash])
+        ).rows[0].state;
+        assert.equal(current.principal, principal);
+        assert.deepEqual([...current.identity.grantedOperations].sort(), [...operations].sort());
+        await measured.query('SELECT pg_stat_force_next_flush()');
+        let calls = 0;
+        for (let attempt = 0; attempt < 30; attempt++) {
+          await measured.query('SELECT pg_stat_clear_snapshot()');
+          calls =
+            (
+              await measured.query(
+                "SELECT calls::int FROM pg_stat_user_functions WHERE funcid='moria.runtime_job_delegation_guard(uuid,boolean)'::regprocedure::oid",
+              )
+            ).rows[0]?.calls ?? 0;
+          if (calls) break;
+          await delay(10);
+        }
+        assert.equal(
+          calls,
+          1,
+          'The current credential check must not repeat its guarded traversal',
+        );
+      } finally {
+        await measured.query("SET track_functions='none'");
+        measured.release();
+      }
+    });
     await t.test(
       'unregistered legacy bindings and mismatched purposes cannot acquire a service capability',
       async () => {

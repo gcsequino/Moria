@@ -1,5 +1,19 @@
 # Implementation checkpoint
 
+## November 4 private-origin repeated validation
+
+Current private credentials now traverse accepted delegation once on successful
+resolution, returning the identical immutable proof only after complete execution
+validation. Domain failures preserve the previous service/parent revocation error
+precedence. Worker, lease, fence, incarnation, purpose and current capability
+intersection remain checked; no authorization cache or deadline change is added.
+A real PostgreSQL counter regression fails against the old two-traversal resolver
+and passes against one traversal with exact proof equality. All 12 authority cases,
+complete static checks, nine artifact fingerprints and 77 native units pass on the
+frozen component source. Automation still fails child dispatch and remains under
+investigation. See `production/evidence/2026-11-04/job-origin-single-traversal`.
+
+
 ## November 4 filesystem authority and current integration results
 
 The filesystem authority resolver now removes eight redundant inner edge
