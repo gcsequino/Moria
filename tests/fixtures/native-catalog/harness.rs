@@ -597,7 +597,7 @@ async fn run() -> Result<()> {
                     // serial network latency out of the fixture's parity comparison.
                     futures::stream::iter(rows.iter().zip(values).zip(batched))
                         .map(|((row, values), batched)| {
-                            let snapshot = snapshot.as_ref();
+                            let snapshot = &snapshot;
                             let verify_row = row == &expected[0];
                             async move {
                                 let locator = snapshot.lookup_key(&values).await?
