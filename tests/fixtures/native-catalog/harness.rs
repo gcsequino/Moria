@@ -71,6 +71,8 @@ struct Fixture {
     registered_owner: Option<Uuid>,
     header_probe: Option<reader_window::HeaderProbe>,
     standard_export: Option<String>,
+    #[serde(default)]
+    graph_serial_parity: bool,
 }
 fn event(value: Value) {
     println!("{}", value);
@@ -568,7 +570,7 @@ async fn run() -> Result<()> {
             event(json!({"event":"graph_scan_complete","rows":count,
                 "elapsedMillis":scan_started.elapsed().as_millis()}));
             if let Some(expected) = fixture.writer_rows.get(&source.resource) {
-                let parity_started = std::time::Instant::now();
+                let parity_limit = if fixture.graph_serial_parity { 1 } else { 4 };
                 let schema = snapshot.metadata().current_schema();
                 let expected_rows=if expected.is_empty(){Vec::new()}else{typed_rows(&supplied_batch(schema.as_ref(),expected,&columns)?,&columns)?};
                 for row in expected_rows {
@@ -584,8 +586,12 @@ async fn run() -> Result<()> {
                 ensure!(snapshot.lookup_keys(&[]).await?.is_empty(), "FIXTURE_BATCH_KEY_MISMATCH");
                 for rows in expected.chunks(1000) {
                     let values: Vec<_> = rows.iter().map(|row|keys.iter().map(|key| row[key].clone()).collect::<Vec<_>>()).collect();
+                    let batch_started = std::time::Instant::now();
                     let batched = snapshot.lookup_keys(&values).await?;
                     ensure!(batched.len() == rows.len(), "FIXTURE_BATCH_KEY_MISMATCH");
+                    event(json!({"event":"graph_batch_keys_complete","rows":rows.len(),
+                        "elapsedMillis":batch_started.elapsed().as_millis()}));
+                    let parity_started = std::time::Instant::now();
                     let bootstrap = fixture.mode.starts_with("graph-bootstrap");
                     // Every scalar lookup checks live authority. Four in flight keep
                     // serial network latency out of the fixture's parity comparison.
@@ -610,12 +616,12 @@ async fn run() -> Result<()> {
                                 Ok::<_, anyhow::Error>(())
                             }
                         })
-                        .buffer_unordered(4)
+                        .buffer_unordered(parity_limit)
                         .try_for_each(|()| async { Ok(()) })
                         .await?;
+                    event(json!({"event":"graph_key_parity_checked","rows":rows.len(),
+                        "concurrency":parity_limit,"elapsedMillis":parity_started.elapsed().as_millis()}));
                 }
-                event(json!({"event":"graph_key_parity_checked","rows":expected.len(),
-                    "elapsedMillis":parity_started.elapsed().as_millis()}));
             }
             if let Some((directory, metadata)) = export {
                 let members = standard_export::write(snapshot.as_ref(), directory, &metadata).await?;
