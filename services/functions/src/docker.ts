@@ -152,8 +152,10 @@ export class DockerFunctionWorker implements FunctionWorker {
       });
     });
     let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
+    let cleanup: Promise<void> | undefined;
+    const remove = () => (cleanup ??= this.remove(id));
     const stop = () => {
-      void this.remove(id).catch(() => {});
+      void remove().catch(() => {});
       cleanupTimer ??= setTimeout(() => child.kill('SIGKILL'), 12000);
     };
     const abort = () => {
@@ -303,7 +305,7 @@ export class DockerFunctionWorker implements FunctionWorker {
       if (cleanupTimer) clearTimeout(cleanupTimer);
       signal.removeEventListener('abort', abort);
       child.stdin.destroy();
-      await this.remove(id);
+      await remove();
     }
   }
 }
