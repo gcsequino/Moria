@@ -28,8 +28,13 @@ and [API 1.41 specification](https://docs.docker.com/reference/api/engine/versio
 - New tests exercise numeric overlap and minimum versions, malformed metadata,
   real Unix HTTP requests through the native client, retry after failed
   negotiation, escaped path segments and sharing the selected version across clones.
-- Full OCI execution against Docker 28.0.4 is pending. These results do not claim
-  a complete integration gate, independent CI success or production capacity.
+- Subsequent actual Docker 28.0.4 execution passed the complete native sandbox
+  file (9/9, no skips) and existing TypeScript Docker compatibility file (1/1,
+  no skips), using the separately committed completion challenge change. See
+  `actual-docker28/`. The frozen combined native digest is
+  `7988218af28168cca79ecfb6254047beafc034f04368543caf50f30b76515dc6`.
+- These results do not claim the complete platform gate, independent CI success
+  or production capacity.
 
 The real daemon proof uses a private network namespace and separate containerd,
 data and execution roots. No AWS instance was started for this check.

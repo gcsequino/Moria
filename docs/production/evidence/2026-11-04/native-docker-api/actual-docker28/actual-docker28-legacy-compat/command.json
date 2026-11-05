@@ -1,0 +1,15 @@
+{
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=45s",
+    "180s",
+    "python3",
+    "/home/gcseq/moria-proofs/docker-api-compatibility-20261104/old-daemon-harness/run-quality.py",
+    "sha256:c391776c90e69d561048bbfd1a680621447c89d0b5c42dcea9f3983b0c3266fa",
+    "pnpm",
+    "test:integration",
+    "tests/functions-docker-compat.integration.test.ts"
+  ],
+  "dockerHost": "unix:///home/gcseq/moria-proofs/docker-api-compatibility-20261104/daemon/docker.sock"
+}

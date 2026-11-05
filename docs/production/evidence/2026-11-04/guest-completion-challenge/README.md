@@ -31,5 +31,35 @@ There is no legacy acceptance fallback. See the [sandbox contract](../../../cont
   missing, early, preemitted, wrong, duplicate and trailing acknowledgements and a
   correct acknowledgement followed by nonzero exit. The read-only root positive
   case acknowledges its actual challenge.
-- Real OCI execution and Python engine integration are pending at this checkpoint.
-  This is not a complete platform gate, independent CI pass or capacity proof.
+
+## Subsequent real execution
+
+The frozen combined image `sha256:c391776c90e69d561048bbfd1a680621447c89d0b5c42dcea9f3983b0c3266fa`
+ran against actual Docker 28.0.4, API 1.48, in a separate network namespace:
+
+- The full native sandbox file passed 9/9 test results without skips in 45.91
+  seconds including controller setup/cleanup. The existing read-only root positive
+  case and all nine malformed/early/absent/wrong/duplicate/trailing/nonzero
+  completion modes passed their original assertions, including premature exit.
+- The existing TypeScript Docker compatibility file passed 1/1 without skips in
+  10.52 seconds, including successful use of the shared runner and real CPU-budget
+  exhaustion. No accounting limit was weakened.
+- The actual canonical Python runner and protocol, using matching locked
+  DuckDB/PyArrow packages, passed five direct control cases: valid challenge
+  acknowledged before exit; absent, malformed, boolean-version and extra-field
+  challenges rejected without acknowledgement. Each guest was removed.
+- The Python proof uses a metadata-only pipe broker and a no-op transform. It
+  proves runner control transport, not native Dataset IO, admission, publication
+  or full engine integration. Its transcripts and scope are in
+  `actual-python-control/`.
+- Standard fresh scratch provisioning and owned controller/registry/guest cleanup
+  remained active. Every controller, temporary directory and scratch pool was
+  verified absent afterward. The private daemon was empty after both native/TS
+  files. Native execution transcripts and exact helper socket adaptation are in
+  `../native-docker-api/actual-docker28/`.
+
+No complete platform gate, independent CI pass or production capacity is claimed.
+
+After testing, the owned private Docker daemon and containerd were stopped and
+their private network namespace removed. Existing host bridge identity and
+existing container processes were unchanged. Local caches and proof files remain.
