@@ -15,6 +15,7 @@ heads and accepted 64 outputs in 25.487 seconds against the original
 30-second request deadline. All nine Pipeline subtests and seven provenance
 tests passed, including grouped publication, spill recovery, and revocation
 on replay. [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
+· [Pipeline follow-up](https://github.com/gcsequino/Moria/issues/83)
 
 The Dataset v3 readback harness keeps four scalar checks in flight. Its
 isolated run compared all 64 keys with the batch result, verified the first
@@ -43,6 +44,7 @@ records, including the SDK-created record, one top-level Function receipt,
 and the later Source ACL checks. The same instance ran real Agent, local
 model, Evaluation, Pipeline, Search, and Automation work before browser
 sign-in. It verified authorization revocation without provider calls.
+[Browser and recovery follow-up](https://github.com/gcsequino/Moria/issues/84)
 
 The Connector custody file passed all 15 tests in 251.332 seconds under
 its 300-second root deadline. The phase trace measured 30.309 and 34.824
@@ -50,9 +52,18 @@ seconds for the first two publications and 8.094 seconds for independent
 typed readback. It passed Secret reflection, upstream faults, and in-flight
 revocation while retaining the prior head and cursor.
 
-Hosted Linux CI on the integrated revision remains required. The ten-case
-service-dispatched Evaluation still exceeds its original 90-second lifecycle
-barrier and remains under qualification.
+The native Agent suite passed all 24 tests. A separate live run stopped the
+SDK worker after queue admission and verified that fixture cleanup cancelled
+the exact queued Agent without starting an attempt. The following Agent cases
+ran successfully with their original deadlines.
+
+The previous hosted Linux run at `e232e11` reported 1,323 passes, 29 failures,
+and two cancellations. Static quality passed on the newer `3f24ad7` run.
+The complete hosted Linux result remains pending. The ten-case service
+Evaluation still exceeds its original 90-second lifecycle barrier in isolation.
+[Previous Linux result](https://github.com/gcsequino/Moria/actions/runs/42097076558)
+· [Current Linux run](https://github.com/gcsequino/Moria/actions/runs/42111707604)
+· [Linux follow-up](https://github.com/gcsequino/Moria/issues/82)
 
 ## November 5 Agent publication identity reuse
 
@@ -3373,11 +3384,12 @@ All nine exact native artifacts, 113 units, full static checks, both custody cas
 
 ## Native integration and production goals · November 5, 2026
 
-The development checkpoint is `0c5e996`. The persistent Linux checkout, focused integration commands, and artifact provenance checks are in place. Full Linux quality remains required on the proposed merge revision. [Native component inventory and API contracts](production/RUST-PLATFORM-PROGRAM.md) · [Draft integration PR](https://github.com/gcsequino/Moria/pull/81)
+The persistent Linux checkout, focused integration commands, and artifact
+provenance checks are in place. See the
+[latest Linux and integration results](#november-5-linux-function-and-pipeline-fixes),
+[native component inventory and API contracts](production/RUST-PLATFORM-PROGRAM.md),
+and [draft integration PR](https://github.com/gcsequino/Moria/pull/81).
 
-- The combined `04e0c80` build passed static checks, all nine native artifact checks, 125 native units and seven PostgreSQL provenance tests. The isolated Pipeline passed eight of nine cases, including 18,000 real Iceberg rows, two outputs in one receipt, SDK and CLI replay, exact Parquet readback, and hard-spill recovery. The 64-input, 64-output admission still hit 30 seconds. The requester batching in `5e925d9` needs its exact native build and live retest. [Pipeline admission](https://github.com/gcsequino/Moria/issues/83)
-- Independent Linux on `04e0c80` reported 1,344 passes and 16 failures, with zero skips or cancellations. Static CI passed. Linux failures included Docker CPU accounting, v3 replacement, multi-case Evaluation, Function lease and authority, and Pipeline. Its live Pipeline result differs from the isolated local run. [CI follow-up](https://github.com/gcsequino/Moria/issues/82) · [Exact CI run](https://github.com/gcsequino/Moria/actions/runs/42078685523)
-- The composed `0c5e996` diagnostic run completed the local-model Agent, one Evaluation case, Pipeline with an exact output Dataset pin, Search with real embeddings, Automation, and current-authority denial checks. It timed out waiting for browser verification. The test controller and scratch pools were removed. [Browser and clean-host recovery](https://github.com/gcsequino/Moria/issues/84)
 - Native v3 replacement, empty publication, metadata pruning and exact-version recovery have scoped proofs. An independent Iceberg reader verified the unchanged replacement files. The isolated sparse writer passed static checks. Its native build and live Connector proof still need to exercise append, upsert, delete, position-delete readback, and checkpoint-only completion. [Reader evidence](production/evidence/2026-11-05/native-standard-iceberg-v3-baseline/summary.json) · [Sparse writes](https://github.com/gcsequino/Moria/issues/85)
 - The separate `f096509` Source branch passed five live cases and 113 native units. Certified metadata-only v2 and v3 commits reused the Source store, key map and typed projection. The v3 Search generation advanced coverage with zero new embedding inputs. Integration and sparse mutation journal consumption remain open. [Qualified Source evidence](https://github.com/gcsequino/Moria/blob/f09650966828e895bef9eceddf9a8c5bdb575960/docs/production/evidence/2026-11-05/source-unchanged-publication/summary.json) · [Source and Search](https://github.com/gcsequino/Moria/issues/86)
 - Connector discovery and custody have scoped proofs. Operator-only Delivery reconciliation passed 12 live cases and is in the checkpoint. The separate Action-origin writeback candidate built all nine artifacts and passed 120 native units. Its first live test stopped during Source setup with `SOURCE_RUNTIME_PROFILE_INVALID`. The fixture-only retry passed static and native checks and needs its live run. [Delivery evidence](production/evidence/2026-11-05/delivery-operator-reconciliation.md) · [Connector writeback](https://github.com/gcsequino/Moria/issues/87)
