@@ -2910,3 +2910,13 @@ rollback, lineage and independent browser-origin fixtures passed the full SQL
 file, 48/48 with zero skips, plus all nine artifacts, 79 native units and static
 checks. Original and interrupted failures are retained under
 `production/evidence/2026-11-04/sql-provenance-contracts`.
+
+
+Indexing admission checkpoint (2026-11-04): revoked preclaim work now becomes a
+durable failed build instead of terminating the shared drain. Known authority
+rejections use savepoint isolation under the selected row lock; unknown/schema
+errors still propagate, and no lease is fabricated. The schema-lease test watches
+its actual PostgreSQL blocker while retaining migration fencing assertions.
+All original indexing cases plus actual plan/task/advance failure-isolation
+regressions passed 16/16, with all nine artifacts, 79 native units and static
+checks. Evidence: `production/evidence/2026-11-04/indexing-preclaim-isolation`.
