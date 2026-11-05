@@ -220,6 +220,7 @@ BEGIN
   IF EXISTS(SELECT 1 FROM moria.indexing_tasks WHERE build=build_id AND status<>'sealed') THEN RAISE EXCEPTION 'STAGE_INVALID'; END IF;
   IF NOT EXISTS(SELECT 1 FROM moria.dataset_heads WHERE environment=b.environment AND dataset=b.source AND revision=b.source_revision) THEN RAISE EXCEPTION 'HEAD_CONFLICT'; END IF;
   r:=moria.activate_source_stage(build_id);
+  PERFORM moria.runtime_source_store_publish(build_id,worker_id,worker_fence,r);
   result:=jsonb_build_object('stage',build_id,'revision',r::text,'sourceRevision',b.source_revision::text);
   INSERT INTO moria.indexing_changes VALUES(b.environment,r,0,b.target,build_id,true);
   UPDATE moria.indexing_builds SET status='active',receipt=result,lease_until=NULL WHERE id=build_id;

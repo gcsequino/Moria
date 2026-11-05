@@ -25,6 +25,8 @@ type Input = {
   snapshot: Record<string, any>;
   bindings: any[];
   rows: Record<string, unknown>[];
+  markings: string[];
+  sourceStore: { target: string; stage: string; revision: string };
 };
 export async function managedDatasetRecovery(input: Input) {
   const {
@@ -139,7 +141,7 @@ export async function managedDatasetRecovery(input: Input) {
       };
       const binding = (
         await pool.query(
-          "INSERT INTO moria.runtime_execution_bindings(environment,resource,spec,context,operations,markings,security_epoch,instance_epoch,incarnation) SELECT $1,$2,$3,$4,$5,ARRAY['private'],$6,s.security_epoch,i.incarnation FROM moria.instance_state s,moria.indexing_instance i RETURNING id",
+          'INSERT INTO moria.runtime_execution_bindings(environment,resource,spec,context,operations,markings,security_epoch,instance_epoch,incarnation) SELECT $1,$2,$3,$4,$5,$7,$6,s.security_epoch,i.incarnation FROM moria.instance_state s,moria.indexing_instance i RETURNING id',
           [
             environment,
             source,
@@ -147,6 +149,7 @@ export async function managedDatasetRecovery(input: Input) {
             { environment, principal, application, sessionHash: tokenHash },
             [`${source}:read`, 'filesystem:read'],
             state.epoch,
+            input.markings.slice(0, 1),
           ],
         )
       ).rows[0].id;
@@ -159,6 +162,7 @@ export async function managedDatasetRecovery(input: Input) {
           { ...snapshot, revision: datasetNamespace.revision, snapshotId: head.snapshotId },
         ],
         nativeRef: head.metadataLocation,
+        expectedMarkings: input.markings.slice(0, 1),
       };
       const output = await promisify(execFile)(
         harness,
@@ -228,6 +232,24 @@ export async function managedDatasetRecovery(input: Input) {
         targetEnv,
       );
       assert.equal(restored.dispatchEnabled, true);
+      const sourceStore = (
+        await pool.query(
+          'SELECT s.status,s.row_count::text,s.key_count::text,a.store FROM moria.native_source_row_stores s JOIN moria.native_source_generation_aliases a ON a.store=s.id WHERE a.environment=$1 AND a.object_type=$2 AND a.revision=$3',
+          [environment, input.sourceStore.target, input.sourceStore.revision],
+        )
+      ).rows[0];
+      assert.equal(sourceStore.store, input.sourceStore.stage);
+      assert.equal(sourceStore.status, 'published');
+      assert.equal(sourceStore.row_count, String(input.rows.length));
+      assert.equal(sourceStore.key_count, String(input.rows.length));
+      const restoredSource = (
+        await pool.query(
+          'SELECT source_value FROM moria.runtime_object_base($1,$2,$3) ORDER BY uid',
+          [environment, input.sourceStore.target, input.sourceStore.revision],
+        )
+      ).rows.map((row) => row.source_value);
+      assert.deepEqual(restoredSource, input.rows);
+
       const binding = (
         await pool.query(
           'SELECT revision,columns,iceberg_schema,namespace_revision,source_digest,physical_binding_fingerprint FROM moria.native_dataset_bindings WHERE environment=$1 AND resource=$2',
@@ -255,7 +277,7 @@ export async function managedDatasetRecovery(input: Input) {
         kind: 'workload',
         enabled: true,
         attributes: {},
-        markings: ['private', 'secret'],
+        markings: input.markings,
       });
       await cloneAuthority.setApplication(
         environment,
@@ -305,7 +327,7 @@ export async function managedDatasetRecovery(input: Input) {
       };
       const bindingId = (
         await pool.query(
-          "INSERT INTO moria.runtime_execution_bindings(environment,resource,spec,context,operations,markings,security_epoch,instance_epoch,incarnation) SELECT $1,$2,$3,$4,$5,ARRAY['private'],$6,s.security_epoch,i.incarnation FROM moria.instance_state s,moria.indexing_instance i RETURNING id",
+          'INSERT INTO moria.runtime_execution_bindings(environment,resource,spec,context,operations,markings,security_epoch,instance_epoch,incarnation) SELECT $1,$2,$3,$4,$5,$7,$6,s.security_epoch,i.incarnation FROM moria.instance_state s,moria.indexing_instance i RETURNING id',
           [
             environment,
             source,
@@ -313,6 +335,7 @@ export async function managedDatasetRecovery(input: Input) {
             { environment, principal, application, sessionHash: tokenHash },
             [`${source}:read`, `${source}:write`, 'filesystem:read'],
             state.epoch,
+            input.markings.slice(0, 1),
           ],
         )
       ).rows[0].id;

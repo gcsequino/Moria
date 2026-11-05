@@ -1,0 +1,33 @@
+{"controller": "moria-quality-b1541c5d-5625-4542-ac75-a8904e7d0210", "image": "sha256:653ea3516fbe42efbcbbc1d3ffe91561c492fee896bf5197f6db09b2dc9288d6", "scratchPools": ["/tmp/moria-engine-scratch-ad656e6e-dac0-41cf-ac34-e60ec7d31b69", "/tmp/moria-engine-scratch-6bb5ad77-0d3a-4c7c-890d-c598df2d803a"], "temporary": "/tmp/moria-quality-lw30ubi5"}
+$ node scripts/test-files.mjs integration tests/native-indexing-service.integration.test.ts
+Running 1 integration test files.
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (18617.500533ms)
+  ✔ clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication (38531.957091ms)
+  ✔ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (11010.193901ms)
+  ✔ new Source aliases preserve real Action overlays and tombstones across replacement and historical reads (98406.198339ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (9600.61729ms)
+  ✔ broader current policy retains the old generation restriction until a newly captured native build activates (10431.079786ms)
+  ✔ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (10254.209061ms)
+  ✔ disabled registered purpose remains blocked even after further unrelated epoch changes (10087.10694ms)
+  ✔ approved bounded history collection retires old Source payload and exact key maps while retaining Search and current stores (359.356527ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows) (214272.653713ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"62388d5a-f730-4f32-a5fe-b6e5eb720632","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"5f9422c5-144e-478e-927f-1420dccc3a4c"}]}
+ℹ {"fullObjectSource":{"execution":"bc19343b-3d2a-47ea-ab77-c4bd786103a7","generation":"447e10e2-14c9-4698-ba29-2a82b50fab83","store":"852ffd68-a3c4-456c-85a9-b8dd7778fbb2","rows":299},"ordinaryRows":149}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (11052.458306ms)
+  ✔ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (10123.740022ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (4347.263647ms)
+  ✔ broader current policy retains the old generation restriction until a newly captured native build activates (7679.277963ms)
+  ✔ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (4499.345887ms)
+  ✔ disabled registered purpose remains blocked even after further unrelated epoch changes (4434.881853ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width) (46653.41816ms)
+ℹ {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"275e9d53-5c43-43bb-9e1d-f11542a2a0fc","event":"reducer_batches","maxWireBytes":"8388678","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"6a81ae25-0507-4401-9d2d-3ff5a1a95c9a"}]}
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 261498.63233

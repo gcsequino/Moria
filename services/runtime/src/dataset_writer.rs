@@ -909,6 +909,7 @@ pub async fn prepare_replacement(
 }
 
 mod keys;
+pub(crate) use keys::encoded_json_key;
 pub(crate) use keys::validate_primary_keys;
 
 mod contract;

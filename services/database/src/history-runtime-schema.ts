@@ -234,12 +234,16 @@ BEGIN
   ELSE
    IF source_head.stage IS NOT NULL THEN
     WITH batch AS MATERIALIZED(SELECT uid FROM moria.staged_source_rows WHERE stage=source_head.stage AND (work.position->>'uid' IS NULL OR uid>(work.position->>'uid')::uuid) ORDER BY uid LIMIT 1000),
+     keys_deleted AS(DELETE FROM moria.native_source_key_map m USING batch b WHERE m.store=source_head.stage AND m.uid=b.uid RETURNING 1),
      deleted AS(DELETE FROM moria.staged_source_rows r USING batch b WHERE r.stage=source_head.stage AND r.uid=b.uid RETURNING 1)
     SELECT (SELECT count(*) FROM batch),(SELECT count(*) FROM deleted),(SELECT to_jsonb(uid) FROM batch ORDER BY uid DESC LIMIT 1) INTO scanned,removed,last_position;
    ELSE
     WITH batch AS MATERIALIZED(SELECT uid FROM moria.source_rows WHERE environment=policy.environment AND object_type=source_head.object_type AND revision=source_head.revision AND (work.position->>'uid' IS NULL OR uid>(work.position->>'uid')::uuid) ORDER BY uid LIMIT 1000),
      deleted AS(DELETE FROM moria.source_rows r USING batch b WHERE r.environment=policy.environment AND r.object_type=source_head.object_type AND r.revision=source_head.revision AND r.uid=b.uid RETURNING 1)
     SELECT (SELECT count(*) FROM batch),(SELECT count(*) FROM deleted),(SELECT to_jsonb(uid) FROM batch ORDER BY uid DESC LIMIT 1) INTO scanned,removed,last_position;
+   END IF;
+   IF source_head.stage IS NOT NULL AND scanned=0 THEN
+    UPDATE moria.native_source_row_stores SET status='retired' WHERE id=source_head.stage AND status='published';
    END IF;
    UPDATE moria.runtime_history_collections SET position=jsonb_build_object('resource',source_head.object_type,'revision',CASE WHEN scanned=0 THEN (source_head.revision+1)::text ELSE source_head.revision::text END)||CASE WHEN scanned=0 THEN '{}'::jsonb ELSE jsonb_build_object('uid',last_position) END,removed_rows=removed_rows+removed WHERE id=work.id;
   END IF;
