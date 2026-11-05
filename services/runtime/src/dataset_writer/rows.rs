@@ -69,6 +69,43 @@ pub(crate) fn encode_rows(
     }
     Ok(output)
 }
+/// Bootstrap validates only projected key columns; it does not invent a digest for unread payloads.
+pub(crate) fn encode_projected_keys(
+    batch: &RecordBatch,
+    keys: &[String],
+    columns: &Value,
+) -> Result<Vec<Vec<u8>>> {
+    ensure!(
+        batch.num_rows() <= PAGE_ROWS && !keys.is_empty() && keys.len() <= 256,
+        "RESOURCE_LIMIT"
+    );
+    ensure!(batch.num_columns() == keys.len(), "SCHEMA_CHANGED");
+    let mut descriptors = BTreeMap::new();
+    for key in keys {
+        let descriptor = columns
+            .get(key)
+            .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
+        ensure!(
+            descriptor["nullable"] == false
+                && descriptors
+                    .insert(key.clone(), descriptor.clone())
+                    .is_none(),
+            "DATASET_PRIMARY_KEY_INVALID"
+        );
+    }
+    validate_batch(batch, &descriptors)?;
+    let mut bytes = 0usize;
+    let mut output = Vec::with_capacity(batch.num_rows());
+    for row in 0..batch.num_rows() {
+        let key = super::keys::encoded_key(batch, row, keys, columns)?;
+        bytes = bytes
+            .checked_add(key.len())
+            .filter(|bytes| *bytes <= PAGE_BYTES)
+            .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))?;
+        output.push(key);
+    }
+    Ok(output)
+}
 /// Delete inputs are key-only in the accepted PK order; full-row deletes cannot silently discard fields.
 pub(crate) fn encode_delete_keys(
     batch: &RecordBatch,
@@ -145,6 +182,10 @@ mod tests {
             &columns,
         )
         .unwrap();
+        let projected =
+            encode_projected_keys(&batch(&[Some(vec!["東京", "😀"])]), &keys, &columns).unwrap();
+        assert_eq!(projected[0], rows[0].key());
+        assert!(encode_projected_keys(&batch(&[None]), &keys, &columns).is_err());
         assert_ne!(rows[0].key(), rows[1].key());
         assert_eq!(rows[0], rows[2]);
         assert_ne!(rows[0].key(), rows[3].key());
@@ -173,5 +214,9 @@ mod tests {
         assert!(encode_rows(&batch.project(&[0]).unwrap(), &keys, &columns).is_err());
         let rows = encode_rows(&batch, &keys, &columns).unwrap();
         assert_eq!(rows.len(), 1);
+        assert!(encode_projected_keys(&batch, &keys, &columns).is_err());
+        let projected =
+            encode_projected_keys(&batch.project(&[0]).unwrap(), &keys, &columns).unwrap();
+        assert_eq!(projected[0], rows[0].key());
     }
 }

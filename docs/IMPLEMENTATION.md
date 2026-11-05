@@ -2879,3 +2879,25 @@ trial010 passes all 96 native units and exact provenance for all nine rebuilt
 executables. Current bootstrap still emits verified payload hashes; projected
 scanning, touched-row derivation, distributed task closure and sparse publication
 remain unactivated. Evidence: `production/evidence/2026-11-04/native-deferred-digests/`.
+
+Projected key derivation checkpoint (2026-11-04): serial keyed bootstrap now
+projects actual typed key columns and records explicit deferred digests. Exact
+receiver-qualified retained v2 member/version receipts can use the existing
+verified-spool/retained-subset path; unsupported legacy versions retain full
+validation. The new touched-key API resolves the actual qualified locator,
+checks file/physical row/sequence/selection, applies existing Parquet allocation
+guards, validates the complete typed row and full encoded key, verifies any
+known digest and rechecks current authority. It accepts no supplied locator.
+
+Frozen trial013 passes static checks, all nine native artifacts, 96 units and
+64-row array-key/nullable-payload readback with every bootstrap digest deferred
+and a full typed point-row oracle (1/1, zero skips/cancellations; 101.67s root under
+120s, 108.75s controller). A failed helper test exposed generic schema validation
+accepting extra columns; exact key/full-row column guards now reject them.
+Initial chunk certification still performs one-time full byte authentication
+when prior receipts are absent. Distributed tasks, new-loader negatives,
+latest-format authority/C08 reruns, actual standard position-delete oracle,
+sparse C04 publication and production workloads remain open. Both Dataset
+contracts now explicitly use standard position deletes to preserve accepted
+array keys, with actual installed-reader proof required before activation.
+Evidence: `production/evidence/2026-11-04/native-projected-keys/`.

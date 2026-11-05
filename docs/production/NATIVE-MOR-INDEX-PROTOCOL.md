@@ -95,7 +95,7 @@ still needs expected-head, lease and checkpoint checks before acknowledgement.
 
 Qualification must include an all-deleted result followed by append/upsert,
 partial compaction above an older key, deferred/verified digest round trips,
-wide payloads excluded from bootstrap I/O, wrong physical locators, arrays and
+wide payload columns excluded from key decoding, separately measured migration/authentication I/O, wrong physical locators, arrays and
 nullable non-key columns, cross-task duplicates and missing reports, unchanged
 upserts, actual standard-engine position-delete readback, old-reader retention,
 crash/conflict/replay and clean-host graph recovery. Production activation waits
@@ -109,6 +109,41 @@ all 96 library units with no ignored or filtered tests. Known zero digests,
 deferred digests and deletion remain distinct, new tags are rejected under
 version two, and original known version-two records remain readable. This is
 [codec evidence](evidence/2026-11-04/native-deferred-digests/summary.json), not
-qualification of projected bootstrap or sparse publication. Current bootstrap
-still derives verified hashes from payloads until its projected-reader slice is
-implemented; distributed task receipts and touched-row derivation remain open.
+qualification of projected bootstrap or sparse publication. At trial010 bootstrap
+still derived verified hashes from payloads. The following checkpoint adds
+projected derivation and a touched-row reader; distributed task receipts remain
+open.
+
+## Projected-key and touched-row checkpoint
+
+The serial keyed derivation now projects only declared key columns and stores
+explicit deferred digests in its spill and runs. An exact previously qualified
+retained v2 root can reuse its member/version/schema proof through the existing
+verified-spool and retained-subset verifier; the current real coordinator,
+expected head, physical fingerprint and incarnation must match every receipt.
+Changed versions, missing membership and current-authority failures do not
+trigger a trust fallback. Unsupported legacy version tokens keep the original
+full byte and typed validation path.
+
+`NativeSnapshot::read_key_row(&Arc<Self>, values)` resolves the actual pinned
+index and returns an optional complete typed value and locator with a verified
+digest. It accepts no caller-supplied locator. It checks exact file membership,
+physical ordinal, data sequence and live row selection, reads the chosen Parquet
+row group through version-pinned graph IO with the existing footer/page
+allocation guards, verifies the complete schema and full encoded key, checks any
+prior verified digest, and rechecks current authority before returning.
+
+Frozen trial013 passes static checks, exact provenance for nine native artifacts,
+96 units and the actual 64-row array-key/nullable-payload graph integration under
+its unchanged 120-second deadline. Every bootstrap locator is explicitly deferred;
+the first actual point read matches the full typed oracle and returns a verified
+digest. [Evidence](evidence/2026-11-04/native-projected-keys/summary.json) retains
+the failed projection-column guard trial and the successful focused gate. New
+loader negative cases, latest-format authority/recovery, distributed tasks,
+provider amplification and sparse publication remain open.
+
+Initial migration cost is separate: a v2 root without authenticated chunk
+receipts still needs explicit one-time byte authentication to create persisted
+exact-version certificates. Key-only decoding does not imply that those bytes
+were never read. Sparse mutations must reuse those persisted qualifications and
+must not rehash or redecode the complete population per mutation.

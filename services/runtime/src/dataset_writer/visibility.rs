@@ -14,7 +14,7 @@ pub struct VisibleRow {
     pub file: String,
     pub row: u64,
     pub data_sequence: u64,
-    pub row_hash: [u8; 32],
+    pub row_hash: Option<[u8; 32]>,
 }
 #[derive(Clone, Debug)]
 pub struct EqualityKey {
@@ -72,7 +72,7 @@ impl VisibilityBootstrap {
             positions: format!("visibility_position_{suffix}"),
             visible: format!("visibility_result_{suffix}"),
         };
-        db.execute_batch(&format!("CREATE TABLE {data}(key BLOB NOT NULL,key_hash BLOB NOT NULL CHECK(length(key_hash)=32),file TEXT NOT NULL,ordinal INTEGER NOT NULL,data_sequence INTEGER NOT NULL,row_hash BLOB NOT NULL CHECK(length(row_hash)=32),PRIMARY KEY(file,ordinal)) WITHOUT ROWID;CREATE INDEX {data}_keys ON {data}(key,file,ordinal);CREATE TABLE {deletes}(key BLOB NOT NULL,data_sequence INTEGER NOT NULL,PRIMARY KEY(key,data_sequence)) WITHOUT ROWID;CREATE TABLE {positions}(file TEXT NOT NULL,ordinal INTEGER NOT NULL,data_sequence INTEGER NOT NULL,PRIMARY KEY(file,ordinal,data_sequence)) WITHOUT ROWID;CREATE TABLE {visible}(key BLOB PRIMARY KEY NOT NULL,key_hash BLOB NOT NULL CHECK(length(key_hash)=32),file TEXT NOT NULL,ordinal INTEGER NOT NULL,data_sequence INTEGER NOT NULL,row_hash BLOB NOT NULL CHECK(length(row_hash)=32),UNIQUE(file,ordinal)) WITHOUT ROWID;CREATE INDEX {visible}_route ON {visible}(key_hash,key);",data=tables.data,deletes=tables.deletes,positions=tables.positions,visible=tables.visible))?;
+        db.execute_batch(&format!("CREATE TABLE {data}(key BLOB NOT NULL,key_hash BLOB NOT NULL CHECK(length(key_hash)=32),file TEXT NOT NULL,ordinal INTEGER NOT NULL,data_sequence INTEGER NOT NULL,row_hash BLOB CHECK(row_hash IS NULL OR length(row_hash)=32),PRIMARY KEY(file,ordinal)) WITHOUT ROWID;CREATE INDEX {data}_keys ON {data}(key,file,ordinal);CREATE TABLE {deletes}(key BLOB NOT NULL,data_sequence INTEGER NOT NULL,PRIMARY KEY(key,data_sequence)) WITHOUT ROWID;CREATE TABLE {positions}(file TEXT NOT NULL,ordinal INTEGER NOT NULL,data_sequence INTEGER NOT NULL,PRIMARY KEY(file,ordinal,data_sequence)) WITHOUT ROWID;CREATE TABLE {visible}(key BLOB PRIMARY KEY NOT NULL,key_hash BLOB NOT NULL CHECK(length(key_hash)=32),file TEXT NOT NULL,ordinal INTEGER NOT NULL,data_sequence INTEGER NOT NULL,row_hash BLOB CHECK(row_hash IS NULL OR length(row_hash)=32),UNIQUE(file,ordinal)) WITHOUT ROWID;CREATE INDEX {visible}_route ON {visible}(key_hash,key);",data=tables.data,deletes=tables.deletes,positions=tables.positions,visible=tables.visible))?;
         Ok(Self {
             spool,
             authority,
@@ -140,7 +140,7 @@ impl VisibilityBootstrap {
                         row.file,
                         row.row as i64,
                         row.data_sequence as i64,
-                        row.row_hash.as_slice()
+                        row.row_hash.as_ref().map(|hash| hash.as_slice())
                     ]),
                     "DATASET_KEY_INDEX_INVALID",
                 )?;
@@ -280,7 +280,7 @@ impl VisibilityBootstrap {
                             row.file,
                             row.row as i64,
                             row.data_sequence as i64,
-                            row.row_hash.as_slice()
+                            row.row_hash.as_ref().map(|hash| hash.as_slice())
                         ]),
                         "DATASET_PRIMARY_KEY_DUPLICATE",
                     )?;
@@ -372,15 +372,18 @@ fn bounded_rows(mut rows: rusqlite::Rows<'_>) -> Result<Vec<VisibleRow>> {
             break;
         }
         bytes += size;
-        let hash: Vec<u8> = row.get(4)?;
+        let hash: Option<Vec<u8>> = row.get(4)?;
         output.push(VisibleRow {
             key,
             file,
             row: u64::try_from(row.get::<_, i64>(2)?)?,
             data_sequence: u64::try_from(row.get::<_, i64>(3)?)?,
             row_hash: hash
-                .try_into()
-                .map_err(|_| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?,
+                .map(|hash| {
+                    hash.try_into()
+                        .map_err(|_| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))
+                })
+                .transpose()?,
         });
     }
     Ok(output)

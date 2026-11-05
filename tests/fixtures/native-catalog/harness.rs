@@ -2,6 +2,7 @@ use anyhow::{Context, Result, ensure};
 use futures::TryStreamExt;
 use moria_runtime::{
     authority::Authority,
+    canonical::canonical_json,
     catalog::*,
     database::Database,
     execution::{Domain, ExecutionAuthority, Lease, TaskPlan},
@@ -565,6 +566,14 @@ async fn run() -> Result<()> {
                     let values = keys.iter().map(|key| row[key].clone()).collect::<Vec<_>>();
                     let locator = snapshot.lookup_key(&values).await?.ok_or_else(|| anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
                     ensure!(locator.file.starts_with("moria://"), "FIXTURE_KEY_NOT_FOUND");
+                    if fixture.mode.starts_with("graph-bootstrap") {
+                        ensure!(locator.row_hash.is_none(), "FIXTURE_BOOTSTRAP_DIGEST_NOT_DEFERRED");
+                    }
+                    if row == &expected[0] {
+                        let verified = snapshot.read_key_row(&values).await?.ok_or_else(||anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
+                        ensure!(verified.locator.row_hash.is_some(), "FIXTURE_ROW_DIGEST_NOT_VERIFIED");
+                        ensure!(canonical_json(&verified.value)? == canonical_json(row)?, "FIXTURE_READBACK_MISMATCH");
+                    }
                 }
             }
             event(json!({"event":"graph_bootstrap_read","execution":id,"rows":count,"headUnchanged":true}));

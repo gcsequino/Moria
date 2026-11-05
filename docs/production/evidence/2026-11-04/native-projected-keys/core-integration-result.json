@@ -1,0 +1,21 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 108.74753713607788,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-core-013-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-core-013-20261104",
+    "sha256:d9baa8da0a3f91e00dafe526769b6518eae01d4e2081918a16f9e06e58b02ca6",
+    "pnpm",
+    "test:integration",
+    "tests/native-dataset-graph.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}

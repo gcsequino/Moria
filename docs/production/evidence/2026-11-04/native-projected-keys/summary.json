@@ -1,0 +1,95 @@
+{
+  "base": "b818c55",
+  "classification": "qualified serial projected-key derivation and exact touched-row verification; sparse and distributed activation remain open",
+  "image": "sha256:d9baa8da0a3f91e00dafe526769b6518eae01d4e2081918a16f9e06e58b02ca6",
+  "sourceManifestSha256": "36d4fb0ba90fc0dd4f3a819c6176184a41e441fc491b9bd36d9caac487ed65eb",
+  "nativeDigest": "56f756eeb236a4f2e2b93d31ea2830e4e3a6881bbe57f3db68b6c4555f922a27",
+  "sourceHashes": {
+    "services/runtime/src/catalog.rs": "b4e088f2f115604de9866e4bf2582d1151f949341547514572cedc3e2d0199b7",
+    "services/runtime/src/dataset_graph.rs": "8103dcc92d9604fcaece690e1e84b4d0be157997172d792a470c5e7a67c3e82d",
+    "services/runtime/src/dataset_writer.rs": "eaae434dd0cfe58ebf68032a8bbba167c4543240919a93456cdb073be65877be",
+    "services/runtime/src/dataset_writer/bootstrap_v2.rs": "307f0ec5236c32ecc52e6bbf41d78cd9af7c9880f6a9c8a8794d5533aaca890e",
+    "services/runtime/src/dataset_writer/rows.rs": "f40a0c9f9b9f3039b18478c693f110dcfbc73b3e398e3eeca626c67ae2a06a4d",
+    "services/runtime/src/dataset_writer/visibility.rs": "9db9559c339f87e28437c25007fa19fcac37b5bbd285d8412aac23dbe714abc0",
+    "services/runtime/src/native_snapshot_v3.rs": "7d5cb5184e68e37dcafe286448f3bf409c7b6cdd0eab832faf1e798b5d0ef29c",
+    "services/runtime/src/native_snapshot_v3/point.rs": "294f1975c2d58df82f05d55aae3548c80592ef5f1046120ab8efcdf08bbf9aad",
+    "services/runtime/src/snapshot.rs": "087dddbf83e166fec215eb26d8d4c02d419ba49d82f228c5e9d8d208a10e9700",
+    "services/runtime/src/snapshot_parquet_bounds.rs": "65bea62184d0d0e3b69f6d38f2d48915c984620208336e6397ec7f0856b10a80",
+    "tests/fixtures/native-catalog/harness.rs": "343cac165d81b1ae8679241f0b071d9eaa6a087b2726ba4c55339bdac96c9a49"
+  },
+  "nativeArtifacts": {
+    "moria-indexing-tests": {
+      "sha256": "36d954b201d69d5162ff81408f763b22fe101cad3fa97c4fe80dc3bb74128cc1",
+      "bytes": 62320304
+    },
+    "moria-indexing": {
+      "sha256": "ceeaf9590ae6fd9e106e6ec6678f77b5e874e56b6b5838a951f5514a8669327c",
+      "bytes": 158070880
+    },
+    "moria-runtime": {
+      "sha256": "5ad1adbd2c6d6e24e83f16448f30b981deae1f6b9a710d06e56f717eea580e5c",
+      "bytes": 158070872
+    },
+    "moria-native-transport-test": {
+      "sha256": "035401d257031a3b7b3e531b90329d140dc6ef4583afa6d3cc60c5dd3d39f1d6",
+      "bytes": 26541136
+    },
+    "moria-native-storage-test": {
+      "sha256": "66226f5e3619e1145fdfb14ef0c8a8c1e20f9f1726937aea822a77f983d400c4",
+      "bytes": 101859392
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "01aa1ccf4ce83237f34a5cfb8a1dff1d6648bef8356066e6ae7b14de779bda0b",
+      "bytes": 57222640
+    },
+    "moria-native-retention-test": {
+      "sha256": "e1d60984967ced01e4ae3d2e36acfc3d904c62e69d6464562ae2025d9d20d38d",
+      "bytes": 27010608
+    },
+    "moria-native-policy-test": {
+      "sha256": "cd744ae60a37e5f351a950abbe0512261c9f35dd6d7829ba005b4d214cfc822d",
+      "bytes": 22203824
+    },
+    "moria-native-catalog-test": {
+      "sha256": "8babbf589b300efa951e6b8b7170c0c4fd6d070f782cb7b702cdf0c3503b1943",
+      "bytes": 116311840
+    }
+  },
+  "validation": {
+    "fullStatic": true,
+    "allNineNativeArtifactsMatch": true,
+    "unitsPassed": 96,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "core": {
+      "passed": 1,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "originalRootDeadlineSeconds": 120,
+      "rootSeconds": 101.667358601,
+      "controllerSeconds": 108.74753713607788
+    }
+  },
+  "failedTrials": {
+    "011": "wrong ArrowReaderOptions import path; corrected before successful all-nine build",
+    "012": "95 units passed,1 failed: projected helper accepted an extra column because generic validate_batch permits extras; added exact column-count checks"
+  },
+  "verifiedScope": [
+    "actual64 typed array keys and nullable non-key payload preserve published v2 head and standard typed readback",
+    "every bootstrap locator explicitly defers its row digest",
+    "qualified member-version receipts permit metadata-only reuse through existing verified-spool/retained-subset verifier",
+    "unsupported legacy provider versions retain full byte/typed validation fallback",
+    "key decoder reads projected typed columns and never substitutes a sentinel row hash",
+    "first actual touched key reads qualified selected Parquet row group with existing allocation guards and verifies full schema/key/row/digest/current authority"
+  ],
+  "migrationCost": "first authenticated chunk certificates still require explicit full byte authentication when v2 lacks prior chunk receipts; this is distinct from key-only decoding and steady-state sparse IO",
+  "notVerified": [
+    "end-to-end bootstrap provider-byte amplification or distributed task execution",
+    "changed-version/unqualified-member negative for the new loader",
+    "new-format authority and C08 recovery reruns",
+    "independent installed standard Iceberg position-delete reader proof",
+    "sparse publication, DatasetCommitDelta journal and production workload ladder"
+  ]
+}

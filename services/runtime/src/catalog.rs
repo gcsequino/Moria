@@ -2,11 +2,11 @@ use crate::{
     authority::{Authority, VerifiedSession},
     database::Database,
     execution::Lease,
-    snapshot::{SnapshotPin, SnapshotProof, verify_snapshot},
+    snapshot::{SnapshotPin, SnapshotProof, verify_retained_subset, verify_snapshot},
     storage::{
         Cancellation, ClosureEntry, ClosureLimits, ClosureSpool, IndexNamespace, LogicalObject,
         ObjectReader, ObjectStore, ObjectVersion, ObjectWriter, PosixStore, ReadAuthority,
-        RecordingReader, SealedObject, WriteAuthority,
+        RecordingReader, SealedObject, VerifiedVersionAuthority, WriteAuthority,
     },
 };
 use anyhow::{Result, ensure};
@@ -1073,6 +1073,57 @@ pub async fn load_snapshot(
     limits: ClosureLimits,
     cancel: Cancellation,
 ) -> Result<LoadedSnapshot> {
+    load_snapshot_inner(
+        scratch,
+        reader,
+        authority,
+        reference,
+        expected_table_uuid,
+        expected_snapshot_id,
+        limits,
+        cancel,
+        None,
+    )
+    .await
+}
+
+/// Metadata-only reuse is available only through an exact retained-root version authority.
+pub(crate) async fn load_qualified_snapshot(
+    scratch: &PosixStore,
+    reader: Arc<dyn ObjectReader>,
+    authority: Arc<dyn ReadAuthority>,
+    reference: &NativeSnapshotRef,
+    expected_table_uuid: Uuid,
+    expected_snapshot_id: i64,
+    limits: ClosureLimits,
+    cancel: Cancellation,
+    known: &dyn VerifiedVersionAuthority,
+) -> Result<LoadedSnapshot> {
+    load_snapshot_inner(
+        scratch,
+        reader,
+        authority,
+        reference,
+        expected_table_uuid,
+        expected_snapshot_id,
+        limits,
+        cancel,
+        Some(known),
+    )
+    .await
+}
+
+async fn load_snapshot_inner(
+    scratch: &PosixStore,
+    reader: Arc<dyn ObjectReader>,
+    authority: Arc<dyn ReadAuthority>,
+    reference: &NativeSnapshotRef,
+    expected_table_uuid: Uuid,
+    expected_snapshot_id: i64,
+    limits: ClosureLimits,
+    cancel: Cancellation,
+    known: Option<&dyn VerifiedVersionAuthority>,
+) -> Result<LoadedSnapshot> {
     let root = snapshot_root(
         reader.as_ref(),
         authority.clone(),
@@ -1124,24 +1175,45 @@ pub async fn load_snapshot(
         spool.append_page(&page.entries).await?;
     }
     ensure!(current.is_none(), "EXTRA_SNAPSHOT_PAGE");
-    let closure = spool.seal(reader.as_ref(), authority.clone()).await?;
+    let mut qualified = false;
+    let closure = if let Some(known) = known {
+        match spool
+            .seal_verified(reader.as_ref(), authority.clone(), known)
+            .await
+        {
+            Ok(closure) => {
+                qualified = true;
+                closure
+            }
+            Err(error)
+                if matches!(
+                    error.root_cause().to_string().as_str(),
+                    "INVALID_STORAGE_VERSION" | "CONDITIONAL_DELETE_UNSUPPORTED"
+                ) =>
+            {
+                spool.seal(reader.as_ref(), authority.clone()).await?
+            }
+            Err(error) => return Err(error),
+        }
+    } else {
+        spool.seal(reader.as_ref(), authority.clone()).await?
+    };
     ensure!(
         closure.entries == root.proof.closure.entries
             && closure.referenced_bytes == root.proof.closure.referenced_bytes
             && closure.sha256 == root.proof.closure.sha256,
         "CLOSURE_MISMATCH"
     );
-    let proof = verify_snapshot(
-        &spool,
-        reader.clone(),
-        authority.clone(),
-        SnapshotPin {
-            metadata: root.proof.metadata,
-            table_uuid: expected_table_uuid,
-            snapshot_id: expected_snapshot_id,
-        },
-    )
-    .await?;
+    let pin = SnapshotPin {
+        metadata: root.proof.metadata,
+        table_uuid: expected_table_uuid,
+        snapshot_id: expected_snapshot_id,
+    };
+    let proof = if qualified {
+        verify_retained_subset(&spool, reader.clone(), authority.clone(), pin).await?
+    } else {
+        verify_snapshot(&spool, reader.clone(), authority.clone(), pin).await?
+    };
     ensure!(
         proof.data_files == root.proof.data_files
             && proof.physical_rows == root.proof.physical_rows

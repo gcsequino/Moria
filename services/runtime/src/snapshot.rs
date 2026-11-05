@@ -36,7 +36,7 @@ use std::{collections::BTreeMap, fmt::Debug, ops::Range, sync::Arc};
 use uuid::Uuid;
 
 #[path = "snapshot_parquet_bounds.rs"]
-mod parquet_bounds;
+pub(crate) mod parquet_bounds;
 
 const METADATA_MAX: usize = 8 * 1024 * 1024;
 const DECODED_MAX: usize = 64 * 1024 * 1024;
