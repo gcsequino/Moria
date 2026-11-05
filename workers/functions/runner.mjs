@@ -8,7 +8,8 @@ const send = (value, flushed) =>
 const pending = new Map();
 let counter = 0,
   started = false,
-  completed = false;
+  completed = false,
+  acknowledged = false;
 const cancellation = new AbortController();
 process.on('SIGTERM', () => {
   cancellation.abort();
@@ -102,8 +103,17 @@ lines.on('line', (line) => {
         send({ type: 'error' });
       }
     })();
-  } else if (message.type === 'complete' && completed) process.exit(0);
-  else if (
+  } else if (
+    message.type === 'complete' &&
+    completed &&
+    !acknowledged &&
+    Object.keys(message).sort().join(',') === 'nonce,type,version' &&
+    typeof message.nonce === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(message.nonce)
+  ) {
+    acknowledged = true;
+    send({ type: 'completed', nonce: message.nonce }, (error) => process.exit(error ? 1 : 0));
+  } else if (
     ['osdkResult', 'osdkError', 'httpResult', 'httpError'].includes(message.type) &&
     pending.has(message.id)
   ) {

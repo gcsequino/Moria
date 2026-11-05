@@ -941,6 +941,8 @@ impl Docker {
 enum GuestMessage {
     #[serde(rename = "result")]
     Result { version: u32, value: Value },
+    #[serde(rename = "completed")]
+    Completed { version: u32, nonce: Uuid },
     #[serde(rename = "error")]
     Error { version: u32 },
     #[serde(rename = "log")]
@@ -1632,6 +1634,8 @@ impl SandboxSupervisor {
             let mut total = 0;
             let mut buffer = Vec::new();
             let mut result = None;
+            let mut completion_nonce = None;
+            let mut acknowledged = false;
             let mut calls = BTreeSet::new();
             let mut sequence = 0u64;
             let mut logs = 0;
@@ -1643,11 +1647,22 @@ impl SandboxSupervisor {
                 }
                 buffer.extend(bytes);
                 while let Some(end) = buffer.iter().position(|b| *b == b'\n') {
-                    ensure!(end <= frame_bytes && result.is_none(), "FUNCTION_PROTOCOL");
+                    ensure!(end <= frame_bytes && !acknowledged, "FUNCTION_PROTOCOL");
                     let line: Vec<u8> = buffer.drain(..=end).collect();
                     let message: GuestMessage = serde_json::from_slice(&line[..end])
                         .map_err(|_| anyhow::anyhow!("FUNCTION_PROTOCOL"))?;
+                    ensure!(
+                        result.is_none() || matches!(&message, GuestMessage::Completed { .. }),
+                        "FUNCTION_PROTOCOL"
+                    );
                     match message {
+                        GuestMessage::Completed { version, nonce } => {
+                            ensure!(
+                                version == 1 && result.is_some() && completion_nonce == Some(nonce),
+                                "FUNCTION_PROTOCOL"
+                            );
+                            acknowledged = true;
+                        }
                         GuestMessage::Result { version, value } => {
                             ensure!(version == 1, "FUNCTION_PROTOCOL");
                             let descriptor = values::descriptor(
@@ -1671,13 +1686,15 @@ impl SandboxSupervisor {
                                 "FUNCTION_WORKER_ACCOUNTING"
                             );
                             context.check().await?;
+                            let nonce = Uuid::new_v4();
                             write_limited(
                                 &mut writer,
-                                json!({"version":1,"type":"complete"}),
+                                json!({"version":1,"type":"complete","nonce":nonce}),
                                 frame_bytes,
                             )
                             .await?;
                             completed.store(true, Ordering::SeqCst);
+                            completion_nonce = Some(nonce);
                             result = Some(value);
                         }
                         GuestMessage::Error { version } => {
@@ -1791,6 +1808,7 @@ impl SandboxSupervisor {
             ensure!(buffer.is_empty(), "FUNCTION_PROTOCOL");
             ensure!(self.docker.wait(&name).await? == 0, "FUNCTION_FAILED");
             let result = result.ok_or_else(|| anyhow::anyhow!("FUNCTION_OUTPUT_MISSING"))?;
+            ensure!(acknowledged, "FUNCTION_PROTOCOL");
             context.begin_observation("_system/finish").await?;
             self.broker.finish(context, &result).await?;
             context.observation_completed().await?;
