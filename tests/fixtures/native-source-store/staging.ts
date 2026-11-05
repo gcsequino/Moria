@@ -18,9 +18,8 @@ type Input = {
   queryCount: () => Promise<number>;
 };
 
-/** Real native stages, policies and competing SQL locks; only fixture-owned clock fields are aged. */
-export async function sourceStagingCollection(input: Input) {
-  const { db, runtime, env, environment, target, publishedBuild } = input;
+/** Native CLI calls with either the ordinary runtime identity or actual fixture operator. */
+export function sourceStagingCli({ db, runtime, env }: Pick<Input, 'db' | 'runtime' | 'env'>) {
   const ref = env.MORIA_INDEXING_DATABASE_SECRET_REF!;
   const operator = {
     ...env,
@@ -61,6 +60,15 @@ export async function sourceStagingCollection(input: Input) {
       child.stdin.end(JSON.stringify(value));
     });
   };
+  return cli;
+}
+
+/** Real native stages, policies and competing SQL locks; only fixture-owned clock fields are aged. */
+export async function sourceStagingCollection(input: Input) {
+  const { db, environment, target, publishedBuild } = input;
+  const { runtime, env } = input;
+  const ref = env.MORIA_INDEXING_DATABASE_SECRET_REF!;
+  const cli = sourceStagingCli(input);
   const history = async (command: string, id: string) => {
     const result = JSON.parse(await cli(['history-retention', command], { id }, true));
     assert.ok(Number(result.indexingStaging?.discovered ?? 0) <= 8);

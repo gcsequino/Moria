@@ -1,0 +1,67 @@
+{"controller": "moria-quality-753eb640-3483-4971-b280-81a7b9c4c0f0", "image": "sha256:706972f054a228aedf8f2f255f48de7dedd857a9327bf5747722f97e12116030", "scratchPools": ["/tmp/moria-engine-scratch-2f67b4de-ad0d-4a4a-9a68-4ec1dce76d27", "/tmp/moria-engine-scratch-e2bc0153-b670-4f22-be12-b821d2a69685", "/tmp/moria-engine-scratch-7adddbed-f589-4f76-a47b-789388360e0a"], "temporary": "/tmp/moria-quality-c43tmgey"}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (near-cap storage)
+  ✖ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (2427.52425ms)
+  ✖ accepted near-cap typed rows expose exact physical storage and defer blocked work without poisoning another real build (2.541252ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (near-cap storage) (6982.334044ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7484.117456
+
+✖ failing tests:
+
+test at tests/native-indexing-service.integration.test.ts:523:15
+✖ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (2427.52425ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (120) panicked at ../../tests/fixtures/native-catalog/harness.rs:304:10:
+  called `Result::unwrap()` on an `Err` value: DECODED_ROW_LIMIT
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"elapsedMillis":"1260","event":"closure_hashed"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 2.42s\n\n',
+    stderr: "\nthread 'catalog_publication' (120) panicked at ../../tests/fixtures/native-catalog/harness.rs:304:10:\ncalled `Result::unwrap()` on an `Err` value: DECODED_ROW_LIMIT\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-indexing-service.integration.test.ts:705:17
+✖ accepted near-cap typed rows expose exact physical storage and defer blocked work without poisoning another real build (2.541252ms)
+  error: invalid input syntax for type uuid: ""
+      at /app/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async sourceStagingWidth (/app/tests/fixtures/native-source-store/width.ts:18:5)
+      at async TestContext.<anonymous> (/app/tests/native-indexing-service.integration.test.ts:708:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-indexing-service.integration.test.ts:705:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    length: 129,
+    severity: 'ERROR',
+    code: '22P02',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: "unnamed portal parameter $1 = ''",
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'uuid.c',
+    line: '177',
+    routine: 'string_to_uuid'
+  }
