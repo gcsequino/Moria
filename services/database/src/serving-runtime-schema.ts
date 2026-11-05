@@ -238,7 +238,8 @@ CREATE FUNCTION moria.native_source_file_proof_immutable() RETURNS trigger LANGU
 BEGIN RAISE EXCEPTION 'IMMUTABLE_SOURCE_FILE_PROOF'; END $$;
 CREATE TRIGGER fs_source_resource_files_immutable BEFORE UPDATE OR DELETE ON moria.fs_source_resource_files
   FOR EACH ROW EXECUTE FUNCTION moria.native_source_file_proof_immutable();
-CREATE FUNCTION moria.native_filesystem_acl_targets_operations_state(state jsonb, target_ids uuid[], operations text[], include_inactive boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
+-- Recursive closure costs depend on the actual targets and release inventory.
+CREATE FUNCTION moria.native_filesystem_acl_targets_operations_state(state jsonb, target_ids uuid[], operations text[], include_inactive boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql STABLE SET plan_cache_mode=force_custom_plan AS $$
 DECLARE node record; administrator boolean;
   labels jsonb; label_names text[]; required_ids uuid[]; missing_proof boolean;
   operation text; failure text; errors jsonb:='{}';
