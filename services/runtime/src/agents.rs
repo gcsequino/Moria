@@ -674,6 +674,58 @@ impl NativeAgents {
         let row = Self::row(tx.client(), session, id).await?;
         self.retained(tx, session, &row).await
     }
+    /// Observe and reap only the exact accepted child while a live case is waiting.
+    /// A false result requires the ordinary protected progress check before release.
+    pub(crate) async fn evaluation_child_pending(
+        &self,
+        session: &VerifiedSession,
+        case: Uuid,
+        child: Uuid,
+    ) -> Result<bool> {
+        let client = self.db.get().await?;
+        let row = client
+            .query_opt(
+                "WITH tick AS MATERIALIZED (SELECT clock_timestamp() AS now)
+                 SELECT moria.runtime_execution_reap(agent.id)
+                 FROM moria.runtime_job_sessions credential
+                 JOIN moria.runtime_execution_tasks task ON task.id=credential.task
+                   AND task.execution=credential.execution AND task.owner=credential.owner
+                   AND task.fence=credential.fence AND task.worker_generation=credential.worker_generation
+                 JOIN moria.runtime_workers worker ON worker.owner=credential.owner
+                   AND worker.host_id=credential.host_id AND worker.generation=credential.worker_generation
+                   AND worker.incarnation=credential.incarnation AND worker.enabled
+                 JOIN moria.runtime_executions parent ON parent.id=credential.execution
+                 JOIN moria.runtime_evaluation_cases c ON c.execution=parent.id AND c.agent_execution=$3
+                 JOIN moria.runtime_executions agent ON agent.id=c.agent_execution
+                 JOIN moria.runtime_job_delegations delegation ON delegation.execution=agent.id
+                   AND delegation.parent_execution=parent.id
+                 CROSS JOIN tick
+                 WHERE credential.token_hash=$1 AND credential.execution=$2
+                   AND credential.incarnation=(SELECT incarnation FROM moria.indexing_instance)
+                   AND credential.expires_at>tick.now AND credential.expires_at<=parent.deadline
+                   AND task.status='running' AND task.lease_until>tick.now
+                   AND worker.expires_at>tick.now AND parent.resource_class=ANY(worker.resource_classes)
+                   AND 'evaluation'=ANY(worker.domains)
+                   AND parent.status='running' AND parent.deadline>tick.now
+                   AND ROW(parent.environment,parent.principal,parent.application)=ROW($4,$5,$6)
+                   AND c.outcome IN ('pending','running') AND agent.spec->>'domain'='agent'
+                   AND agent.status IN ('queued','running','preparing')
+                   AND ROW(agent.environment,agent.principal,agent.application)
+                     =ROW(parent.environment,parent.principal,parent.application)
+                   AND NOT EXISTS(SELECT 1 FROM moria.runtime_execution_cancellations cancel
+                     WHERE cancel.execution IN (parent.id,agent.id))",
+                &[
+                    &session.session_hash(),
+                    &case,
+                    &child,
+                    &session.environment(),
+                    &session.principal(),
+                    &session.application(),
+                ],
+            )
+            .await?;
+        Ok(row.is_some_and(|row| row.get::<_, i32>(0) == 0))
+    }
     /// A controller can wait for its exact child without inspecting an unfinished
     /// callback. Terminal data still passes the ordinary retained release gate.
     pub(crate) async fn evaluation_progress(

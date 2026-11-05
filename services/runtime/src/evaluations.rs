@@ -1171,15 +1171,29 @@ impl NativeEvaluations {
             tx.execute("UPDATE moria.runtime_evaluation_cases SET agent_execution=$2,outcome='running' WHERE execution=$1 AND outcome IN ('pending','running')",&[&lease.execution,&agent_id]).await?;
             tx.commit().await?;
         }
+        let mut next_progress = Instant::now();
         let agent = loop {
-            if let Some(result) = self
-                .agents
-                .evaluation_progress(&session, lease.execution, agent_id)
-                .await?
+            if Instant::now() >= next_progress
+                || !self
+                    .agents
+                    .evaluation_child_pending(&session, lease.execution, agent_id)
+                    .await?
             {
-                break result;
+                if let Some(result) = self
+                    .agents
+                    .evaluation_progress(&session, lease.execution, agent_id)
+                    .await?
+                {
+                    break result;
+                }
+                next_progress = Instant::now() + Duration::from_millis(500);
             }
-            tokio::time::sleep(Duration::from_millis(100)).await;
+            tokio::time::sleep(
+                next_progress
+                    .saturating_duration_since(Instant::now())
+                    .min(Duration::from_millis(100)),
+            )
+            .await;
         };
         let client = self.db.get().await?;
         let row=client.query_one("SELECT c.*,r.definition,r.release,e.resource,e.deadline::text FROM moria.runtime_evaluation_cases c JOIN moria.runtime_evaluations r ON r.execution=c.evaluation JOIN moria.runtime_executions e ON e.id=c.execution WHERE c.execution=$1",&[&lease.execution]).await?;
