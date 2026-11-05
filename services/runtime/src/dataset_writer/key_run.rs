@@ -1,0 +1,758 @@
+//! Sorted bounded native key runs. The enclosing qualified index supplies snapshot authority.
+use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
+const MAGIC: &[u8; 8] = b"MORIAKR2";
+const LIMIT: usize = 16 * 1024 * 1024;
+const KEY_LIMIT: usize = 4 * 1024 * 1024;
+const RECORD_LIMIT: usize = 65536;
+const DECODED_LIMIT: usize = 64 * 1024 * 1024;
+const NAME_LIMIT: usize = 4096;
+const BLOCK_RECORDS: u64 = 64;
+const BLOCK_BYTES: u64 = 64 * 1024;
+const POINT_BLOCK_LIMIT: usize = 8;
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RunKind {
+    Hashes,
+    Locations,
+}
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Locator {
+    pub file: String,
+    pub row: u64,
+    pub data_sequence: u64,
+    pub row_hash: [u8; 32],
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RunValue {
+    Deleted,
+    Hash([u8; 32]),
+    Location(Locator),
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RunEntry {
+    pub key: Vec<u8>,
+    pub value: RunValue,
+}
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PartitionSlice {
+    pub partition: u8,
+    pub start: u64,
+    pub end: u64,
+    pub entries: u64,
+}
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BlockSlice {
+    pub partition: u8,
+    pub start: u64,
+    pub end: u64,
+    pub entries: u64,
+    pub minimum: [u8; 32],
+    pub maximum: [u8; 32],
+}
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RunDescriptor {
+    pub version: u32,
+    pub kind: RunKind,
+    pub key_schema_hash: String,
+    pub sequence: u64,
+    pub entries: u64,
+    pub size: u64,
+    pub partitions: Vec<PartitionSlice>,
+    pub blocks: Vec<BlockSlice>,
+}
+pub fn key_route(key: &[u8]) -> [u8; 32] {
+    Sha256::digest(key).into()
+}
+fn partition(key: &[u8]) -> u8 {
+    key_route(key)[0]
+}
+pub(crate) fn compare_keys(a: &[u8], b: &[u8]) -> std::cmp::Ordering {
+    key_route(a).cmp(&key_route(b)).then_with(|| a.cmp(b))
+}
+fn valid_hash(value: &str) -> bool {
+    value.len() == 71
+        && value.starts_with("sha256:")
+        && value[7..]
+            .bytes()
+            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+}
+fn append(out: &mut Vec<u8>, data: &[u8]) -> Result<()> {
+    ensure!(
+        out.len()
+            .checked_add(data.len())
+            .is_some_and(|size| size <= LIMIT),
+        "RESOURCE_LIMIT"
+    );
+    out.extend_from_slice(data);
+    Ok(())
+}
+/// Input must already be spill-sorted by (SHA256 routing bytes,full encoded key); hash collisions compare complete keys. Every call and whole run are bounded.
+pub struct RunWriter {
+    descriptor: RunDescriptor,
+    bytes: Vec<u8>,
+    previous: Option<Vec<u8>>,
+    failed: bool,
+}
+impl RunWriter {
+    pub fn new(kind: RunKind, key_schema_hash: &str, sequence: u64) -> Result<Self> {
+        ensure!(
+            valid_hash(key_schema_hash) && sequence <= 9_007_199_254_740_991,
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        Ok(Self {
+            descriptor: RunDescriptor {
+                version: 2,
+                kind,
+                key_schema_hash: key_schema_hash.into(),
+                sequence,
+                entries: 0,
+                size: 0,
+                partitions: vec![],
+                blocks: vec![],
+            },
+            bytes: MAGIC.to_vec(),
+            previous: None,
+            failed: false,
+        })
+    }
+    pub fn would_fit(&self, entry: &RunEntry) -> bool {
+        let extra = 4usize.checked_add(entry.key.len()).and_then(|n| {
+            n.checked_add(match &entry.value {
+                RunValue::Deleted => 1,
+                RunValue::Hash(_) => 33,
+                RunValue::Location(value) => 57 + value.file.len(),
+            })
+        });
+        !self.failed
+            && self.descriptor.entries < RECORD_LIMIT as u64
+            && extra
+                .and_then(|extra| self.bytes.len().checked_add(extra))
+                .is_some_and(|n| n <= LIMIT)
+    }
+    pub fn push(&mut self, entry: &RunEntry) -> Result<()> {
+        ensure!(!self.failed, "WRITER_FAILED");
+        self.failed = true;
+        self.push_checked(entry)?;
+        self.failed = false;
+        Ok(())
+    }
+    fn push_checked(&mut self, entry: &RunEntry) -> Result<()> {
+        ensure!(
+            self.descriptor.entries < (RECORD_LIMIT as u64),
+            "RESOURCE_LIMIT"
+        );
+        ensure!(
+            !entry.key.is_empty() && entry.key.len() <= KEY_LIMIT,
+            "DATASET_PRIMARY_KEY_LIMIT"
+        );
+        let bucket = partition(&entry.key);
+        ensure!(
+            self.previous
+                .as_ref()
+                .is_none_or(|key| compare_keys(key, &entry.key).is_lt()),
+            "DATASET_PRIMARY_KEY_DUPLICATE"
+        );
+        let start = self.bytes.len() as u64;
+        append(&mut self.bytes, &(entry.key.len() as u32).to_le_bytes())?;
+        append(&mut self.bytes, &entry.key)?;
+        match (&self.descriptor.kind, &entry.value) {
+            (_, RunValue::Deleted) => append(&mut self.bytes, &[0])?,
+            (RunKind::Hashes, RunValue::Hash(hash)) => {
+                append(&mut self.bytes, &[1])?;
+                append(&mut self.bytes, hash)?;
+            }
+            (RunKind::Locations, RunValue::Location(value)) => {
+                ensure!(
+                    !value.file.is_empty()
+                        && value.file.len() <= NAME_LIMIT
+                        && value.file.starts_with("moria://")
+                        && value.row <= 9_007_199_254_740_991
+                        && value.data_sequence <= 9_007_199_254_740_991,
+                    "DATASET_KEY_INDEX_INVALID"
+                );
+                append(&mut self.bytes, &[2])?;
+                append(&mut self.bytes, &(value.file.len() as u32).to_le_bytes())?;
+                append(&mut self.bytes, value.file.as_bytes())?;
+                append(&mut self.bytes, &value.row.to_le_bytes())?;
+                append(&mut self.bytes, &value.data_sequence.to_le_bytes())?;
+                append(&mut self.bytes, &value.row_hash)?;
+            }
+            _ => anyhow::bail!("DATASET_KEY_INDEX_INVALID"),
+        }
+        let end = self.bytes.len() as u64;
+        if self
+            .descriptor
+            .partitions
+            .last()
+            .is_none_or(|slice| slice.partition != bucket)
+        {
+            self.descriptor.partitions.push(PartitionSlice {
+                partition: bucket,
+                start,
+                end,
+                entries: 1,
+            });
+        } else {
+            let slice = self.descriptor.partitions.last_mut().unwrap();
+            slice.end = end;
+            slice.entries += 1;
+        }
+        let digest = key_route(&entry.key);
+        let record_bytes = end - start;
+        if self.descriptor.blocks.last().is_none_or(|block| {
+            block.partition != bucket
+                || block.entries >= BLOCK_RECORDS
+                || end - block.start > BLOCK_BYTES
+        }) {
+            self.descriptor.blocks.push(BlockSlice {
+                partition: bucket,
+                start,
+                end,
+                entries: 1,
+                minimum: digest,
+                maximum: digest,
+            });
+        } else {
+            let block = self.descriptor.blocks.last_mut().unwrap();
+            block.end = end;
+            block.entries += 1;
+            block.maximum = digest;
+        }
+        ensure!(
+            record_bytes <= KEY_LIMIT as u64 + NAME_LIMIT as u64 + 64,
+            "RESOURCE_LIMIT"
+        );
+        self.descriptor.entries += 1;
+        self.previous = Some(entry.key.clone());
+        Ok(())
+    }
+    pub fn finish(mut self) -> Result<(RunDescriptor, Vec<u8>)> {
+        ensure!(
+            !self.failed && self.descriptor.entries > 0,
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        self.descriptor.size = self.bytes.len() as u64;
+        validate_descriptor(&self.descriptor)?;
+        Ok((self.descriptor, self.bytes))
+    }
+}
+fn take<'a>(bytes: &'a [u8], offset: &mut usize, count: usize) -> Result<&'a [u8]> {
+    let end = offset
+        .checked_add(count)
+        .filter(|end| *end <= bytes.len())
+        .ok_or_else(|| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?;
+    let result = &bytes[*offset..end];
+    *offset = end;
+    Ok(result)
+}
+fn integer(bytes: &[u8], offset: &mut usize) -> Result<u32> {
+    Ok(u32::from_le_bytes(take(bytes, offset, 4)?.try_into()?))
+}
+fn long(bytes: &[u8], offset: &mut usize) -> Result<u64> {
+    let value = u64::from_le_bytes(take(bytes, offset, 8)?.try_into()?);
+    ensure!(value <= 9_007_199_254_740_991, "DATASET_KEY_INDEX_INVALID");
+    Ok(value)
+}
+fn validate_descriptor(descriptor: &RunDescriptor) -> Result<()> {
+    ensure!(
+        descriptor.version == 2
+            && valid_hash(&descriptor.key_schema_hash)
+            && descriptor.sequence <= 9_007_199_254_740_991
+            && descriptor.entries > 0
+            && descriptor.entries <= RECORD_LIMIT as u64
+            && descriptor.size <= LIMIT as u64
+            && !descriptor.partitions.is_empty()
+            && descriptor.partitions.len() <= 256,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    let mut offset = MAGIC.len() as u64;
+    let mut previous = None;
+    let mut count = 0u64;
+    for slice in &descriptor.partitions {
+        ensure!(
+            previous.is_none_or(|value| value < slice.partition)
+                && slice.start == offset
+                && slice.start < slice.end
+                && slice.end <= descriptor.size
+                && slice.entries > 0,
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        count = count
+            .checked_add(slice.entries)
+            .filter(|count| *count <= descriptor.entries)
+            .ok_or_else(|| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?;
+        previous = Some(slice.partition);
+        offset = slice.end;
+    }
+    ensure!(
+        offset == descriptor.size && count == descriptor.entries,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    ensure!(
+        !descriptor.blocks.is_empty() && descriptor.blocks.len() <= RECORD_LIMIT,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    let mut block_index = 0;
+    for slice in &descriptor.partitions {
+        let mut offset = slice.start;
+        let mut entries = 0u64;
+        let mut previous = None;
+        while let Some(block) = descriptor
+            .blocks
+            .get(block_index)
+            .filter(|block| block.partition == slice.partition)
+        {
+            ensure!(
+                block.start == offset
+                    && block.end > block.start
+                    && block.end <= slice.end
+                    && block.entries > 0
+                    && block.entries <= BLOCK_RECORDS
+                    && block.minimum[0] == slice.partition
+                    && block.maximum[0] == slice.partition
+                    && block.minimum <= block.maximum
+                    && previous.is_none_or(|hash| hash <= block.minimum)
+                    && (block.end - block.start <= BLOCK_BYTES || block.entries == 1)
+                    && block.end - block.start <= KEY_LIMIT as u64 + NAME_LIMIT as u64 + 64,
+                "DATASET_KEY_INDEX_INVALID"
+            );
+            entries = entries
+                .checked_add(block.entries)
+                .filter(|n| *n <= slice.entries)
+                .ok_or_else(|| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?;
+            offset = block.end;
+            previous = Some(block.maximum);
+            block_index += 1;
+        }
+        ensure!(
+            offset == slice.end && entries == slice.entries,
+            "DATASET_KEY_INDEX_INVALID"
+        );
+    }
+    ensure!(
+        block_index == descriptor.blocks.len(),
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    Ok(())
+}
+pub fn validate_header(descriptor: &RunDescriptor, header: &[u8], actual_size: u64) -> Result<()> {
+    validate_descriptor(descriptor)?;
+    ensure!(
+        header == MAGIC && actual_size == descriptor.size,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    Ok(())
+}
+pub fn allocation_bound(slice: &PartitionSlice) -> Result<usize> {
+    let records = usize::try_from(slice.entries)?;
+    let wire = usize::try_from(
+        slice
+            .end
+            .checked_sub(slice.start)
+            .ok_or_else(|| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?,
+    )?;
+    records
+        .checked_mul(std::mem::size_of::<RunEntry>())
+        .and_then(|bytes| bytes.checked_mul(2))
+        .and_then(|bytes| wire.checked_mul(2).and_then(|wire| bytes.checked_add(wire)))
+        .filter(|bytes| *bytes <= DECODED_LIMIT)
+        .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))
+}
+/// A receiver reads a single authenticated partition slice, never the whole historical run set in memory.
+pub fn decode_partition(
+    descriptor: &RunDescriptor,
+    slice: &PartitionSlice,
+    bytes: &[u8],
+) -> Result<Vec<RunEntry>> {
+    validate_descriptor(descriptor)?;
+    allocation_bound(slice)?;
+    ensure!(
+        descriptor.version == 2
+            && valid_hash(&descriptor.key_schema_hash)
+            && descriptor.sequence <= 9_007_199_254_740_991
+            && slice.start >= MAGIC.len() as u64
+            && slice.start < slice.end
+            && slice.end <= LIMIT as u64
+            && slice.end - slice.start == bytes.len() as u64
+            && slice.entries > 0
+            && slice.entries <= RECORD_LIMIT as u64
+            && descriptor
+                .partitions
+                .iter()
+                .any(|accepted| accepted == slice),
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    // Encoded minimum record length bounds output allocation before decoding untrusted counts.
+    ensure!(
+        slice.entries <= bytes.len() as u64 / 6,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    let mut output = Vec::new();
+    let mut offset = 0;
+    for _ in 0..slice.entries {
+        let length = integer(bytes, &mut offset)? as usize;
+        ensure!(
+            (1..=KEY_LIMIT).contains(&length),
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        let key = take(bytes, &mut offset, length)?.to_vec();
+        ensure!(
+            partition(&key) == slice.partition
+                && output
+                    .last()
+                    .is_none_or(|entry: &RunEntry| compare_keys(&entry.key, &key).is_lt()),
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        let operation = take(bytes, &mut offset, 1)?[0];
+        let value = match (operation, descriptor.kind) {
+            (0, _) => RunValue::Deleted,
+            (1, RunKind::Hashes) => RunValue::Hash(take(bytes, &mut offset, 32)?.try_into()?),
+            (2, RunKind::Locations) => {
+                let length = integer(bytes, &mut offset)? as usize;
+                ensure!(
+                    (1..=NAME_LIMIT).contains(&length),
+                    "DATASET_KEY_INDEX_INVALID"
+                );
+                let file = std::str::from_utf8(take(bytes, &mut offset, length)?)?.to_owned();
+                ensure!(file.starts_with("moria://"), "DATASET_KEY_INDEX_INVALID");
+                let row = long(bytes, &mut offset)?;
+                let data_sequence = long(bytes, &mut offset)?;
+                let row_hash = take(bytes, &mut offset, 32)?.try_into()?;
+                RunValue::Location(Locator {
+                    file,
+                    row,
+                    data_sequence,
+                    row_hash,
+                })
+            }
+            _ => anyhow::bail!("DATASET_KEY_INDEX_INVALID"),
+        };
+        output.push(RunEntry { key, value });
+    }
+    ensure!(offset == bytes.len(), "DATASET_KEY_INDEX_INVALID");
+    Ok(output)
+}
+/// Merge already bounded sorted partition slices newest-first. Equal sequence runs are invalid;
+/// compaction emits the same exact visible mapping, with no implicit last-row wins inside a run.
+pub fn merge_partition(
+    kind: RunKind,
+    bucket: u8,
+    runs: &[(u64, Vec<RunEntry>)],
+    maximum_entries: usize,
+) -> Result<Vec<RunEntry>> {
+    ensure!(
+        !runs.is_empty() && runs.len() <= 8 && maximum_entries <= RECORD_LIMIT,
+        "RESOURCE_LIMIT"
+    );
+    let mut previous = None;
+    let mut visible = BTreeMap::new();
+    let mut key_bytes = 0usize;
+    let total = runs
+        .iter()
+        .flat_map(|(_, entries)| entries)
+        .try_fold(0usize, |total, entry| {
+            total
+                .checked_add(std::mem::size_of::<RunEntry>())
+                .and_then(|total| total.checked_add(entry.key.len()))
+                .and_then(|total| {
+                    total.checked_add(match &entry.value {
+                        RunValue::Location(value) => value.file.len(),
+                        _ => 0,
+                    })
+                })
+                .filter(|total| *total <= DECODED_LIMIT)
+                .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))
+        })?;
+    ensure!(total <= DECODED_LIMIT, "RESOURCE_LIMIT");
+    for (sequence, entries) in runs {
+        ensure!(
+            previous.is_none_or(|previous| previous > *sequence),
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        previous = Some(*sequence);
+        let mut previous_key: Option<&[u8]> = None;
+        for entry in entries {
+            ensure!(
+                !entry.key.is_empty()
+                    && entry.key.len() <= KEY_LIMIT
+                    && partition(&entry.key) == bucket
+                    && matches!(
+                        (kind, &entry.value),
+                        (_, RunValue::Deleted)
+                            | (RunKind::Hashes, RunValue::Hash(_))
+                            | (RunKind::Locations, RunValue::Location(_))
+                    ),
+                "DATASET_KEY_INDEX_INVALID"
+            );
+            ensure!(
+                previous_key.is_none_or(|key| compare_keys(key, &entry.key).is_lt()),
+                "DATASET_KEY_INDEX_INVALID"
+            );
+            previous_key = Some(&entry.key);
+            if !visible.contains_key(&entry.key) {
+                key_bytes = key_bytes
+                    .checked_add(entry.key.len())
+                    .filter(|bytes| *bytes <= LIMIT)
+                    .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))?;
+                ensure!(visible.len() < maximum_entries, "RESOURCE_LIMIT");
+                visible.insert(entry.key.clone(), entry.value.clone());
+            }
+        }
+    }
+    let mut output = visible
+        .into_iter()
+        .filter_map(|(key, value)| {
+            if value == RunValue::Deleted {
+                None
+            } else {
+                Some(RunEntry { key, value })
+            }
+        })
+        .collect::<Vec<_>>();
+    output.sort_by(|a, b| compare_keys(&a.key, &b.key));
+    Ok(output)
+}
+/// Sparse bounds are trusted only after the enclosing receiver verifies the complete run descriptor.
+/// Matching hash collisions remain bounded and every candidate compares complete key bytes.
+pub fn point_blocks<'a>(descriptor: &'a RunDescriptor, key: &[u8]) -> Result<Vec<&'a BlockSlice>> {
+    validate_descriptor(descriptor)?;
+    ensure!(
+        !key.is_empty() && key.len() <= KEY_LIMIT,
+        "DATASET_PRIMARY_KEY_LIMIT"
+    );
+    let digest = key_route(key);
+    let blocks = descriptor
+        .blocks
+        .iter()
+        .filter(|block| {
+            block.partition == digest[0] && block.minimum <= digest && digest <= block.maximum
+        })
+        .collect::<Vec<_>>();
+    ensure!(blocks.len() <= POINT_BLOCK_LIMIT, "RESOURCE_LIMIT");
+    Ok(blocks)
+}
+pub fn decode_block(
+    descriptor: &RunDescriptor,
+    block: &BlockSlice,
+    bytes: &[u8],
+) -> Result<Vec<RunEntry>> {
+    validate_descriptor(descriptor)?;
+    ensure!(
+        descriptor.blocks.contains(block) && bytes.len() as u64 == block.end - block.start,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    // Reuse the same strict codec with a bounded descriptor for this exact block.
+    let mut bounded = descriptor.clone();
+    bounded.entries = block.entries;
+    bounded.size = 8 + bytes.len() as u64;
+    let mut block = block.clone();
+    block.start = 8;
+    block.end = bounded.size;
+    bounded.partitions = vec![PartitionSlice {
+        partition: block.partition,
+        start: block.start,
+        end: block.end,
+        entries: block.entries,
+    }];
+    bounded.blocks = vec![block.clone()];
+    let rows = decode_partition(&bounded, &bounded.partitions[0], bytes)?;
+    ensure!(
+        rows.first()
+            .is_some_and(|row| key_route(&row.key) == block.minimum)
+            && rows
+                .last()
+                .is_some_and(|row| key_route(&row.key) == block.maximum),
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    Ok(rows)
+}
+/// Receiver bootstrap/compaction independently verifies every byte interval and sparse fence.
+/// This pure codec proof alone never grants Dataset membership or publication authority.
+pub fn verify_complete_run(descriptor: &RunDescriptor, bytes: &[u8]) -> Result<()> {
+    validate_header(
+        descriptor,
+        bytes
+            .get(..8)
+            .ok_or_else(|| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?,
+        bytes.len() as u64,
+    )?;
+    let mut previous: Option<Vec<u8>> = None;
+    for block in &descriptor.blocks {
+        for entry in decode_block(
+            descriptor,
+            block,
+            &bytes[block.start as usize..block.end as usize],
+        )? {
+            ensure!(
+                previous
+                    .as_ref()
+                    .is_none_or(|key| compare_keys(key, &entry.key).is_lt()),
+                "DATASET_KEY_INDEX_INVALID"
+            );
+            previous = Some(entry.key);
+        }
+    }
+    Ok(())
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn packed_partition_runs_roundtrip_and_delete_visibility() {
+        let mut entries = (0u64..1000)
+            .map(|i| RunEntry {
+                key: format!("key-{i:06}").into_bytes(),
+                value: RunValue::Hash(Sha256::digest(i.to_le_bytes()).into()),
+            })
+            .collect::<Vec<_>>();
+        entries.sort_by(|a, b| compare_keys(&a.key, &b.key));
+        let mut writer =
+            RunWriter::new(RunKind::Hashes, &format!("sha256:{}", "a".repeat(64)), 7).unwrap();
+        for entry in &entries {
+            writer.push(entry).unwrap();
+        }
+        let (descriptor, bytes) = writer.finish().unwrap();
+        assert_eq!(&bytes[..8], MAGIC);
+        verify_complete_run(&descriptor, &bytes).unwrap();
+        let mut actual = vec![];
+        for slice in &descriptor.partitions {
+            actual.extend(
+                decode_partition(
+                    &descriptor,
+                    slice,
+                    &bytes[slice.start as usize..slice.end as usize],
+                )
+                .unwrap(),
+            );
+        }
+        assert_eq!(actual, entries);
+        let key = b"key".to_vec();
+        assert!(
+            merge_partition(
+                RunKind::Hashes,
+                partition(&key),
+                &[
+                    (
+                        8,
+                        vec![RunEntry {
+                            key: key.clone(),
+                            value: RunValue::Deleted
+                        }]
+                    ),
+                    (
+                        7,
+                        vec![RunEntry {
+                            key: key.clone(),
+                            value: RunValue::Hash([1; 32])
+                        }]
+                    )
+                ],
+                10
+            )
+            .unwrap()
+            .is_empty()
+        );
+        assert_eq!(
+            merge_partition(
+                RunKind::Hashes,
+                partition(&key),
+                &[
+                    (
+                        9,
+                        vec![RunEntry {
+                            key: key.clone(),
+                            value: RunValue::Hash([2; 32])
+                        }]
+                    ),
+                    (
+                        8,
+                        vec![RunEntry {
+                            key,
+                            value: RunValue::Deleted
+                        }]
+                    )
+                ],
+                10
+            )
+            .unwrap()[0]
+                .value,
+            RunValue::Hash([2; 32])
+        );
+    }
+    #[test]
+    fn duplicates_malformed_counts_and_unknown_operations_rejected() {
+        let hash = format!("sha256:{}", "a".repeat(64));
+        let entry = RunEntry {
+            key: b"one".to_vec(),
+            value: RunValue::Hash([0; 32]),
+        };
+        let mut writer = RunWriter::new(RunKind::Hashes, &hash, 1).unwrap();
+        writer.push(&entry).unwrap();
+        assert!(writer.push(&entry).is_err());
+        assert!(writer.finish().is_err());
+        let mut writer = RunWriter::new(RunKind::Hashes, &hash, 1).unwrap();
+        writer.push(&entry).unwrap();
+        let (descriptor, bytes) = writer.finish().unwrap();
+        let slice = &descriptor.partitions[0];
+        let mut body = bytes[slice.start as usize..slice.end as usize].to_vec();
+        body[4 + entry.key.len()] = 99;
+        assert!(decode_partition(&descriptor, slice, &body).is_err());
+        let mut wrong = descriptor.clone();
+        wrong.partitions[0].entries = u64::MAX;
+        assert!(decode_partition(&wrong, &wrong.partitions[0], &body).is_err());
+        assert!(
+            merge_partition(
+                RunKind::Hashes,
+                partition(&entry.key),
+                &[(1, vec![entry.clone()]), (1, vec![entry])],
+                10
+            )
+            .is_err()
+        );
+    }
+    #[test]
+    fn sparse_point_fences_bound_reads_and_reject_omitted_or_shifted_ranges() {
+        let mut rows = (0..50000u64)
+            .map(|i| RunEntry {
+                key: i.to_be_bytes().to_vec(),
+                value: RunValue::Hash([7; 32]),
+            })
+            .collect::<Vec<_>>();
+        rows.sort_by(|a, b| compare_keys(&a.key, &b.key));
+        let mut writer =
+            RunWriter::new(RunKind::Hashes, &format!("sha256:{}", "b".repeat(64)), 3).unwrap();
+        for row in &rows {
+            writer.push(row).unwrap();
+        }
+        let (descriptor, bytes) = writer.finish().unwrap();
+        verify_complete_run(&descriptor, &bytes).unwrap();
+        let wanted = &rows[24001];
+        let blocks = point_blocks(&descriptor, &wanted.key).unwrap();
+        assert_eq!(blocks.len(), 1);
+        assert!(blocks[0].end - blocks[0].start <= BLOCK_BYTES);
+        let decoded = decode_block(
+            &descriptor,
+            blocks[0],
+            &bytes[blocks[0].start as usize..blocks[0].end as usize],
+        )
+        .unwrap();
+        assert!(decoded.iter().any(|row| row == wanted));
+        assert!(decoded.len() <= 64);
+        let mut wrong = descriptor.clone();
+        wrong.blocks.remove(0);
+        assert!(verify_complete_run(&wrong, &bytes).is_err());
+        let mut wrong = descriptor.clone();
+        wrong.blocks[0].minimum = wrong.blocks[0].maximum;
+        assert!(verify_complete_run(&wrong, &bytes).is_err());
+        let mut wrong = descriptor.clone();
+        wrong.blocks[0].end -= 1;
+        assert!(verify_complete_run(&wrong, &bytes).is_err());
+    }
+}

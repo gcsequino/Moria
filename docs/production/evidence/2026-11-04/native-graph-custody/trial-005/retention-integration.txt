@@ -1,0 +1,40 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-retention.integration.test.ts
+Running 1 integration test files.
+✖ graph custody survives exact sidecar collection and independent clean-host recovery (53288.70828ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53763.086686
+
+✖ failing tests:
+
+test at tests/native-dataset-graph-retention.integration.test.ts:1:421
+✖ graph custody survives exact sidecar collection and independent clean-host recovery (53288.70828ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (159) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:
+  called `Result::unwrap()` on an `Err` value: native graph bootstrap
+  
+  Caused by:
+      0: db error
+      1: ERROR: DATASET_GRAPH_ANCESTRY_REQUIRED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... FAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 5.93s\n\n',
+    stderr: "\nthread 'catalog_publication' (159) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:\ncalled `Result::unwrap()` on an `Err` value: native graph bootstrap\n\nCaused by:\n    0: db error\n    1: ERROR: DATASET_GRAPH_ANCESTRY_REQUIRED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+[ELIFECYCLE] Command failed with exit code 1.

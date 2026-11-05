@@ -1,4 +1,5 @@
 //! Clean-host custody is rooted in an operator-verified manifest, never the restored database.
+mod graph;
 use super::*;
 use crate::canonical::fingerprint;
 use crate::recovery::{METADATA_PART_BYTES, MetadataArchive, MetadataPage};
@@ -768,11 +769,23 @@ impl RecoveredContentProof {
                         version.size == member.source.size,
                         "RECOVERY_CONTENT_MISMATCH"
                     );
-                    values.push(json!({"content":member.source,"physicalVersion":version,"physicalFingerprint":target.physical}));
+                    let source = self
+                        .namespaces
+                        .iter()
+                        .find(|namespace| {
+                            namespace.source.warehouse_id == object.warehouse_id
+                                && namespace.source.table_id == object.table_id
+                                && namespace.kind == "dataset"
+                        })
+                        .ok_or_else(|| anyhow::anyhow!("RECOVERY_TARGET_REQUIRED"))?;
+                    values.push(json!({"content":member.source,"physicalVersion":version,"physicalFingerprint":target.physical,"sourcePhysicalFingerprint":source.source_physical_fingerprint}));
                 }
             }
             if !values.is_empty() {
-                client.execute("INSERT INTO moria.runtime_dataset_qualified_members(root,physical_fingerprint,incarnation,warehouse_id,table_id,object_id,content,physical_version) SELECT m.root,q.physical_fingerprint,q.incarnation,m.warehouse_id,m.table_id,m.object_id,m.content,v->'physicalVersion' FROM jsonb_array_elements($1) v JOIN moria.runtime_dataset_root_members m ON m.warehouse_id=v->'content'->'object'->>'warehouseId' AND m.table_id=v->'content'->'object'->>'tableId' AND m.object_id=v->'content'->'object'->>'objectId' AND m.content=v->'content' JOIN moria.runtime_dataset_root_qualifications q ON q.root=m.root AND q.restore=$2 AND q.incarnation=$3 AND q.physical_fingerprint=v->>'physicalFingerprint' ON CONFLICT DO NOTHING",&[&Value::Array(values),&restore,&incarnation]).await?;
+                let values = Value::Array(values);
+                self.qualify_graph_nodes_in(client, restore, incarnation, previous, &values)
+                    .await?;
+                client.execute("INSERT INTO moria.runtime_dataset_qualified_members(root,physical_fingerprint,incarnation,warehouse_id,table_id,object_id,content,physical_version) SELECT m.root,q.physical_fingerprint,q.incarnation,m.warehouse_id,m.table_id,m.object_id,m.content,v->'physicalVersion' FROM jsonb_array_elements($1) v JOIN moria.runtime_dataset_root_members m ON m.warehouse_id=v->'content'->'object'->>'warehouseId' AND m.table_id=v->'content'->'object'->>'tableId' AND m.object_id=v->'content'->'object'->>'objectId' AND m.content=v->'content' JOIN moria.runtime_dataset_root_qualifications q ON q.root=m.root AND q.restore=$2 AND q.incarnation=$3 AND q.physical_fingerprint=v->>'physicalFingerprint' ON CONFLICT DO NOTHING",&[&values,&restore,&incarnation]).await?;
             }
             let object = &members.last().unwrap().0.source.object;
             after = Some((
@@ -785,6 +798,8 @@ impl RecoveredContentProof {
         ensure!(!client.query_one("SELECT EXISTS(SELECT 1 FROM moria.runtime_dataset_root_qualifications q JOIN moria.runtime_dataset_roots r ON r.key=q.root JOIN moria.snapshot_history h ON h.metadata_location=r.metadata_location WHERE q.restore=$1 AND q.incarnation=$2 AND NOT q.sealed)",&[&restore,&incarnation]).await?.get::<_,bool>(0),"RECOVERY_CONTENT_MISMATCH");
         ensure!(!client.query_one("SELECT EXISTS(SELECT 1 FROM moria.runtime_dataset_qualified_members m JOIN moria.runtime_dataset_root_qualifications q USING(root,physical_fingerprint,incarnation) JOIN moria.runtime_dataset_issued_objects o ON o.physical_fingerprint=m.physical_fingerprint AND o.warehouse_id=m.warehouse_id AND o.table_id=m.table_id AND o.object_id=m.object_id WHERE q.restore=$1 AND q.incarnation=$2 AND q.sealed AND o.producer<>q.producer) OR EXISTS(SELECT 1 FROM moria.runtime_dataset_qualified_members m JOIN moria.runtime_dataset_root_qualifications q USING(root,physical_fingerprint,incarnation) JOIN moria.runtime_dataset_gc_candidates c ON c.physical_fingerprint=m.physical_fingerprint AND c.warehouse_id=m.warehouse_id AND c.table_id=m.table_id AND c.object_id=m.object_id WHERE q.restore=$1 AND q.incarnation=$2 AND q.sealed)",&[&restore,&incarnation]).await?.get::<_,bool>(0),"RECOVERY_TARGET_NOT_FRESH");
         client.execute("INSERT INTO moria.runtime_dataset_issued_objects(physical_fingerprint,warehouse_id,table_id,object_id,producer,expected_size,expected_sha256) SELECT DISTINCT m.physical_fingerprint,m.warehouse_id,m.table_id,m.object_id,q.producer,(m.content->>'size')::bigint,m.content->>'sha256' FROM moria.runtime_dataset_qualified_members m JOIN moria.runtime_dataset_root_qualifications q USING(root,physical_fingerprint,incarnation) WHERE q.restore=$1 AND q.incarnation=$2 AND q.sealed ON CONFLICT DO NOTHING",&[&restore,&incarnation]).await?;
+        self.qualify_graph_roots_in(client, restore, incarnation, previous)
+            .await?;
         self.custody.cancel.check()?;
         Ok(())
     }

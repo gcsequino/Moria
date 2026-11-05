@@ -245,6 +245,11 @@ pub(super) async fn plan(db: &Database, input: Plan) -> Result<Value> {
         .query_one("SELECT incarnation FROM moria.indexing_instance", &[])
         .await?
         .get(0);
+    tx.query_one(
+        "SELECT moria.runtime_dataset_graph_retire($1,$2,256)",
+        &[&input.policy, &incarnation],
+    )
+    .await?;
     let operation = Uuid::new_v4();
     let rows=tx.query("SELECT o.object_id,o.producer FROM moria.runtime_dataset_issued_objects o JOIN moria.runtime_dataset_producers p ON p.scope=o.producer WHERE o.physical_fingerprint=$1 AND o.warehouse_id=$2 AND o.table_id=$3 AND p.namespace=$4 AND p.incarnation=$5 AND ($6::text IS NULL OR o.object_id>$6) AND o.created_at+make_interval(secs=>$7::bigint::double precision)<=clock_timestamp() ORDER BY o.object_id LIMIT $8",&[&physical,&namespace.warehouse_id,&namespace.table_id,&serde_json::to_value(&namespace)?,&incarnation,&input.after,&state["retainSeconds"].as_str().unwrap().parse::<i64>()?,&(input.limit as i64)]).await?;
     let mut added = 0u64;
@@ -404,7 +409,7 @@ pub(super) async fn once(db: &Database, input: Once) -> Result<Value> {
             multipart_outcomes.push((upload_id, aborted));
         }
         // Prefer exact qualified versions already certified by immutable native roots, including overwritten versions.
-        let known=db.get().await?.query_opt("SELECT m.physical_version FROM moria.runtime_dataset_member_locations m JOIN moria.runtime_dataset_roots r ON r.key=m.root WHERE m.physical_fingerprint=$1 AND m.incarnation=(SELECT incarnation FROM moria.indexing_instance) AND r.reader_profile='iceberg-v2-cow-flat-bounded-v2' AND r.sealed AND m.warehouse_id=$2 AND m.table_id=$3 AND m.object_id=$4 AND m.content->>'size'=$5 AND m.content->>'sha256'=$6 AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_gc_versions v WHERE v.candidate=$7 AND v.version_key=encode(sha256(convert_to(m.physical_version::text,'UTF8')),'hex')) ORDER BY m.root LIMIT 1",&[&claim.physical,&claim.object.warehouse_id,&claim.object.table_id,&claim.object.object_id,&expected_size.to_string(),&expected_hash,&id]).await?;
+        let known=db.get().await?.query_opt("SELECT physical_version FROM(SELECT m.physical_version,m.root AS identity FROM moria.runtime_dataset_member_locations m JOIN moria.runtime_dataset_roots r ON r.key=m.root WHERE m.physical_fingerprint=$1 AND m.incarnation=(SELECT incarnation FROM moria.indexing_instance) AND r.reader_profile='iceberg-v2-cow-flat-bounded-v2' AND r.sealed AND m.warehouse_id=$2 AND m.table_id=$3 AND m.object_id=$4 AND m.content->>'size'=$5 AND m.content->>'sha256'=$6 UNION ALL SELECT q.physical_version,n.id AS identity FROM moria.runtime_dataset_graph_qualifications q JOIN moria.runtime_dataset_graph_nodes n ON n.id=q.node WHERE q.physical_fingerprint=$1 AND q.incarnation=(SELECT incarnation FROM moria.indexing_instance) AND n.content->'object'->>'warehouseId'=$2 AND n.content->'object'->>'tableId'=$3 AND n.content->'object'->>'objectId'=$4 AND n.content->>'size'=$5 AND n.content->>'sha256'=$6) versions WHERE NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_gc_versions v WHERE v.candidate=$7 AND v.version_key=encode(sha256(convert_to(versions.physical_version::text,'UTF8')),'hex')) ORDER BY identity LIMIT 1",&[&claim.physical,&claim.object.warehouse_id,&claim.object.table_id,&claim.object.object_id,&expected_size.to_string(),&expected_hash,&id]).await?;
         let (version, certified) = if let Some(known) = known {
             (
                 Some(serde_json::from_value::<ObjectVersion>(known.get(0))?),

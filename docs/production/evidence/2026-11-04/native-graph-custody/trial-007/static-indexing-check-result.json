@@ -1,0 +1,19 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--cpus",
+    "2",
+    "--memory",
+    "4g",
+    "moria-test:mor-bootstrap-007-20261104",
+    "sh",
+    "-c",
+    "pnpm check:static && pnpm check:indexing"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 40.40174174308777
+}

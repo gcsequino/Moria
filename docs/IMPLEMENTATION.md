@@ -2874,7 +2874,6 @@ certification.
 
 Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed 3/3 native integration tests with zero skips (125.88s), including exact boundary scalar values, canonical composite duplicates, null-key rejection, preserved prior typed rows/head, and live-reader retained-history compaction. Evidence: `docs/production/evidence/2026-10-31/native-retention/dataset-composite-pk-v6-20261031T133255Z/`. Incremental MOR/qualified graph and Source delta publication remain under implementation and are not enabled by this checkpoint.
 
-
 Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.
 
 
@@ -2959,3 +2958,37 @@ Batch admission accepts an unordered implementation capability set containing
 unit build, static checks and runtime evidence are retained in
 `production/evidence/2026-11-04/connector-http-faults`. This remains functional
 replace/full qualification, with the remaining N09 scope recorded there.
+Native MOR primitives checkpoint (2026-11-04): the library now includes
+receiver-qualified graph traversal, authenticated bounded range reads,
+path-copy directories, packed key/locator runs, streamed merge, exact row
+selection and bounded verified-v2 bootstrap. `cargo check --locked --lib -j2`
+and all 91 library tests pass, with no ignored or filtered tests. An isolated
+PostgreSQL check applies the graph schema and rejects unissued read/reuse claims.
+The graph and Source delta schemas remain excluded from the installed baseline;
+v2 dispatch is unchanged. C04 publication, sidecar retention/clean-host recovery,
+sparse writer activation and Source delta publication remain unverified.
+See `production/NATIVE-MOR-PRIMITIVES.md` and
+`production/evidence/2026-11-04/native-mor-primitives/` for scope and results.
+
+Native graph custody checkpoint (2026-11-04): the fresh baseline now installs
+receiver-qualified graph custody. Real coordinator bootstrap preserves the
+published v2 head; backup includes every reachable graph content member at its
+exact provider version. Fresh isolated restore requalifies actual copied bytes
+under new physical versions and incarnation, reconstructs retained roots and
+bounded references, and preserves standard Iceberg typed readback. Graph GC
+protects pending propagation, respects unchanged grace, and drains committed
+retirements across a disabled-policy successor without changing their original
+physical/incarnation authority.
+
+Frozen trial008 passes static checks, all nine exact native artifacts, 91 native
+units and the full custody integration (1/1, zero skips/cancellations, 164.04s controller wall time),
+including real policy succession, busy propagation, conflicting version/reused
+target and missing backup-child failures with disabled dispatch. The predecessor
+SQL's policy-successor regression is reproduced red. Earlier trial005 separately
+passes typed/array key readback and warmed-cache authority revocation (2/2);
+these are not combined same-source results. Its 64-row positive has little
+margin under the unchanged 120-second root deadline. Failed trials are retained.
+C04 v3 publication, sparse writers, distributed projected-key bootstrap, Source
+delta publication, full independent gates and production capacity remain open.
+See `production/NATIVE-MOR-PRIMITIVES.md` and
+`production/evidence/2026-11-04/native-graph-custody/` for exact scope/results.

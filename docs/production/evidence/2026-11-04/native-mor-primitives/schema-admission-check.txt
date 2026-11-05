@@ -1,0 +1,1 @@
+{"event":"graph-schema-admission-check","applied":true,"unissuedReadDenied":true,"unissuedReuseDenied":true,"classification":"synthetic schema/admission check; no v3 publication qualification"}

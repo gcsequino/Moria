@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-retention.integration.test.ts
+Running 1 integration test files.
+✔ graph custody survives exact sidecar collection and independent clean-host recovery (149150.481541ms)
+ℹ {"heads":2,"allGraphBytesBackedUp":true,"sourceSidecarExactVersionRemoved":true,"orphanGracePreserved":true,"freshPhysicalQualification":true,"independentTypedGraphReadback":true,"successorPolicyDrainsOriginalWork":true,"pendingPropagationProtectsGraphObjects":true,"conflictingTargetVersionRejected":true,"reusedTargetRejected":true,"missingGraphBackupChildRejectedWithDispatchDisabled":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 149678.5122
