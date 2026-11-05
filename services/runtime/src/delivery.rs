@@ -489,30 +489,14 @@ impl DeliveryAuthority {
                 && !evidence.contains('\0'),
             "Invalid reconciliation evidence"
         );
-        let mut client = self.db.get().await?;
-        let tx = client.transaction().await?;
-        let row = tx
+        self.db
+            .get()
+            .await?
             .query_one(
-                "SELECT status,fence FROM moria.runtime_deliveries WHERE id=$1 FOR UPDATE",
-                &[&id],
+                "SELECT moria.runtime_delivery_reconcile($1,$2,$3,$4)",
+                &[&id, &expected, &resolution, &evidence],
             )
             .await?;
-        ensure!(
-            row.get::<_, String>(0) == "uncertain" && row.get::<_, i64>(1) == expected,
-            "Only the current uncertain delivery can be reconciled"
-        );
-        if resolution == "notDelivered" {
-            tx.query_one("SELECT moria.runtime_delivery_check($1)", &[&id])
-                .await?;
-        }
-        tx.execute("INSERT INTO moria.runtime_delivery_reconciliations(delivery,expected_fence,resolution,evidence) VALUES($1,$2,$3,$4)", &[&id,&expected,&resolution,&evidence]).await?;
-        let state = if resolution == "delivered" {
-            "delivered"
-        } else {
-            "pending"
-        };
-        tx.execute("UPDATE moria.runtime_deliveries SET status=$2,cycle_attempts=0,sent_at=CASE WHEN $2='pending' THEN NULL ELSE sent_at END,available_at=clock_timestamp(),deadline=clock_timestamp()+interval '30 minutes',error=NULL,finished_at=CASE WHEN $2='delivered' THEN clock_timestamp() ELSE NULL END WHERE id=$1", &[&id,&state]).await?;
-        tx.commit().await?;
         Ok(())
     }
 }

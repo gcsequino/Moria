@@ -32,7 +32,8 @@ CREATE TABLE moria.runtime_delivery_attempts (
 CREATE TABLE moria.runtime_delivery_reconciliations (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, delivery uuid NOT NULL REFERENCES moria.runtime_deliveries(id),
   expected_fence bigint NOT NULL, resolution text NOT NULL CHECK(resolution IN ('delivered','notDelivered')),
-  evidence text NOT NULL CHECK(octet_length(evidence) BETWEEN 1 AND 1024), created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+  evidence text NOT NULL CHECK(octet_length(evidence) BETWEEN 1 AND 1024), created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  UNIQUE(delivery,expected_fence)
 );
 
 CREATE FUNCTION moria.runtime_delivery_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -90,6 +91,58 @@ BEGIN
   SELECT * INTO d FROM moria.runtime_deliveries WHERE id=delivery_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'DELIVERY_UNKNOWN'; END IF;
   PERFORM moria.runtime_destination_check(d.destination,d.source_markings,dispatch);
+END $$;
+
+CREATE FUNCTION moria.runtime_delivery_reconciliation_history() RETURNS trigger LANGUAGE plpgsql
+  SECURITY DEFINER SET search_path=pg_catalog,moria,pg_temp AS $$
+BEGIN
+  PERFORM moria.runtime_recovery_operator();
+  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'IMMUTABLE_DELIVERY_RECONCILIATION'; END IF;
+  PERFORM 1 FROM moria.runtime_deliveries WHERE id=NEW.delivery AND status='uncertain'
+    AND fence=NEW.expected_fence FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'DELIVERY_RECONCILIATION_STALE'; END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION moria.runtime_delivery_reconciliation_history() FROM PUBLIC;
+CREATE TRIGGER runtime_delivery_reconciliation_history BEFORE INSERT OR UPDATE OR DELETE
+  ON moria.runtime_delivery_reconciliations FOR EACH ROW EXECUTE FUNCTION moria.runtime_delivery_reconciliation_history();
+CREATE TRIGGER runtime_delivery_reconciliation_truncate BEFORE TRUNCATE
+  ON moria.runtime_delivery_reconciliations FOR EACH STATEMENT EXECUTE FUNCTION moria.runtime_delivery_reconciliation_history();
+
+CREATE FUNCTION moria.runtime_delivery_uncertain_transition() RETURNS trigger LANGUAGE plpgsql
+  SECURITY DEFINER SET search_path=pg_catalog,moria,pg_temp AS $$
+BEGIN
+  PERFORM moria.runtime_recovery_operator();
+  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'DELIVERY_RECONCILIATION_REQUIRED'; END IF;
+  IF NEW.fence<>OLD.fence OR NOT EXISTS(
+    SELECT 1 FROM moria.runtime_delivery_reconciliations r WHERE r.delivery=OLD.id AND r.expected_fence=OLD.fence
+      AND ((NEW.status='pending' AND r.resolution='notDelivered') OR (NEW.status='delivered' AND r.resolution='delivered'))
+  ) THEN RAISE EXCEPTION 'DELIVERY_RECONCILIATION_REQUIRED'; END IF;
+  IF NEW.status='pending' THEN PERFORM moria.runtime_delivery_check(NEW.id); END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION moria.runtime_delivery_uncertain_transition() FROM PUBLIC;
+CREATE TRIGGER runtime_delivery_uncertain_transition BEFORE UPDATE OF status,fence ON moria.runtime_deliveries
+  FOR EACH ROW WHEN (OLD.status='uncertain' AND (NEW.status<>OLD.status OR NEW.fence<>OLD.fence))
+  EXECUTE FUNCTION moria.runtime_delivery_uncertain_transition();
+CREATE TRIGGER runtime_delivery_uncertain_delete BEFORE DELETE ON moria.runtime_deliveries
+  FOR EACH ROW WHEN (OLD.status='uncertain') EXECUTE FUNCTION moria.runtime_delivery_uncertain_transition();
+
+CREATE FUNCTION moria.runtime_delivery_reconcile(delivery_id uuid, requested_fence bigint, requested_resolution text, provider_evidence text)
+  RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria,pg_temp AS $$
+DECLARE next_state text;
+BEGIN
+  PERFORM moria.runtime_recovery_operator();
+  IF delivery_id IS NULL OR requested_fence IS NULL OR requested_fence<0 OR requested_resolution IS NULL
+    OR requested_resolution NOT IN ('delivered','notDelivered') OR provider_evidence IS NULL
+    OR octet_length(provider_evidence) NOT BETWEEN 1 AND 1024 THEN RAISE EXCEPTION 'DELIVERY_RECONCILIATION_INVALID'; END IF;
+  INSERT INTO moria.runtime_delivery_reconciliations(delivery,expected_fence,resolution,evidence)
+    VALUES(delivery_id,requested_fence,requested_resolution,provider_evidence);
+  next_state:=CASE WHEN requested_resolution='delivered' THEN 'delivered' ELSE 'pending' END;
+  UPDATE moria.runtime_deliveries SET status=next_state,cycle_attempts=0,
+    sent_at=CASE WHEN next_state='pending' THEN NULL ELSE sent_at END,
+    available_at=clock_timestamp(),deadline=clock_timestamp()+interval '30 minutes',error=NULL,
+    finished_at=CASE WHEN next_state='delivered' THEN clock_timestamp() ELSE NULL END WHERE id=delivery_id;
 END $$;
 
 CREATE FUNCTION moria.runtime_delivery_enqueue(destination_id uuid, logical_key text, payload jsonb, source_markings text[], origin jsonb) RETURNS uuid LANGUAGE plpgsql AS $$
