@@ -1,0 +1,72 @@
+$ pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter
+$ prettier --check "**/*.{ts,tsx,js,mjs,json,yml,yaml}"
+Checking formatting...
+All matched files use Prettier code style!
+$ tsx scripts/check-architecture.ts
+Protected boundary architecture checks passed.
+$ tsx scripts/generate-sdk.ts --check
+$ tsc --noEmit
+$ node scripts/check-python.mjs
+All done! ✨ 🍰 ✨
+18 files would be left unchanged.
+# Specification validation report
+
+Executed locally for the review package. This is not a platform runtime test report.
+
+- JSON Schema Draft 2020-12 meta-validation: 3 schemas passed.
+- Resource examples: 36 passed; all 23 declared kinds covered.
+- Negative structural cases: 13 rejected as expected.
+- Static cross-resource checks: example manifest passed.
+- Negative semantic cases: 12 structurally valid cases rejected as expected.
+- Local Markdown file links: 25 resolved.
+- Validator: Python jsonschema 4.26.0, format checking enabled; schema references resolved offline.
+
+Install `schemas/requirements.txt`, then run `python schemas/validate.py` from this package. The validator rewrites this report. The example uses placeholder artifact digests, endpoints, project IDs and UIDs; it is not a deployable platform.
+
+Not tested: SQL policy enforcement, transaction races, worker isolation, model integrations, performance, installation or restore. Full expression typing, current grants, dependency packages, ownership and server-side execution checks are future compiler/runtime work. No Foundry reference conformance was executed.
+
+Rejected 6 invalid calibration mutations.
+M0 v0.2 calibration invariants passed; no runtime or capacity claim.
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.367s
+
+OK
+$ pnpm build:management && pnpm build:snotel
+$ vite build --config apps/management/vite.config.ts
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/management/dist/index.html                   0.40 kB │ gzip:  0.27 kB
+apps/management/dist/assets/index-2o2wHpTR.css   12.38 kB │ gzip:  3.42 kB
+apps/management/dist/assets/index-BfsGE9A2.js   260.99 kB │ gzip: 80.67 kB
+apps/management/dist/assets/source-8E1vKdiD.js  274.60 kB │ gzip: 28.67 kB
+
+✓ built in 164ms
+$ vite build --config apps/snotel/vite.config.ts
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 26 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/snotel/dist/index.html                   0.36 kB │ gzip:  0.27 kB
+apps/snotel/dist/assets/index-CShDBEjJ.css    9.10 kB │ gzip:  2.65 kB
+apps/snotel/dist/assets/index-Cys8spqb.js   259.14 kB │ gzip: 81.08 kB
+
+✓ built in 87ms
+$ tsc --noEmit -p examples/station-explorer/tsconfig.json && tsx scripts/verify-starter.ts
+{
+  "ok": true,
+  "app": "station-explorer",
+  "version": "c20f74a976943f94f15efc47d7572bb624aa1a70708ae5fd809265eec221f17b",
+  "verified": [
+    "SDK drift",
+    "Vite build",
+    "artifact integrity",
+    "workflow declaration",
+    "HTTP HTML and JS",
+    "static-only API isolation"
+  ]
+}

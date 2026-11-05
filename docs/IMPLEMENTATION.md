@@ -2905,3 +2905,14 @@ classified so one denied job cannot stop the worker. A queued Secret file denial
 and subsequent successful window are added to the real fixture; fresh combined
 native build and runtime qualification are pending. No runtime restriction or
 individual deadline is relaxed.
+
+### Connector custody and checkpoint qualification
+
+The registered native replace/full Sync profile now passes eight focused checks
+with eight exact operator-approved credentials, a real isolated Python/Arrow
+guest, typed Dataset readback, durable semantic cursor reuse and live socket
+revocation. The caller needs exact logical operations without filesystem browsing.
+[Proof and remaining scope](production/evidence/2026-11-04/connector-secret-custody/README.md)
+retain the failed readback trial and exact artifact/fixture identities. Optional
+capabilities, other write modes, full HTTP/worker fault coverage and scale testing
+remain open; this is not complete N09 qualification.

@@ -102,7 +102,17 @@ export async function startInstanceEngine(input: {
   const worker = start(['pipelines', 'worker'], input.runtimeEnvironment, undefined, true);
   let pid: string | undefined;
   const signal = async (name: 'TERM' | 'KILL') => {
-    const child = spawn('docker', ['exec', '--user', '0', controller, 'kill', '-' + name, pid!]);
+    const child = spawn('docker', [
+      'exec',
+      '--user',
+      '0',
+      controller,
+      '/app/.venv/bin/python',
+      '-c',
+      'import os,signal,sys\ntry: os.kill(int(sys.argv[1]),getattr(signal,"SIG"+sys.argv[2]))\nexcept ProcessLookupError: pass',
+      pid!,
+      name,
+    ]);
     await new Promise<void>((resolve, reject) => {
       child.once('error', reject);
       child.once('exit', (code) =>

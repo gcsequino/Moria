@@ -1,0 +1,122 @@
+{"controller": "moria-quality-4e1a3c33-c6be-4f7f-b059-2cbaa1817e7e", "image": "sha256:8d908238f0105f294fe771af8ee06ce1631288bbcc74b959c14f45078742e403", "scratchPools": ["/tmp/moria-engine-scratch-ff8fb6f1-fcaf-49ef-942c-fb3ca93a7a07", "/tmp/moria-engine-scratch-d3824799-8ff1-4b08-985a-a6e7ad6d8d0b"], "temporary": "/tmp/moria-quality-45o6v4li"}
+TAP version 13
+# Subtest: native Connector custody and checkpoint publication
+    # Subtest: every declared Secret needs exact operator custody and independent caller/service use before code
+    ok 1 - every declared Secret needs exact operator custody and independent caller/service use before code
+      ---
+      duration_ms: 1823.494819
+      type: 'test'
+      ...
+▶ native Connector custody and checkpoint publication
+  ✔ every declared Secret needs exact operator custody and independent caller/service use before code (1823.494819ms)
+    # Subtest: a missed approval disable/reenable pulse permanently fences an accepted window
+    ok 2 - a missed approval disable/reenable pulse permanently fences an accepted window
+      ---
+      duration_ms: 2296.343346
+      type: 'test'
+      ...
+  ✔ a missed approval disable/reenable pulse permanently fences an accepted window (2296.343346ms)
+    # Subtest: a Secret file denial fences a queued window without stopping its worker
+    ok 3 - a Secret file denial fences a queued window without stopping its worker
+      ---
+      duration_ms: 2933.560574
+      type: 'test'
+      ...
+  ✔ a Secret file denial fences a queued window without stopping its worker (2933.560574ms)
+    # Subtest: the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+    ok 4 - the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+      ---
+      duration_ms: 26990.996927
+      type: 'test'
+      ...
+  ✔ the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically (26990.996927ms)
+    # Subtest: a next window reuses its semantic cursor despite a new execution and head revision
+    not ok 5 - a next window reuses its semantic cursor despite a new execution and head revision
+      ---
+      duration_ms: 33928.893035
+      type: 'test'
+      location: '/app/tests/fixtures/native-connectors/custody.ts:479:11'
+      failureType: 'testCodeFailure'
+      error: |-
+        Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+
+        thread 'catalog_publication' (506) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:
+        called `Result::unwrap()` on an `Err` value: Permission denied (os error 13)
+        note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+      code: 101
+      stack: |-
+        genericNodeError (node:internal/errors:986:15)
+        wrappedFn (node:internal/errors:540:14)
+        ChildProcess.exithandler (node:child_process:417:12)
+        ChildProcess.emit (node:events:514:28)
+        maybeClose (node:internal/child_process:1172:16)
+        ChildProcess._handle.onexit (node:internal/child_process:335:5)
+      ...
+  ✖ a next window reuses its semantic cursor despite a new execution and head revision (33928.893035ms)
+    # Subtest: reflected material never reaches guest frames or observable events
+    ok 6 - reflected material never reaches guest frames or observable events
+      ---
+      duration_ms: 10178.080191
+      type: 'test'
+      ...
+  ✔ reflected material never reaches guest frames or observable events (10178.080191ms)
+    # Subtest: revocation closes an in-flight Connector socket and preserves the prior head and cursor
+  ✔ revocation closes an in-flight Connector socket and preserves the prior head and cursor (8632.877459ms)
+    ok 7 - revocation closes an in-flight Connector socket and preserves the prior head and cursor
+      ---
+      duration_ms: 8632.877459
+      type: 'test'
+      ...
+    1..7
+not ok 1 - native Connector custody and checkpoint publication
+  ---
+  duration_ms: 102224.670613
+  type: 'test'
+  location: '/app/tests/connector-custody-proof.ts:3:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+✖ native Connector custody and checkpoint publication (102224.670613ms)
+1..1
+# tests 8
+ℹ tests 8
+# suites 0
+# pass 6
+ℹ suites 0
+ℹ pass 6
+# fail 2
+ℹ fail 2
+# cancelled 0
+ℹ cancelled 0
+# skipped 0
+ℹ skipped 0
+# todo 0
+ℹ todo 0
+# duration_ms 112905.590987
+ℹ duration_ms 112905.590987
+
+✖ failing tests:
+
+test at tests/fixtures/native-connectors/custody.ts:479:11
+✖ a next window reuses its semantic cursor despite a new execution and head revision (33928.893035ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+
+  thread 'catalog_publication' (506) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:
+  called `Result::unwrap()` on an `Err` value: Permission denied (os error 13)
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... FAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.34s\n\n',
+    stderr: "\nthread 'catalog_publication' (506) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:\ncalled `Result::unwrap()` on an `Err` value: Permission denied (os error 13)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }

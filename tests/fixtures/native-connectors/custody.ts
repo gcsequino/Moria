@@ -10,7 +10,6 @@ import { startInstanceEngine } from '../native-instance/engine.js';
 import { Authority } from '../../../services/security/src/authority.js';
 import { WorkloadSessions } from '../../../services/security/src/sessions.js';
 import { FilesystemAuthority } from '../../../services/security/src/filesystem.js';
-import { filesystemOperations } from '../../../packages/contracts/filesystem.js';
 import type { Resource } from '../../../packages/contracts/types.js';
 
 const program = `import pyarrow as pa,uuid,os
@@ -93,13 +92,24 @@ export async function connectorCustody(t: TestContext) {
     }
   });
   t.after(async () => {
+    const errors: unknown[] = [];
+    const cleanup = async (action: () => Promise<unknown>) => {
+      try {
+        await action();
+      } catch (error) {
+        errors.push(error);
+      }
+    };
     release();
-    await engine?.close();
-    if (engine) await engine.restoreOwnership(db.root);
+    if (engine) {
+      await cleanup(engine.close);
+      await cleanup(() => engine!.restoreOwnership(db.root));
+    }
     provider.closeAllConnections();
-    await new Promise<void>((resolve) => provider.close(() => resolve()));
-    await image.close();
-    await fixture.close();
+    await cleanup(() => new Promise<void>((resolve) => provider.close(() => resolve())));
+    await cleanup(image.close);
+    await cleanup(fixture.close);
+    assert.deepEqual(errors, [], 'Every owned Connector fixture resource must close');
   });
   await new Promise<void>((resolve, reject) => {
     provider.once('error', reject);
@@ -181,10 +191,7 @@ export async function connectorCustody(t: TestContext) {
     await authority.setGrants(environment, 'fixture', principal, app, granted);
     return (await sessions.mint({ environment, principal, application: app }, 'fixture')).token;
   };
-  const token = await mint(application, [
-    ...operations,
-    ...filesystemOperations.map((operation) => `filesystem:${operation}`),
-  ]);
+  const token = await mint(application, operations);
   await mint(serviceApplication, operations);
   await db.pool.query(
     "INSERT INTO moria.runtime_resource_classes(name,maximum_tasks,maximum_environment_tasks) VALUES('engine-spill',2,2)",
@@ -378,9 +385,22 @@ export async function connectorCustody(t: TestContext) {
         )
       ).rows[0].id;
       const security = new FilesystemAuthority(authority);
+      const identity = (
+        await db.pool.query(
+          'SELECT instance_id FROM moria.instance_principal_bindings WHERE environment=$1 AND principal=$2',
+          [environment, principal],
+        )
+      ).rows[0].instance_id;
       await security.setPolicy('fixture', entry, '0', {
-        markings: [{ environment, marking: 'connector-denied' }],
-        grants: [],
+        markings: [],
+        grants: [
+          {
+            subject: { kind: 'principal', id: identity },
+            operations: ['read'],
+            inherit: false,
+            effect: 'deny',
+          },
+        ],
       });
       const pool = JSON.parse(process.env.MORIA_ENGINE_SCRATCH_POOL_JSON ?? 'null');
       assert.ok(
@@ -473,7 +493,9 @@ export async function connectorCustody(t: TestContext) {
         ).rows,
         [{ version: '2', value: { offset: 2 } }],
       );
-      assert.equal((await db.catalog.heads(environment, [dataset]))[0].revision, '2');
+      const head = (await db.catalog.heads(environment, [dataset]))[0];
+      assert.equal(head.revision, '2');
+      await fixture.read(head, true, [row]);
     },
   );
   await t.test('reflected material never reaches guest frames or observable events', async () => {
@@ -491,10 +513,9 @@ export async function connectorCustody(t: TestContext) {
     );
     reflect = false;
     assert.equal((await db.catalog.heads(environment, [dataset]))[0].revision, '2');
-    const events = await fixture.command(
-      ['pipelines', 'events'],
-      { token, id: reflected.id },
-      runtimeEnvironment,
+    await assert.rejects(
+      fixture.command(['pipelines', 'events'], { token, id: reflected.id }, runtimeEnvironment),
+      /FUNCTION_OBSERVATION_INCOMPLETE/,
     );
     const stored = (
       await db.pool.query('SELECT payload FROM moria.runtime_execution_events WHERE execution=$1', [
@@ -502,7 +523,6 @@ export async function connectorCustody(t: TestContext) {
       ])
     ).rows;
     for (const material of materials) {
-      assert.ok(!JSON.stringify(events).includes(material));
       assert.ok(!JSON.stringify(stored).includes(material));
     }
   });
@@ -517,7 +537,11 @@ export async function connectorCustody(t: TestContext) {
         release = resolve;
       });
       const inFlight = await invoke('in-flight-revocation');
-      await until(async () => entered, 10000);
+      // Startup uses the accepted 120-second window; revocation below retains its ten-second bound.
+      await until(async () => {
+        engine!.check();
+        return entered;
+      });
       await fixture.command(['secret', 'disable'], { id: approvals[1].id }, operatorEnvironment);
       await until(async () => socketClosed, 10000);
       release();
