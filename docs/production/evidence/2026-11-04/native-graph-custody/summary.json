@@ -1,0 +1,550 @@
+{
+  "base": "1dd06bc6002c0f9824861aa0c85328d0df4d1c61",
+  "classification": "native v2 graph sidecar custody; v3 publication and sparse writers remain unactivated",
+  "installedSchemas": {
+    "datasetGraph": true,
+    "sourceDelta": false
+  },
+  "qualifiedLatest": {
+    "trial": "008",
+    "static": true,
+    "exactNativeArtifactCount": 9,
+    "nativeLibraryTests": {
+      "passed": 91,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "custodyIntegration": {
+      "passed": 1,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0
+    }
+  },
+  "separateEarlierCoreProof": {
+    "trial": "005",
+    "passed": 2,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "sameAsLatestSource": false,
+    "performanceMargin": "64-row positive body completed near its unchanged 120-second root deadline; broader concurrency and scale remain unqualified"
+  },
+  "successorRegressionOldSql": {
+    "exitCode": 1,
+    "elapsedSeconds": 143.3253390789032,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--name",
+      "moria-mor-successor-red-006-20261104",
+      "--label",
+      "moria.test.proof=moria-mor-successor-red-006-20261104",
+      "sha256:8b6608c11a23e1c84a66242d9a41d4d59d749acc2bfec114648abeb1b9484790",
+      "pnpm",
+      "test:integration",
+      "tests/native-dataset-graph-retention.integration.test.ts"
+    ],
+    "controllerAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "trials": {
+    "001": {
+      "image": "sha256:8463fbbffdcf4e2b19bca19269af548f03f65b848f9005e2f4f444616fba6b0e",
+      "sourceManifestSha256": "ccde80f214be7537b0e9478f2a5756de2102955eef22e28a94ac3c803dfa2146",
+      "checks": {
+        "integration": {
+          "exitCode": 1,
+          "elapsedSeconds": 122.20981890700023,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-bootstrap-001-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-bootstrap-001-20261104",
+            "sha256:8463fbbffdcf4e2b19bca19269af548f03f65b848f9005e2f4f444616fba6b0e",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "checks": {
+          "exitCode": 0,
+          "elapsedSeconds": 34.18542636699931,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "sha256:8463fbbffdcf4e2b19bca19269af548f03f65b848f9005e2f4f444616fba6b0e",
+            "sh",
+            "-c",
+            "pnpm check:static && pnpm check:indexing"
+          ]
+        }
+      }
+    },
+    "002": {
+      "image": "sha256:5c6aae0fb60583128df04f4da4f21aa5869a7d6b80d2e54c8133b528a96e4926",
+      "sourceManifestSha256": "5dd97c5403acdbf96f0435b711276e2e3eae9fe064a6eb51e63b8ef137c2a363",
+      "checks": {
+        "integration": {
+          "exitCode": 1,
+          "elapsedSeconds": 89.00567443399996,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-bootstrap-002-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-bootstrap-002-20261104",
+            "sha256:5c6aae0fb60583128df04f4da4f21aa5869a7d6b80d2e54c8133b528a96e4926",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "checks": {
+          "exitCode": 0,
+          "elapsedSeconds": 28.85617699499926,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "sha256:5c6aae0fb60583128df04f4da4f21aa5869a7d6b80d2e54c8133b528a96e4926",
+            "sh",
+            "-c",
+            "pnpm check:static && pnpm check:indexing"
+          ]
+        }
+      }
+    },
+    "003": {
+      "image": "sha256:4910b32a80f600a896655cdee6054a2d7f63df59f8f4d3007ca86b755bec55bd",
+      "sourceManifestSha256": "c821e89eb83c86ca6c1a152be5031b75dcf23e32d3f6c29519bf03a713572be6",
+      "checks": {
+        "integration": {
+          "exitCode": 1,
+          "elapsedSeconds": 82.28504741100005,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-bootstrap-003-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-bootstrap-003-20261104",
+            "sha256:4910b32a80f600a896655cdee6054a2d7f63df59f8f4d3007ca86b755bec55bd",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "indexing-check": {
+          "exitCode": 0,
+          "elapsedSeconds": 9.107473124000535,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "sha256:4910b32a80f600a896655cdee6054a2d7f63df59f8f4d3007ca86b755bec55bd",
+            "pnpm",
+            "check:indexing"
+          ]
+        }
+      }
+    },
+    "004": {
+      "image": "sha256:dd515d6f240fa41c694f48a0132d004a10b636389bc73396b372d85a57346c67",
+      "sourceManifestSha256": "83b98bb0c0df90604732fbd6698ae505357c67ea47136fe9bd26337e3763999a",
+      "checks": {
+        "integration": {
+          "exitCode": 1,
+          "elapsedSeconds": 122.36402051799996,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-bootstrap-004-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-bootstrap-004-20261104",
+            "sha256:dd515d6f240fa41c694f48a0132d004a10b636389bc73396b372d85a57346c67",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "indexing-check": {
+          "exitCode": 0,
+          "elapsedSeconds": 12.48696420199849,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "sha256:dd515d6f240fa41c694f48a0132d004a10b636389bc73396b372d85a57346c67",
+            "pnpm",
+            "check:indexing"
+          ]
+        }
+      }
+    },
+    "005": {
+      "image": "sha256:f0ae7ddc543fb4f237d046272557a86cee198ab6c35ba6d2c5b6f97764290ff6",
+      "sourceManifestSha256": "51a1846244c14c40e6c321394f938d80c50f6f066146e254e566e5e62bb905a5",
+      "checks": {
+        "integration": {
+          "exitCode": 0,
+          "elapsedSeconds": 159.66742228099974,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-bootstrap-005-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-bootstrap-005-20261104",
+            "sha256:f0ae7ddc543fb4f237d046272557a86cee198ab6c35ba6d2c5b6f97764290ff6",
+            "pnpm",
+            "exec",
+            "tsx",
+            "--test",
+            "--test-concurrency=1",
+            "--test-reporter=./scripts/test-reporter.ts",
+            "tests/native-dataset-graph.integration.test.ts",
+            "tests/native-dataset-graph-authority.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "retention-integration": {
+          "exitCode": 1,
+          "elapsedSeconds": 54.63074473300003,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-retention-005-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-retention-005-20261104",
+            "sha256:f0ae7ddc543fb4f237d046272557a86cee198ab6c35ba6d2c5b6f97764290ff6",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph-retention.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "checks": {
+          "exitCode": 0,
+          "elapsedSeconds": 28.642740977000358,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "sha256:f0ae7ddc543fb4f237d046272557a86cee198ab6c35ba6d2c5b6f97764290ff6",
+            "sh",
+            "-c",
+            "pnpm check:static && pnpm check:indexing"
+          ]
+        }
+      }
+    },
+    "006": {
+      "image": "sha256:88b399aebe41954c5818d05bd08ff92bf08c339e1daae2e430b7d75bb534f17c",
+      "sourceManifestSha256": "eed65dddf5ca9ab1b6dd7ebefead1b52ddc4ff3ce073fb1689df832fb0cbb573",
+      "checks": {
+        "retention-integration": {
+          "exitCode": 0,
+          "elapsedSeconds": 116.02378454400241,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-retention-006-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-retention-006-20261104",
+            "sha256:88b399aebe41954c5818d05bd08ff92bf08c339e1daae2e430b7d75bb534f17c",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph-retention.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "indexing-check": {
+          "exitCode": 0,
+          "elapsedSeconds": 10.498386803999892,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "sha256:88b399aebe41954c5818d05bd08ff92bf08c339e1daae2e430b7d75bb534f17c",
+            "pnpm",
+            "check:indexing"
+          ]
+        }
+      }
+    },
+    "007": {
+      "image": "sha256:68b9ac6578221caf64e7ddf9dffebad6326319a82da1da73947cd9557939fd8d",
+      "sourceManifestSha256": "b6bfd9827f273810ef51d4290004b53d944418edeea3b3d94112f503ec19f8ef",
+      "checks": {
+        "retention-integration": {
+          "exitCode": 1,
+          "elapsedSeconds": 122.21633982658386,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-retention-007-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-retention-007-20261104",
+            "sha256:68b9ac6578221caf64e7ddf9dffebad6326319a82da1da73947cd9557939fd8d",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph-retention.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "static-indexing-check": {
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "moria-test:mor-bootstrap-007-20261104",
+            "sh",
+            "-c",
+            "pnpm check:static && pnpm check:indexing"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 40.40174174308777
+        }
+      }
+    },
+    "008": {
+      "image": "sha256:bad437f64be65f25d5f55b8741e8a58bf35db78392e3c063cd25554436933c37",
+      "sourceManifestSha256": "a58428ff4383533240665f4e981386ba06667db72a707a7770e9871f02a47f6c",
+      "checks": {
+        "retention-integration": {
+          "exitCode": 0,
+          "elapsedSeconds": 164.0443513393402,
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--name",
+            "moria-mor-retention-008-20261104",
+            "--label",
+            "moria.test.proof=moria-mor-retention-008-20261104",
+            "sha256:bad437f64be65f25d5f55b8741e8a58bf35db78392e3c063cd25554436933c37",
+            "pnpm",
+            "test:integration",
+            "tests/native-dataset-graph-retention.integration.test.ts"
+          ],
+          "controllerAbsent": true,
+          "externalHostScratchCreated": false
+        },
+        "static-indexing-check": {
+          "command": [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "4g",
+            "moria-test:mor-bootstrap-008-20261104",
+            "sh",
+            "-c",
+            "pnpm check:static && pnpm check:indexing"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 36.088998556137085,
+          "allNineArtifactsIdenticalTo007": true
+        }
+      },
+      "nativeArtifacts": {
+        "moria-indexing-tests": {
+          "sha256": "842d1caa7dd5d5dc0a2f8c9fe9972ad3e212274ee5efca546a6e4329ec88e151",
+          "bytes": 62207976
+        },
+        "moria-native-transport-test": {
+          "sha256": "a9f499dba473369fce2b018381e8160cdcc991877591bcd7179feda69e2bdedd",
+          "bytes": 26538656
+        },
+        "moria-native-storage-test": {
+          "sha256": "244d9542c41ef42e32d2fb20d99949532029d920559992411d73ff2219f939b5",
+          "bytes": 101856304
+        },
+        "moria-native-sandbox-test": {
+          "sha256": "1b60f24a5f1f1228d1691184a011f6ba38b02f7942bfa1985623a7b94af96b0f",
+          "bytes": 57219448
+        },
+        "moria-native-retention-test": {
+          "sha256": "42b08c4a8c0690488238e9ac3a07148fa4baea59eb1078a3313f09d5307f5dd9",
+          "bytes": 27007488
+        },
+        "moria-native-policy-test": {
+          "sha256": "052d584b4e9eee216431af0c5eeff218fa6d64420450577102372230840f6b5e",
+          "bytes": 22200888
+        },
+        "moria-indexing": {
+          "sha256": "11ff9d33e1e41077de50b27511f64e0bd44fde2eae27b971050eb9d58a550085",
+          "bytes": 158059600
+        },
+        "moria-native-catalog-test": {
+          "sha256": "666efeab5c1514dccdc34f709803faf46d000c0df54a08ff9c64a906a0ab1ff7",
+          "bytes": 115979464
+        },
+        "moria-runtime": {
+          "sha256": "4a5137d9cb7efe71e0eb8fa777112a5bfe3ebc406d53ef0a61fb9832e4b6a23d",
+          "bytes": 158059592
+        }
+      }
+    }
+  },
+  "latestSourceHashes": {
+    "services/database/src/baseline.ts": "195f7bac1336184a0f670953b564c077be049c6d92f741f543fc0679f6b64105",
+    "services/database/src/dataset-graph-schema.ts": "17ea402bf5767e4e83950767e94b2a8540d7418d3e29ba0d051852f8ec8c388b",
+    "services/database/src/retention-runtime-schema.ts": "543efae8630ae35f76064a9272e9ed2931ff4d35cd8023605513f51038b8b66a",
+    "services/runtime/schema.json": "7fb4b698da904318495cec68e09554402d631ebd87654e2e9c27d34005f3b895",
+    "services/runtime/src/dataset_retention/collect.rs": "a9641ca1389880d9e71922b1b4fba71a91b4da47ef981db296645b34f1b65d59",
+    "services/runtime/src/dataset_writer/bootstrap_v2.rs": "bd2b446dd72219b5c4e2e8795fac01df22f4d955fad0cab042cdcf7bfe98f88b",
+    "services/runtime/src/dataset_writer/key_run_io.rs": "5dd2c10eb95e34c2c043f73c45b0229a5360fd5c47f90ce22a090bfcf4776998",
+    "services/runtime/src/dataset_writer/key_run_set.rs": "7e21ced3a6cecfd3a4bfe09962aa0ae84a7e1fff6b702c2a402aa35d36901e66",
+    "services/runtime/src/native_snapshot_v3.rs": "c62965c50502e3eac1a097a888c3e629c56c9084b0b7a2eaa26dc653235b3f43",
+    "services/runtime/src/recovery_content.rs": "919c8c4a0ad72beeffdff44b8bdf821f486fecf80e05bb9c44dd7e37c97edb4e",
+    "services/runtime/src/recovery_content/graph.rs": "cadac61135d9f2896c37ce1550dd9bfdb34bdfc6fe56602da085800e62542af3",
+    "services/runtime/src/recovery_content/offline.rs": "b0a5314610db66bc8b7845b3725135c84bed89c080e72b1901b5e8801afcc2cc",
+    "services/runtime/src/recovery_content/offline/graph.rs": "0eaf983c3624f4373819fa571e235ad6abafa501cc33bfe97713e6f1645ad174",
+    "tests/fixtures/native-catalog/harness.rs": "505a8a2a74bfd9c87ae5615b14f40fb5d4e52820093d4d92cd323abb5c391184",
+    "tests/fixtures/native-retention/graph.ts": "a47eb56d60d406b9bc8de09a60adfb17da1a32195100e06428369facec44c008",
+    "tests/fixtures/native-retention/recovery.ts": "8a93291e75e369d4bf4075bef8dafc6683a4c5093459dd1e9d40eebb28284743",
+    "tests/native-dataset-graph-authority.integration.test.ts": "a7c47ea1f33f70fa49badbdf77c61cc589241d50fc42ac5dde57babfefeac0d7",
+    "tests/native-dataset-graph-retention.integration.test.ts": "6180f6253b28d71dd3738610763dd05e1ad7bf9891677193e3709b62c885e61b",
+    "tests/native-dataset-graph.integration.test.ts": "216861faa80b2a3496e3955d319df711eefe94a35ec686b576355f2d9155c3c0"
+  },
+  "verifiedScope": [
+    "actual v2 retained snapshot to graph sidecar bootstrap without changing the published head",
+    "complete typed graph readback and every declared array key lookup on trial005",
+    "warmed immutable run metadata never bypasses live revoked authority on trial005",
+    "backup includes every live graph content object under exact provider versions",
+    "bounded graph expiration and propagation under replacement policy B retain original committed policy A authority",
+    "pending graph propagation prevents sidecar GC candidate admission",
+    "exact-version graph sidecar collection after unchanged orphan grace",
+    "new database and new local provider prefix receive fresh physical qualifications",
+    "historical graph roots and standard v2 typed rows survive independent restore",
+    "qualification physical version immutable; previously owned restore target rejected",
+    "actual exact backup-child version HEAD succeeds then HEAD404 after synthetic deletion",
+    "restore with missing graph backup child rejects with exact public failure code and leaves dispatch disabled with zero new-incarnation graph qualifications"
+  ],
+  "notVerified": [
+    "v3 Catalog publication and C04 crash atomicity",
+    "native sparse append/upsert/delete writer activation",
+    "bounded distributed projected-key bootstrap at production target scale",
+    "complete Source delta publication writer footprint",
+    "whole-platform full pnpm check and latest independent CI",
+    "production workload rates latency freshness capacity HA and cost qualification"
+  ],
+  "documentedStaticCheck": {
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--cpus",
+      "2",
+      "--memory",
+      "4g",
+      "--mount",
+      "type=bind,src=/home/gcseq/moria-mor-recovery-20261104/docs,dst=/app/docs,readonly",
+      "moria-test:mor-bootstrap-008-20261104",
+      "pnpm",
+      "check:static"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 26.324790716171265
+  }
+}

@@ -67,6 +67,7 @@ pub(crate) async fn write_run(
     Ok(QualifiedRun { descriptor, node })
 }
 /// Root-path-bound run reader. Every independent operation freshly checks accepted authority.
+#[derive(Debug)]
 pub struct RunReader {
     descriptor: RunDescriptor,
     file: GraphFile,

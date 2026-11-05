@@ -456,6 +456,11 @@ BEGIN
 END $$;
 CREATE FUNCTION moria.runtime_dataset_object_referenced(physical text,warehouse text,table_name text,object_name text) RETURNS boolean LANGUAGE plpgsql AS $$
 BEGIN
+ IF EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_nodes n JOIN moria.runtime_dataset_graph_qualifications q ON q.node=n.id
+  LEFT JOIN moria.runtime_dataset_graph_counts c ON c.node=q.node AND c.physical_fingerprint=q.physical_fingerprint AND c.incarnation=q.incarnation
+  WHERE n.content->'object'->>'warehouseId'=warehouse AND n.content->'object'->>'tableId'=table_name AND n.content->'object'->>'objectId'=object_name
+   AND q.physical_fingerprint=physical AND q.incarnation=(SELECT incarnation FROM moria.indexing_instance)
+   AND (COALESCE(c.live_references,0)>0 OR moria.runtime_dataset_graph_gc_busy(n.environment,n.dataset,physical,q.incarnation))) THEN RETURN true;END IF;
  IF EXISTS(SELECT 1 FROM moria.runtime_dataset_member_locations m
   LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=m.root WHERE m.warehouse_id=warehouse AND m.table_id=table_name AND m.object_id=object_name
     AND m.physical_fingerprint=physical AND m.incarnation=(SELECT incarnation FROM moria.indexing_instance) AND e.root IS NULL) THEN RETURN true; END IF;

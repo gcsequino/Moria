@@ -11,6 +11,9 @@ use crate::{
 };
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+
+pub(crate) type RunCache = tokio::sync::Mutex<Option<(SealedObject, Arc<RunReader>)>>;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Segment {
@@ -124,6 +127,7 @@ pub(crate) async fn bootstrap_value(
 /// A bucket entry was obtained on the exact retained root path; only matching runs are opened.
 pub(crate) async fn lookup(
     context: &GraphReadContext,
+    cache: &RunCache,
     entry: &ReadEntry,
     kind: RunKind,
     key_schema_hash: &str,
@@ -156,7 +160,28 @@ pub(crate) async fn lookup(
                 node.content() == &segment.run,
                 "DATASET_GRAPH_ANCESTRY_REQUIRED"
             );
-            let reader = RunReader::open(context, &node, key_schema_hash, kind).await?;
+            ensure!(node.kind() == "keyRun", "DATASET_GRAPH_ANCESTRY_REQUIRED");
+            let cached = cache
+                .lock()
+                .await
+                .as_ref()
+                .filter(|(content, _)| content == node.content())
+                .map(|(_, reader)| reader.clone());
+            let reader = match cached {
+                Some(reader) => reader,
+                None => {
+                    let reader =
+                        Arc::new(RunReader::open(context, &node, key_schema_hash, kind).await?);
+                    *cache.lock().await = Some((node.content().clone(), reader.clone()));
+                    reader
+                }
+            };
+            ensure!(
+                reader.descriptor().kind == kind
+                    && reader.descriptor().key_schema_hash == key_schema_hash
+                    && reader.descriptor().entries == node.entries(),
+                "DATASET_KEY_INDEX_INVALID"
+            );
             ensure!(
                 reader.descriptor().sequence == segment.sequence,
                 "DATASET_KEY_INDEX_INVALID"

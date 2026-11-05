@@ -33,6 +33,7 @@ fn capture_phase<T>(result: Result<T>, phase: &'static str) -> Result<T> {
     })
 }
 
+mod graph;
 mod offline;
 pub(crate) use offline::{OfflineRecovery, RecoveredContentProof};
 
@@ -477,6 +478,8 @@ impl Capture {
             )
             .await?;
             self.member(&root.proof.metadata).await?;
+            self.graph(snapshot, descriptor.as_str().unwrap(), reader.as_ref())
+                .await?;
             ensure!(
                 root.proof.closure.entries <= self.limits.members
                     && root.proof.closure.referenced_bytes <= self.limits.bytes,

@@ -1,0 +1,21 @@
+{
+  "exitCode": 1,
+  "elapsedSeconds": 54.63074473300003,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-retention-005-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-retention-005-20261104",
+    "sha256:f0ae7ddc543fb4f237d046272557a86cee198ab6c35ba6d2c5b6f97764290ff6",
+    "pnpm",
+    "test:integration",
+    "tests/native-dataset-graph-retention.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}

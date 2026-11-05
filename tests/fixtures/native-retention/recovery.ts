@@ -195,6 +195,7 @@ export async function retentionRecovery(fixture: Fixture) {
       const read = async (
         head: { revision: string; snapshotId: string | null; metadataLocation: string | null },
         rows: Record<string, unknown>[],
+        mode: 'read' | 'graph-read' = 'read',
       ) => {
         const state = await authority.current(
           fixture.environment,
@@ -242,7 +243,7 @@ export async function retentionRecovery(fixture: Fixture) {
                 root: db.root,
                 token,
                 binding,
-                mode: 'read',
+                mode,
                 expectedRows: rows.length,
                 writerRows: { [fixture.dataset]: rows },
                 nativeRef: head.metadataLocation,

@@ -146,8 +146,8 @@ impl Builder {
         }
         // Each bucket contains only finite run descriptors; the full population remains spill-backed.
         for kind in [RunKind::Hashes, RunKind::Locations] {
+            let mut mutations = BTreeMap::new();
             for partition in 0..=255u8 {
-                self.graph.check_current().await?;
                 let records = {
                     let db = self.spool.database()?;
                     self.spool.assert_scope(&db)?;
@@ -168,6 +168,7 @@ impl Builder {
                 if records.is_empty() {
                     continue;
                 }
+                self.graph.check_current().await?;
                 ensure!(records.len() <= 112, "RESOURCE_LIMIT");
                 let mut nodes = Vec::with_capacity(records.len());
                 for (segment, content) in records {
@@ -187,21 +188,36 @@ impl Builder {
                     nodes,
                 )
                 .await?;
-                let mutation = BTreeMap::from([(format!("{partition:02x}"), Some(value))]);
-                match kind {
-                    RunKind::Hashes => {
-                        self.hashes_root = self
-                            .hashes
-                            .apply(self.hashes_root.as_ref(), mutation)
-                            .await?
-                    }
-                    RunKind::Locations => {
-                        self.locations_root = self
-                            .locations
-                            .apply(self.locations_root.as_ref(), mutation)
-                            .await?
-                    }
-                };
+                mutations.insert(format!("{partition:02x}"), Some(value));
+                // Bound temporary metadata while avoiding a new immutable root for every bucket.
+                if mutations.len() == 16 {
+                    self.apply_index(kind, std::mem::take(&mut mutations))
+                        .await?;
+                }
+            }
+            if !mutations.is_empty() {
+                self.apply_index(kind, mutations).await?;
+            }
+        }
+        Ok(())
+    }
+    async fn apply_index(
+        &mut self,
+        kind: RunKind,
+        mutations: BTreeMap<String, Option<GraphValue>>,
+    ) -> Result<()> {
+        match kind {
+            RunKind::Hashes => {
+                self.hashes_root = self
+                    .hashes
+                    .apply(self.hashes_root.as_ref(), mutations)
+                    .await?
+            }
+            RunKind::Locations => {
+                self.locations_root = self
+                    .locations
+                    .apply(self.locations_root.as_ref(), mutations)
+                    .await?
             }
         }
         Ok(())
@@ -243,6 +259,7 @@ pub async fn bootstrap_expected_head(
     cancel: Cancellation,
 ) -> Result<BootstrapReceipt> {
     grant.check_current().await?;
+    ensure!(grant.lease().task.is_none(), "COORDINATOR_REQUIRED");
     grant.validate_store(store.as_ref())?;
     ensure!(
         grant.expected_revision()? > 0,

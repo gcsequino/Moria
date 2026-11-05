@@ -61,6 +61,8 @@ pub struct NativeSnapshot {
     descriptor: RootDescriptor,
     files: ReadDirectory,
     metadata: Arc<TableMetadata>,
+    // Only immutable metadata is retained; each lookup still checks live root/file authority.
+    run_cache: Arc<crate::dataset_writer::key_run_set::RunCache>,
 }
 impl NativeSnapshot {
     pub async fn open(context: GraphReadContext, root: ReadableNode) -> Result<Self> {
@@ -172,6 +174,7 @@ impl NativeSnapshot {
             descriptor,
             files,
             metadata: Arc::new(metadata),
+            run_cache: Arc::new(tokio::sync::Mutex::new(None)),
         })
     }
     async fn logical_file(
@@ -341,6 +344,7 @@ impl NativeSnapshot {
         };
         let result = crate::dataset_writer::key_run_set::lookup(
             &self.context,
+            &self.run_cache,
             &entry,
             crate::dataset_writer::key_run::RunKind::Locations,
             &self.descriptor.key_schema_hash,

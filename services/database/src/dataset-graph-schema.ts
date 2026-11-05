@@ -63,7 +63,8 @@ CREATE TABLE moria.runtime_dataset_graph_retirements(
  environment text NOT NULL,dataset text NOT NULL,physical_fingerprint text NOT NULL,incarnation uuid NOT NULL,completed boolean NOT NULL DEFAULT false,
  PRIMARY KEY(root,physical_fingerprint,incarnation)
 );
-CREATE INDEX runtime_dataset_graph_retirement_pending ON moria.runtime_dataset_graph_retirements(environment,dataset,physical_fingerprint,incarnation) WHERE NOT completed;
+CREATE INDEX runtime_dataset_graph_retirement_pending ON moria.runtime_dataset_graph_retirements(environment,dataset,physical_fingerprint,incarnation,maintenance,root) WHERE NOT completed;
+CREATE INDEX runtime_dataset_graph_retirement_work ON moria.runtime_dataset_graph_retirements(maintenance,root) WHERE NOT completed;
 CREATE TABLE moria.runtime_dataset_graph_task_roots(
  task uuid NOT NULL REFERENCES moria.runtime_execution_tasks(id),owner uuid NOT NULL,fence bigint NOT NULL CHECK(fence>0),resource text NOT NULL,
  node text NOT NULL,physical_fingerprint text NOT NULL,incarnation uuid NOT NULL,
@@ -78,6 +79,24 @@ DO $$DECLARE target text;BEGIN
   EXECUTE format('CREATE TRIGGER dataset_graph_admission BEFORE INSERT OR UPDATE OR DELETE ON moria.%I FOR EACH ROW EXECUTE FUNCTION moria.runtime_dataset_multipart_mutation()','runtime_dataset_graph_'||target);
  END LOOP;
 END $$;
+CREATE INDEX runtime_dataset_graph_unpublished ON moria.runtime_dataset_graph_stages(environment,dataset,physical_fingerprint,incarnation,created_at,id) WHERE status IN ('preparing','ready','candidate');
+CREATE INDEX runtime_dataset_graph_member_object ON moria.runtime_dataset_graph_nodes((content->'object'->>'warehouseId'),(content->'object'->>'tableId'),(content->'object'->>'objectId'),id);
+CREATE TABLE moria.runtime_recovery_graph_nodes(
+ recovery_set uuid NOT NULL REFERENCES moria.runtime_recovery_sets(id),node text NOT NULL,
+ physical_fingerprint text NOT NULL,incarnation uuid NOT NULL,processed boolean NOT NULL DEFAULT false,
+ PRIMARY KEY(recovery_set,node,physical_fingerprint,incarnation),
+ FOREIGN KEY(node,physical_fingerprint,incarnation) REFERENCES moria.runtime_dataset_graph_qualifications(node,physical_fingerprint,incarnation)
+);
+CREATE INDEX runtime_recovery_graph_pending ON moria.runtime_recovery_graph_nodes(recovery_set,node,physical_fingerprint,incarnation) WHERE NOT processed;
+CREATE INDEX runtime_dataset_graph_root_nodes ON moria.runtime_dataset_graph_roots(root,physical_fingerprint,incarnation,node);
+CREATE FUNCTION moria.runtime_recovery_graph_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF TG_OP='DELETE' OR ROW(NEW.recovery_set,NEW.node,NEW.physical_fingerprint,NEW.incarnation) IS DISTINCT FROM ROW(OLD.recovery_set,OLD.node,OLD.physical_fingerprint,OLD.incarnation)
+  OR (OLD.processed AND NOT NEW.processed) THEN RAISE EXCEPTION 'IMMUTABLE_RECOVERY_CONTENT';END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER runtime_recovery_graph_immutable BEFORE UPDATE OR DELETE ON moria.runtime_recovery_graph_nodes FOR EACH ROW EXECUTE FUNCTION moria.runtime_recovery_graph_immutable();
+CREATE TRIGGER recovery_operator_mutation BEFORE INSERT OR UPDATE OR DELETE ON moria.runtime_recovery_graph_nodes FOR EACH ROW EXECUTE FUNCTION moria.runtime_recovery_operator_mutation();
 CREATE FUNCTION moria.runtime_dataset_graph_scope(claims jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE state jsonb;binding jsonb;producer text;namespace_state jsonb;profile jsonb;
 BEGIN
@@ -133,6 +152,9 @@ BEGIN
  IF EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_edges e WHERE e.parent=node_id AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(input->'edges') v WHERE v->>'label'=e.label AND v->>'node'=e.child)) THEN RAISE EXCEPTION 'DATASET_GRAPH_INVALID';END IF;
  INSERT INTO moria.runtime_dataset_graph_qualifications(node,physical_fingerprint,incarnation,physical_version,producer) VALUES(node_id,physical,inc,input->'physicalVersion',producer_key) ON CONFLICT DO NOTHING;
  IF NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_qualifications q WHERE q.node=node_id AND q.physical_fingerprint=physical AND q.incarnation=inc AND q.physical_version=input->'physicalVersion') THEN RAISE EXCEPTION 'GC_OBJECT_OWNERSHIP_CHANGED';END IF;
+ INSERT INTO moria.runtime_dataset_graph_admissions(producer,node,physical_fingerprint,incarnation,origin,source_root)
+  SELECT producer_key,node_id,physical,inc,'expectedHeadBytes',a.root FROM moria.runtime_dataset_graph_byte_admissions a
+   WHERE a.producer=producer_key AND a.physical_fingerprint=physical AND a.incarnation=inc AND a.content=content AND a.physical_version=input->'physicalVersion' ON CONFLICT DO NOTHING;
  RETURN node_id;
 END $$;
 CREATE FUNCTION moria.runtime_dataset_graph_walk(start_node text,path text[],physical text,inc uuid) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
@@ -297,7 +319,9 @@ BEGIN
  PERFORM 1 FROM moria.indexing_instance WHERE incarnation=instance FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'GC_LEASE_LOST';END IF;
  state:=moria.runtime_dataset_policy_check(policy_id);
- IF NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_maintenance_runs WHERE id=origin_id AND policy=policy_id AND incarnation=instance AND status='committed')
+ IF NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_maintenance_runs m JOIN moria.runtime_dataset_retention_policies p ON p.id=m.policy
+   WHERE m.id=origin_id AND m.incarnation=instance AND m.status='committed' AND p.environment=state->>'environment' AND p.dataset=state->>'dataset' AND p.physical_fingerprint=state->>'physicalFingerprint' AND p.incarnation=instance)
+  OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_retirements WHERE maintenance=origin_id AND (environment<>state->>'environment' OR dataset<>state->>'dataset' OR physical_fingerprint<>state->>'physicalFingerprint' OR incarnation<>instance))
   OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_queue WHERE origin=origin_id AND processed_at IS NULL AND (environment<>state->>'environment' OR dataset<>state->>'dataset' OR physical_fingerprint<>state->>'physicalFingerprint' OR incarnation<>instance)) THEN RAISE EXCEPTION 'GC_POLICY_CHANGED';END IF;
  FOR retirement IN SELECT * FROM moria.runtime_dataset_graph_retirements WHERE maintenance=origin_id AND NOT completed ORDER BY root LIMIT 1 FOR UPDATE LOOP
   FOR reference IN SELECT * FROM moria.runtime_dataset_graph_references WHERE kind='history' AND owner=retirement.root AND physical_fingerprint=retirement.physical_fingerprint AND incarnation=retirement.incarnation ORDER BY node LIMIT 64 FOR UPDATE LOOP
@@ -345,7 +369,7 @@ BEGIN
  chosen:=moria.runtime_dataset_graph_walk(origin.node,path,physical,instance_inc);
  SELECT * INTO node FROM moria.runtime_dataset_graph_nodes WHERE id=chosen AND environment=env AND dataset=resource_id AND runtime_dataset_graph_nodes.profile=graph_profile;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
- SELECT * INTO qualification FROM moria.runtime_dataset_graph_qualifications WHERE runtime_dataset_graph_qualifications.node=chosen AND physical_fingerprint=physical AND incarnation=instance_inc AND profile=graph_profile;
+ SELECT * INTO qualification FROM moria.runtime_dataset_graph_qualifications WHERE runtime_dataset_graph_qualifications.node=chosen AND physical_fingerprint=physical AND incarnation=instance_inc;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  PERFORM moria.runtime_dataset_object_read(node.content->'object'->>'warehouseId',node.content->'object'->>'tableId',node.content->'object'->>'objectId');
  RETURN jsonb_build_object('identity',jsonb_build_object('environment',env,'dataset',resource_id,'revision',history.revision::text,'snapshot',history.snapshot_id,'metadataLocation',history.metadata_location,'root',origin.node,'physicalFingerprint',physical,'incarnation',instance_inc,'profile',graph_profile),
@@ -409,4 +433,35 @@ CREATE FUNCTION moria.runtime_dataset_graph_object_live(env text,resource text,p
  SELECT 1 FROM moria.runtime_dataset_graph_nodes n JOIN moria.runtime_dataset_graph_counts c ON c.node=n.id
  WHERE n.environment=env AND n.dataset=resource AND n.content->'object'->>'warehouseId'=warehouse AND n.content->'object'->>'tableId'=table_name AND n.content->'object'->>'objectId'=object_name AND c.physical_fingerprint=physical AND c.incarnation=inc AND c.live_references>0)
 $$;
+CREATE FUNCTION moria.runtime_dataset_graph_retire(policy_id uuid,instance uuid,maximum integer) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+DECLARE state jsonb;origin uuid;stage moria.runtime_dataset_graph_stages;reference moria.runtime_dataset_graph_references;
+BEGIN
+ PERFORM moria.runtime_recovery_operator();
+ IF maximum NOT BETWEEN 1 AND 256 THEN RAISE EXCEPTION 'RESOURCE_LIMIT';END IF;
+ state:=moria.runtime_dataset_policy_check(policy_id);
+ PERFORM 1 FROM moria.indexing_instance WHERE incarnation=instance FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'GC_LEASE_LOST';END IF;
+ SELECT s.* INTO stage FROM moria.runtime_dataset_graph_stages s WHERE s.environment=state->>'environment' AND s.dataset=state->>'dataset'
+  AND s.physical_fingerprint=state->>'physicalFingerprint' AND s.incarnation=instance AND s.status IN ('preparing','ready','candidate') AND moria.runtime_dataset_producer_closed(s.producer)
+  ORDER BY s.created_at,s.id LIMIT 1 FOR UPDATE;
+ IF FOUND THEN
+  DELETE FROM moria.runtime_dataset_graph_references WHERE kind='stage' AND owner=stage.id::text AND node=stage.node AND physical_fingerprint=stage.physical_fingerprint AND incarnation=stage.incarnation RETURNING * INTO reference;
+  IF FOUND THEN INSERT INTO moria.runtime_dataset_graph_queue(environment,dataset,origin,node,physical_fingerprint,incarnation,delta) VALUES(stage.environment,stage.dataset,stage.id,stage.node,stage.physical_fingerprint,stage.incarnation,-1);END IF;
+  UPDATE moria.runtime_dataset_graph_stages SET status='abandoned' WHERE id=stage.id;
+  RETURN moria.runtime_dataset_graph_step(stage.id,maximum);
+ END IF;
+ SELECT q.origin INTO origin FROM moria.runtime_dataset_graph_queue q JOIN moria.runtime_dataset_graph_stages s ON s.id=q.origin
+  WHERE q.environment=state->>'environment' AND q.dataset=state->>'dataset' AND q.physical_fingerprint=state->>'physicalFingerprint' AND q.incarnation=instance
+   AND q.processed_at IS NULL AND s.status IN ('published','abandoned') ORDER BY q.sequence LIMIT 1;
+ IF origin IS NOT NULL THEN RETURN moria.runtime_dataset_graph_step(origin,maximum);END IF;
+ SELECT maintenance INTO origin FROM moria.runtime_dataset_graph_retirements WHERE environment=state->>'environment' AND dataset=state->>'dataset'
+  AND physical_fingerprint=state->>'physicalFingerprint' AND incarnation=instance AND NOT completed ORDER BY maintenance LIMIT 1;
+ IF origin IS NULL THEN
+  SELECT q.origin INTO origin FROM moria.runtime_dataset_graph_queue q JOIN moria.runtime_dataset_maintenance_runs m ON m.id=q.origin JOIN moria.runtime_dataset_retention_policies p ON p.id=m.policy
+   WHERE q.environment=state->>'environment' AND q.dataset=state->>'dataset' AND q.physical_fingerprint=state->>'physicalFingerprint' AND q.incarnation=instance
+    AND q.processed_at IS NULL AND m.incarnation=instance AND m.status='committed' AND p.environment=q.environment AND p.dataset=q.dataset AND p.physical_fingerprint=q.physical_fingerprint AND p.incarnation=instance ORDER BY q.sequence LIMIT 1;
+ END IF;
+ IF origin IS NULL THEN RETURN 0;END IF;
+ RETURN moria.runtime_dataset_graph_retirement_advance(policy_id,instance,origin,maximum);
+END $$;
 `;

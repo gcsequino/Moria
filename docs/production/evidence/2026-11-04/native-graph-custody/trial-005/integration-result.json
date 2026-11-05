@@ -1,0 +1,26 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 159.66742228099974,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-bootstrap-005-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-bootstrap-005-20261104",
+    "sha256:f0ae7ddc543fb4f237d046272557a86cee198ab6c35ba6d2c5b6f97764290ff6",
+    "pnpm",
+    "exec",
+    "tsx",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=./scripts/test-reporter.ts",
+    "tests/native-dataset-graph.integration.test.ts",
+    "tests/native-dataset-graph-authority.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}
