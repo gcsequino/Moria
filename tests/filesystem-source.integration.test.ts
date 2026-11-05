@@ -1020,6 +1020,27 @@ test(
           ]);
         assert.deepEqual((await current()).rows[0].labels, ['protected']);
         assert.deepEqual((await pinned(old.digest)).rows[0].labels, ['protected']);
+        const releaseMeasurement = await db.pool.connect();
+        try {
+          await releaseMeasurement.query('BEGIN');
+          await releaseMeasurement.query("SET LOCAL track_functions='pl'");
+          const labels = await releaseMeasurement.query(
+            'SELECT moria.native_resource_release_access($1,$2,$3,$4) labels',
+            [hash, unit.resource.resourceId, 'read', old.digest],
+          );
+          assert.deepEqual(labels.rows[0].labels, ['protected']);
+          const leaf = await releaseMeasurement.query(
+            "SELECT calls::int FROM pg_stat_xact_user_functions WHERE schemaname='moria' AND funcname='native_filesystem_acl_targets_operations_state'",
+          );
+          assert.equal(
+            leaf.rows[0]?.calls,
+            1,
+            'Live target and pinned files share one ACL closure',
+          );
+        } finally {
+          await releaseMeasurement.query('ROLLBACK');
+          releaseMeasurement.release();
+        }
         const declarationBatch = (requests: unknown[]) =>
           db.pool.query('SELECT moria.native_source_declaration_labels_batch($1,$2) labels', [
             hash,
@@ -1185,6 +1206,28 @@ test(
         );
         assert.deepEqual((await pinned(replacement.digest)).rows[0].labels, ['protected']);
         await assert.rejects(pinned(old.digest), { message: 'NOT_FOUND' });
+        const missingRelease = 'sha256:' + '0'.repeat(64);
+        await assert.rejects(pinned(missingRelease), { message: 'SOURCE_FILE_PROOF_REQUIRED' });
+        await security.setPolicy('operator', unit.resource.entryId, '0', {
+          markings: [],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['read'],
+              effect: 'deny',
+              inherit: false,
+            },
+          ],
+        });
+        try {
+          await assert.rejects(pinned(replacement.digest), { message: 'FORBIDDEN' });
+          await assert.rejects(pinned(missingRelease), { message: 'FORBIDDEN' });
+        } finally {
+          await security.setPolicy('operator', unit.resource.entryId, '1', {
+            markings: [],
+            grants: [],
+          });
+        }
         assert.deepEqual(
           (
             await declarationBatch([
@@ -1219,6 +1262,54 @@ test(
           ]),
           { message: 'NOT_FOUND' },
         );
+
+        const upstream = await isolatedOntology('historical_data_origin');
+        const upstreamDataset = upstream.first.resources.find(
+          (resource) => resource.reference === 'historical_data_origin/Dataset/source',
+        )!.id;
+        const admissionOperations = [
+          readOperation,
+          `${unit.resource.resourceId}:write`,
+          `${upstreamDataset}:read`,
+        ];
+        await authority.setApplication(
+          environment,
+          'operator',
+          readerApplication,
+          admissionOperations,
+        );
+        await authority.setGrants(
+          environment,
+          'operator',
+          principal,
+          readerApplication,
+          admissionOperations,
+        );
+        await db.catalog.transaction(
+          (client) =>
+            db.catalog.admitDataProvenance(
+              client,
+              hash,
+              [unit.resource.resourceId],
+              [upstreamDataset],
+              'write',
+            ),
+          environment,
+        );
+        assert.deepEqual((await pinned(replacement.digest)).rows[0].labels, ['protected']);
+        const upstreamEntry = (await source.resource(context, upstreamDataset)).entryId;
+        await security.setPolicy('operator', upstreamEntry, '0', {
+          markings: [],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['read'],
+              effect: 'deny',
+              inherit: false,
+            },
+          ],
+        });
+        await assert.rejects(pinned(replacement.digest), { message: 'FORBIDDEN' });
       },
     );
     await t.test(
