@@ -1173,14 +1173,10 @@ impl NativeEvaluations {
     }
     async fn case_once(&self, lease: &Lease, host: Uuid) -> Result<Value> {
         let session = self.live(lease, host).await?;
-        let agent = self
+        let agent_id = self
             .agents
             .invoke_evaluation_case(&session, lease.execution)
             .await?;
-        let agent_id: Uuid = agent["id"]
-            .as_str()
-            .ok_or_else(|| anyhow::anyhow!("EVALUATION_AGENT_INVALID"))?
-            .parse()?;
         {
             let mut client = self.db.get().await?;
             let tx = client.transaction().await?;

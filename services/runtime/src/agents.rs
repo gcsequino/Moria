@@ -538,18 +538,38 @@ impl NativeAgents {
         &self,
         session: &VerifiedSession,
         case: Uuid,
-    ) -> Result<Value> {
+    ) -> Result<Uuid> {
         let client = self.db.get().await?;
-        Authority::current(&**client, session).await?;
+        let existing: Option<Uuid> = client
+            .query_one(
+                "SELECT moria.runtime_evaluation_agent_resume($1,$2)",
+                &[&session.session_hash(), &case],
+            )
+            .await?
+            .get(0);
+        if let Some(child) = existing {
+            drop(client);
+            self.evaluation_progress(session, case, child).await?;
+            return Ok(child);
+        }
         let row=client.query_opt("SELECT r.agent_resource,c.input FROM moria.runtime_evaluation_cases c JOIN moria.runtime_evaluations r ON r.execution=c.evaluation JOIN moria.runtime_executions e ON e.id=c.execution JOIN moria.runtime_job_sessions s ON s.execution=e.id AND s.token_hash=$2 WHERE c.execution=$1 AND e.environment=$3 AND e.principal=$4 AND e.application=$5 AND e.status='running'",&[&case,&session.session_hash(),&session.environment(),&session.principal(),&session.application()]).await?.ok_or_else(||anyhow::anyhow!("EVALUATION_CASE_AUTHORITY"))?;
-        self.invoke_inner(
-            session,
-            row.get(0),
-            &format!("evaluation/{case}/agent"),
-            json!({"input":row.get::<_,Value>(1),"wait":false}),
-            Some(case),
-        )
-        .await
+        let resource = row.get(0);
+        let input: Value = row.get(1);
+        drop(client);
+        let accepted = self
+            .invoke_inner(
+                session,
+                resource,
+                &format!("evaluation/{case}/agent"),
+                json!({"input":input,"wait":false}),
+                Some(case),
+            )
+            .await?;
+        accepted["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("EVALUATION_AGENT_INVALID"))?
+            .parse()
+            .map_err(Into::into)
     }
     async fn row(client: &Client, session: &VerifiedSession, id: Uuid) -> Result<Row> {
         client.query_opt("SELECT e.*,a.definition,a.markings AS agent_markings,a.attempt_id,a.correlation_id,a.release,a.model_resource,a.model_binding,r.result AS agent_result,(e.finished_at IS NOT NULL AND e.finished_at<=clock_timestamp()-interval '30 days') AS expired FROM moria.runtime_executions e JOIN moria.runtime_agent_executions a ON a.execution=e.id LEFT JOIN moria.runtime_agent_receipts r ON r.execution=e.id WHERE e.id=$1 AND e.environment=$2 AND e.principal=$3 AND e.application=$4",&[&id,&session.environment(),&session.principal(),&session.application()]).await?.ok_or_else(||anyhow::anyhow!("NOT_FOUND"))
@@ -1049,6 +1069,10 @@ impl NativeAgents {
             &[&id, &json!(labels)],
         )
         .await?;
+        if let Some(case) = evaluation_case {
+            let linked=tx.execute("UPDATE moria.runtime_evaluation_cases SET agent_execution=$2 WHERE execution=$1 AND (agent_execution IS NULL OR agent_execution=$2) AND outcome IN('pending','running')",&[&case,&id]).await?;
+            ensure!(linked == 1, "EVALUATION_CASE_AUTHORITY");
+        }
         let row = Self::row(tx.client(), session, id).await?;
         let result = Self::public(tx.client(), &row, labels).await?;
         Authority::finish(&*tx, session, &snapshot).await?;

@@ -1,0 +1,236 @@
+{
+  "error": "Native evaluation did not reach its real lifecycle barrier",
+  "states": [
+    {
+      "id": "4cc654a9-4b9d-4ddb-b94f-63410c9421ad",
+      "domain": "evaluation",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "edb4a7ba-4282-417b-b854-1782eb163d73",
+      "domain": "evaluation",
+      "status": "failed",
+      "error": "EVALUATION_FAILED"
+    },
+    {
+      "id": "d0fd3730-465b-4935-a243-6c55acf0aa40",
+      "domain": "evaluation",
+      "status": "failed",
+      "error": "EVALUATION_FAILED"
+    },
+    {
+      "id": "34442e51-ba0c-4aa0-bf5c-543d47304772",
+      "domain": "evaluation",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "b879b00a-db1d-4808-9464-0922cf32e2fd",
+      "domain": "evaluation",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "74ea5101-7740-4238-9469-860ae033eb88",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "16e64ea2-c35d-437b-b8a5-3765c5c92a4f",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "23a16681-c52e-4fd7-9cec-ad38510e33bd",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "af99e892-86d8-4f42-9e9a-81f893ef45d6",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "1ef9052e-b878-4cb8-829f-7cf5912d22b3",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "ed7bcbca-8e5b-4425-9658-520109805cf5",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "9f86399a-bd7b-430d-a4ea-feaa8c7698a6",
+      "domain": "agent",
+      "status": "failed",
+      "error": "DEADLINE_EXCEEDED"
+    },
+    {
+      "id": "edddf407-a09b-4fac-b2ba-bb053e540f37",
+      "domain": "agent",
+      "status": "failed",
+      "error": "WORKER_LOST"
+    },
+    {
+      "id": "8a04bae7-7d26-4a6b-99ab-3e208309eea9",
+      "domain": "agent",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "33f101b9-c24b-4b36-a7e3-5c9d08088bce",
+      "domain": "agent",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "d41dfbae-e429-46c2-83d2-9175278484a5",
+      "domain": "function",
+      "status": "failed",
+      "error": "DEADLINE_EXCEEDED"
+    },
+    {
+      "id": "805fddba-8078-466e-9399-a68d90308c2c",
+      "domain": "function",
+      "status": "failed",
+      "error": "DEADLINE_EXCEEDED"
+    }
+  ],
+  "failures": [
+    {
+      "id": "d41dfbae-e429-46c2-83d2-9175278484a5",
+      "domain": "function",
+      "kind": "failed",
+      "payload": {
+        "error": "DEADLINE_EXCEEDED"
+      }
+    },
+    {
+      "id": "805fddba-8078-466e-9399-a68d90308c2c",
+      "domain": "function",
+      "kind": "failed",
+      "payload": {
+        "error": "DEADLINE_EXCEEDED"
+      }
+    },
+    {
+      "id": "edddf407-a09b-4fac-b2ba-bb053e540f37",
+      "domain": "agent",
+      "kind": "failed",
+      "payload": {
+        "error": "WORKER_LOST"
+      }
+    },
+    {
+      "id": "9f86399a-bd7b-430d-a4ea-feaa8c7698a6",
+      "domain": "agent",
+      "kind": "failed",
+      "payload": {
+        "error": "DEADLINE_EXCEEDED"
+      }
+    },
+    {
+      "id": "d0fd3730-465b-4935-a243-6c55acf0aa40",
+      "domain": "evaluation",
+      "kind": "failed",
+      "payload": {
+        "code": "EVALUATION_FAILED",
+        "cause": "FUNCTION_OBSERVATION_INCOMPLETE",
+        "sqlstate": null
+      }
+    },
+    {
+      "id": "edb4a7ba-4282-417b-b854-1782eb163d73",
+      "domain": "evaluation",
+      "kind": "failed",
+      "payload": {
+        "code": "EVALUATION_FAILED",
+        "cause": "FUNCTION_OBSERVATION_INCOMPLETE",
+        "sqlstate": null
+      }
+    }
+  ],
+  "agentModelCalls": [],
+  "gatewayCalls": [
+    {
+      "state": "succeeded",
+      "error": null
+    }
+  ],
+  "sandboxObservations": [
+    {
+      "id": "9f86399a-bd7b-430d-a4ea-feaa8c7698a6",
+      "domain": "agent",
+      "status": "failed",
+      "case_id": "pass",
+      "repeat": 0,
+      "state": "failed",
+      "error": "FUNCTION_FAILED",
+      "observation_pending": "1",
+      "observation_blocked": true
+    },
+    {
+      "id": "edddf407-a09b-4fac-b2ba-bb053e540f37",
+      "domain": "agent",
+      "status": "failed",
+      "case_id": "pass",
+      "repeat": 1,
+      "state": "failed",
+      "error": "FUNCTION_FAILED",
+      "observation_pending": "2",
+      "observation_blocked": true
+    },
+    {
+      "id": "d41dfbae-e429-46c2-83d2-9175278484a5",
+      "domain": "function",
+      "status": "failed",
+      "case_id": null,
+      "repeat": null,
+      "state": "failed",
+      "error": "FUNCTION_FAILED",
+      "observation_pending": "_system/finish",
+      "observation_blocked": true
+    },
+    {
+      "id": "805fddba-8078-466e-9399-a68d90308c2c",
+      "domain": "function",
+      "status": "failed",
+      "case_id": null,
+      "repeat": null,
+      "state": "failed",
+      "error": "FUNCTION_FAILED",
+      "observation_pending": null,
+      "observation_blocked": false
+    },
+    {
+      "id": "8a04bae7-7d26-4a6b-99ab-3e208309eea9",
+      "domain": "agent",
+      "status": "running",
+      "case_id": "fail",
+      "repeat": 0,
+      "state": "starting",
+      "error": null,
+      "observation_pending": "_system/start",
+      "observation_blocked": false
+    },
+    {
+      "id": "33f101b9-c24b-4b36-a7e3-5c9d08088bce",
+      "domain": "agent",
+      "status": "running",
+      "case_id": "fail",
+      "repeat": 1,
+      "state": "starting",
+      "error": null,
+      "observation_pending": null,
+      "observation_blocked": false
+    }
+  ]
+}
