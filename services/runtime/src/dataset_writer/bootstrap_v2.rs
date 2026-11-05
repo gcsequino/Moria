@@ -83,12 +83,11 @@ pub async fn bootstrap_expected_head(
     )?;
     let suffix = Uuid::new_v4().simple().to_string();
     let files_table = format!("bootstrap_files_{suffix}");
-    let runs_table = format!("bootstrap_runs_{suffix}");
     let spool = loaded.spool().clone();
     {
         let db = spool.database()?;
         spool.assert_scope(&db)?;
-        db.execute_batch(&format!("CREATE TABLE {files_table}(name TEXT PRIMARY KEY,rows INTEGER NOT NULL,sequence INTEGER NOT NULL,scanned INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID;CREATE TABLE {runs_table}(kind TEXT NOT NULL,partition INTEGER NOT NULL,minimum BLOB NOT NULL,segment TEXT NOT NULL,content TEXT NOT NULL,PRIMARY KEY(kind,partition,minimum,content)) WITHOUT ROWID;"))?;
+        db.execute_batch(&format!("CREATE TABLE {files_table}(name TEXT PRIMARY KEY,rows INTEGER NOT NULL,sequence INTEGER NOT NULL,scanned INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID;"))?;
     }
     let file_count = inventory(
         &spool,
@@ -105,7 +104,6 @@ pub async fn bootstrap_expected_head(
         files_root: None,
         selections_root: None,
         spool: spool.clone(),
-        runs_table,
         hashes: GraphDirectory::new(graph.clone(), vec!["hashes".into()])?,
         locations: GraphDirectory::new(graph.clone(), vec!["locations".into()])?,
         hashes_root: None,

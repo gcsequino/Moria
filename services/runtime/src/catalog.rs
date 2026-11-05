@@ -583,6 +583,24 @@ pub(crate) async fn prepare_graph_candidate(
     grant.validate_schema(snapshot.metadata().current_schema().as_ref())?;
     snapshot.validate_replacement(spool).await?;
     let proof = snapshot.preparation_proof(stage, &reference)?;
+    record_graph_candidate(
+        &grant, graph, stage, &reference, &snapshot, proof, "replace",
+    )
+    .await
+}
+
+/// Shared receipt insertion after the exact profile-specific staged receiver has validated.
+pub(crate) async fn record_graph_candidate(
+    grant: &DatasetIoGrant,
+    graph: &crate::dataset_graph::NativeGraph,
+    stage: Uuid,
+    reference: &NativeSnapshotRef,
+    snapshot: &crate::native_snapshot_v3::NativeSnapshot,
+    proof: Value,
+    write_mode: &str,
+) -> Result<Uuid> {
+    grant.require_write_mode(write_mode)?;
+
     let delta_profile = crate::dataset_commit_delta::profile(
         snapshot.metadata().current_schema(),
         &grant.state["datasetBinding"]["icebergSchema"],
@@ -596,6 +614,24 @@ pub(crate) async fn prepare_graph_candidate(
     let snapshot_id = snapshot.snapshot_id()?.to_string();
     let mut client = grant.db.get().await?;
     let tx = client.transaction().await?;
+    graph_write_in(grant, &tx).await?;
+    if !grant.primary_key()?.is_empty() {
+        let rows = i64::try_from(snapshot.row_count())?;
+        tx.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) VALUES(moria.runtime_dataset_root_key($1),$2,$3,$4) ON CONFLICT DO NOTHING",&[&location,&grant.key_schema_hash()?,&snapshot_id,&rows]).await?;
+        ensure!(tx.query_one("SELECT key_rows=$3 AND snapshot_id=$4 FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($1) AND key_schema_hash=$2",&[&location,&grant.key_schema_hash()?,&rows,&snapshot_id]).await?.get::<_,bool>(0),"DATASET_PRIMARY_KEY_INVALID");
+    }
+    let id = Uuid::new_v4();
+    let expected = grant.expected_revision()?;
+    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof,delta_profile,write_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",&[&id,&grant.session.environment(),&grant.lease.execution,&grant.resource(),&expected,&grant.state,&grant.session.session_hash(),&grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&location,&snapshot_id,&proof,&delta_profile,&write_mode]).await?;
+    graph.attach_candidate(&tx, stage, id).await?;
+    tx.commit().await?;
+    Ok(id)
+}
+
+async fn graph_write_in(
+    grant: &DatasetIoGrant,
+    tx: &tokio_postgres::Transaction<'_>,
+) -> Result<()> {
     let current: Value = tx
         .query_one(
             "SELECT moria.runtime_dataset_io_check($1,$2,NULL,$3,$4,$5,$6,$7,$8,true)",
@@ -613,15 +649,58 @@ pub(crate) async fn prepare_graph_candidate(
         .await?
         .get(0);
     ensure!(current == grant.state, "STORAGE_NAMESPACE_REVOKED");
-    if !grant.primary_key()?.is_empty() {
-        let rows = i64::try_from(snapshot.row_count())?;
-        tx.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) VALUES(moria.runtime_dataset_root_key($1),$2,$3,$4) ON CONFLICT DO NOTHING",&[&location,&grant.key_schema_hash()?,&snapshot_id,&rows]).await?;
-        ensure!(tx.query_one("SELECT key_rows=$3 AND snapshot_id=$4 FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($1) AND key_schema_hash=$2",&[&location,&grant.key_schema_hash()?,&rows,&snapshot_id]).await?.get::<_,bool>(0),"DATASET_PRIMARY_KEY_INVALID");
-    }
+    Ok(())
+}
+
+pub(crate) async fn record_no_effect(
+    grant: &DatasetIoGrant,
+    contract: &crate::dataset_writer::WriteContract,
+    proof: &Value,
+) -> Result<Uuid> {
+    grant.require_write_mode(&contract.mode)?;
+    let expected = &contract.expected_head;
+    let revision = grant.expected_revision()?;
+    ensure!(expected.revision == revision.to_string(), "HEAD_CONFLICT");
+    let mut client = grant.db.get().await?;
+    let tx = client.transaction().await?;
+    graph_write_in(grant, &tx).await?;
+    let head = tx
+        .query_one(
+            "SELECT revision,snapshot_id,metadata_location FROM moria.dataset_heads
+         WHERE environment=$1 AND dataset=$2 FOR SHARE",
+            &[&grant.session.environment(), &grant.resource()],
+        )
+        .await?;
+    ensure!(
+        head.get::<_, i64>(0) == revision
+            && head.get::<_, Option<String>>(1) == expected.snapshot
+            && head.get::<_, Option<String>>(2) == expected.metadata_location,
+        "HEAD_CONFLICT"
+    );
     let id = Uuid::new_v4();
-    let expected = grant.expected_revision()?;
-    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof,delta_profile) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",&[&id,&grant.session.environment(),&grant.lease.execution,&grant.resource(),&expected,&grant.state,&grant.session.session_hash(),&grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&location,&snapshot_id,&proof,&delta_profile]).await?;
-    graph.attach_candidate(&tx, stage, id).await?;
+    tx.execute(
+        "INSERT INTO moria.runtime_snapshot_no_effects(
+            id,environment,execution,resource,expected_revision,expected_snapshot,expected_metadata,
+            namespace_state,session_hash,owner,fence,incarnation,write_mode,proof)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",
+        &[
+            &id,
+            &grant.session.environment(),
+            &grant.lease.execution,
+            &grant.resource(),
+            &revision,
+            &expected.snapshot,
+            &expected.metadata_location,
+            &grant.state,
+            &grant.session.session_hash(),
+            &grant.lease.owner,
+            &grant.lease.fence.parse::<i64>()?,
+            &grant.lease.incarnation,
+            &contract.mode,
+            &proof,
+        ],
+    )
+    .await?;
     tx.commit().await?;
     Ok(id)
 }

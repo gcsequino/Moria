@@ -159,6 +159,98 @@ pub(super) async fn seal(
     })
 }
 
+/// Read the actual standard delete file through its qualified result-root version.
+pub(super) async fn read(
+    file: crate::dataset_graph_read::GraphFile,
+    rows: u64,
+) -> Result<(String, Vec<u64>)> {
+    use crate::snapshot::{parquet_bounds, parquet_read::BoundedParquetRead};
+    use arrow_array::Array;
+    use futures::TryStreamExt;
+    use parquet::arrow::async_reader::ParquetRecordBatchStreamBuilder;
+    ensure!(
+        (1..=MAX_ROWS as u64).contains(&rows),
+        "DATASET_MUTATION_PROOF_CHANGED"
+    );
+    let builder = ParquetRecordBatchStreamBuilder::new(BoundedParquetRead::new(
+        file.window(),
+        file.content().size,
+    ))
+    .await?;
+    ensure!(
+        u64::try_from(builder.metadata().file_metadata().num_rows())? == rows,
+        "PARQUET_COUNT_MISMATCH"
+    );
+    let fields = builder.parquet_schema().root_schema().get_fields();
+    ensure!(
+        fields.len() == 2
+            && [("file_path", FILE_PATH_ID), ("pos", POSITION_ID)]
+                .iter()
+                .zip(fields)
+                .all(|((name, id), field)| field.name() == *name
+                    && field.get_basic_info().has_id()
+                    && field.get_basic_info().id() == *id
+                    && field.get_basic_info().repetition() == parquet::basic::Repetition::REQUIRED),
+        "DATASET_MUTATION_PROOF_CHANGED"
+    );
+    let chunks = parquet_bounds::metadata(builder.metadata(), file.content().size)?;
+    let mut headers = file.window();
+    for chunk in chunks {
+        let mut walk = parquet_bounds::PageWalk::new();
+        while walk.position() < chunk.size {
+            let offset = chunk.offset + walk.position();
+            let bytes = headers
+                .read(offset..(offset + 64 * 1024).min(chunk.offset + chunk.size))
+                .await?;
+            walk.header(&bytes, &chunk)?;
+        }
+        walk.finish(&chunk)?;
+    }
+    headers.check_current().await?;
+    let mut reader = builder.with_batch_size(MAX_ROWS).build()?;
+    let mut path = None::<String>;
+    let mut positions = Vec::with_capacity(rows as usize);
+    while let Some(batch) = reader.try_next().await? {
+        ensure!(batch.num_columns() == 2, "DATASET_MUTATION_PROOF_CHANGED");
+        let paths = batch
+            .column(0)
+            .as_any()
+            .downcast_ref::<StringArray>()
+            .ok_or_else(|| anyhow::anyhow!("DATASET_MUTATION_PROOF_CHANGED"))?;
+        let ordinals = batch
+            .column(1)
+            .as_any()
+            .downcast_ref::<Int64Array>()
+            .ok_or_else(|| anyhow::anyhow!("DATASET_MUTATION_PROOF_CHANGED"))?;
+        ensure!(
+            paths.null_count() == 0 && ordinals.null_count() == 0,
+            "DATASET_MUTATION_PROOF_CHANGED"
+        );
+        for index in 0..batch.num_rows() {
+            let name = paths.value(index);
+            let row = u64::try_from(ordinals.value(index))?;
+            ensure!(
+                name.starts_with("moria://")
+                    && name.len() <= 4096
+                    && path.as_deref().is_none_or(|prior| prior == name)
+                    && positions.last().is_none_or(|prior| *prior < row)
+                    && positions.len() < rows as usize,
+                "DATASET_MUTATION_PROOF_CHANGED"
+            );
+            if path.is_none() {
+                path = Some(name.into());
+            }
+            positions.push(row);
+        }
+    }
+    ensure!(positions.len() == rows as usize, "PARQUET_COUNT_MISMATCH");
+    file.check_current().await?;
+    Ok((
+        path.ok_or_else(|| anyhow::anyhow!("DATASET_MUTATION_PROOF_CHANGED"))?,
+        positions,
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

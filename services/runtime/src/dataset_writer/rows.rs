@@ -12,6 +12,7 @@ const ROW_BYTES: usize = 4 * 1024 * 1024;
 pub struct CanonicalRow {
     key: Vec<u8>,
     hash: [u8; 32],
+    bytes: u64,
 }
 impl CanonicalRow {
     pub fn key(&self) -> &[u8] {
@@ -19,6 +20,9 @@ impl CanonicalRow {
     }
     pub fn row_hash(&self) -> [u8; 32] {
         self.hash
+    }
+    pub(crate) fn bytes(&self) -> u64 {
+        self.bytes
     }
 }
 /// Full target schema and complete ordered PK are mandatory; no column normalization or omission.
@@ -45,18 +49,7 @@ pub(crate) fn encode_rows(
     let mut bytes = 0usize;
     let mut output = Vec::with_capacity(batch.num_rows());
     for row in 0..batch.num_rows() {
-        let mut value = serde_json::Map::new();
-        for (name, descriptor) in &descriptors {
-            let array = batch
-                .column_by_name(name)
-                .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?;
-            value.insert(
-                name.clone(),
-                values::arrow_value(array.as_ref(), row, descriptor)?,
-            );
-        }
-        let canonical = canonical_json(&Value::Object(value))?.into_bytes();
-        ensure!(canonical.len() <= ROW_BYTES, "DECODED_ROW_LIMIT");
+        let canonical = canonical_payload(batch, row, &descriptors)?;
         let key = super::keys::encoded_key(batch, row, keys, columns)?;
         bytes = bytes
             .checked_add(key.len() + 32)
@@ -65,9 +58,41 @@ pub(crate) fn encode_rows(
         output.push(CanonicalRow {
             key,
             hash: Sha256::digest(&canonical).into(),
+            bytes: canonical.len() as u64,
         });
     }
     Ok(output)
+}
+fn canonical_payload(
+    batch: &RecordBatch,
+    row: usize,
+    descriptors: &BTreeMap<String, Value>,
+) -> Result<Vec<u8>> {
+    let mut value = serde_json::Map::new();
+    for (name, descriptor) in descriptors {
+        let array = batch
+            .column_by_name(name)
+            .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?;
+        value.insert(
+            name.clone(),
+            values::arrow_value(array.as_ref(), row, descriptor)?,
+        );
+    }
+    let canonical = canonical_json(&Value::Object(value))?.into_bytes();
+    ensure!(canonical.len() <= ROW_BYTES, "DECODED_ROW_LIMIT");
+    Ok(canonical)
+}
+/// Count actual logical rows for an unkeyed append without manufacturing row identity.
+pub(crate) fn payload_bytes(batch: &RecordBatch, columns: &BTreeMap<String, Value>) -> Result<u64> {
+    ensure!(batch.num_rows() <= PAGE_ROWS, "RESOURCE_LIMIT");
+    validate_batch(batch, columns)?;
+    let mut bytes = 0u64;
+    for row in 0..batch.num_rows() {
+        bytes = bytes
+            .checked_add(canonical_payload(batch, row, columns)?.len() as u64)
+            .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))?;
+    }
+    Ok(bytes)
 }
 /// Bootstrap validates only projected key columns; it does not invent a digest for unread payloads.
 pub(crate) fn encode_projected_keys(
@@ -138,6 +163,42 @@ pub(crate) fn encode_delete_keys(
     }
     Ok(output)
 }
+pub(super) enum MutationRows {
+    Complete(Vec<CanonicalRow>),
+    Keys(Vec<Vec<u8>>),
+    Unkeyed(u64),
+}
+/// Split only the codec's actual key-byte page overflow, before any mutation IO.
+pub(super) fn mutation_page(
+    batch: &RecordBatch,
+    start: usize,
+    keys: &[String],
+    columns: &BTreeMap<String, Value>,
+    column_json: &Value,
+    key_only: bool,
+) -> Result<(RecordBatch, MutationRows)> {
+    ensure!(
+        start < batch.num_rows() && batch.num_rows() <= PAGE_ROWS,
+        "RESOURCE_LIMIT"
+    );
+    let mut count = batch.num_rows() - start;
+    loop {
+        let page = batch.slice(start, count);
+        let encoded = if key_only {
+            encode_delete_keys(&page, keys, column_json).map(MutationRows::Keys)
+        } else if keys.is_empty() {
+            payload_bytes(&page, columns).map(MutationRows::Unkeyed)
+        } else {
+            encode_rows(&page, keys, column_json).map(MutationRows::Complete)
+        };
+        match encoded {
+            Ok(encoded) => return Ok((page, encoded)),
+            Err(error) if count > 1 && error.to_string() == "RESOURCE_LIMIT" => count /= 2,
+            Err(error) => return Err(error),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -194,6 +255,54 @@ mod tests {
             encode_delete_keys(&batch(&[Some(vec!["東京", "😀"])]), &keys, &columns).unwrap();
         assert_eq!(keyrows[0], rows[0].key());
     }
+    #[test]
+    fn wide_valid_keys_split_without_losing_rows() {
+        use arrow_array::{ArrayRef, StringArray};
+        use std::sync::Arc;
+        let values = [
+            "a".repeat(3 * 1024 * 1024),
+            "b".repeat(3 * 1024 * 1024),
+            "c".repeat(3 * 1024 * 1024),
+        ];
+        let batch = RecordBatch::try_from_iter(vec![(
+            "id",
+            Arc::new(StringArray::from(
+                values.iter().map(String::as_str).collect::<Vec<_>>(),
+            )) as ArrayRef,
+        )])
+        .unwrap();
+        let columns = BTreeMap::from([(
+            "id".into(),
+            serde_json::json!({"type":"string","nullable":false}),
+        )]);
+        let keys = vec!["id".into()];
+        let column_json = serde_json::to_value(&columns).unwrap();
+        let (first, first_keys) =
+            mutation_page(&batch, 0, &keys, &columns, &column_json, true).unwrap();
+        let (last, last_keys) = mutation_page(
+            &batch,
+            first.num_rows(),
+            &keys,
+            &columns,
+            &column_json,
+            true,
+        )
+        .unwrap();
+        let (MutationRows::Keys(first_keys), MutationRows::Keys(last_keys)) =
+            (first_keys, last_keys)
+        else {
+            panic!("expected key pages");
+        };
+        assert_eq!((first.num_rows(), last.num_rows()), (1, 2));
+        assert_eq!(
+            first_keys.into_iter().chain(last_keys).collect::<Vec<_>>(),
+            values
+                .iter()
+                .map(|value| serde_json::to_vec(&[value]).unwrap())
+                .collect::<Vec<_>>()
+        );
+    }
+
     #[test]
     fn delete_schema_is_exact_key_only_and_full_rows_do_not_omit_columns() {
         let batch = RecordBatch::try_from_iter(vec![

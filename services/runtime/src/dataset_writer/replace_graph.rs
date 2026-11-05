@@ -9,8 +9,8 @@ use crate::{
     dataset_graph::{NativeGraph, QualifiedNode},
     dataset_graph_read::{GraphReadContext, ReadBasis},
     native_snapshot_v3::{
-        INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef, LogicalFile, NativeSnapshot,
-        PROFILE, RootDescriptor, VisibilityIndex,
+        IndexSummary, IndexSummaryRef, LogicalFile, NativeSnapshot, PROFILE, RootDescriptor,
+        VisibilityIndex,
     },
     persistent_directory::{
         NodeReference,
@@ -104,8 +104,6 @@ impl ReplacementGraph {
         cancel: Cancellation,
     ) -> Result<Self> {
         let graph = NativeGraph::acquire(store.clone(), grant.clone(), cancel.clone()).await?;
-        let runs_table = format!("replacement_runs_{}", Uuid::new_v4().simple());
-        spool.database()?.execute_batch(&format!("CREATE TABLE {runs_table}(kind TEXT NOT NULL,partition INTEGER NOT NULL,minimum BLOB NOT NULL,segment TEXT NOT NULL,content TEXT NOT NULL,PRIMARY KEY(kind,partition,minimum,content)) WITHOUT ROWID;"))?;
         let keys = grant.primary_key()?;
         let visible = if keys.is_empty() {
             None
@@ -129,7 +127,6 @@ impl ReplacementGraph {
             files_root: prior,
             selections_root: None,
             spool,
-            runs_table,
             hashes: GraphDirectory::new(graph.clone(), vec!["hashes".into()])?,
             locations: GraphDirectory::new(graph.clone(), vec!["locations".into()])?,
             hashes_root: None,
@@ -315,28 +312,9 @@ impl ReplacementGraph {
             selections: self.builder.selections_root.clone(),
             visibility: self.visibility(),
         };
-        let node = self
-            .graph
-            .write_descriptor(
-                "root",
-                &serde_json::to_value(summary)?,
-                self.index_children().await?,
-                self.rows,
-                0,
-            )
-            .await?;
-        let reference = IndexSummaryRef {
-            version: 1,
-            root: node.content().clone(),
-        };
-        let snapshot = metadata["snapshots"]
-            .as_array_mut()
-            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?
-            .iter_mut()
-            .find(|head| head["snapshot-id"] == snapshot)
-            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
-        snapshot["summary"][INDEX_SUMMARY_PROPERTY] = Value::String(reference.encode()?);
-        Ok(reference)
+        self.builder
+            .seal_index_summary(metadata, snapshot, summary)
+            .await
     }
     fn visibility(&self) -> Option<VisibilityIndex> {
         (!self.keys.is_empty()).then(|| VisibilityIndex {
@@ -346,25 +324,7 @@ impl ReplacementGraph {
         })
     }
     async fn index_children(&self) -> Result<Vec<(String, QualifiedNode)>> {
-        let mut children = Vec::new();
-        for (label, reference, directory) in [
-            (
-                "selections",
-                &self.builder.selections_root,
-                &self.builder.selections,
-            ),
-            ("hashes", &self.builder.hashes_root, &self.builder.hashes),
-            (
-                "locations",
-                &self.builder.locations_root,
-                &self.builder.locations,
-            ),
-        ] {
-            if let Some(reference) = reference {
-                children.push((label.into(), directory.qualified_root(reference).await?));
-            }
-        }
-        Ok(children)
+        self.builder.index_children().await
     }
     pub(super) async fn finish(
         self,

@@ -54,6 +54,28 @@ CREATE FUNCTION moria.runtime_snapshot_candidate_immutable() RETURNS trigger LAN
 BEGIN RAISE EXCEPTION 'IMMUTABLE_SNAPSHOT_CANDIDATE'; END $$;
 CREATE TRIGGER runtime_snapshot_candidate_immutable BEFORE UPDATE ON moria.runtime_snapshot_candidates
   FOR EACH ROW EXECUTE FUNCTION moria.runtime_snapshot_candidate_immutable();
+-- Certified no-effect outputs have their own preparation identity and never fabricate a snapshot.
+CREATE TABLE moria.runtime_snapshot_no_effects (
+  id uuid PRIMARY KEY, environment text NOT NULL REFERENCES moria.environments(id),
+  execution uuid NOT NULL REFERENCES moria.runtime_executions(id), resource text NOT NULL,
+  expected_revision bigint NOT NULL CHECK(expected_revision>=0), expected_snapshot text, expected_metadata text,
+  namespace_state jsonb NOT NULL, session_hash text NOT NULL, owner uuid NOT NULL, fence bigint NOT NULL CHECK(fence>0),
+  incarnation uuid NOT NULL, write_mode text NOT NULL CHECK(write_mode IN ('append','upsert','delete')),
+  proof jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  CHECK((expected_revision=0 AND expected_snapshot IS NULL AND expected_metadata IS NULL)
+    OR (expected_revision>0 AND expected_snapshot IS NOT NULL AND expected_metadata IS NOT NULL AND expected_metadata LIKE 'moria-snapshot-v3:%')),
+  CHECK(jsonb_typeof(proof)='object' AND octet_length(proof::text)<=65536
+    AND proof->>'kind' IS NOT DISTINCT FROM 'datasetMutationNoEffect' AND proof->>'version' IS NOT DISTINCT FROM '1')
+);
+CREATE TRIGGER runtime_snapshot_no_effect_immutable BEFORE UPDATE OR DELETE ON moria.runtime_snapshot_no_effects
+  FOR EACH ROW EXECUTE FUNCTION moria.runtime_snapshot_candidate_immutable();
+CREATE FUNCTION moria.runtime_snapshot_no_effect_owner() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT has_schema_privilege(current_user,'moria','CREATE') THEN RAISE EXCEPTION 'DATASET_MUTATION_PRODUCER_REQUIRED'; END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER runtime_snapshot_no_effect_owner BEFORE INSERT ON moria.runtime_snapshot_no_effects
+  FOR EACH ROW EXECUTE FUNCTION moria.runtime_snapshot_no_effect_owner();
 CREATE TABLE moria.runtime_snapshot_checkpoint_bindings (
   binding uuid PRIMARY KEY REFERENCES moria.runtime_execution_bindings(id),
   connection text NOT NULL, stream text NOT NULL, config_revision text NOT NULL
@@ -173,8 +195,9 @@ END $$;
 
 CREATE FUNCTION moria.runtime_snapshot_publish(session_hash text,execution_id uuid,worker uuid,worker_fence bigint,
   instance_incarnation uuid,candidate_ids uuid[],checkpoint jsonb) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE state jsonb; e moria.runtime_executions; item moria.runtime_snapshot_candidates; current_state jsonb;
-  old moria.publications; receipt jsonb; outputs jsonb:='[]'; lineage jsonb; request_hash text; revision bigint; updated bigint; env_name text; delta_candidate uuid;
+DECLARE state jsonb; e moria.runtime_executions; item record; current_state jsonb;
+  old moria.publications; receipt jsonb; outputs jsonb:='[]'; lineage jsonb; request_hash text; revision bigint; updated bigint; env_name text;
+  prepared_ids jsonb; prepared_count bigint; prepared_resources bigint; head moria.dataset_heads;
 BEGIN
   IF cardinality(candidate_ids) NOT BETWEEN 1 AND 64 OR cardinality(candidate_ids)<>(SELECT count(DISTINCT id) FROM unnest(candidate_ids) id)
     THEN RAISE EXCEPTION 'OUTPUT_INVALID'; END IF;
@@ -184,20 +207,31 @@ BEGIN
   PERFORM pg_advisory_xact_lock_shared(hashtextextended('moria/filesystem',0));
   PERFORM 1 FROM moria.environments WHERE id=env_name FOR UPDATE;
   SELECT * INTO e FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
-  IF (SELECT count(*) FROM moria.runtime_snapshot_candidates WHERE id=ANY(candidate_ids) AND execution=execution_id)<>cardinality(candidate_ids)
-    OR (SELECT count(DISTINCT resource) FROM moria.runtime_snapshot_candidates WHERE id=ANY(candidate_ids))<>cardinality(candidate_ids)
+  PERFORM 1 FROM moria.runtime_snapshot_candidates c WHERE c.id=ANY(candidate_ids) AND c.execution=execution_id ORDER BY c.resource FOR SHARE;
+  PERFORM 1 FROM moria.runtime_snapshot_no_effects n WHERE n.id=ANY(candidate_ids) AND n.execution=execution_id ORDER BY n.resource FOR SHARE;
+  SELECT count(*),count(DISTINCT resource),jsonb_agg(id ORDER BY resource)
+    INTO prepared_count,prepared_resources,prepared_ids FROM (
+      SELECT c.id,c.resource FROM moria.runtime_snapshot_candidates c WHERE c.id=ANY(candidate_ids) AND c.execution=execution_id
+      UNION ALL SELECT n.id,n.resource FROM moria.runtime_snapshot_no_effects n WHERE n.id=ANY(candidate_ids) AND n.execution=execution_id
+    ) prepared WHERE e.spec->'expectedHeads' ? resource;
+  IF prepared_count<>cardinality(candidate_ids) OR prepared_resources<>cardinality(candidate_ids)
+    OR (SELECT count(DISTINCT value) FROM jsonb_array_elements(prepared_ids))<>cardinality(candidate_ids)
     OR cardinality(candidate_ids)<>(SELECT count(*) FROM jsonb_object_keys(e.spec->'expectedHeads')) THEN RAISE EXCEPTION 'OUTPUT_INVALID'; END IF;
   SELECT COALESCE(jsonb_object_agg(p->>'resource',p->>'revision'),'{}') INTO lineage FROM jsonb_array_elements(e.spec->'pinnedInputs') p;
-  request_hash:=encode(sha256(convert_to(jsonb_build_object('candidates',(SELECT jsonb_agg(id ORDER BY resource) FROM moria.runtime_snapshot_candidates
-    WHERE id=ANY(candidate_ids)),'checkpoint',checkpoint)::text,'UTF8')),'hex');
+  request_hash:=encode(sha256(convert_to(jsonb_build_object('candidates',prepared_ids,'checkpoint',checkpoint)::text,'UTF8')),'hex');
   SELECT * INTO old FROM moria.publications WHERE environment=e.environment AND execution=execution_id::text;
   IF old.request_hash IS NOT NULL AND EXISTS(SELECT 1 FROM moria.runtime_job_sessions WHERE token_hash=session_hash) THEN
     IF old.request_hash<>request_hash THEN RAISE EXCEPTION 'PUBLICATION_CONFLICT'; END IF;
-    IF e.result IS DISTINCT FROM old.receipt OR e.status<>'succeeded'
-      OR EXISTS(SELECT 1 FROM moria.runtime_snapshot_candidates WHERE id=ANY(candidate_ids)
-        AND (runtime_snapshot_publish.session_hash IS DISTINCT FROM runtime_snapshot_candidates.session_hash OR owner<>worker OR fence<>worker_fence OR incarnation<>instance_incarnation)) THEN
-      RAISE EXCEPTION 'CANDIDATE_STALE'; END IF;
-    FOR item IN SELECT * FROM moria.runtime_snapshot_candidates WHERE id=ANY(candidate_ids) ORDER BY resource LOOP
+    IF e.result IS DISTINCT FROM old.receipt OR e.status<>'succeeded' THEN RAISE EXCEPTION 'CANDIDATE_STALE'; END IF;
+    FOR item IN
+      SELECT c.resource,c.session_hash,c.owner,c.fence,c.incarnation FROM moria.runtime_snapshot_candidates c
+        WHERE c.id=ANY(candidate_ids) AND c.execution=execution_id
+      UNION ALL SELECT n.resource,n.session_hash,n.owner,n.fence,n.incarnation FROM moria.runtime_snapshot_no_effects n
+        WHERE n.id=ANY(candidate_ids) AND n.execution=execution_id
+      ORDER BY resource
+    LOOP
+      IF item.session_hash IS DISTINCT FROM session_hash OR item.owner<>worker OR item.fence<>worker_fence OR item.incarnation<>instance_incarnation
+        THEN RAISE EXCEPTION 'CANDIDATE_STALE'; END IF;
       PERFORM moria.native_dataset_receipt_access(session_hash,execution_id,worker,worker_fence,item.resource,'write');
     END LOOP;
     RETURN old.receipt;
@@ -212,7 +246,15 @@ BEGIN
     PERFORM moria.runtime_execution_complete(execution_id,worker,worker_fence,old.receipt);
     RETURN old.receipt;
   END IF;
-  FOR item IN SELECT * FROM moria.runtime_snapshot_candidates WHERE id=ANY(candidate_ids) ORDER BY resource FOR SHARE LOOP
+  FOR item IN
+    SELECT c.id,c.resource,c.expected_revision,c.namespace_state,c.session_hash,c.owner,c.fence,c.incarnation,
+      c.metadata_location,c.snapshot_id,c.write_mode,c.proof,true AS changed
+      FROM moria.runtime_snapshot_candidates c WHERE c.id=ANY(candidate_ids) AND c.execution=execution_id
+    UNION ALL SELECT n.id,n.resource,n.expected_revision,n.namespace_state,n.session_hash,n.owner,n.fence,n.incarnation,
+      n.expected_metadata,n.expected_snapshot,n.write_mode,n.proof,false
+      FROM moria.runtime_snapshot_no_effects n WHERE n.id=ANY(candidate_ids) AND n.execution=execution_id
+    ORDER BY resource
+  LOOP
     current_state:=moria.runtime_dataset_io_check(session_hash,execution_id,NULL,worker,worker_fence,instance_incarnation,
       item.namespace_state->>'warehouseId',item.namespace_state->>'tableId',item.namespace_state->>'revision',true);
     IF current_state->'datasetBinding' IS NOT NULL AND current_state->'datasetBinding'<>'null'::jsonb
@@ -220,8 +262,29 @@ BEGIN
     IF item.session_hash<>session_hash OR item.owner<>worker OR item.fence<>worker_fence OR item.incarnation<>instance_incarnation
       OR item.namespace_state<>current_state OR e.spec->'expectedHeads'->>item.resource IS DISTINCT FROM item.expected_revision::text THEN
       RAISE EXCEPTION 'CANDIDATE_STALE'; END IF;
+    IF item.write_mode<>'replace' THEN
+      IF NOT EXISTS(
+        SELECT 1 FROM moria.runtime_pipeline_executions p CROSS JOIN LATERAL jsonb_each(p.outputs) output
+         WHERE p.execution=execution_id AND p.definition->>'kind'='Connection'
+          AND p.definition->'spec'->>'mode'=item.write_mode AND output.value->>'resource'=item.resource
+          AND jsonb_typeof(output.value->'mutationBudget')='object'
+          AND output.value->'mutationBudget'=item.proof->'budget'
+      ) THEN RAISE EXCEPTION 'DATASET_MUTATION_PRODUCER_REQUIRED'; END IF;
+    END IF;
+    IF NOT item.changed THEN
+      SELECT * INTO head FROM moria.dataset_heads WHERE environment=e.environment AND dataset=item.resource FOR UPDATE;
+      IF NOT FOUND OR head.revision<>item.expected_revision OR head.snapshot_id IS DISTINCT FROM item.snapshot_id
+        OR head.metadata_location IS DISTINCT FROM item.metadata_location THEN RAISE EXCEPTION 'HEAD_CONFLICT'; END IF;
+      outputs:=outputs||jsonb_build_array(jsonb_build_object('dataset',item.resource,'revision',head.revision::text,'snapshotId',head.snapshot_id,'changed',false));
+      CONTINUE;
+    END IF;
     UPDATE moria.dataset_heads SET revision=moria.dataset_heads.revision+1,metadata_location=item.metadata_location,snapshot_id=item.snapshot_id
-      WHERE environment=e.environment AND dataset=item.resource AND moria.dataset_heads.revision=item.expected_revision RETURNING moria.dataset_heads.revision INTO updated;
+      WHERE environment=e.environment AND dataset=item.resource AND moria.dataset_heads.revision=item.expected_revision
+        AND (item.write_mode='replace' OR (
+          moria.dataset_heads.snapshot_id IS NOT DISTINCT FROM item.proof->'mutationBasis'->>'snapshot'
+          AND moria.dataset_heads.metadata_location IS NOT DISTINCT FROM item.proof->'mutationBasis'->>'metadata'
+          AND item.proof->'mutationBasis'->>'revision'=item.expected_revision::text
+        )) RETURNING moria.dataset_heads.revision INTO updated;
     IF NOT FOUND THEN RAISE EXCEPTION 'HEAD_CONFLICT'; END IF;
     INSERT INTO moria.snapshot_history VALUES(e.environment,item.resource,updated,item.metadata_location,item.snapshot_id,execution_id::text,lineage);
     outputs:=outputs||jsonb_build_array(jsonb_build_object('dataset',item.resource,'revision',updated::text,'snapshotId',item.snapshot_id));
@@ -241,13 +304,13 @@ BEGIN
   END IF;
   UPDATE moria.environments SET revision=moria.environments.revision+1 WHERE id=e.environment RETURNING moria.environments.revision INTO revision;
   receipt:=jsonb_build_object('revision',revision::text,'outputs',outputs);
-  FOR current_state IN SELECT value FROM jsonb_array_elements(outputs) LOOP
+  FOR current_state IN SELECT value FROM jsonb_array_elements(outputs) WHERE value->>'changed' IS DISTINCT FROM 'false' LOOP
     PERFORM moria.indexing_enqueue(e.environment,current_state->>'dataset',(current_state->>'revision')::bigint,revision);
   END LOOP;
   INSERT INTO moria.publications VALUES(e.environment,execution_id::text,request_hash,receipt);
   PERFORM moria.runtime_execution_complete(execution_id,worker,worker_fence,receipt);
-  FOREACH delta_candidate IN ARRAY candidate_ids LOOP
-    PERFORM moria.runtime_dataset_commit_record_execution(session_hash,execution_id,delta_candidate,receipt);
+  FOR item IN SELECT c.id FROM moria.runtime_snapshot_candidates c WHERE c.id=ANY(candidate_ids) AND c.execution=execution_id LOOP
+    PERFORM moria.runtime_dataset_commit_record_execution(session_hash,execution_id,item.id,receipt);
   END LOOP;
   RETURN receipt;
 END $$;

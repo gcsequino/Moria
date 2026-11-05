@@ -182,12 +182,121 @@ impl MutationFootprint {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum RowOperation {
+    Insert,
+    Replacement,
+}
+impl RowOperation {
+    pub(crate) fn name(self) -> &'static str {
+        match self {
+            Self::Insert => "insert",
+            Self::Replacement => "replacement",
+        }
+    }
+}
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ChangedFile {
+    pub(crate) operation: RowOperation,
+    pub(crate) file: super::LogicalFile,
+    pub(crate) rows: u64,
+    pub(crate) data_sequence: String,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct DeletedRun {
+    partition: u8,
+    rows: u64,
+    sequence: String,
+    run: crate::storage::SealedObject,
+}
+
 pub(crate) struct ReadableMutation {
     pub(crate) descriptor: MutationFootprint,
     pub(crate) complete_rows: Option<ReadDirectory>,
     pub(crate) delete_keys: Option<ReadDirectory>,
     pub(crate) inputs: ReadDirectory,
 }
+impl NativeSnapshot {
+    /// A footprint entry is already rooted in the accepted window or actual candidate.
+    /// Re-resolve its certificate and the same file on this result before decoding.
+    pub(crate) async fn changed_rows(
+        self: &std::sync::Arc<Self>,
+        name: &str,
+        entry: crate::persistent_directory::read::ReadEntry,
+    ) -> Result<(
+        ChangedFile,
+        futures::stream::BoxStream<'static, Result<arrow_array::RecordBatch>>,
+    )> {
+        self.check_current().await?;
+        let changed: ChangedFile = serde_json::from_value(entry.value.clone())?;
+        ensure!(
+            changed.file.name == name
+                && changed.rows > 0
+                && changed.data_sequence == self.descriptor.sequence
+                && entry.link_count() == 1,
+            "{INVALID}"
+        );
+        let certificate = self.context.file(&entry.link(0).await?).await?;
+        let file = self.file(name).await?;
+        ensure!(
+            certificate.content() == &changed.file.content
+                && file.content() == certificate.content()
+                && file.physical_version() == certificate.physical_version(),
+            "{INVALID}"
+        );
+        let plan = super::GraphScanFile {
+            name: name.into(),
+            content: changed.file.content.clone(),
+            physical_rows: changed.rows,
+            selected_rows: changed.rows,
+            data_sequence: bigint(&changed.data_sequence)?,
+        };
+        let stream = self.clone().scan_planned_file(&plan, 128).await?;
+        Ok((changed, stream))
+    }
+
+    pub(crate) async fn deleted_run(
+        &self,
+        entry: crate::persistent_directory::read::ReadEntry,
+    ) -> Result<(u8, u64, crate::dataset_writer::key_run_io::RunReader)> {
+        use crate::dataset_writer::{key_run::RunKind, key_run_io::RunReader};
+        self.check_current().await?;
+        let deleted: DeletedRun = serde_json::from_value(entry.value.clone())?;
+        ensure!(
+            deleted.rows > 0
+                && deleted.sequence == self.descriptor.sequence
+                && entry.link_count() == 1,
+            "{INVALID}"
+        );
+        let node = entry.link(0).await?;
+        ensure!(
+            node.content() == &deleted.run && node.entries() == deleted.rows,
+            "{INVALID}"
+        );
+        let run = RunReader::open(
+            &self.context,
+            &node,
+            &self.descriptor.key_schema_hash,
+            RunKind::Hashes,
+        )
+        .await?;
+        let descriptor = run.descriptor();
+        ensure!(
+            descriptor.sequence == bigint(&deleted.sequence)?
+                && descriptor.entries == deleted.rows
+                && descriptor.partitions.len() == 1
+                && descriptor.partitions[0].partition == deleted.partition
+                && descriptor.partitions[0].entries == deleted.rows,
+            "{INVALID}"
+        );
+        self.check_current().await?;
+        Ok((deleted.partition, deleted.rows, run))
+    }
+}
+
 impl NativeSnapshot {
     /// The expected reference is read from the actual immutable journal-window member.
     /// It can only narrow an already qualified result-root context, never grant a read.

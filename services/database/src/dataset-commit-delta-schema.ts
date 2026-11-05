@@ -1,4 +1,4 @@
-/** Immutable Dataset publication edges; sparse mutation production remains disabled. */
+/** Immutable Dataset publication edges bound to qualified native producer output. */
 export const datasetCommitDeltaSchema = String.raw`
 ALTER TABLE moria.runtime_snapshot_candidates ADD COLUMN delta_profile jsonb;
 CREATE TABLE moria.runtime_dataset_commit_deltas(
@@ -14,6 +14,7 @@ CREATE TABLE moria.runtime_dataset_commit_deltas(
  change_kind text NOT NULL CHECK(change_kind IN ('replace','mutation','unchanged')),
  unchanged_reason text CHECK(unchanged_reason IN ('metadataPrune','compaction','noOp')),equivalence_receipt jsonb,
  complete_rows_root text REFERENCES moria.runtime_dataset_roots(key),delete_keys_root text REFERENCES moria.runtime_dataset_roots(key),
+ mutation_footprint jsonb,
  producer_kind text NOT NULL CHECK(producer_kind IN ('execution','maintenance')),
  execution uuid REFERENCES moria.runtime_executions(id),candidate uuid REFERENCES moria.runtime_snapshot_candidates(id),
  maintenance uuid REFERENCES moria.runtime_dataset_maintenance_runs(id),policy uuid REFERENCES moria.runtime_dataset_retention_policies(id),
@@ -23,8 +24,13 @@ CREATE TABLE moria.runtime_dataset_commit_deltas(
   OR (basis_revision>0 AND basis_snapshot IS NOT NULL AND basis_metadata IS NOT NULL AND basis_root IS NOT NULL)),
  CHECK((producer_kind='execution' AND mode IS NOT NULL AND execution IS NOT NULL AND candidate IS NOT NULL AND candidate=commit AND maintenance IS NULL AND policy IS NULL)
   OR (producer_kind='maintenance' AND mode IS NULL AND change_kind='unchanged' AND execution IS NULL AND candidate IS NULL AND maintenance IS NOT NULL AND maintenance=commit AND policy IS NOT NULL)),
- CHECK((change_kind='replace' AND mode='replace' AND complete_rows_root=result_root AND delete_keys_root IS NULL AND unchanged_reason IS NULL AND equivalence_receipt IS NULL)
-  OR (change_kind='unchanged' AND unchanged_reason IS NOT NULL AND equivalence_receipt IS NOT NULL AND complete_rows_root IS NULL AND delete_keys_root IS NULL)),
+ CHECK((change_kind='replace' AND mode='replace' AND complete_rows_root IS NOT NULL AND complete_rows_root=result_root AND delete_keys_root IS NULL AND mutation_footprint IS NULL AND unchanged_reason IS NULL AND equivalence_receipt IS NULL)
+  OR (change_kind='unchanged' AND unchanged_reason IS NOT NULL AND equivalence_receipt IS NOT NULL AND complete_rows_root IS NULL AND delete_keys_root IS NULL AND mutation_footprint IS NULL)
+  OR (change_kind='mutation' AND mode IS NOT NULL AND mode IN ('append','upsert','delete') AND producer_kind='execution'
+    AND complete_rows_root IS NULL AND delete_keys_root IS NULL AND unchanged_reason IS NULL AND equivalence_receipt IS NULL
+    AND mutation_footprint IS NOT NULL AND jsonb_typeof(mutation_footprint)='object'
+    AND octet_length(mutation_footprint::text)<=16384 AND mutation_footprint-ARRAY['version','node']='{}'::jsonb
+    AND mutation_footprint->>'version' IS NOT DISTINCT FROM '1' AND jsonb_typeof(mutation_footprint->'node') IS NOT DISTINCT FROM 'object')),
  CHECK(jsonb_typeof(dataset_schema)='object' AND octet_length(dataset_schema::text)<=1048576),
  CHECK(octet_length(sealed_receipt::text)<=1048576 AND jsonb_typeof(sealed_receipt)='object'),
  CHECK(equivalence_receipt IS NULL OR (jsonb_typeof(equivalence_receipt)='object' AND octet_length(equivalence_receipt::text)<=16384))
@@ -72,7 +78,7 @@ BEGIN
 END $$;
 CREATE FUNCTION moria.runtime_dataset_commit_record_execution(session_hash text,execution_id uuid,candidate_id uuid,publication_receipt jsonb) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE c moria.runtime_snapshot_candidates;e moria.runtime_executions;basis moria.snapshot_history;
- result_key text;basis_key text;profile jsonb;state jsonb;
+ result_key text;basis_key text;profile jsonb;state jsonb;footprint jsonb;kind text:='replace';
 BEGIN
  SELECT * INTO c FROM moria.runtime_snapshot_candidates WHERE id=candidate_id AND execution=execution_id;
  SELECT * INTO e FROM moria.runtime_executions WHERE id=execution_id;
@@ -92,7 +98,6 @@ BEGIN
   PERFORM moria.runtime_dataset_labels_state(state,c.resource);
   PERFORM moria.native_resource_filesystem_access_state(state,c.resource,'write');
  END IF;
- IF c.write_mode<>'replace' THEN RAISE EXCEPTION 'DATASET_DELTA_PRODUCER_UNSUPPORTED';END IF;
  profile:=c.delta_profile;
  PERFORM moria.runtime_dataset_commit_profile_check(c.environment,c.resource,profile);
  result_key:=moria.runtime_dataset_commit_root_check(c.environment,c.resource,c.metadata_location,c.snapshot_id,NULL);
@@ -104,11 +109,38 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_DELTA_CHAIN_MISSING';END IF;
   basis_key:=moria.runtime_dataset_commit_root_check(c.environment,c.resource,basis.metadata_location,basis.snapshot_id,basis.revision);
  END IF;
+ IF c.write_mode<>'replace' THEN
+  kind:='mutation';footprint:=c.proof->'mutationFootprint';
+  IF c.metadata_location NOT LIKE 'moria-snapshot-v3:%'
+   OR c.proof->>'readerProfile' IS DISTINCT FROM 'iceberg-v2-native-mor-bounded-v3'
+   OR c.proof->'mutationBasis'->>'revision' IS DISTINCT FROM c.expected_revision::text
+   OR c.proof->'mutationBasis'->>'snapshot' IS DISTINCT FROM basis.snapshot_id
+   OR c.proof->'mutationBasis'->>'metadata' IS DISTINCT FROM basis.metadata_location
+   OR c.proof->'mutationBasis'->>'root' IS DISTINCT FROM basis_key
+   OR jsonb_typeof(footprint) IS DISTINCT FROM 'object' OR footprint->>'version' IS DISTINCT FROM '1'
+   OR footprint#>>'{node,nodes}' IS DISTINCT FROM '1' OR footprint#>>'{node,logicalBytes}' IS DISTINCT FROM '0'
+   OR NOT EXISTS(
+    SELECT 1 FROM moria.runtime_dataset_graph_stages stage
+     JOIN moria.runtime_dataset_graph_roots g ON g.root=result_key AND g.node=stage.node
+       AND g.physical_fingerprint=stage.physical_fingerprint AND g.incarnation=stage.incarnation
+     JOIN moria.runtime_dataset_graph_edges edge ON edge.parent=g.node AND edge.label='mutation'
+     JOIN moria.runtime_dataset_graph_nodes node ON node.id=edge.child
+     JOIN moria.runtime_dataset_graph_qualifications q ON q.node=node.id
+       AND q.physical_fingerprint=g.physical_fingerprint AND q.incarnation=g.incarnation
+    WHERE stage.candidate=c.id AND stage.root=result_key AND stage.status IN ('candidate','published')
+      AND stage.environment=c.environment AND stage.dataset=c.resource AND stage.incarnation=c.incarnation
+      AND stage.id::text=c.proof->>'stage' AND q.producer=stage.producer
+      AND node.kind='root' AND node.profile=g.profile AND node.environment=c.environment AND node.dataset=c.resource
+      AND node.content=footprint#>'{node,content}' AND node.entries>0
+      AND node.entries::text=footprint#>>'{node,entries}' AND node.logical_bytes=0
+      AND node.entries::text=c.proof->'mutationObserved'->>'changedRows'
+   ) THEN RAISE EXCEPTION 'DATASET_DELTA_FOOTPRINT_INVALID';END IF;
+ END IF;
  INSERT INTO moria.runtime_dataset_commit_deltas(commit,environment,dataset,basis_revision,basis_snapshot,basis_metadata,result_revision,result_snapshot,result_metadata,
-  basis_root,result_root,binding_revision,dataset_schema_hash,dataset_schema,key_schema_hash,ordered_primary_key,mode,change_kind,complete_rows_root,producer_kind,execution,candidate,sealed_receipt)
+  basis_root,result_root,binding_revision,dataset_schema_hash,dataset_schema,key_schema_hash,ordered_primary_key,mode,change_kind,complete_rows_root,mutation_footprint,producer_kind,execution,candidate,sealed_receipt)
  VALUES(c.id,c.environment,c.resource,c.expected_revision,basis.snapshot_id,basis.metadata_location,c.expected_revision+1,c.snapshot_id,c.metadata_location,
   basis_key,result_key,profile->>'bindingRevision',profile->>'datasetSchemaHash',profile->'datasetSchema',profile->>'keySchemaHash',ARRAY(SELECT jsonb_array_elements_text(profile->'orderedPrimaryKey')),
-  c.write_mode,'replace',result_key,'execution',execution_id,c.id,publication_receipt);
+  c.write_mode,kind,CASE WHEN kind='replace' THEN result_key ELSE NULL END,footprint,'execution',execution_id,c.id,publication_receipt);
 END $$;
 CREATE FUNCTION moria.runtime_dataset_commit_record_maintenance(run_id uuid,profile jsonb,equivalence jsonb,publication_receipt jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE run moria.runtime_dataset_maintenance_runs;policy_row moria.runtime_dataset_retention_policies;basis moria.snapshot_history;result moria.snapshot_history;

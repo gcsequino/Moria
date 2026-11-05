@@ -100,6 +100,12 @@ struct EngineLimits {
 struct Output {
     namespace: IndexNamespace,
     schema: Value,
+    #[serde(
+        default,
+        rename = "mutationBudget",
+        skip_serializing_if = "Option::is_none"
+    )]
+    mutation_budget: Option<crate::dataset_writer::MutationBudget>,
 }
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -130,6 +136,15 @@ fn profile(value: &Value) -> Result<Profile> {
     );
     crate::sandbox::artifact_image(&result.adapter)?;
     for output in result.outputs.values() {
+        if let Some(budget) = &output.mutation_budget {
+            budget.validate()?;
+            ensure!(
+                budget.max_input_bytes <= result.limits.output_bytes
+                    && budget.max_changed_logical_bytes <= result.limits.output_bytes
+                    && budget.max_compaction_bytes <= result.limits.input_bytes,
+                "DATASET_MUTATION_BUDGET_INVALID"
+            );
+        }
         let _: iceberg::spec::Schema = serde_json::from_value(output.schema.clone())?;
         let columns = crate::snapshot::columns(&output.schema)?;
         let scalars = [
@@ -455,14 +470,24 @@ async fn program(
     } else {
         ensure!(
             definition["kind"] == "Connection"
-                && (capability != Some(Capability::BatchRead)
-                    || (spec["mode"] == "replace" && spec["coverage"] == "full"))
                 && spec["secrets"]
                     .as_array()
                     .is_some_and(|values| values.len() <= 8)
                 && profile.connector.is_some(),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
+        let sparse_approved = !profile.outputs.is_empty()
+            && profile
+                .outputs
+                .values()
+                .all(|output| output.mutation_budget.is_some());
+        if capability == Some(Capability::BatchRead) {
+            let (mode, _) = crate::dataset_writer::accepted_semantics(Some(definition))?;
+            ensure!(
+                mode == "replace" || sparse_approved,
+                "DATASET_MUTATION_BUDGET_REQUIRED"
+            );
+        }
         let implementation_id = reference_in(
             client,
             release,
@@ -480,6 +505,7 @@ async fn program(
                     &spec["mode"],
                     &spec["coverage"],
                     capability,
+                    sparse_approved,
                 ),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
@@ -904,29 +930,110 @@ impl NativePipelines {
             pins.push(pin.execution_input());
             inputs.insert(name, json!({"resource":id,"pin":pin}));
         }
+        let (write_mode, _) = crate::dataset_writer::accepted_semantics(Some(&definition))?;
         for (name, id) in output_ids {
             let output = &profile.outputs[&name];
             let (_, _, dataset) = source_in(tx.client(), session.environment(), id).await?;
             ensure!(
                 dataset["spec"]["writeModes"]
                     .as_array()
-                    .is_some_and(|modes| modes.contains(&json!("replace")))
-                    && normalized_columns(&dataset["spec"]["columns"])?
-                        == serde_json::to_value(crate::snapshot::columns(&output.schema)?)?,
+                    .is_some_and(|modes| modes.contains(&json!(write_mode)))
+                    && (write_mode != "replace"
+                        || normalized_columns(&dataset["spec"]["columns"])?
+                            == serde_json::to_value(crate::snapshot::columns(&output.schema)?)?),
                 "PIPELINE_SCHEMA_UNSUPPORTED"
             );
             ensure!(tx.query_opt("SELECT 1 FROM moria.native_storage_namespaces WHERE environment=$1 AND resource=$2 AND warehouse_id=$3 AND table_id=$4 AND revision=$5 AND enabled AND purpose='dataset-source'",&[&session.environment(),&id.to_string(),&output.namespace.warehouse_id,&output.namespace.table_id,&output.namespace.revision]).await?.is_some(),"STORAGE_NAMESPACE_REVOKED");
             let physical: Value = tx.query_one("SELECT jsonb_build_object('resource',b.resource,'physicalBindingFingerprint',b.physical_binding_fingerprint,'namespace',jsonb_build_object('warehouseId',b.warehouse_id,'tableId',b.table_id,'revision',b.namespace_revision),'icebergUuid',n.iceberg_uuid,'columns',b.columns,'icebergSchema',b.iceberg_schema,'primaryKey',to_jsonb(b.primary_key),'keySchemaHash',b.key_schema_hash,'writeModes',(SELECT jsonb_agg(mode ORDER BY mode COLLATE \"C\") FROM unnest(b.write_modes) mode)) FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource::text AND n.warehouse_id=b.warehouse_id AND n.table_id=b.table_id AND n.revision=b.namespace_revision WHERE b.environment=$1 AND b.resource=$2 AND b.enabled AND n.enabled FOR SHARE OF b,n", &[&session.environment(),&id]).await?.get(0);
             checkpoint_outputs.insert(
                 id.to_string(),
-                json!({"binding":physical,"writerSchema":output.schema}),
+                json!({"binding":&physical,"writerSchema":output.schema}),
             );
             tx.execute("INSERT INTO moria.dataset_heads(environment,dataset,revision) VALUES($1,$2,0) ON CONFLICT DO NOTHING",&[&session.environment(),&id.to_string()]).await?;
-            heads.insert(id.to_string(),tx.query_one("SELECT revision::text FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2 FOR SHARE",&[&session.environment(),&id.to_string()]).await?.get::<_,String>(0));
-            outputs.insert(
-                name,
-                json!({"resource":id,"namespace":output.namespace,"schema":output.schema}),
-            );
+            if write_mode == "replace" {
+                heads.insert(id.to_string(),tx.query_one("SELECT revision::text FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2 FOR SHARE",&[&session.environment(),&id.to_string()]).await?.get::<_,String>(0));
+                outputs.insert(
+                    name,
+                    json!({"resource":id,"namespace":output.namespace,"schema":output.schema}),
+                );
+            } else {
+                let budget = output
+                    .mutation_budget
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("DATASET_MUTATION_BUDGET_REQUIRED"))?;
+                let target: iceberg::spec::Schema =
+                    serde_json::from_value(physical["icebergSchema"].clone())?;
+                let keys: Vec<String> = serde_json::from_value(physical["primaryKey"].clone())?;
+                ensure!(
+                    physical["writeModes"]
+                        .as_array()
+                        .is_some_and(|modes| modes.contains(&json!(write_mode)))
+                        && (write_mode == "append" || !keys.is_empty())
+                        && normalized_columns(&dataset["spec"]["columns"])?
+                            == serde_json::to_value(crate::snapshot::columns(
+                                &physical["icebergSchema"]
+                            )?)?,
+                    "PIPELINE_SCHEMA_UNSUPPORTED"
+                );
+                let input = if write_mode == "delete" {
+                    crate::dataset_writer::delete_input_schema(&target, &keys)?
+                } else {
+                    target.clone()
+                };
+                ensure!(
+                    serde_json::from_value::<iceberg::spec::Schema>(output.schema.clone())?
+                        == input,
+                    "PIPELINE_SCHEMA_UNSUPPORTED"
+                );
+                let head=tx.query_one(
+                    "SELECT revision,snapshot_id,metadata_location FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2 FOR SHARE",
+                    &[&session.environment(),&id.to_string()],
+                ).await?;
+                let revision: i64 = head.get(0);
+                let snapshot: Option<String> = head.get(1);
+                let location: Option<String> = head.get(2);
+                if revision == 0 {
+                    ensure!(
+                        snapshot.is_none() && location.is_none(),
+                        "DATASET_WRITE_CAPABILITY_REQUIRED"
+                    );
+                } else {
+                    let location = location
+                        .as_deref()
+                        .ok_or_else(|| anyhow::anyhow!("DATASET_WRITE_CAPABILITY_REQUIRED"))?;
+                    let snapshot = snapshot
+                        .as_deref()
+                        .ok_or_else(|| anyhow::anyhow!("DATASET_WRITE_CAPABILITY_REQUIRED"))?;
+                    let fingerprint = physical["physicalBindingFingerprint"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("STORAGE_NAMESPACE_REVOKED"))?;
+                    ensure!(
+                        crate::catalog::NativeSnapshotRef::decode(location)?.version==3
+                        && tx.query_opt(
+                            "SELECT 1 FROM moria.runtime_dataset_roots r
+                              JOIN moria.runtime_dataset_root_locations l ON l.root=r.key
+                              JOIN moria.runtime_dataset_graph_roots g ON g.root=r.key AND g.physical_fingerprint=l.physical_fingerprint AND g.incarnation=l.incarnation
+                             WHERE r.key=moria.runtime_dataset_root_key($3) AND r.environment=$1 AND r.dataset=$2
+                               AND r.metadata_location=$3 AND r.snapshot_id=$4 AND r.sealed AND l.sealed
+                               AND r.reader_profile='iceberg-v2-native-mor-bounded-v3'
+                               AND l.physical_fingerprint=$5 AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance)
+                               AND l.namespace->>'warehouseId'=$6 AND l.namespace->>'tableId'=$7
+                               AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_expired_roots x WHERE x.root=r.key)",
+                            &[&session.environment(),&id.to_string(),&location,&snapshot,&fingerprint,
+                              &output.namespace.warehouse_id,&output.namespace.table_id],
+                        ).await?.is_some(),
+                        "DATASET_WRITE_CAPABILITY_REQUIRED"
+                    );
+                }
+                heads.insert(id.to_string(), revision.to_string());
+                outputs.insert(
+                    name,
+                    json!({
+                        "resource":id,"namespace":output.namespace,"schema":target,
+                        "inputSchema":input,"mutationBudget":budget,
+                    }),
+                );
+            }
             Authority::resource_access_for_operation(tx.client(), session, &id.to_string(), "read")
                 .await?;
         }
@@ -1952,6 +2059,11 @@ impl PlatformBroker for NativePipelineBroker {
                             .into(),
                         namespace: serde_json::from_value(value["namespace"].clone())?,
                         schema: serde_json::from_value(value["schema"].clone())?,
+                        input_schema: value
+                            .get("inputSchema")
+                            .cloned()
+                            .map(serde_json::from_value)
+                            .transpose()?,
                     },
                 ))
             })

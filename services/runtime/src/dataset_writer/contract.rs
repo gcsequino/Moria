@@ -23,6 +23,8 @@ pub struct WriteContract {
     pub key_schema_hash: String,
     pub primary_key: Vec<String>,
     pub expected_head: ExpectedHead,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) mutation_budget: Option<super::mutation_write::MutationBudget>,
 }
 
 impl WriteContract {
@@ -36,33 +38,36 @@ impl WriteContract {
         ensure!(self.version == 2, "DATASET_WRITE_CONTRACT_REQUIRED");
         match (self.mode.as_str(), self.input_kind.as_str()) {
             ("replace" | "append" | "upsert", "rows") => Ok(target.clone()),
-            ("delete", "keys") => {
-                ensure!(!self.primary_key.is_empty(), "DATASET_PRIMARY_KEY_MISSING");
-                let fields = self
-                    .primary_key
-                    .iter()
-                    .map(|key| {
-                        let field = target
-                            .as_struct()
-                            .fields()
-                            .iter()
-                            .find(|field| field.name == *key)
-                            .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
-                        ensure!(field.required, "DATASET_PRIMARY_KEY_NULL");
-                        Ok(field.clone())
-                    })
-                    .collect::<Result<Vec<_>>>()?;
-                Ok(iceberg::spec::Schema::builder()
-                    .with_schema_id(target.schema_id())
-                    .with_fields(fields)
-                    .build()?)
-            }
+            ("delete", "keys") => delete_input_schema(target, &self.primary_key),
             _ => anyhow::bail!("DATASET_WRITE_CONTRACT_REQUIRED"),
         }
     }
 }
 
-fn semantics(definition: Option<&Value>) -> Result<(&str, &str)> {
+pub(crate) fn delete_input_schema(
+    target: &iceberg::spec::Schema,
+    primary_key: &[String],
+) -> Result<iceberg::spec::Schema> {
+    ensure!(!primary_key.is_empty(), "DATASET_PRIMARY_KEY_MISSING");
+    let fields = primary_key
+        .iter()
+        .map(|key| {
+            let field = target
+                .as_struct()
+                .fields()
+                .iter()
+                .find(|field| field.name == *key)
+                .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
+            ensure!(field.required, "DATASET_PRIMARY_KEY_NULL");
+            Ok(field.clone())
+        })
+        .collect::<Result<Vec<_>>>()?;
+    Ok(iceberg::spec::Schema::builder()
+        .with_schema_id(target.schema_id())
+        .with_fields(fields)
+        .build()?)
+}
+pub(crate) fn semantics(definition: Option<&Value>) -> Result<(&str, &str)> {
     let Some(definition) = definition else {
         return Ok(("replace", "full"));
     };
@@ -104,16 +109,31 @@ impl DatasetIoGrant {
         let definition = accepted
             .as_ref()
             .map(|row| row.get::<_, Value>("definition"));
-        if let Some(accepted) = accepted.as_ref() {
-            let outputs: Value = accepted.get("outputs");
-            ensure!(
-                outputs.as_object().is_some_and(|outputs| outputs
+        let outputs = accepted.as_ref().map(|row| row.get::<_, Value>("outputs"));
+        let selected = outputs
+            .as_ref()
+            .and_then(Value::as_object)
+            .and_then(|outputs| {
+                outputs
                     .values()
-                    .any(|output| output["resource"].as_str() == Some(self.resource()))),
-                "UNDECLARED_DATASET"
-            );
-        }
+                    .find(|output| output["resource"].as_str() == Some(self.resource()))
+            });
+        ensure!(
+            accepted.is_none() || selected.is_some(),
+            "UNDECLARED_DATASET"
+        );
         let (mode, coverage) = semantics(definition.as_ref())?;
+        let mutation_budget = if mode == "replace" {
+            None
+        } else {
+            let value = selected
+                .and_then(|output| output.get("mutationBudget"))
+                .ok_or_else(|| anyhow::anyhow!("DATASET_MUTATION_BUDGET_REQUIRED"))?;
+            let budget: super::mutation_write::MutationBudget =
+                serde_json::from_value(value.clone())?;
+            budget.validate()?;
+            Some(budget)
+        };
         self.require_write_mode(mode)?;
         let primary_key = self.primary_key()?;
         ensure!(
@@ -136,12 +156,22 @@ impl DatasetIoGrant {
             schema_hash: super::schema_hash(schema)?,
             key_schema_hash,
             primary_key,
+            mutation_budget,
             expected_head: ExpectedHead {
                 revision: revision.to_string(),
                 snapshot: row.get("snapshot_id"),
                 metadata_location: row.get("metadata_location"),
             },
         };
+        if mode != "replace" {
+            let input: iceberg::spec::Schema = serde_json::from_value(
+                selected
+                    .and_then(|output| output.get("inputSchema"))
+                    .cloned()
+                    .ok_or_else(|| anyhow::anyhow!("DATASET_WRITE_CONTRACT_REQUIRED"))?,
+            )?;
+            ensure!(input == result.input_schema(schema)?, "SCHEMA_CHANGED");
+        }
         drop(client);
         self.check_current().await?;
         Ok(result)
@@ -170,6 +200,7 @@ mod tests {
             schema_hash: crate::dataset_writer::schema_hash(&target).unwrap(),
             key_schema_hash: format!("sha256:{}", "a".repeat(64)),
             primary_key: vec!["tags".into(), "id".into()],
+            mutation_budget: None,
             expected_head: ExpectedHead {
                 revision: "0".into(),
                 snapshot: None,
@@ -194,6 +225,13 @@ mod tests {
         contract.mode = "append".into();
         contract.primary_key.clear();
         assert_eq!(contract.input_schema(&target).unwrap(), target);
+        contract.mode = "replace".into();
+        assert!(
+            serde_json::to_value(&contract)
+                .unwrap()
+                .get("mutationBudget")
+                .is_none()
+        );
     }
 
     #[test]

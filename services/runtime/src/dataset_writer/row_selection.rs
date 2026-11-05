@@ -379,6 +379,9 @@ impl ReadSelection {
     }
     /// Verify distinct physical row witnesses with one lookup per touched bitmap chunk.
     pub(crate) async fn verify_selected(&self, rows: &[u64]) -> Result<()> {
+        self.verify_positions(rows, true).await
+    }
+    pub(crate) async fn verify_positions(&self, rows: &[u64], selected: bool) -> Result<()> {
         ensure!(
             rows.len() <= 1000
                 && rows.windows(2).all(|pair| pair[0] < pair[1])
@@ -394,7 +397,10 @@ impl ReadSelection {
             let end = rows[after..].partition_point(|row| *row / ROWS == ordinal) + after;
             let chunk = self.chunk(ordinal).await?;
             for row in &rows[after..end] {
-                ensure!(chunk.contains(*row)?, "DATASET_KEY_INDEX_INVALID");
+                ensure!(
+                    chunk.contains(*row)? == selected,
+                    "DATASET_KEY_INDEX_INVALID"
+                );
             }
             after = end;
         }

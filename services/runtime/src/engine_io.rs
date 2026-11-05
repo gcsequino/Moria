@@ -20,6 +20,7 @@ pub(crate) struct EngineOutput {
     pub resource: String,
     pub namespace: IndexNamespace,
     pub schema: iceberg::spec::Schema,
+    pub input_schema: Option<iceberg::spec::Schema>,
 }
 pub(crate) struct EngineIoLimits {
     pub input_bytes: u64,
@@ -299,7 +300,9 @@ impl NativeEngineIo {
             .outputs
             .get(name)
             .ok_or_else(|| anyhow::anyhow!("UNDECLARED_DATASET"))?;
-        let schema = crate::dataset_writer::arrow_schema(&output.schema)?;
+        let schema = crate::dataset_writer::arrow_schema(
+            output.input_schema.as_ref().unwrap_or(&output.schema),
+        )?;
         let prefix = engine_ipc::encode_schema(&schema)?;
         let grant = Arc::new(
             DatasetIoGrant::acquire(
@@ -312,9 +315,18 @@ impl NativeEngineIo {
         );
         ensure!(grant.resource() == output.resource, "UNDECLARED_DATASET");
         let (store, _) = configured_store_with_fingerprint(&output.namespace)?;
-        let writer =
+        let writer = if output.input_schema.is_some() {
+            StreamingDatasetWriter::open_graph(
+                store,
+                grant,
+                output.schema.clone(),
+                self.cancel.clone(),
+            )
+            .await?
+        } else {
             StreamingDatasetWriter::open(store, grant, output.schema.clone(), self.cancel.clone())
-                .await?;
+                .await?
+        };
         self.check().await?;
         self.writer = Some(Output {
             name: name.into(),

@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     dataset_graph::{NativeGraph, QualifiedNode},
-    native_snapshot_v3::LogicalFile,
+    native_snapshot_v3::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef, LogicalFile},
     persistent_directory::{
         NodeReference,
         graph::{GraphDirectory, GraphValue},
@@ -24,7 +24,6 @@ pub(super) struct GraphBuilder {
     pub(super) files_root: Option<NodeReference>,
     pub(super) selections_root: Option<NodeReference>,
     pub(super) spool: ClosureSpool,
-    pub(super) runs_table: String,
     pub(super) hashes: GraphDirectory,
     pub(super) locations: GraphDirectory,
     pub(super) hashes_root: Option<NodeReference>,
@@ -33,6 +32,55 @@ pub(super) struct GraphBuilder {
     pub(super) key_hash: String,
 }
 impl GraphBuilder {
+    pub(super) async fn index_children(&self) -> Result<Vec<(String, QualifiedNode)>> {
+        let mut children = Vec::new();
+        for (label, reference, directory) in [
+            ("selections", &self.selections_root, &self.selections),
+            ("hashes", &self.hashes_root, &self.hashes),
+            ("locations", &self.locations_root, &self.locations),
+        ] {
+            if let Some(reference) = reference {
+                children.push((label.into(), directory.qualified_root(reference).await?));
+            }
+        }
+        Ok(children)
+    }
+
+    pub(super) async fn seal_index_summary(
+        &self,
+        metadata: &mut serde_json::Value,
+        snapshot: i64,
+        summary: IndexSummary,
+    ) -> Result<IndexSummaryRef> {
+        ensure!(
+            summary.snapshot_id == snapshot.to_string()
+                && summary.sequence == self.sequence.to_string(),
+            "NATIVE_INDEX_SUMMARY_CHANGED"
+        );
+        let node = self
+            .graph
+            .write_descriptor(
+                "root",
+                &serde_json::to_value(&summary)?,
+                self.index_children().await?,
+                summary.rows,
+                0,
+            )
+            .await?;
+        let reference = IndexSummaryRef {
+            version: 1,
+            root: node.content().clone(),
+        };
+        let snapshot = metadata["snapshots"]
+            .as_array_mut()
+            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?
+            .iter_mut()
+            .find(|head| head["snapshot-id"] == snapshot)
+            .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
+        snapshot["summary"][INDEX_SUMMARY_PROPERTY] =
+            serde_json::Value::String(reference.encode()?);
+        Ok(reference)
+    }
     pub(super) async fn file(
         &mut self,
         name: &str,
@@ -73,7 +121,7 @@ impl GraphBuilder {
             .await?;
         Ok(certificate)
     }
-    async fn record_run(&self, kind: RunKind, run: QualifiedRun) -> Result<()> {
+    async fn record_run(&self, runs_table: &str, kind: RunKind, run: QualifiedRun) -> Result<()> {
         self.graph.check_current().await?;
         let db = self.spool.database()?;
         self.spool.assert_scope(&db)?;
@@ -82,7 +130,7 @@ impl GraphBuilder {
             db.execute(
                 &format!(
                     "INSERT INTO {}(kind,partition,minimum,segment,content)VALUES(?1,?2,?3,?4,?5)",
-                    self.runs_table
+                    runs_table
                 ),
                 params![
                     match kind {
@@ -105,6 +153,15 @@ impl GraphBuilder {
         Ok(())
     }
     pub(super) async fn index(&mut self, visible: &VisibilityBootstrap) -> Result<()> {
+        let runs_table = format!("bootstrap_runs_{}", uuid::Uuid::new_v4().simple());
+        {
+            let db = self.spool.database()?;
+            self.spool.assert_scope(&db)?;
+            db.execute_batch(&format!(
+                "CREATE TABLE {runs_table}(kind TEXT NOT NULL,partition INTEGER NOT NULL,minimum BLOB NOT NULL,
+                 segment TEXT NOT NULL,content TEXT NOT NULL,PRIMARY KEY(kind,partition,minimum,content)) WITHOUT ROWID"
+            ))?;
+        }
         let mut after = None;
         let mut hash_rows = Vec::new();
         let mut location_rows = Vec::new();
@@ -126,7 +183,8 @@ impl GraphBuilder {
                 };
                 if !sizing.would_fit(&location) {
                     ensure!(!location_rows.is_empty(), "RESOURCE_LIMIT");
-                    self.flush_runs(&hash_rows, &location_rows).await?;
+                    self.flush_runs(&runs_table, &hash_rows, &location_rows)
+                        .await?;
                     hash_rows.clear();
                     location_rows.clear();
                     sizing = RunWriter::new(RunKind::Locations, &self.key_hash, self.sequence)?;
@@ -141,7 +199,8 @@ impl GraphBuilder {
             after = page.last().map(|row| row.key.clone());
         }
         if !location_rows.is_empty() {
-            self.flush_runs(&hash_rows, &location_rows).await?;
+            self.flush_runs(&runs_table, &hash_rows, &location_rows)
+                .await?;
         }
         // Each bucket contains only finite run descriptors; the full population remains spill-backed.
         for kind in [RunKind::Hashes, RunKind::Locations] {
@@ -150,7 +209,7 @@ impl GraphBuilder {
                 let records = {
                     let db = self.spool.database()?;
                     self.spool.assert_scope(&db)?;
-                    let mut statement=db.prepare(&format!("SELECT segment,content FROM {} WHERE kind=?1 AND partition=?2 ORDER BY minimum,content LIMIT 113",self.runs_table))?;
+                    let mut statement=db.prepare(&format!("SELECT segment,content FROM {} WHERE kind=?1 AND partition=?2 ORDER BY minimum,content LIMIT 113",runs_table))?;
                     statement
                         .query_map(
                             params![
@@ -221,8 +280,14 @@ impl GraphBuilder {
         }
         Ok(())
     }
-    async fn flush_runs(&self, hashes: &[RunEntry], locations: &[RunEntry]) -> Result<()> {
+    async fn flush_runs(
+        &self,
+        runs_table: &str,
+        hashes: &[RunEntry],
+        locations: &[RunEntry],
+    ) -> Result<()> {
         self.record_run(
+            runs_table,
             RunKind::Hashes,
             write_run(
                 &self.graph,
@@ -235,6 +300,7 @@ impl GraphBuilder {
         )
         .await?;
         self.record_run(
+            runs_table,
             RunKind::Locations,
             write_run(
                 &self.graph,

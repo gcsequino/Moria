@@ -12,12 +12,12 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 const KEY_MAX: usize = 4 * 1024 * 1024;
 const BATCH_MAX: usize = 8 * 1024 * 1024;
-struct Keys {
+pub(super) struct Keys {
     db: rusqlite::Connection,
     table: String,
 }
 impl Keys {
-    fn new(spool: &ClosureSpool) -> Result<Self> {
+    pub(super) fn new(spool: &ClosureSpool) -> Result<Self> {
         let db = spool.database()?;
         spool.assert_scope(&db)?;
         let table = format!("dataset_keys_{}", Uuid::new_v4().simple());
@@ -26,7 +26,7 @@ impl Keys {
         ))?;
         Ok(Self { db, table })
     }
-    fn insert(&mut self, keys: &[Vec<u8>]) -> Result<()> {
+    pub(super) fn insert(&mut self, keys: &[Vec<u8>]) -> Result<()> {
         ensure!(
             keys.len() <= 1000 && keys.iter().map(Vec::len).sum::<usize>() <= BATCH_MAX,
             "RESOURCE_LIMIT"

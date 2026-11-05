@@ -25,13 +25,18 @@ pub(crate) fn capability_supported(
     mode: &Value,
     coverage: &Value,
     requested: Option<Capability>,
+    sparse_approved: bool,
 ) -> bool {
     let Some(declared) = declared.as_array() else {
         return false;
     };
     let batch = declared.iter().any(|value| value == "batchRead")
-        && mode == "replace"
-        && coverage == "full";
+        && match (mode.as_str(), coverage.as_str()) {
+            (Some("replace"), Some("full")) => true,
+            (Some("append" | "upsert" | "delete"), Some("full" | "incremental"))
+            | (Some("append"), Some("appendOnly")) => sparse_approved,
+            _ => false,
+        };
     let discovery = declared.iter().any(|value| value == "schemaDiscovery");
     match requested {
         Some(Capability::BatchRead) => batch,
@@ -97,48 +102,60 @@ mod tests {
 
     #[test]
     fn configuration_and_readiness_require_an_executable_capability_pair() {
-        for declared in [
-            json!(["batchRead"]),
-            json!(["schemaDiscovery"]),
-            json!(["schemaDiscovery", "batchRead"]),
-            json!(["writeback"]),
-        ] {
-            for mode in ["replace", "append"] {
-                for coverage in ["full", "incremental"] {
-                    let batch = declared
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .any(|value| value == "batchRead")
-                        && mode == "replace"
-                        && coverage == "full";
-                    let discovery = declared
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .any(|value| value == "schemaDiscovery");
-                    assert_eq!(
-                        capability_supported(&declared, &json!(mode), &json!(coverage), None),
-                        batch || discovery
-                    );
-                    assert_eq!(
-                        capability_supported(
-                            &declared,
-                            &json!(mode),
-                            &json!(coverage),
-                            Some(Capability::BatchRead)
-                        ),
-                        batch
-                    );
-                    assert_eq!(
-                        capability_supported(
-                            &declared,
-                            &json!(mode),
-                            &json!(coverage),
-                            Some(Capability::SchemaDiscovery)
-                        ),
-                        discovery
-                    );
+        for sparse_approved in [false, true] {
+            for declared in [
+                json!(["batchRead"]),
+                json!(["schemaDiscovery"]),
+                json!(["schemaDiscovery", "batchRead"]),
+                json!(["writeback"]),
+            ] {
+                for mode in ["replace", "append", "upsert", "delete"] {
+                    for coverage in ["full", "incremental", "appendOnly"] {
+                        let batch = declared
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .any(|value| value == "batchRead")
+                            && ((mode == "replace" && coverage == "full")
+                                || (sparse_approved
+                                    && mode != "replace"
+                                    && (coverage != "appendOnly" || mode == "append")));
+                        let discovery = declared
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .any(|value| value == "schemaDiscovery");
+                        assert_eq!(
+                            capability_supported(
+                                &declared,
+                                &json!(mode),
+                                &json!(coverage),
+                                None,
+                                sparse_approved
+                            ),
+                            batch || discovery
+                        );
+                        assert_eq!(
+                            capability_supported(
+                                &declared,
+                                &json!(mode),
+                                &json!(coverage),
+                                Some(Capability::BatchRead),
+                                sparse_approved,
+                            ),
+                            batch
+                        );
+                        assert_eq!(
+                            capability_supported(
+                                &declared,
+                                &json!(mode),
+                                &json!(coverage),
+                                Some(Capability::SchemaDiscovery),
+                                sparse_approved,
+                            ),
+                            discovery
+                        );
+                    }
                 }
             }
         }

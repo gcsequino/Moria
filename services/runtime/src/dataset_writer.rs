@@ -1123,6 +1123,8 @@ pub(crate) use keys::{encoded_json_key, encoded_key, validate_primary_keys};
 
 mod contract;
 pub use contract::{ExpectedHead, WriteContract};
+pub(crate) use contract::{delete_input_schema, semantics as accepted_semantics};
+pub(crate) use mutation_write::MutationBudget;
 
 /// Prepare only the semantics derived from the actual accepted job. Unsupported layouts fail before IO.
 pub async fn prepare_output(
@@ -1135,10 +1137,10 @@ pub async fn prepare_output(
     cancel: Cancellation,
 ) -> Result<Uuid> {
     let contract = grant.write_contract(&schema).await?;
-    ensure!(
-        contract.mode == "replace",
-        "DATASET_WRITE_CAPABILITY_REQUIRED"
-    );
+    if contract.mode != "replace" {
+        return mutation_write::prepare(store, scratch, grant, schema, partsets, limits, cancel)
+            .await;
+    }
     prepare_replacement(store, scratch, grant, schema, partsets, limits, cancel).await
 }
 
@@ -1149,8 +1151,12 @@ pub mod key_run;
 pub mod key_run_io;
 pub mod key_run_merge;
 pub mod key_run_set;
+mod mutation_index;
 mod mutation_inputs;
 mod mutation_standard;
+mod mutation_validate;
+mod mutation_witness;
+mod mutation_write;
 mod position_delete;
 mod replace_graph;
 pub mod row_selection;

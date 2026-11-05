@@ -29,7 +29,10 @@ pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummar
 pub use point::VerifiedKeyRow;
 mod batch;
 mod mutation;
-pub(crate) use mutation::{MutationFootprintRef, MutationMode};
+pub(crate) use mutation::{
+    MutationBasis, MutationCounts, MutationFootprint, MutationFootprintRef, MutationMode,
+    MutationProducer, MutationResult, RowOperation,
+};
 pub(crate) use point::VerifiedPosition;
 pub(crate) use scan::GraphScanFile;
 

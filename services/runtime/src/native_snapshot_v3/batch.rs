@@ -50,6 +50,22 @@ impl NativeSnapshot {
         &self,
         keys: &[Vec<u8>],
     ) -> Result<Vec<Option<Locator>>> {
+        self.lookup_runs(keys, RunKind::Locations)
+            .await?
+            .into_iter()
+            .map(|value| match value {
+                None => Ok(None),
+                Some(RunValue::Location(locator)) => Ok(Some(locator)),
+                _ => anyhow::bail!("DATASET_KEY_INDEX_INVALID"),
+            })
+            .collect()
+    }
+
+    pub(crate) async fn lookup_runs(
+        &self,
+        keys: &[Vec<u8>],
+        kind: RunKind,
+    ) -> Result<Vec<Option<RunValue>>> {
         self.check_current().await?;
         ensure!(keys.len() <= 1000, "RESOURCE_LIMIT");
         keys.iter().try_fold(0usize, |bytes, key| {
@@ -66,7 +82,11 @@ impl NativeSnapshot {
         if keys.is_empty() {
             return Ok(result);
         }
-        let Some(directory) = self.index_directory("locations").await? else {
+        let label = match kind {
+            RunKind::Hashes => "hashes",
+            RunKind::Locations => "locations",
+        };
+        let Some(directory) = self.index_directory(label).await? else {
             self.check_current().await?;
             return Ok(result);
         };
@@ -83,17 +103,13 @@ impl NativeSnapshot {
                 &self.context,
                 &self.run_cache,
                 &entry,
-                RunKind::Locations,
+                kind,
                 &self.descriptor.key_schema_hash,
                 &selected,
             )
             .await?;
             for (index, value) in indices.into_iter().zip(resolved) {
-                result[index] = match value {
-                    None => None,
-                    Some(RunValue::Location(locator)) => Some(locator),
-                    _ => anyhow::bail!("DATASET_KEY_INDEX_INVALID"),
-                };
+                result[index] = value;
             }
         }
         self.check_current().await?;

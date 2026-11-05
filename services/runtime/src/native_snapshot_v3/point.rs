@@ -48,6 +48,12 @@ impl VerifiedPosition {
     pub(crate) fn next_sequence(&self) -> u64 {
         self.next_sequence
     }
+    pub(crate) fn path(&self) -> &str {
+        &self.path
+    }
+    pub(crate) fn row(&self) -> u64 {
+        self.row
+    }
     pub(crate) fn into_parts(self) -> (String, u64, u64, SealedObject, ObjectVersion) {
         (
             self.path,
@@ -143,6 +149,7 @@ impl NativeSnapshot {
     pub(crate) async fn lookup_verified_positions(
         &self,
         keys: &[Vec<u8>],
+        mut admit_file: impl FnMut(&str) -> Result<()> + Send,
     ) -> Result<Vec<Option<VerifiedPosition>>> {
         let locators = self.lookup_encoded_keys(keys).await?;
         let next_sequence = self.next_sequence()?;
@@ -166,6 +173,7 @@ impl NativeSnapshot {
         }
         let mut verified = vec![None; keys.len()];
         for (name, mut indices) in files {
+            admit_file(&name)?;
             let selection = self.selection(&name).await?;
             indices.sort_unstable_by_key(|index| locators[*index].as_ref().unwrap().row);
             let mut rows = Vec::with_capacity(indices.len());
