@@ -1,0 +1,15 @@
+error[E0433]: cannot find type `Bytes` in this scope
+   --> src/native_snapshot_v3/point.rs:227:13
+    |
+227 |             Bytes::from(bytes),
+    |             ^^^^^ use of undeclared type `Bytes`
+    |
+help: consider importing one of these structs
+    |
+195 +     use std::io::Bytes;
+    |
+195 +     use std::str::Bytes;
+    |
+195 +     use core::str::Bytes;
+    |
+

@@ -85,6 +85,22 @@ impl QualifiedFile {
             incarnation,
         })
     }
+    pub(crate) fn from_producer_graph(
+        proof: crate::dataset_graph::ProducerFileProof,
+    ) -> Result<Self> {
+        let (certificate, physical_version, physical_fingerprint, incarnation) = proof.into_parts();
+        certificate.validate()?;
+        ensure!(
+            physical_version.size == certificate.content.size,
+            "CONTENT_MISMATCH"
+        );
+        Ok(Self {
+            certificate,
+            physical_version,
+            physical_fingerprint,
+            incarnation,
+        })
+    }
     pub fn certificate(&self) -> &FileCertificate {
         &self.certificate
     }

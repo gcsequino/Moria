@@ -227,3 +227,36 @@ This reader bridge does not create a v3 Dataset head or qualify a v3 writer.
 Actual v3 root preparation, standard metadata/index agreement, stage validation,
 atomic publication, recovery/pruning and sparse position-delete production remain
 separate required integration gates.
+
+## Staged v3 replacement protocol
+
+The native v3 replacement task emits version-three partsets. Its actual sealed
+task output is the registered graph partset node itself. Bounded file and page
+directories bind file certificates and all page descriptors; page references
+retain their existing ordinal/previous checks without linear graph-height
+growth. Coordinator admission derives the task, owner and fence from the actual
+sealed execution report and resolves every selected file/page through that
+registered task root. Imported nodes, paths, counts and versions grant nothing.
+
+Whole replacement validates newly written typed rows in bounded batches, checks
+complete ordered-key uniqueness in private spill and builds exact physical
+locators, row selections and canonical row digests. It shares standard Iceberg
+manifest and metadata generation with the existing replacement writer. An
+index-summary node excludes metadata/file-tree roots; the same canonical sealed
+summary reference is embedded in the current standard snapshot summary and
+the outer graph descriptor. This removes a hash cycle.
+
+A ready graph stage supplies the private verification view. Its identity carries
+the actual stage and expected-head basis revision with no fabricated published
+revision. Registration retains one root member; graph edges and exact receiver
+qualifications retain descendants. Final validation enumerates
+the actual current standard manifests, rejects deletes in this whole-replacement
+profile and checks exact file/row counts, data sequences and full selections.
+Candidate insertion and stage attachment share one transaction; existing C04
+head/checkpoint/completion/journal publication remains atomic.
+
+The native service entry is staged for qualification. Existing production output
+selection is unchanged. Trial030 builds nine executables and passes static plus
+113 units; no actual v3 Catalog publication or recovery proof is claimed at this
+checkpoint. Runtime gates, standard-engine position deletes, sparse mutations,
+distributed bootstrap and incremental Source chains remain required.

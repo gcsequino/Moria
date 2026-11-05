@@ -358,7 +358,7 @@ export async function managedRetentionDataset(
       return output.stdout;
     };
     const writtenRows = new Map<string, Record<string, unknown>[]>();
-    const publish = async (rows: Record<string, unknown>[]) => {
+    const publish = async (rows: Record<string, unknown>[], format: { graph?: boolean } = {}) => {
       const prior = (await db.catalog.heads(environment, [dataset]))[0],
         binding = await bind([], { [dataset]: prior.revision });
       await invoke({
@@ -366,6 +366,7 @@ export async function managedRetentionDataset(
         token,
         binding,
         mode: 'writer-supplied',
+        graphOutput: format.graph ?? false,
         snapshots: [snapshot],
         writerRows: { [dataset]: rows },
         s3Bindings: [datasetStorage],

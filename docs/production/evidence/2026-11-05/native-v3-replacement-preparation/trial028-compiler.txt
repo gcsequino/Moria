@@ -1,0 +1,76 @@
+error: future cannot be sent between threads safely
+    --> src/pipelines.rs:1352:22
+     |
+1352 |                 jobs.spawn(async move {
+     |                      ^^^^^ future created by async block is not `Send`
+     |
+     = help: within `ReplacementGraph`, the trait `Sync` is not implemented for `RefCell<rusqlite::inner_connection::InnerConnection>`
+     = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+note: future is not `Send` as this value is used across an await
+    --> src/dataset_writer/replace_graph.rs:153:51
+     |
+ 152 |     pub(super) async fn task_root(&self, reference: &SealedObject) -> Result<PartRoot> {
+     |                                   ----- has type `&ReplacementGraph` which is not `Send`
+ 153 |         let task:Uuid=self.grant.database().get().await?.query_one("SELECT id FROM moria.runtime_execution_tasks WHERE execution=$...
+     |                                                   ^^^^^ await occurs here, with `&self` maybe used later
+note: required by a bound in `JoinSet::<T>::spawn`
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.54.1/src/task/join_set.rs:145:12
+     |
+ 142 |     pub fn spawn<F>(&mut self, task: F) -> AbortHandle
+     |            ----- required by a bound in this associated function
+...
+ 145 |         F: Send + 'static,
+     |            ^^^^ required by this bound in `JoinSet::<T>::spawn`
+
+
+error: future cannot be sent between threads safely
+    --> src/pipelines.rs:1352:22
+     |
+1352 |                 jobs.spawn(async move {
+     |                      ^^^^^ future created by async block is not `Send`
+     |
+     = help: within `ReplacementGraph`, the trait `Sync` is not implemented for `RefCell<LruCache<Arc<str>, RawStatement>>`
+     = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+note: future is not `Send` as this value is used across an await
+    --> src/dataset_writer/replace_graph.rs:153:51
+     |
+ 152 |     pub(super) async fn task_root(&self, reference: &SealedObject) -> Result<PartRoot> {
+     |                                   ----- has type `&ReplacementGraph` which is not `Send`
+ 153 |         let task:Uuid=self.grant.database().get().await?.query_one("SELECT id FROM moria.runtime_execution_tasks WHERE execution=$...
+     |                                                   ^^^^^ await occurs here, with `&self` maybe used later
+note: required by a bound in `JoinSet::<T>::spawn`
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.54.1/src/task/join_set.rs:145:12
+     |
+ 142 |     pub fn spawn<F>(&mut self, task: F) -> AbortHandle
+     |            ----- required by a bound in this associated function
+...
+ 145 |         F: Send + 'static,
+     |            ^^^^ required by this bound in `JoinSet::<T>::spawn`
+     = note: the full name for the type has been written to '/work/services/runtime/target/debug/deps/moria_runtime-8f0623ac606ae753.long-type-2715839729328765566.txt'
+     = note: consider using `--verbose` to print the full type name to the console
+
+
+error: future cannot be sent between threads safely
+    --> src/pipelines.rs:1352:22
+     |
+1352 |                 jobs.spawn(async move {
+     |                      ^^^^^ future created by async block is not `Send`
+     |
+     = help: within `{async block@src/pipelines.rs:1352:28: 1352:38}`, the trait `std::marker::Send` is not implemented for `*mut sqlite3_stmt`
+note: future is not `Send` as this value is used across an await
+    --> src/dataset_writer/visibility.rs:320:24
+     |
+ 312 |         let mut statement = self.db.prepare(&query)?;
+     |             ------------- has type `rusqlite::Statement<'_>` which is not `Send`
+...
+ 320 |         self.current().await?;
+     |                        ^^^^^ await occurs here, with `mut statement` maybe used later
+note: required by a bound in `JoinSet::<T>::spawn`
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.54.1/src/task/join_set.rs:145:12
+     |
+ 142 |     pub fn spawn<F>(&mut self, task: F) -> AbortHandle
+     |            ----- required by a bound in this associated function
+...
+ 145 |         F: Send + 'static,
+     |            ^^^^ required by this bound in `JoinSet::<T>::spawn`
+

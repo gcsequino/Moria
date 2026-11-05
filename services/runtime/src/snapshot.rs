@@ -38,6 +38,9 @@ use uuid::Uuid;
 #[path = "snapshot_parquet_bounds.rs"]
 pub(crate) mod parquet_bounds;
 
+#[path = "snapshot_parquet_read.rs"]
+pub(crate) mod parquet_read;
+
 const METADATA_MAX: usize = 8 * 1024 * 1024;
 const DECODED_MAX: usize = 64 * 1024 * 1024;
 

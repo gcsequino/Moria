@@ -23,6 +23,7 @@ impl GraphValue {
 pub struct GraphDirectory {
     graph: NativeGraph,
     expected_path: Vec<String>,
+    source_task: Option<uuid::Uuid>,
 }
 impl GraphDirectory {
     pub(crate) fn new(graph: NativeGraph, expected_path: Vec<String>) -> Result<Self> {
@@ -30,7 +31,23 @@ impl GraphDirectory {
         Ok(Self {
             graph,
             expected_path,
+            source_task: None,
         })
+    }
+    pub(crate) fn sealed_task(
+        graph: NativeGraph,
+        expected_path: Vec<String>,
+        task: uuid::Uuid,
+    ) -> Result<Self> {
+        let mut directory = Self::new(graph, expected_path)?;
+        directory.source_task = Some(task);
+        Ok(directory)
+    }
+    async fn admit(&self, path: &[String], content: &SealedObject) -> Result<QualifiedNode> {
+        match self.source_task {
+            Some(task) => self.graph.admit_task(task, path, content).await,
+            None => self.graph.admit_head(path, content).await,
+        }
     }
     fn path(&self, prefix: &str) -> Vec<String> {
         let mut path = self.expected_path.clone();
@@ -41,11 +58,7 @@ impl GraphDirectory {
         let known = self.graph.known_node(&reference.content).await?;
         let node = match known {
             Some(node) => node,
-            None => {
-                self.graph
-                    .admit_head(&self.path(prefix), &reference.content)
-                    .await?
-            }
+            None => self.admit(&self.path(prefix), &reference.content).await?,
         };
         ensure!(
             node.kind() == "directory"
@@ -152,7 +165,7 @@ impl Nodes for GraphDirectory {
                     if self.graph.known_node(content).await?.is_none() {
                         let mut path = self.path(prefix);
                         path.push(format!("entry/{ordinal}/{link}"));
-                        self.graph.admit_head(&path, content).await?;
+                        self.admit(&path, content).await?;
                     }
                 }
             }

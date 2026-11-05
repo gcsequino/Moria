@@ -113,6 +113,21 @@ impl GraphReadContext {
         let claims = json!({"kind":"execution","basis":match basis {ReadBasis::Input=>"input",ReadBasis::ExpectedHead=>"expectedHead"},"session":grant.session().session_hash(),"execution":lease.execution,"task":lease.task,"owner":lease.owner,"fence":lease.fence,"incarnation":lease.incarnation,"warehouse":ns.warehouse_id,"table":ns.table_id,"revision":ns.revision});
         Self::open(grant.database().clone(), inner, claims, cancel).await
     }
+    /// Private candidate verification view: a real ready coordinator stage, never a published input pin.
+    pub(crate) async fn staged(
+        inner: Arc<dyn ObjectReader>,
+        grant: Arc<DatasetIoGrant>,
+        stage: Uuid,
+        cancel: Cancellation,
+    ) -> Result<(Self, ReadableNode)> {
+        grant.check_current().await?;
+        grant.validate_store(inner.as_ref())?;
+        ensure!(grant.lease().task.is_none(), "COORDINATOR_REQUIRED");
+        let lease = grant.lease();
+        let ns = grant.namespace();
+        let claims = json!({"kind":"execution","basis":"stage","stage":stage,"session":grant.session().session_hash(),"execution":lease.execution,"task":lease.task,"owner":lease.owner,"fence":lease.fence,"incarnation":lease.incarnation,"warehouse":ns.warehouse_id,"table":ns.table_id,"revision":ns.revision});
+        Self::open(grant.database().clone(), inner, claims, cancel).await
+    }
     /// Uses the exact immutable source revision/snapshot/root of a real live indexing build.
     pub async fn indexing(
         inner: Arc<dyn ObjectReader>,

@@ -336,13 +336,26 @@ END $$;
 -- Read authority is resolved from an actual accepted input/expected head or indexing build.
 -- It never reserves a producer or adds qualifications/admissions.
 CREATE FUNCTION moria.runtime_dataset_graph_read(claims jsonb,path text[]) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
-DECLARE state jsonb;binding jsonb;graph_profile jsonb;execution_state moria.runtime_executions;build moria.indexing_builds;history moria.snapshot_history;origin moria.runtime_dataset_graph_roots;node moria.runtime_dataset_graph_nodes;qualification moria.runtime_dataset_graph_qualifications;resource_id text;env text;instance_inc uuid;physical text;chosen text;table_uuid text;retained moria.runtime_dataset_roots;catalog_version integer;
+DECLARE state jsonb;binding jsonb;graph_profile jsonb;execution_state moria.runtime_executions;build moria.indexing_builds;history moria.snapshot_history;origin moria.runtime_dataset_graph_roots;node moria.runtime_dataset_graph_nodes;qualification moria.runtime_dataset_graph_qualifications;resource_id text;env text;instance_inc uuid;physical text;chosen text;table_uuid text;retained moria.runtime_dataset_roots;catalog_version integer;stage moria.runtime_dataset_graph_stages;stage_state jsonb;root_node text;
 BEGIN
  IF claims->>'kind'='execution' THEN
   state:=moria.runtime_dataset_io_check(claims->>'session',(claims->>'execution')::uuid,(claims->>'task')::uuid,(claims->>'owner')::uuid,(claims->>'fence')::bigint,(claims->>'incarnation')::uuid,claims->>'warehouse',claims->>'table',claims->>'revision',false);
   SELECT * INTO execution_state FROM moria.runtime_executions WHERE id=(claims->>'execution')::uuid;
   resource_id:=state->>'resource';env:=state->>'environment';instance_inc:=(claims->>'incarnation')::uuid;
-  IF claims->>'basis'='input' THEN
+  IF claims->>'basis'='stage' THEN
+   IF claims->>'task' IS NOT NULL THEN RAISE EXCEPTION 'COORDINATOR_REQUIRED';END IF;
+   stage_state:=moria.runtime_dataset_graph_scope(claims);
+   SELECT s.* INTO stage FROM moria.runtime_dataset_graph_stages s WHERE s.id=(claims->>'stage')::uuid
+    AND s.producer=stage_state->>'producer' AND s.environment=env AND s.dataset=resource_id
+    AND s.physical_fingerprint=stage_state->>'physicalFingerprint' AND s.incarnation=instance_inc AND s.status IN ('ready','candidate');
+   IF NOT FOUND OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_queue WHERE origin=stage.id AND processed_at IS NULL) THEN RAISE EXCEPTION 'DATASET_GRAPH_NOT_READY';END IF;
+   IF NOT EXISTS(SELECT 1 FROM moria.dataset_heads h WHERE h.environment=env AND h.dataset=resource_id AND h.revision::text=stage_state->>'expectedRevision') THEN RAISE EXCEPTION 'HEAD_CONFLICT';END IF;
+   SELECT r.* INTO retained FROM moria.runtime_dataset_roots r JOIN moria.runtime_dataset_graph_nodes n ON n.content=r.root->'root'
+    WHERE n.id=stage.node AND n.kind='root' AND n.profile=stage_state->'graphProfile' AND r.producer=stage.producer AND r.environment=env AND r.dataset=resource_id AND r.sealed
+     AND r.root->>'version'='3' AND r.reader_profile='iceberg-v2-native-mor-bounded-v3';
+   IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_NOT_READY';END IF;
+   history.environment:=env;history.dataset:=resource_id;history.snapshot_id:=retained.snapshot_id;history.metadata_location:=retained.metadata_location;
+  ELSIF claims->>'basis'='input' THEN
    SELECT h.* INTO history FROM moria.snapshot_history h JOIN LATERAL jsonb_array_elements(execution_state.spec->'pinnedInputs') pin ON pin->>'resource'=h.dataset AND pin->>'revision'=h.revision::text AND pin->>'snapshot'=h.snapshot_id
     WHERE h.environment=env AND h.dataset=resource_id;
   ELSIF claims->>'basis'='expectedHead' THEN
@@ -372,15 +385,21 @@ BEGIN
    AND EXISTS(SELECT 1 FROM moria.runtime_dataset_root_locations l WHERE l.root=r.key AND l.sealed AND l.physical_fingerprint=physical AND l.incarnation=instance_inc);
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  graph_profile:=jsonb_build_object('version',3,'readerProfile','iceberg-v2-native-mor-bounded-v3','directoryProfile','sha256-radix16-v1','chunkProfiles',jsonb_build_array('moria-sha256-chunks-1m-v1','moria-sha256-chunks-64k-v1'),'tableUuid',table_uuid,'schemaIdentity',encode(sha256(convert_to((binding->'icebergSchema')::text,'UTF8')),'hex'),'keySchemaHash',binding->>'keySchemaHash');
- SELECT * INTO origin FROM moria.runtime_dataset_graph_roots WHERE root=moria.runtime_dataset_root_key(history.metadata_location) AND physical_fingerprint=physical AND incarnation=instance_inc AND profile=graph_profile;
- IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_WRITE_CAPABILITY_REQUIRED';END IF;
- chosen:=moria.runtime_dataset_graph_walk(origin.node,path,physical,instance_inc);
+ IF stage.id IS NOT NULL THEN
+  IF stage_state->'graphProfile' IS DISTINCT FROM graph_profile THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
+  root_node:=stage.node;
+ ELSE
+  SELECT * INTO origin FROM moria.runtime_dataset_graph_roots WHERE root=moria.runtime_dataset_root_key(history.metadata_location) AND physical_fingerprint=physical AND incarnation=instance_inc AND profile=graph_profile;
+  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_WRITE_CAPABILITY_REQUIRED';END IF;
+  root_node:=origin.node;
+ END IF;
+ chosen:=moria.runtime_dataset_graph_walk(root_node,path,physical,instance_inc);
  SELECT * INTO node FROM moria.runtime_dataset_graph_nodes WHERE id=chosen AND environment=env AND dataset=resource_id AND runtime_dataset_graph_nodes.profile=graph_profile;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  SELECT * INTO qualification FROM moria.runtime_dataset_graph_qualifications WHERE runtime_dataset_graph_qualifications.node=chosen AND physical_fingerprint=physical AND incarnation=instance_inc;
  IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
  PERFORM moria.runtime_dataset_object_read(node.content->'object'->>'warehouseId',node.content->'object'->>'tableId',node.content->'object'->>'objectId');
- RETURN jsonb_build_object('identity',jsonb_build_object('environment',env,'dataset',resource_id,'revision',history.revision::text,'snapshot',history.snapshot_id,'metadataLocation',history.metadata_location,'catalogVersion',catalog_version,'readerProfile',retained.reader_profile,'root',origin.node,'physicalFingerprint',physical,'incarnation',instance_inc,'profile',graph_profile),
+ RETURN jsonb_build_object('identity',jsonb_build_object('environment',env,'dataset',resource_id,'revision',history.revision::text,'snapshot',history.snapshot_id,'metadataLocation',history.metadata_location,'catalogVersion',catalog_version,'readerProfile',retained.reader_profile,'root',root_node,'stage',stage.id,'basisRevision',stage_state->>'expectedRevision','physicalFingerprint',physical,'incarnation',instance_inc,'profile',graph_profile),
   'node',jsonb_build_object('node',chosen,'content',node.content,'physicalVersion',qualification.physical_version,'kind',node.kind,'height',node.height,'entries',node.entries,'logicalBytes',node.logical_bytes,'profile',graph_profile));
 END $$;
 
@@ -394,6 +413,24 @@ BEGIN
    AND (qualification.producer=state->>'producer' OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_admissions admission WHERE admission.producer=state->>'producer' AND admission.node=n.id AND admission.physical_fingerprint=qualification.physical_fingerprint AND admission.incarnation=qualification.incarnation));
  IF NOT FOUND THEN RETURN NULL;END IF;
  SELECT * INTO q FROM moria.runtime_dataset_graph_qualifications WHERE node=selected.id AND physical_fingerprint=state->>'physicalFingerprint' AND incarnation=(state->>'incarnation')::uuid;
+ RETURN jsonb_build_object('node',selected.id,'physicalVersion',q.physical_version,'profile',state->'graphProfile','content',selected.content,'kind',selected.kind,'height',selected.height,'entries',selected.entries,'logicalBytes',selected.logical_bytes);
+END $$;
+
+CREATE FUNCTION moria.runtime_dataset_graph_child(claims jsonb,parent_id text,label_name text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+DECLARE state jsonb;parent moria.runtime_dataset_graph_nodes;selected moria.runtime_dataset_graph_nodes;q moria.runtime_dataset_graph_qualifications;
+BEGIN
+ state:=moria.runtime_dataset_graph_scope(claims);
+ SELECT n.* INTO parent FROM moria.runtime_dataset_graph_nodes n JOIN moria.runtime_dataset_graph_qualifications qualification ON qualification.node=n.id
+ WHERE n.id=parent_id AND n.environment=state->>'environment' AND n.dataset=state->>'resource' AND n.profile=state->'graphProfile'
+  AND qualification.physical_fingerprint=state->>'physicalFingerprint' AND qualification.incarnation=(state->>'incarnation')::uuid
+  AND (qualification.producer=state->>'producer' OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_admissions a WHERE a.producer=state->>'producer' AND a.node=n.id AND a.physical_fingerprint=qualification.physical_fingerprint AND a.incarnation=qualification.incarnation));
+ IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
+ SELECT n.* INTO selected FROM moria.runtime_dataset_graph_edges edge JOIN moria.runtime_dataset_graph_nodes n ON n.id=edge.child
+ WHERE edge.parent=parent_id AND edge.label=label_name AND n.environment=parent.environment AND n.dataset=parent.dataset AND n.profile=parent.profile;
+ IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
+ SELECT qualification.* INTO q FROM moria.runtime_dataset_graph_qualifications qualification WHERE qualification.node=selected.id AND qualification.physical_fingerprint=state->>'physicalFingerprint' AND qualification.incarnation=(state->>'incarnation')::uuid;
+ IF NOT FOUND THEN RAISE EXCEPTION 'DATASET_GRAPH_ANCESTRY_REQUIRED';END IF;
+ INSERT INTO moria.runtime_dataset_graph_admissions(producer,node,physical_fingerprint,incarnation,origin,source_root) VALUES(state->>'producer',selected.id,q.physical_fingerprint,q.incarnation,'qualifiedChild',parent_id) ON CONFLICT DO NOTHING;
  RETURN jsonb_build_object('node',selected.id,'physicalVersion',q.physical_version,'profile',state->'graphProfile','content',selected.content,'kind',selected.kind,'height',selected.height,'entries',selected.entries,'logicalBytes',selected.logical_bytes);
 END $$;
 

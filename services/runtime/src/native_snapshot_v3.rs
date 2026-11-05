@@ -24,6 +24,7 @@ use uuid::Uuid;
 mod index_summary;
 mod point;
 mod scan;
+mod validate;
 pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef};
 pub use point::VerifiedKeyRow;
 pub(crate) use scan::GraphScanFile;
@@ -245,6 +246,12 @@ impl NativeSnapshot {
         );
         self.check_current().await?;
         Ok(file)
+    }
+    pub(crate) fn metadata_file(&self) -> &LogicalFile {
+        &self.descriptor.metadata
+    }
+    pub(crate) fn files_reference(&self) -> &NodeReference {
+        &self.descriptor.files
     }
     pub fn metadata(&self) -> &Arc<TableMetadata> {
         &self.metadata

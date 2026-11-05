@@ -57,6 +57,8 @@ struct Fixture {
     expected_rows: Option<usize>,
     expected_markings: Option<Vec<String>>,
     #[serde(default)]
+    graph_output: bool,
+    #[serde(default)]
     s3_bindings: Vec<S3Binding>,
     allocation: Option<capacity::Allocation>,
     closure_limits: Option<ClosureLimits>,
@@ -552,8 +554,8 @@ async fn run() -> Result<()> {
             ensure!(count == fixture.expected_rows.unwrap_or(64), "FIXTURE_READBACK_MISMATCH");
             if let Some(expected) = fixture.writer_rows.get(&source.resource) {
                 let schema = snapshot.metadata().current_schema();
-                let batch = supplied_batch(schema.as_ref(), expected, &columns)?;
-                for row in typed_rows(&batch, &columns)? {
+                let expected_rows=if expected.is_empty(){Vec::new()}else{typed_rows(&supplied_batch(schema.as_ref(),expected,&columns)?,&columns)?};
+                for row in expected_rows {
                     let value = actual.get_mut(&row).ok_or_else(|| anyhow::anyhow!("FIXTURE_READBACK_MISMATCH"))?;
                     ensure!(*value > 0, "FIXTURE_READBACK_MISMATCH");
                     *value -= 1;
@@ -912,13 +914,23 @@ async fn run() -> Result<()> {
                         },
                     )?),
                 };
-            let mut writer = moria_runtime::dataset_writer::StreamingDatasetWriter::open(
-                store,
-                grant,
-                selected_schema.clone(),
-                Cancellation::default(),
-            )
-            .await
+            let mut writer = if fixture.graph_output {
+                moria_runtime::dataset_writer::StreamingDatasetWriter::open_graph(
+                    store,
+                    grant,
+                    selected_schema.clone(),
+                    Cancellation::default(),
+                )
+                .await
+            } else {
+                moria_runtime::dataset_writer::StreamingDatasetWriter::open(
+                    store,
+                    grant,
+                    selected_schema.clone(),
+                    Cancellation::default(),
+                )
+                .await
+            }
             .context("WRITER_OPEN")?;
             if fixture.mode == "writer-supplied" {
                 let rows = fixture
@@ -1114,23 +1126,43 @@ async fn run() -> Result<()> {
                 event(json!({"event":"denied","error":"OUTPUT_INVALID","execution":id}));
                 return Ok(());
             }
-            let candidate = moria_runtime::dataset_writer::prepare_replacement(
-                store.clone(),
-                &scratch,
-                grant.clone(),
-                native_schemas
-                    .get(&fixture_snapshot.resource)
-                    .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
-                    .clone(),
-                std::slice::from_ref(partset),
-                ClosureLimits {
-                    max_entries: 10000,
-                    max_referenced_bytes: 1024 * 1024 * 1024,
-                    max_spool_bytes: 32 * 1024 * 1024,
-                },
-                cancel,
-            )
-            .await
+            let candidate = if fixture.graph_output {
+                moria_runtime::dataset_writer::prepare_graph_replacement(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    native_schemas
+                        .get(&fixture_snapshot.resource)
+                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
+                        .clone(),
+                    std::slice::from_ref(partset),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    cancel,
+                )
+                .await
+            } else {
+                moria_runtime::dataset_writer::prepare_replacement(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    native_schemas
+                        .get(&fixture_snapshot.resource)
+                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
+                        .clone(),
+                    std::slice::from_ref(partset),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    cancel,
+                )
+                .await
+            }
             .context("WRITER_PREPARE")?;
             candidates.push(candidate);
             continue;

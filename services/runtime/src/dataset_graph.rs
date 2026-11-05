@@ -525,6 +525,47 @@ impl NativeGraph {
         self.check_current().await?;
         Ok(node)
     }
+    pub(crate) async fn child(&self, parent: &QualifiedNode, label: &str) -> Result<QualifiedNode> {
+        self.check_node(parent)?;
+        self.check_current().await?;
+        let value: Value = self
+            .grant
+            .database()
+            .get()
+            .await?
+            .query_one(
+                "SELECT moria.runtime_dataset_graph_child($1,$2,$3)",
+                &[&self.claims, &parent.id(), &label],
+            )
+            .await?
+            .get(0);
+        let child = self.admitted_node(value)?;
+        self.check_current().await?;
+        Ok(child)
+    }
+    pub(crate) async fn file_proof(
+        &self,
+        certificate: &QualifiedNode,
+    ) -> Result<ProducerFileProof> {
+        self.check_node(certificate)?;
+        ensure!(
+            certificate.kind() == "certificate",
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        let proof: crate::authenticated_file::FileCertificate =
+            serde_json::from_value(self.read_descriptor(certificate).await?)?;
+        let file = self.child(certificate, "file").await?;
+        ensure!(
+            file.kind() == "content" && file.content() == proof.content(),
+            "DATASET_GRAPH_ANCESTRY_REQUIRED"
+        );
+        Ok(ProducerFileProof {
+            certificate: proof,
+            physical_version: file.physical_version,
+            physical_fingerprint: file.physical_fingerprint,
+            incarnation: file.incarnation,
+        })
+    }
     pub async fn register_task_root(&self, node: &QualifiedNode) -> Result<()> {
         self.check_node(node)?;
         self.check_current().await?;
@@ -538,6 +579,19 @@ impl NativeGraph {
             )
             .await?;
         self.check_current().await
+    }
+    pub(crate) async fn attach_candidate(
+        &self,
+        tx: &tokio_postgres::Transaction<'_>,
+        stage: Uuid,
+        candidate: Uuid,
+    ) -> Result<()> {
+        tx.query_one(
+            "SELECT moria.runtime_dataset_graph_attach($1,$2,$3)",
+            &[&self.claims, &stage, &candidate],
+        )
+        .await?;
+        Ok(())
     }
     pub(crate) async fn begin_stage(&self, id: Uuid, node: &QualifiedNode) -> Result<()> {
         self.check_node(node)?;
@@ -572,6 +626,30 @@ impl NativeGraph {
     }
 }
 
+/// Constructed only from an actual admitted parent and its immutable, qualified file edge.
+pub(crate) struct ProducerFileProof {
+    certificate: crate::authenticated_file::FileCertificate,
+    physical_version: ObjectVersion,
+    physical_fingerprint: String,
+    incarnation: Uuid,
+}
+impl ProducerFileProof {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        crate::authenticated_file::FileCertificate,
+        ObjectVersion,
+        String,
+        Uuid,
+    ) {
+        (
+            self.certificate,
+            self.physical_version,
+            self.physical_fingerprint,
+            self.incarnation,
+        )
+    }
+}
 #[async_trait::async_trait]
 impl crate::storage::VerifiedVersionAuthority for NativeGraph {
     async fn verified_version(&self, content: &SealedObject) -> Result<ObjectVersion> {

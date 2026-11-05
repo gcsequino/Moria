@@ -1,24 +1,23 @@
 //! Exact touched-row verification; a locator or deferred digest never supplies row-content proof.
 use super::NativeSnapshot;
 use crate::{
-    canonical::canonical_json, dataset_graph_read::GraphFile, dataset_writer::key_run::Locator,
-    snapshot::parquet_bounds, storage::ObjectReadWindow,
+    canonical::canonical_json,
+    dataset_writer::key_run::Locator,
+    snapshot::{parquet_bounds, parquet_read::BoundedParquetRead},
 };
 use anyhow::{Result, ensure};
-use bytes::Bytes;
-use futures::{FutureExt, StreamExt, future::BoxFuture};
+use futures::StreamExt;
 use parquet::{
     arrow::{
-        arrow_reader::{ArrowReaderOptions, RowSelection, RowSelector},
-        async_reader::{AsyncFileReader, ParquetRecordBatchStreamBuilder},
+        arrow_reader::{RowSelection, RowSelector},
+        async_reader::ParquetRecordBatchStreamBuilder,
     },
-    file::metadata::{ParquetMetaData, ParquetMetaDataReader},
+    file::metadata::ParquetMetaData,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
-    ops::Range,
     sync::Arc,
 };
 
@@ -26,51 +25,6 @@ use std::{
 pub struct VerifiedKeyRow {
     pub value: Value,
     pub locator: Locator,
-}
-struct Read {
-    file: GraphFile,
-    window: ObjectReadWindow,
-}
-fn external(error: anyhow::Error) -> parquet::errors::ParquetError {
-    parquet::errors::ParquetError::External(error.into())
-}
-impl AsyncFileReader for Read {
-    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
-        async move {
-            if range.start > range.end || range.end > self.file.content().size {
-                return Err(external(anyhow::anyhow!("PARQUET_RANGE_LIMIT")));
-            }
-            self.window.read(range).await.map_err(external)
-        }
-        .boxed()
-    }
-    fn get_metadata<'a>(
-        &'a mut self,
-        _: Option<&'a ArrowReaderOptions>,
-    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
-        async move {
-            let size = self.file.content().size;
-            if size < 12 {
-                return Err(external(anyhow::anyhow!("PARQUET_ALLOCATION_LIMIT")));
-            }
-            let footer = self.get_bytes(size - 8..size).await?;
-            if &footer[4..] != b"PAR1" {
-                return Err(external(anyhow::anyhow!("PARQUET_ALLOCATION_LIMIT")));
-            }
-            let length = u64::from(u32::from_le_bytes(footer[..4].try_into().unwrap()));
-            if length > 8 * 1024 * 1024 || length > size - 12 {
-                return Err(external(anyhow::anyhow!("PARQUET_ALLOCATION_LIMIT")));
-            }
-            let raw = self.get_bytes(size - 8 - length..size - 8).await?;
-            parquet_bounds::footer(&raw).map_err(external)?;
-            let metadata = ParquetMetaDataReader::new()
-                .load_and_finish(&mut *self, size)
-                .await?;
-            parquet_bounds::arrow_metadata(&metadata).map_err(external)?;
-            Ok(Arc::new(metadata))
-        }
-        .boxed()
-    }
 }
 impl NativeSnapshot {
     /// Resolve through the actual pinned key index, then independently verify the selected physical row.
@@ -98,10 +52,10 @@ impl NativeSnapshot {
             file.content() == selection.content(),
             "DATASET_GRAPH_ANCESTRY_REQUIRED"
         );
-        let builder = ParquetRecordBatchStreamBuilder::new(Read {
-            window: file.window(),
-            file: file.clone(),
-        })
+        let builder = ParquetRecordBatchStreamBuilder::new(BoundedParquetRead::new(
+            file.window(),
+            file.content().size,
+        ))
         .await?;
         ensure!(
             u64::try_from(builder.metadata().file_metadata().num_rows())?
@@ -239,6 +193,7 @@ fn verify_row(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bytes::Bytes;
     use serde_json::json;
     fn locator() -> Locator {
         Locator {

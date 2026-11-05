@@ -180,6 +180,10 @@ struct PartRoot {
     parts: u64,
     rows: u64,
     last_page: Option<SealedObject>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    graph_files: Option<crate::persistent_directory::NodeReference>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    graph_pages: Option<crate::persistent_directory::NodeReference>,
 }
 
 pub(crate) fn schema_hash(schema: &Schema) -> Result<String> {
@@ -373,6 +377,7 @@ pub struct StreamingDatasetWriter {
     parts: u64,
     rows: u64,
     failed: bool,
+    graph: Option<graph_output::GraphOutput>,
 }
 impl StreamingDatasetWriter {
     pub async fn open(
@@ -414,7 +419,21 @@ impl StreamingDatasetWriter {
             parts: 0,
             rows: 0,
             failed: false,
+            graph: None,
         })
+    }
+    /// Native service entry for staged v3 output. Publication requires its separate graph candidate validator.
+    pub async fn open_graph(
+        store: Arc<dyn ObjectStore>,
+        grant: Arc<DatasetIoGrant>,
+        schema: Schema,
+        cancel: Cancellation,
+    ) -> Result<Self> {
+        let graph =
+            graph_output::GraphOutput::open(store.clone(), grant.clone(), cancel.clone()).await?;
+        let mut writer = Self::open(store, grant, schema, cancel).await?;
+        writer.graph = Some(graph);
+        Ok(writer)
     }
     fn begin_part(&mut self) -> Result<()> {
         if self.writer.is_none() {
@@ -497,8 +516,20 @@ impl StreamingDatasetWriter {
             self.cancel.clone(),
         )
         .await?;
+        let name = logical(&self.grant, "data");
+        if let Some(graph) = self.graph.as_mut() {
+            graph
+                .file(
+                    &name,
+                    &content,
+                    self.store.clone(),
+                    self.grant.clone(),
+                    self.cancel.clone(),
+                )
+                .await?;
+        }
         self.page.push(Part {
-            name: logical(&self.grant, "data"),
+            name,
             content,
             rows: self.part_rows,
         });
@@ -531,7 +562,9 @@ impl StreamingDatasetWriter {
             previous: self.last_page.take(),
             parts: std::mem::take(&mut self.page),
         };
-        self.last_page = Some(
+        self.last_page = Some(if let Some(graph) = self.graph.as_mut() {
+            graph.page(&page).await?
+        } else {
             put_json(
                 self.store.as_ref(),
                 self.grant.clone(),
@@ -539,8 +572,8 @@ impl StreamingDatasetWriter {
                 PAGE_BYTES,
                 self.cancel.clone(),
             )
-            .await?,
-        );
+            .await?
+        });
         self.pages += 1;
         Ok(())
     }
@@ -550,7 +583,7 @@ impl StreamingDatasetWriter {
         self.flush_page().await?;
         let lease = self.grant.lease();
         let root = PartRoot {
-            version: 2,
+            version: if self.graph.is_some() { 3 } else { 2 },
             execution: lease.execution,
             task: lease.task.unwrap(),
             owner: lease.owner,
@@ -563,8 +596,20 @@ impl StreamingDatasetWriter {
             parts: self.parts,
             rows: self.rows,
             last_page: self.last_page,
+            graph_files: self
+                .graph
+                .as_ref()
+                .and_then(graph_output::GraphOutput::files_root),
+            graph_pages: self
+                .graph
+                .as_ref()
+                .and_then(graph_output::GraphOutput::pages_root),
         };
-        put_json(self.store.as_ref(), self.grant, &root, 16384, self.cancel).await
+        if let Some(graph) = self.graph {
+            graph.finish(&root).await
+        } else {
+            put_json(self.store.as_ref(), self.grant, &root, 16384, self.cancel).await
+        }
     }
 }
 
@@ -668,6 +713,36 @@ pub async fn prepare_replacement(
     limits: ClosureLimits,
     cancel: Cancellation,
 ) -> Result<Uuid> {
+    prepare_replacement_inner(
+        store, scratch, grant, schema, partsets, limits, cancel, false,
+    )
+    .await
+}
+/// Staged native replacement; only actual version-three sealed task graph receipts are accepted.
+pub async fn prepare_graph_replacement(
+    store: Arc<dyn ObjectStore>,
+    scratch: &PosixStore,
+    grant: Arc<DatasetIoGrant>,
+    schema: Schema,
+    partsets: &[SealedObject],
+    limits: ClosureLimits,
+    cancel: Cancellation,
+) -> Result<Uuid> {
+    prepare_replacement_inner(
+        store, scratch, grant, schema, partsets, limits, cancel, true,
+    )
+    .await
+}
+async fn prepare_replacement_inner(
+    store: Arc<dyn ObjectStore>,
+    scratch: &PosixStore,
+    grant: Arc<DatasetIoGrant>,
+    schema: Schema,
+    partsets: &[SealedObject],
+    limits: ClosureLimits,
+    cancel: Cancellation,
+    graph_format: bool,
+) -> Result<Uuid> {
     ensure!(
         grant.lease().task.is_none() && !partsets.is_empty() && partsets.len() <= 4096,
         "OUTPUT_INVALID"
@@ -686,15 +761,29 @@ pub async fn prepare_replacement(
     )
     .await?;
     let schema = Arc::new(schema);
-    let prior = prior_sequence(
-        store.as_ref(),
-        grant.clone(),
-        schema.as_ref(),
-        &mut spool,
-        limits,
-        cancel.clone(),
-    )
-    .await?;
+    let (prior, prior_files) = if graph_format {
+        let basis = replace_graph::basis(
+            store.clone(),
+            grant.clone(),
+            schema.as_ref(),
+            cancel.clone(),
+        )
+        .await?;
+        (basis.raw, basis.files)
+    } else {
+        (
+            prior_sequence(
+                store.as_ref(),
+                grant.clone(),
+                schema.as_ref(),
+                &mut spool,
+                limits,
+                cancel.clone(),
+            )
+            .await?,
+            None,
+        )
+    };
     let sequence = prior
         .as_ref()
         .map(|raw| {
@@ -712,6 +801,22 @@ pub async fn prepare_replacement(
         .build()?;
     let hash = schema_hash(&schema)?;
     let snapshot_id = (Uuid::new_v4().as_u128() as u64 & ((1_u64 << 52) - 1)).max(1) as i64;
+    let mut graph = if graph_format {
+        Some(
+            replace_graph::ReplacementGraph::open(
+                store.clone(),
+                grant.clone(),
+                schema.clone(),
+                spool.clone(),
+                u64::try_from(sequence)?,
+                prior_files,
+                cancel.clone(),
+            )
+            .await?,
+        )
+    } else {
+        None
+    };
     let list_name = logical(&grant, "metadata");
     let list_capture = Capture::new();
     let parent_snapshot = prior
@@ -728,20 +833,28 @@ pub async fn prepare_replacement(
     let mut total_parts = 0u64;
     let mut seen = std::collections::BTreeSet::new();
     for reference in partsets {
-        let root: PartRoot = read_descriptor(
-            store.as_ref(),
-            grant.clone(),
-            reference,
-            16384,
-            cancel.clone(),
-        )
-        .await?;
+        let root: PartRoot = if let Some(graph) = graph.as_ref() {
+            graph.task_root(reference).await?
+        } else {
+            read_descriptor(
+                store.as_ref(),
+                grant.clone(),
+                reference,
+                16384,
+                cancel.clone(),
+            )
+            .await?
+        };
         ensure!(
-            ((root.version == 2 && root.contract.as_ref() == Some(&contract))
-                || (root.version == 1
-                    && root.contract.is_none()
-                    && contract.mode == "replace"
-                    && contract.coverage == "full"))
+            ((graph_format && root.version == 3 && root.contract.as_ref() == Some(&contract))
+                || (!graph_format
+                    && root.graph_files.is_none()
+                    && root.graph_pages.is_none()
+                    && ((root.version == 2 && root.contract.as_ref() == Some(&contract))
+                        || (root.version == 1
+                            && root.contract.is_none()
+                            && contract.mode == "replace"
+                            && contract.coverage == "full"))))
                 && root.execution == grant.lease().execution
                 && root.resource == grant.resource()
                 && root.schema_hash == hash
@@ -757,20 +870,25 @@ pub async fn prepare_replacement(
             &[&root.task,&root.execution,&root.owner,&root.fence.parse::<i64>()?,&root.resource,&receipt]).await?;
         ensure!(accepted.is_some(), "OUTPUT_ATTEMPT_CHANGED");
         drop(client);
-        let mut page_ref = root.last_page;
+        let mut page_ref = root.last_page.clone();
         let mut parts = 0;
         let mut rows = 0;
         for ordinal in (0..root.pages).rev() {
-            let page: PartPage = read_descriptor(
-                store.as_ref(),
-                grant.clone(),
-                &page_ref
-                    .take()
-                    .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?,
-                PAGE_BYTES,
-                cancel.clone(),
-            )
-            .await?;
+            let reference = page_ref
+                .take()
+                .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
+            let page: PartPage = if let Some(graph) = graph.as_ref() {
+                graph.task_page(&root, ordinal, &reference).await?
+            } else {
+                read_descriptor(
+                    store.as_ref(),
+                    grant.clone(),
+                    &reference,
+                    PAGE_BYTES,
+                    cancel.clone(),
+                )
+                .await?
+            };
             ensure!(
                 page.version == 1
                     && page.ordinal == ordinal
@@ -791,6 +909,9 @@ pub async fn prepare_replacement(
                         && part.rows <= 9_007_199_254_740_991,
                     "OUTPUT_INVALID"
                 );
+                if let Some(graph) = graph.as_mut() {
+                    graph.task_file(&root, &part).await?;
+                }
                 let file = DataFileBuilder::default()
                     .content(DataContentType::Data)
                     .file_path(part.name.clone())
@@ -815,6 +936,9 @@ pub async fn prepare_replacement(
                 cancel.clone(),
             )
             .await?;
+            if let Some(graph) = graph.as_mut() {
+                graph.metadata_file(&manifest_name, &content).await?;
+            }
             spool
                 .append_page(&[ClosureEntry {
                     name: manifest_name,
@@ -846,6 +970,9 @@ pub async fn prepare_replacement(
         cancel.clone(),
     )
     .await?;
+    if let Some(graph) = graph.as_mut() {
+        graph.metadata_file(&list_name, &list_content).await?;
+    }
     spool
         .append_page(&[ClosureEntry {
             name: list_name.clone(),
@@ -889,10 +1016,31 @@ pub async fn prepare_replacement(
         previous["refs"]["main"] = metadata["refs"]["main"].clone();
         metadata = previous;
     }
+    let graph_index = if let Some(graph) = graph.as_mut() {
+        Some(
+            graph
+                .summary(&mut metadata, snapshot_id, total_rows, total_parts)
+                .await?,
+        )
+    } else {
+        None
+    };
     // Iceberg metadata uses exact signed64 JSON numbers, independently of the native C03 wire.
     let bytes = serde_json::to_vec(&metadata)?;
     ensure!(bytes.len() <= METADATA_BYTES, "RESOURCE_LIMIT");
     let metadata = put(store.as_ref(), grant.clone(), &bytes, cancel.clone()).await?;
+    if let Some(mut graph) = graph {
+        let name = logical(&grant, "metadata");
+        graph.metadata_file(&name, &metadata).await?;
+        return graph
+            .finish(
+                metadata,
+                name,
+                snapshot_id,
+                graph_index.ok_or_else(|| anyhow::anyhow!("NATIVE_INDEX_SUMMARY_REQUIRED"))?,
+            )
+            .await;
+    }
     spool.seal(store.as_ref(), grant.clone()).await?;
     prepare_snapshot(
         store,
@@ -933,10 +1081,13 @@ pub async fn prepare_output(
 }
 
 pub mod bootstrap_v2;
+mod graph_builder;
+mod graph_output;
 pub mod key_run;
 pub mod key_run_io;
 pub mod key_run_merge;
 pub mod key_run_set;
+mod replace_graph;
 pub mod row_selection;
 pub mod rows;
 pub mod visibility;
