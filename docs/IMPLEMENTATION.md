@@ -2891,3 +2891,11 @@ cosine assertions. Focused results and the initial failed expectation are retain
 in `production/evidence/2026-11-04/source-fixture-contracts`. These functional
 checks do not certify production capacity; the complete independent quality gate
 remains required for the integrated revision.
+
+
+Function cancellation fixture checkpoint (2026-11-04): the real CLI/API test now
+checks the accepted cancellation control receipt and separately verifies terminal
+state through authenticated CLI wait, retaining actual Docker cleanup checks.
+The full file passed 17/17 with zero skips; all nine artifact checks, 79 native
+units and static checks passed. Evidence and the original failed expectation are
+under `production/evidence/2026-11-04/function-cancellation-control`.
