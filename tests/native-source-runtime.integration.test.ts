@@ -1501,6 +1501,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                 : []),
               ...(instancePipeline
                 ? [
+                    `${instancePipeline.transform}:read`,
                     `${instancePipeline.transform}:build`,
                     `${instancePipeline.output}:read`,
                     `${instancePipeline.output}:write`,
@@ -1575,6 +1576,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
           const pipelineOwner = randomUUID();
           if (instancePipeline && instanceLogic) {
             const pipelineOperations = [
+              `${instancePipeline.transform}:read`,
               `${instancePipeline.transform}:build`,
               `${instanceLogic.cases}:read`,
               `${instancePipeline.output}:read`,
