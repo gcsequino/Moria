@@ -3310,3 +3310,10 @@ pruned-current/retained fresh-prefix recovery and the existing recovery
 negatives. Evidence:
 [qualification](production/evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
 Production writer/sparse activation and production capacity remain unqualified.
+
+
+## Source commit-window custody
+
+The qualified native custody slice derives a live range from the actual accepted build and active Source alias. It protects superseded intermediate Dataset roots without scanning other builds during C04. The actual coordinator qualifies resumable journal pages with exact history/publication/producer receipts and current physical receiver custody. Real v2 and v3 fixtures exercised two certified metadata-pruning edges, supersession, bounded page resume, repeated acknowledgement, ordinary modification denial, wrong owner denial and actual cancellation. No fabricated work or root qualification was used.
+
+All nine exact native artifacts, 113 units, full static checks, both custody cases and the original permanent-v3 case passed without skips or cancellations. All controllers and scratch pools were removed. Evidence: `production/evidence/2026-11-05/source-commit-window-custody/`. Unchanged alias/projection reuse, sparse mutation publication and production workloads remain unqualified. See `production/NATIVE-SOURCE-COMMIT-WINDOWS.md`.

@@ -1,0 +1,71 @@
+{"controller": "moria-quality-23c0692f-4aa2-4813-8963-eda28ac8b959", "image": "sha256:8befb8bb53b89c3148732ccf6c3e2fc90ffd8761419359ce340c886e358fa72e", "scratchPools": ["/tmp/moria-engine-scratch-631ba4a4-2226-42b9-935d-cd942ee54a9e", "/tmp/moria-engine-scratch-72b0ddaf-b55c-419c-ad73-f4430bce1e56", "/tmp/moria-engine-scratch-c0c13e50-513f-4d75-920c-f711258f6b26"], "temporary": "/tmp/moria-quality-95v3lv7p"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 548ms using pnpm v11.25.0
+✖ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (41418.634879ms)
+✖ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (83965.589333ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 125881.82674
+
+✖ failing tests:
+
+test at tests/native-source-delta.integration.test.ts:14:3
+✖ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (41418.634879ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (/qualified/tests/native-source-delta.integration.test.ts:97:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/native-source-delta.integration.test.ts:14:3
+✖ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (83965.589333ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /SOURCE_STORE_AUTHORITY_REQUIRED/. Input:
+  
+  'error: IMMUTABLE_SOURCE_WINDOW'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/qualified/tests/native-source-delta.integration.test.ts:186:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: error: IMMUTABLE_SOURCE_WINDOW
+        at /app/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (/qualified/tests/native-source-delta.integration.test.ts:186:7)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /SOURCE_STORE_AUTHORITY_REQUIRED/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

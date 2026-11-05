@@ -1,0 +1,28 @@
+{"controller": "moria-quality-2810547b-1c8c-4d83-bb5e-8ac7b94533f6", "image": "sha256:0e1b0c8e29684be5fbb90ba54a074f927b69758e998ed8bcb23a0e3e1cb7079a", "scratchPools": ["/tmp/moria-engine-scratch-72ebfff7-8418-4848-b469-274d8af63b2c", "/tmp/moria-engine-scratch-af59fea0-c634-466f-baf4-33d3e3afa0d5", "/tmp/moria-engine-scratch-f22d770e-da74-468a-8e66-88f28ccb7982"], "temporary": "/tmp/moria-quality-wghek9sn"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 781ms using pnpm v11.25.0
+✔ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (43315.35864ms)
+ℹ {"realFormat":"v2","actualUnchangedEdges":2,"realSupersession":true,"intermediateCustodyBeforePages":true,"pageLimit":1,"first":{"kind":"unchanged","build":"cf8722e0-0a65-42dd-9d0d-9ee92e4450af","state":"capturing","store":"f54cd8e8-56a8-41e9-9c03-0491b19e589d","reason":null,"pending":true,"captured":1,"basisGeneration":"4","capturedThrough":"4","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"second":{"kind":"unchanged","build":"cf8722e0-0a65-42dd-9d0d-9ee92e4450af","state":"qualified","store":"f54cd8e8-56a8-41e9-9c03-0491b19e589d","reason":null,"pending":false,"captured":1,"basisGeneration":"4","capturedThrough":"5","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"noAliasOrPopulationCopy":true,"realCancellationReleasedCustody":true}
+✔ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (69068.985576ms)
+ℹ {"realFormat":"v3","actualUnchangedEdges":2,"realSupersession":true,"intermediateCustodyBeforePages":true,"pageLimit":1,"first":{"kind":"unchanged","build":"0841ed6e-66d7-4747-911c-b83154a83c31","state":"capturing","store":"7426db18-19e3-4929-8839-90ed5c6ffc44","reason":null,"pending":true,"captured":1,"basisGeneration":"4","capturedThrough":"4","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"second":{"kind":"unchanged","build":"0841ed6e-66d7-4747-911c-b83154a83c31","state":"qualified","store":"7426db18-19e3-4929-8839-90ed5c6ffc44","reason":null,"pending":false,"captured":1,"basisGeneration":"4","capturedThrough":"5","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"noAliasOrPopulationCopy":true,"realCancellationReleasedCustody":true}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112860.261226

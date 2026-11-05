@@ -401,6 +401,7 @@ CREATE TRIGGER runtime_indexing_dataset_root_pins AFTER INSERT ON moria.indexing
 CREATE FUNCTION moria.runtime_dataset_root_pinned_except(root_key text,own_maintenance uuid) RETURNS boolean LANGUAGE plpgsql AS $$
 DECLARE p moria.runtime_dataset_root_pins;
 BEGIN
+ IF moria.runtime_source_delta_root_pinned(root_key) THEN RETURN true;END IF;
  FOR p IN SELECT * FROM moria.runtime_dataset_root_pins WHERE runtime_dataset_root_pins.root_key=runtime_dataset_root_pinned_except.root_key LOOP
   IF p.owner_kind='execution' THEN
     IF moria.runtime_dataset_execution_pin_live(p.owner_id) THEN RETURN true; END IF;

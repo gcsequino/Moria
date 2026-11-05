@@ -373,9 +373,41 @@ impl Worker {
         .map_err(Into::into)
     }
 
+    async fn capture_source_window(&self, build: Uuid, fence: i64) -> Result<()> {
+        loop {
+            self.db.guard_claim(build, None, self.owner, fence).await?;
+            let page: Value = self
+                .db
+                .get()
+                .await?
+                .query_one(
+                    "SELECT moria.runtime_source_delta_page($1,$2,$3,256)",
+                    &[&build, &self.owner, &fence],
+                )
+                .await?
+                .get(0);
+            if page["state"] == "busy" {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                continue;
+            }
+            println!(
+                "{}",
+                json!({"event":"source_delta_page","build":build,"page":page})
+            );
+            if page["pending"] != true {
+                return Ok(());
+            }
+        }
+    }
+
     async fn plan_build(&self, row: &Row, fence: i64) -> Result<()> {
         let build: Uuid = row.get("id");
         let definition: Value = row.get("definition");
+        if definition.get("servingBindingGeneration").is_some()
+            && definition.get("projectionRevision").is_some()
+        {
+            self.capture_source_window(build, fence).await?;
+        }
         let scope = Scope {
             db: self.db.clone(),
             build,

@@ -339,6 +339,7 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${retentionRuntimeSchema}
   ${datasetGraphSchema}
   ${datasetCommitDeltaSchema}
+  ${datasetDeltaSchema}
   ${filesystemGcSchema}
   ${executionRootPinsSchema}
   ${directoryRuntimeSchema}
@@ -401,3 +402,5 @@ import { secretRuntimeSchema } from './secret-runtime-schema.js';
 import { sourceDeclarationSchema } from './source-declaration-schema.js';
 
 import { indexingStagingSchema } from './indexing-staging-schema.js';
+
+import { datasetDeltaSchema } from './dataset-delta-schema.js';
