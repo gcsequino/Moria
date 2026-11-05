@@ -85,7 +85,9 @@ pub(super) async fn seal(
     );
     let basis = witnesses[0].basis().clone();
     ensure!(
-        witnesses.iter().all(|witness| witness.basis() == &basis),
+        witnesses
+            .iter()
+            .all(|witness| witness.basis() == &basis && witness.next_sequence() == sequence),
         "DATASET_GRAPH_ANCESTRY_REQUIRED"
     );
     // The opaque witness names the actual captured root, and the coordinator must still
@@ -94,8 +96,7 @@ pub(super) async fn seal(
     ensure!(root.kind() == "root", "DATASET_GRAPH_ANCESTRY_REQUIRED");
     let descriptor: RootDescriptor = serde_json::from_value(graph.read_descriptor(&root).await?)?;
     ensure!(
-        descriptor.reader_profile == PROFILE
-            && descriptor.sequence.parse::<u64>()?.checked_add(1) == Some(sequence),
+        descriptor.reader_profile == PROFILE && descriptor.sequence.parse::<u64>()? < sequence,
         "DATASET_KEY_INDEX_INVALID"
     );
     let mut target: Option<(String, SealedObject, ObjectVersion)> = None;

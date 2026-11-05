@@ -34,6 +34,7 @@ pub struct VerifiedKeyRow {
 #[derive(Clone, Debug)]
 pub(crate) struct VerifiedPosition {
     basis: SealedObject,
+    next_sequence: u64,
     path: String,
     row: u64,
     data_sequence: u64,
@@ -43,6 +44,9 @@ pub(crate) struct VerifiedPosition {
 impl VerifiedPosition {
     pub(crate) fn basis(&self) -> &SealedObject {
         &self.basis
+    }
+    pub(crate) fn next_sequence(&self) -> u64 {
+        self.next_sequence
     }
     pub(crate) fn into_parts(self) -> (String, u64, u64, SealedObject, ObjectVersion) {
         (
@@ -141,6 +145,7 @@ impl NativeSnapshot {
         keys: &[Vec<u8>],
     ) -> Result<Vec<Option<VerifiedPosition>>> {
         let locators = self.lookup_encoded_keys(keys).await?;
+        let next_sequence = self.next_sequence()?;
         let columns = crate::snapshot::columns(&serde_json::to_value(
             self.metadata.current_schema().as_ref(),
         )?)?;
@@ -244,6 +249,7 @@ impl NativeSnapshot {
                     let locator = locators[index].as_ref().unwrap();
                     verified[index] = Some(VerifiedPosition {
                         basis: self.root.content().clone(),
+                        next_sequence,
                         path: name.clone(),
                         row: locator.row,
                         data_sequence: locator.data_sequence,

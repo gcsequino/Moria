@@ -386,22 +386,32 @@ impl StreamingDatasetWriter {
         schema: Schema,
         cancel: Cancellation,
     ) -> Result<Self> {
+        Self::open_qualified(store, grant, schema, cancel, None).await
+    }
+    async fn open_qualified(
+        store: Arc<dyn ObjectStore>,
+        grant: Arc<DatasetIoGrant>,
+        schema: Schema,
+        cancel: Cancellation,
+        graph: Option<graph_output::GraphOutput>,
+    ) -> Result<Self> {
         ensure!(grant.lease().task.is_some(), "TASK_REQUIRED");
         grant.check_current().await?;
         grant.validate_store(store.as_ref())?;
         let contract = grant.write_contract(&schema).await?;
         ensure!(
-            contract.mode == "replace",
+            contract.mode == "replace" || graph.is_some(),
             "DATASET_WRITE_CAPABILITY_REQUIRED"
         );
         grant.validate_schema(&schema)?;
-        let raw = serde_json::to_value(&schema)?;
+        let input_schema = contract.input_schema(&schema)?;
+        let raw = serde_json::to_value(&input_schema)?;
         let descriptors = columns(&raw)?;
         ensure!(!descriptors.is_empty(), "UNSUPPORTED_SCHEMA");
         for descriptor in descriptors.values() {
             ensure!(supported(descriptor), "UNSUPPORTED_OUTPUT_SCHEMA");
         }
-        let arrow = arrow_schema(&schema)?;
+        let arrow = arrow_schema(&input_schema)?;
         Ok(Self {
             store,
             grant,
@@ -419,7 +429,7 @@ impl StreamingDatasetWriter {
             parts: 0,
             rows: 0,
             failed: false,
-            graph: None,
+            graph,
         })
     }
     /// Native service entry for staged v3 output. Publication requires its separate graph candidate validator.
@@ -431,9 +441,7 @@ impl StreamingDatasetWriter {
     ) -> Result<Self> {
         let graph =
             graph_output::GraphOutput::open(store.clone(), grant.clone(), cancel.clone()).await?;
-        let mut writer = Self::open(store, grant, schema, cancel).await?;
-        writer.graph = Some(graph);
-        Ok(writer)
+        Self::open_qualified(store, grant, schema, cancel, Some(graph)).await
     }
     fn begin_part(&mut self) -> Result<()> {
         if self.writer.is_none() {
@@ -516,7 +524,14 @@ impl StreamingDatasetWriter {
             self.cancel.clone(),
         )
         .await?;
-        let name = logical(&self.grant, "data");
+        let name = logical(
+            &self.grant,
+            if self.contract.input_kind == "keys" {
+                "keys"
+            } else {
+                "data"
+            },
+        );
         if let Some(graph) = self.graph.as_mut() {
             graph
                 .file(
@@ -733,6 +748,66 @@ pub async fn prepare_graph_replacement(
     )
     .await
 }
+struct NewSnapshot<'a> {
+    sequence: i64,
+    snapshot_id: i64,
+    parent_snapshot: Option<i64>,
+    list_name: &'a str,
+    summary: Value,
+}
+fn snapshot_metadata(
+    grant: &DatasetIoGrant,
+    schema: &Schema,
+    prior: Option<Value>,
+    snapshot: NewSnapshot<'_>,
+) -> Result<Value> {
+    let NewSnapshot {
+        sequence,
+        snapshot_id,
+        parent_snapshot,
+        list_name,
+        summary,
+    } = snapshot;
+    let now = chrono::Utc::now().timestamp_millis().max(
+        prior
+            .as_ref()
+            .and_then(|v| v["last-updated-ms"].as_i64())
+            .unwrap_or(0),
+    );
+    let mut metadata = json!({"format-version":2,"table-uuid":grant.table_uuid()?.to_string(),
+        "location":format!("moria://{}/{}",grant.namespace().warehouse_id,grant.namespace().table_id),
+        "last-sequence-number":sequence,"last-updated-ms":now,"last-column-id":schema.highest_field_id(),
+        "schemas":[serde_json::to_value(schema)?],"current-schema-id":schema.schema_id(),
+        "partition-specs":[{"spec-id":0,"fields":[]}],"default-spec-id":0,"last-partition-id":999,
+        "properties":{},"current-snapshot-id":snapshot_id,
+        "snapshots":[{"snapshot-id":snapshot_id,"sequence-number":sequence,"timestamp-ms":now,"manifest-list":list_name,
+            "summary":summary,"schema-id":schema.schema_id()}],
+        "snapshot-log":[{"timestamp-ms":now,"snapshot-id":snapshot_id}],"metadata-log":[],
+        "sort-orders":[{"order-id":0,"fields":[]}],"default-sort-order-id":0,
+        "refs":{"main":{"snapshot-id":snapshot_id,"type":"branch"}}});
+    if let Some(mut previous) = prior {
+        metadata["snapshots"][0]["parent-snapshot-id"] =
+            json!(parent_snapshot.ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?);
+        for field in ["snapshots", "snapshot-log"] {
+            let added = metadata[field].as_array().unwrap().clone();
+            previous[field]
+                .as_array_mut()
+                .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?
+                .extend(added);
+        }
+        for field in [
+            "last-updated-ms",
+            "last-sequence-number",
+            "current-snapshot-id",
+        ] {
+            previous[field] = metadata[field].clone();
+        }
+        previous["refs"]["main"] = metadata["refs"]["main"].clone();
+        metadata = previous;
+    }
+    Ok(metadata)
+}
+
 async fn prepare_replacement_inner(
     store: Arc<dyn ObjectStore>,
     scratch: &PosixStore,
@@ -988,43 +1063,21 @@ async fn prepare_replacement_inner(
             }])
             .await?;
     }
-    let now = chrono::Utc::now().timestamp_millis().max(
-        prior
-            .as_ref()
-            .and_then(|v| v["last-updated-ms"].as_i64())
-            .unwrap_or(0),
-    );
-    let mut metadata = json!({"format-version":2,"table-uuid":grant.table_uuid()?.to_string(),
-        "location":format!("moria://{}/{}",grant.namespace().warehouse_id,grant.namespace().table_id),
-        "last-sequence-number":sequence,"last-updated-ms":now,"last-column-id":schema.highest_field_id(),
-        "schemas":[serde_json::to_value(schema.as_ref())?],"current-schema-id":schema.schema_id(),
-        "partition-specs":[{"spec-id":0,"fields":[]}],"default-spec-id":0,"last-partition-id":999,
-        "properties":{},"current-snapshot-id":snapshot_id,
-        "snapshots":[{"snapshot-id":snapshot_id,"sequence-number":sequence,"timestamp-ms":now,"manifest-list":list_name,
-            "summary":{"operation":"overwrite","total-records":total_rows.to_string(),"total-data-files":total_parts.to_string()},"schema-id":schema.schema_id()}],
-        "snapshot-log":[{"timestamp-ms":now,"snapshot-id":snapshot_id}],"metadata-log":[],
-        "sort-orders":[{"order-id":0,"fields":[]}],"default-sort-order-id":0,
-        "refs":{"main":{"snapshot-id":snapshot_id,"type":"branch"}}});
-    if let Some(mut previous) = prior {
-        metadata["snapshots"][0]["parent-snapshot-id"] =
-            json!(parent_snapshot.ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?);
-        for field in ["snapshots", "snapshot-log"] {
-            let added = metadata[field].as_array().unwrap().clone();
-            previous[field]
-                .as_array_mut()
-                .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?
-                .extend(added);
-        }
-        for field in [
-            "last-updated-ms",
-            "last-sequence-number",
-            "current-snapshot-id",
-        ] {
-            previous[field] = metadata[field].clone();
-        }
-        previous["refs"]["main"] = metadata["refs"]["main"].clone();
-        metadata = previous;
-    }
+    let mut metadata = snapshot_metadata(
+        &grant,
+        schema.as_ref(),
+        prior,
+        NewSnapshot {
+            sequence,
+            snapshot_id,
+            parent_snapshot,
+            list_name: &list_name,
+            summary: json!({
+                "operation":"overwrite","total-records":total_rows.to_string(),
+                "total-data-files":total_parts.to_string(),
+            }),
+        },
+    )?;
     let graph_index = if let Some(graph) = graph.as_mut() {
         Some(
             graph
@@ -1096,8 +1149,11 @@ pub mod key_run;
 pub mod key_run_io;
 pub mod key_run_merge;
 pub mod key_run_set;
+mod mutation_inputs;
+mod mutation_standard;
 mod position_delete;
 mod replace_graph;
 pub mod row_selection;
 pub mod rows;
+mod task_graph;
 pub mod visibility;

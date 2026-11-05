@@ -29,7 +29,7 @@ pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummar
 pub use point::VerifiedKeyRow;
 mod batch;
 mod mutation;
-pub(crate) use mutation::MutationFootprintRef;
+pub(crate) use mutation::{MutationFootprintRef, MutationMode};
 pub(crate) use point::VerifiedPosition;
 pub(crate) use scan::GraphScanFile;
 
@@ -276,6 +276,14 @@ impl NativeSnapshot {
     }
     pub fn snapshot_id(&self) -> Result<i64> {
         Ok(self.descriptor.snapshot_id.parse()?)
+    }
+    /// Iceberg sequence allocation is table-wide, even when the current main snapshot
+    /// is older than a retained branch snapshot.
+    pub(crate) fn next_sequence(&self) -> Result<u64> {
+        u64::try_from(self.metadata.last_sequence_number())?
+            .checked_add(1)
+            .filter(|sequence| *sequence <= 9_007_199_254_740_991)
+            .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))
     }
     pub async fn check_current(&self) -> Result<()> {
         self.context.check_node(&self.root).await
