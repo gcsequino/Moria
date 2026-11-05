@@ -1,0 +1,56 @@
+{"controller": "moria-quality-09af42c0-ddf1-4f42-947d-c14000e49d88", "image": "sha256:71b1da782c245f674d7922134132d734ed79e9cf5f46eaf6fe8ced038cfe6088", "scratchPools": ["/tmp/moria-engine-scratch-8b1f38f5-7a62-488c-9cf3-fb4292ed078b", "/tmp/moria-engine-scratch-fa5dd1fe-408b-46d4-9e4b-07425d9863f1", "/tmp/moria-engine-scratch-f10a8b2c-a63a-48cf-a9f2-1387615af82b"], "temporary": "/tmp/moria-quality-795z31xw"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 540ms using pnpm v11.25.0
+✖ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (35233.209178ms)
+ℹ {"realFormat":"v2","actualUnchangedEdges":2,"realSupersession":true,"intermediateCustodyBeforePages":true,"pageLimit":1,"first":{"kind":"unchanged","build":"1bd06036-2b0c-497b-bd27-264cdfc65845","state":"capturing","store":"2c48450f-cec9-4b0d-b97a-79da609a6b6f","reason":null,"pending":true,"captured":1,"basisGeneration":"4","capturedThrough":"4","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"second":{"kind":"unchanged","build":"1bd06036-2b0c-497b-bd27-264cdfc65845","state":"qualified","store":"2c48450f-cec9-4b0d-b97a-79da609a6b6f","reason":null,"pending":false,"captured":1,"basisGeneration":"4","capturedThrough":"5","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"noAliasOrPopulationCopy":true,"realCancellationReleasedCustody":true}
+✖ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (81965.463526ms)
+ℹ {"realFormat":"v3","actualUnchangedEdges":2,"realSupersession":true,"intermediateCustodyBeforePages":true,"pageLimit":1,"first":{"kind":"unchanged","build":"a3d23417-2e43-4682-9135-a685c64399ce","state":"capturing","store":"9bdec477-e4a6-4323-bc2c-0c44c30b9803","reason":null,"pending":true,"captured":1,"basisGeneration":"4","capturedThrough":"4","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"second":{"kind":"unchanged","build":"a3d23417-2e43-4682-9135-a685c64399ce","state":"qualified","store":"9bdec477-e4a6-4323-bc2c-0c44c30b9803","reason":null,"pending":false,"captured":1,"basisGeneration":"4","capturedThrough":"5","descriptorBytes":"285","basisSourceVersion":"1","basisDatasetRevision":"3","targetDatasetRevision":"5"},"noAliasOrPopulationCopy":true,"realCancellationReleasedCustody":true}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 117710.683003
+
+✖ failing tests:
+
+test at tests/native-source-delta.integration.test.ts:14:3
+✖ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (35233.209178ms)
+  error: terminating connection due to administrator command
+      at parseErrorMessage (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:395:9)
+      at Parser.handlePacket (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:212:19)
+      at Parser.parse (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:105:30)
+      at Socket.<anonymous> (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/index.ts:7:48)
+      at Socket.emit (node:events:514:28)
+      at addChunk (node:internal/streams/readable:569:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+      at Readable.push (node:internal/streams/readable:400:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:194:23)
+
+test at tests/native-source-delta.integration.test.ts:14:3
+✖ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (81965.463526ms)
+  error: terminating connection due to administrator command
+      at parseErrorMessage (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:395:9)
+      at Parser.handlePacket (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:212:19)
+      at Parser.parse (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/parser.ts:105:30)
+      at Socket.<anonymous> (/app/node_modules/.pnpm/pg-protocol@1.16.1/node_modules/pg-protocol/src/index.ts:7:48)
+      at Socket.emit (node:events:514:28)
+      at addChunk (node:internal/streams/readable:569:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+      at Readable.push (node:internal/streams/readable:400:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:194:23)
