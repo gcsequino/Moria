@@ -90,5 +90,32 @@
     "nativeInputCount": 134,
     "nativeInputsByteEqual": true,
     "differences": []
+  },
+  "legacyConnectorRegression": {
+    "exitCode": 0,
+    "wallSeconds": 228.1007629960004,
+    "tests": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootWallSeconds": 216.43755583,
+    "rootDeadlineSeconds": 300,
+    "fixtureSha256": "4503372075cf989902b2663e4803f1c5423a81857ef23a0781c208811fefc930",
+    "fixtureBodyUnchanged": true,
+    "entrypoint": "Original connectorCustody function, original root name and 300000ms timeout; separate focused file without filtering/skipping any subcase.",
+    "image": "sha256:17c9cec3f1e39e0acd374bfe45b99aa5de9f22cba1c253b21332c8baa529e3b7",
+    "nativeInputsUnchanged": true,
+    "cleanup": {
+      "controller": "moria-quality-6c220525-1076-4a9f-b0ca-3cc215c3c620",
+      "controllerAbsent": true,
+      "labelsAbsent": true,
+      "pathsAbsent": {
+        "/tmp/moria-engine-scratch-0c385900-d6de-47dd-8fe3-cff379ddc20d": true,
+        "/tmp/moria-engine-scratch-2256122d-c02a-4688-8c5d-e3b2fdcbe1ad": true,
+        "/tmp/moria-engine-scratch-27b3d5be-97cf-46b2-a983-6a3445e9fbf0": true,
+        "/tmp/moria-quality-ifxrsy51": true
+      }
+    }
   }
 }

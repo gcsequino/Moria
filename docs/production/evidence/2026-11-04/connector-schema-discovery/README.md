@@ -39,9 +39,16 @@ the qualified component inputs; only the two test-caller corrections described
 above are overlaid. The controller, labelled children, all three scratch pools
 and temporary root are verified absent after terminal cleanup.
 
-The original fifteen-case Connector custody regression is running separately on
-the same native inputs and unchanged fixture body; its final outcome will be
-recorded in a follow-up checkpoint.
+The original Connector custody cohort also passes **15/15**, with no failures,
+skips or cancellations: 216.438 seconds inside its original 300-second root budget
+and 228.101 seconds including the driver. A focused entry point invokes the
+byte-identical `connectorCustody` fixture, preserving every subcase and limit.
+It covers eight exact Secret slots, queued file-ACL denial, independent typed
+Dataset readback, cursor reuse, three credential-reflection encodings, redirects,
+truncated/oversized responses, unavailable/time-limited providers and in-flight
+revocation. Its nine native artifacts are the same component artifacts. Every
+owned controller, labelled child, scratch pool and temporary root is absent after
+cleanup.
 
 This evidence is functional qualification, not production capacity certification.
 The combined platform revision still requires its complete independent quality

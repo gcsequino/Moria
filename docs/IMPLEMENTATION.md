@@ -17,9 +17,10 @@ artifact fingerprints and 113 native units. Its complete real Source/HTTP/OCI/SQ
 file passes 15/15 with no skips or cancellations, including cancellation,
 revocation, typed proposal rejection, identical-key capability isolation, normal
 batch typed publication and lost-COMMIT replay. All original limits remain intact
-and every owned fixture is cleaned. The original Connector custody regression is
-running separately; current-platform integration and independent complete quality
-checks remain required. See
+and every owned fixture is cleaned. The original Connector custody regression
+also passes 15/15 on identical native inputs and its unchanged fixture body, in
+216.438 seconds within the original 300-second root limit. Current-platform
+integration and independent complete quality checks remain required. See
 [discovery evidence](production/evidence/2026-11-04/connector-schema-discovery/README.md).
 
 ## November 4 private-origin repeated validation
