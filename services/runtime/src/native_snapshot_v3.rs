@@ -27,6 +27,7 @@ mod scan;
 mod validate;
 pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef};
 pub use point::VerifiedKeyRow;
+mod batch;
 pub(crate) use scan::GraphScanFile;
 
 pub const PROFILE: &str = "iceberg-v2-native-mor-bounded-v3";
