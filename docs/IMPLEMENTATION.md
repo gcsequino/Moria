@@ -1,5 +1,25 @@
 # Implementation checkpoint
 
+## November 5 Linux Function and Pipeline fixes
+
+Local Linux reproduced two Function failures from hosted CI. Docker cleanup
+now shares one removal promise between early stop and final cleanup, preserving
+the CPU-limit result. The live revocation fixture waits for the guest log
+and observation to settle before revoking the worker. The Docker compatibility
+test and all 18 Functions tests pass with their original limits.
+[Function evidence](production/evidence/2026-11-05/linux-function-gates.md)
+
+Pipeline batches the current service's ordered provenance checks and verifies
+changed graphs before commit. Full-width admission pinned 64 real Dataset
+heads and accepted 64 outputs in 25.487 seconds against the original
+30-second request deadline. All nine Pipeline subtests and seven provenance
+tests passed, including grouped publication, spill recovery, and revocation
+on replay. [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
+
+Hosted Linux CI on the integrated revision remains required. The Dataset v3
+and Evaluation timing fixes are under local qualification. Whole-instance
+browser and clean-host recovery tests are queued behind those gates.
+
 ## November 5 Agent publication identity reuse
 
 The native platform returns the already verified credential identity after its
