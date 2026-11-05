@@ -1335,7 +1335,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                   foundation: { rootId: published.root.id, digest: published.publication.digest },
                   marking: classification,
                   endpoint,
-                  chat: actual('qwen3:4b'),
+                  chat: actual('qwen3:4b-instruct-2507-q4_K_M'),
                   embedding: actual('nomic-embed-text:latest'),
                 });
               })()
@@ -2097,7 +2097,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
             );
             const casesNamespace = (
               await db.pool.query(
-                'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource WHERE b.environment=$1 AND b.resource=$2',
+                'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource::text WHERE b.environment=$1 AND b.resource=$2',
                 [environment, instanceLogic.cases],
               )
             ).rows[0];
@@ -2199,7 +2199,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
               assert.ok(BigInt(head.revision) > 0n);
               const outputNamespace = (
                 await db.pool.query(
-                  'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource WHERE b.environment=$1 AND b.resource=$2',
+                  'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource::text WHERE b.environment=$1 AND b.resource=$2',
                   [environment, instancePipeline.output],
                 )
               ).rows[0];

@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 499.32401840201055,
+  "originalDigestsPreserved": true,
+  "helperAbsent": true,
+  "model": "qwen3:4b-instruct-2507-q4_K_M",
+  "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0"
+}
