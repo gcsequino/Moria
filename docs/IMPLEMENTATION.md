@@ -28,6 +28,9 @@ The filesystem and S3-compatible clean-host restores verified multipart
 metadata, exact content, and keys before enabling dispatch. The lost pause
 acknowledgement test preserved fencing and reconciled the exact retry.
 An already-applied external effect stayed uncertain without repeat dispatch.
+The managed indexing suite passed all 23 tests. Its clean-host restore
+rebound typed Iceberg data and read retained snapshots before and after a
+new native publication.
 
 The composed local browser fixture passed both tests. The management UI
 created a record and invoked the Function with input `41`, returning
