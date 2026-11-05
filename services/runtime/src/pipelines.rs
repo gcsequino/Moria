@@ -923,14 +923,11 @@ impl NativePipelines {
                 id.to_string(),
                 json!({"binding":physical,"writerSchema":output.schema}),
             );
-            tx.execute("INSERT INTO moria.dataset_heads(environment,dataset,revision) VALUES($1,$2,0) ON CONFLICT DO NOTHING",&[&session.environment(),&id.to_string()]).await?;
             heads.insert(id.to_string(),tx.query_one("SELECT revision::text FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2 FOR SHARE",&[&session.environment(),&id.to_string()]).await?.get::<_,String>(0));
             outputs.insert(
                 name,
                 json!({"resource":id,"namespace":output.namespace,"schema":output.schema}),
             );
-            Authority::resource_access_for_operation(tx.client(), session, &id.to_string(), "read")
-                .await?;
         }
         ensure!(labels.len() <= 256, "PIPELINE_MARKINGS_INVALID");
         authorize(
@@ -1097,21 +1094,25 @@ impl NativePipelines {
             },
             &labels,
         )?;
-        for output in row
-            .get::<_, Value>("outputs")
+        let outputs: Value = row.get("outputs");
+        let output_reads = outputs
             .as_object()
             .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
             .values()
-        {
-            Authority::resource_access_for_operation(
-                client,
-                session,
-                output["resource"]
+            .map(|output| {
+                let resource = output["resource"]
                     .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?,
-                "read",
-            )
-            .await?;
+                    .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+                Ok(json!({"resource":resource,"operation":"read"}))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        if !output_reads.is_empty() {
+            client
+                .query_one(
+                    "SELECT moria.native_serving_resource_access_batch($1,$2,true)",
+                    &[&session.session_hash(), &json!(output_reads)],
+                )
+                .await?;
         }
         for input in row
             .get::<_, Value>("inputs")

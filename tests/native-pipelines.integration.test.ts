@@ -823,6 +823,26 @@ test(
               ).rows[0].labels,
             );
           assert.deepEqual(await sessionBatch(), sessionExpected);
+          const reads = requests.filter(({ operation }) => operation === 'read');
+          assert.deepEqual(
+            (
+              await client.query(
+                'SELECT moria.native_serving_resource_access_batch($1,$2,true) AS labels',
+                [sessionHash, JSON.stringify(reads)],
+              )
+            ).rows[0].labels,
+            await Promise.all(
+              reads.map(
+                async ({ resource }) =>
+                  (
+                    await client.query(
+                      "SELECT moria.native_resource_filesystem_access($1,$2,'read') AS labels",
+                      [sessionHash, resource],
+                    )
+                  ).rows[0].labels,
+              ),
+            ),
+          );
           for (const mutation of [
             [
               "UPDATE moria.native_dataset_bindings SET enabled=false,revision='sha256:'||repeat('f',64) WHERE environment=$1 AND resource=$2",

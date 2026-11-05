@@ -149,7 +149,7 @@ BEGIN
   RETURN to_jsonb(ARRAY(SELECT DISTINCT label FROM unnest(labels) label ORDER BY label));
 END $$;
 REVOKE ALL ON FUNCTION moria.native_serving_resource_access_state(jsonb,text,text) FROM PUBLIC;
-CREATE FUNCTION moria.native_serving_resource_access_batch_state(state jsonb,requests jsonb) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
+CREATE FUNCTION moria.native_serving_resource_access_batch_state(state jsonb,requests jsonb,require_read_scope boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
 DECLARE request jsonb; origin text; operation text; actual_operation text; self_resource text; origins text[];
   labels text[]; fs_labels jsonb; fs_outcomes jsonb; fs_cache jsonb:='{}'; results jsonb:='[]'; operations text[];
 BEGIN
@@ -166,6 +166,11 @@ BEGIN
       OR request->>'operation' NOT IN ('read','write','publish') THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
     operation:=request->>'operation';
     self_resource:=moria.runtime_data_resource(state->>'environment',request->>'resource');
+    IF require_read_scope AND (operation<>'read'
+      OR NOT (state->'identity'->'grantedOperations' ? (self_resource||':read'))
+      OR NOT (state->'identity'->'applicationScopes' ? (self_resource||':read'))) THEN
+      RAISE EXCEPTION 'FORBIDDEN';
+    END IF;
     IF state->>'privatePurpose'='indexing' AND (operation<>'read' OR NOT (state->'privateAllowedSources' ? self_resource)) THEN
       RAISE EXCEPTION 'FORBIDDEN';
     END IF;
@@ -192,11 +197,11 @@ BEGIN
   END LOOP;
   RETURN results;
 END $$;
-REVOKE ALL ON FUNCTION moria.native_serving_resource_access_batch_state(jsonb,jsonb) FROM PUBLIC;
-CREATE FUNCTION moria.native_serving_resource_access_batch(token_hash text,requests jsonb) RETURNS jsonb
+REVOKE ALL ON FUNCTION moria.native_serving_resource_access_batch_state(jsonb,jsonb,boolean) FROM PUBLIC;
+CREATE FUNCTION moria.native_serving_resource_access_batch(token_hash text,requests jsonb,require_read_scope boolean DEFAULT false) RETURNS jsonb
   LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 BEGIN
-  RETURN moria.native_serving_resource_access_batch_state(moria.native_serving_session(token_hash),requests);
+  RETURN moria.native_serving_resource_access_batch_state(moria.native_serving_session(token_hash),requests,require_read_scope);
 END $$;
 CREATE FUNCTION moria.native_serving_resource_access(token_hash text,resource text,operation text) RETURNS jsonb
   LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
