@@ -1945,7 +1945,7 @@ impl FunctionPolicy for NativePlatformBroker {
         tx: &Transaction<'_>,
         context: &SandboxContext,
         result: &Value,
-    ) -> Result<()> {
+    ) -> Result<VerifiedSession> {
         tx.query_one(
             "SELECT id FROM moria.runtime_executions WHERE id=$1 FOR UPDATE",
             &[&context.lease().execution],
@@ -2007,7 +2007,7 @@ impl FunctionPolicy for NativePlatformBroker {
             Self::committed_ledger(tx.client(), &session, context.lease().execution).await?;
         }
         context.check_in(tx.client()).await?;
-        Ok(())
+        Ok(session)
     }
     async fn retained(
         &self,

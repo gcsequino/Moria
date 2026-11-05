@@ -1,5 +1,23 @@
 # Implementation checkpoint
 
+## November 5 Agent publication identity reuse
+
+The native platform returns the already verified credential identity after its
+existing final publication context check. Agent publication uses that identity
+for the original fresh retained Source/model/ledger checks and fenced execution
+completion in the same serializable transaction, avoiding two adjacent context
+checks around rebuilding the same identity. Function publication keeps its
+original path. No authorization snapshot is cached; lock modes and deadlines
+are unchanged.
+
+A real committed receipt's exact transaction measures six worker checks before
+this change and four afterward, with one receipt and the original result in both
+runs. All nine artifacts, full static/provenance and 117 native units pass on the
+frozen `0c36f77` base plus this change. The original Agent file passes 24/24 and
+Functions passes 18/18 with no skips or cancellations and verified cleanup.
+Evaluation and complete current-platform qualification remain open. See
+[Agent publication evidence](production/evidence/2026-11-04/agent-publication-identity/README.md).
+
 ## November 5 grouped Function Source authority
 
 Function authorization now resolves current session state and its operation Source
