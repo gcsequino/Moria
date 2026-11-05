@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "240s",
+  "python3",
+  "/home/gcseq/moria-proofs/automation-service-child-alias-20261104/source/deploy/test/run-quality.py",
+  "sha256:77d2230384ed6abf94d9a768c6840c609ca607da8e863ef58bcfb2f21c0b2e59",
+  "pnpm",
+  "test:integration",
+  "tests/filesystem-source.integration.test.ts"
+]

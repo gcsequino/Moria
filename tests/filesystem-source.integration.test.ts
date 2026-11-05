@@ -466,7 +466,10 @@ test(
           { resource: unit.resource.resourceId, operation: 'write' },
           { resource: unit.resource.resourceId, operation: 'publish' },
         ];
-        const batch = async (values = requests, client: Pick<pg.Pool, 'query'> = db.pool) =>
+        const batch = async (
+          values: unknown[] = requests,
+          client: Pick<pg.Pool, 'query'> = db.pool,
+        ) =>
           (
             await client.query(
               'SELECT moria.native_serving_resource_access_batch_state(moria.native_serving_session($1),$2) labels',
@@ -526,6 +529,50 @@ test(
         } finally {
           await measured.query("SET track_functions='none'");
           measured.release();
+        }
+
+        const operationDefinition = (
+          await db.pool.query(
+            "SELECT pg_get_functiondef('moria.native_serving_filesystem_resource_access_operations_state(jsonb,text,text[])'::regprocedure) definition",
+          )
+        ).rows[0].definition as string;
+        await db.pool.query(
+          operationDefinition.replace(
+            'moria.native_serving_filesystem_resource_access_operations_state(',
+            'moria.acl_operations_probe(',
+          ),
+        );
+        await db.pool.query(
+          'REVOKE ALL ON FUNCTION moria.acl_operations_probe(jsonb,text,text[]) FROM PUBLIC',
+        );
+        const observed = await db.pool.connect();
+        try {
+          await db.pool.query(
+            "CREATE OR REPLACE FUNCTION moria.native_serving_filesystem_resource_access_operations_state(state jsonb,resource text,operations text[]) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$ BEGIN PERFORM set_config('moria.test_acl_operations',to_jsonb(operations)::text,false); RETURN moria.acl_operations_probe(state,resource,operations); END $$",
+          );
+          for (const requested of [
+            ['read'],
+            ['write'],
+            ['read', 'write'],
+            ['read', 'write', 'publish'],
+          ]) {
+            await batch(
+              requested.map((operation) => ({ resource: unit.resource.resourceId, operation })),
+              observed,
+            );
+            const operations = JSON.parse(
+              (
+                await observed.query(
+                  "SELECT current_setting('moria.test_acl_operations') operations",
+                )
+              ).rows[0].operations,
+            ) as string[];
+            assert.deepEqual(operations.sort(), [...new Set(['read', ...requested])].sort());
+          }
+        } finally {
+          await db.pool.query(operationDefinition);
+          await db.pool.query('DROP FUNCTION moria.acl_operations_probe(jsonb,text,text[])');
+          observed.release();
         }
 
         for (const deniedOperation of ['read', 'write'] as const) {
@@ -698,7 +745,25 @@ test(
             [[absent, missing], 'NOT_FOUND'],
             [[forbidden, absent], 'FORBIDDEN'],
             [[absent, forbidden], 'NOT_FOUND'],
-          ] as [typeof requests, string][]) {
+            [
+              [missing, { resource: unit.resource.resourceId, operation: 'unsupported' }],
+              'SOURCE_FILE_PROOF_REQUIRED',
+            ],
+            [
+              [{ resource: unit.resource.resourceId, operation: 'unsupported' }, missing],
+              'FORBIDDEN',
+            ],
+            [[absent, null], 'NOT_FOUND'],
+            [[null, absent], 'FORBIDDEN'],
+            [
+              [missing, { resource: unit.resource.resourceId, operation: 'read', extra: true }],
+              'SOURCE_FILE_PROOF_REQUIRED',
+            ],
+            [
+              [{ resource: unit.resource.resourceId, operation: 'read', extra: true }, missing],
+              'FORBIDDEN',
+            ],
+          ] as [unknown[], string][]) {
             await client.query('SAVEPOINT denied_batch');
             await assert.rejects(batch(values, client), (error: unknown) => {
               assert(error instanceof pg.DatabaseError);

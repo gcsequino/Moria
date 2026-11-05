@@ -141,10 +141,12 @@ END $$;
 REVOKE ALL ON FUNCTION moria.native_serving_resource_access_state(jsonb,text,text) FROM PUBLIC;
 CREATE FUNCTION moria.native_serving_resource_access_batch_state(state jsonb,requests jsonb) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
 DECLARE request jsonb; origin text; operation text; actual_operation text; self_resource text; origins text[];
-  labels text[]; fs_labels jsonb; fs_outcomes jsonb; fs_cache jsonb:='{}'; results jsonb:='[]';
+  labels text[]; fs_labels jsonb; fs_outcomes jsonb; fs_cache jsonb:='{}'; results jsonb:='[]'; operations text[];
 BEGIN
   IF jsonb_typeof(requests) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
   IF jsonb_array_length(requests)>256 THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
+  operations:=ARRAY(SELECT 'read'::text UNION SELECT item.value->>'operation'
+    FROM jsonb_array_elements(requests) item(value) WHERE item.value->>'operation' IN ('read','write','publish'));
   FOR request IN SELECT value FROM jsonb_array_elements(requests) LOOP
     IF jsonb_typeof(request) IS DISTINCT FROM 'object' THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
     IF request-ARRAY['resource','operation']<>'{}'::jsonb
@@ -167,7 +169,7 @@ BEGIN
       IF fs_cache ? origin THEN
         fs_outcomes:=fs_cache->origin;
       ELSE
-        fs_outcomes:=moria.native_serving_filesystem_resource_access_operations_state(state,origin,ARRAY['read','write','publish']);
+        fs_outcomes:=moria.native_serving_filesystem_resource_access_operations_state(state,origin,operations);
         fs_cache:=jsonb_set(fs_cache,ARRAY[origin],fs_outcomes);
         IF pg_column_size(fs_cache)>8388608 THEN RAISE EXCEPTION 'RESOURCE_LIMIT'; END IF;
       END IF;
