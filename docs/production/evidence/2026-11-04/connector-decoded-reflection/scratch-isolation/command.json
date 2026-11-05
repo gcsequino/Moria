@@ -1,0 +1,8 @@
+[
+  "python3",
+  "/home/gcseq/moria-current-publish-20261104/deploy/test/run-quality.py",
+  "sha256:fbe2ec10d63c69763e00a16293a64473c3cd260d2836bd29558388c17846ee07",
+  "node",
+  "-e",
+  "const assert=require('node:assert/strict'),fs=require('node:fs');const names=['MORIA_ENGINE_SCRATCH_POOL_JSON','MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON','MORIA_CONNECTOR_SCRATCH_POOL_JSON'];const pools=names.map(name=>JSON.parse(process.env[name]));assert.equal(new Set(pools.map(p=>p.root)).size,3);assert.equal(new Set(pools.flatMap(p=>p.slots.map(s=>s.registration.filesystemUuid))).size,6);for(const pool of pools){assert.equal(pool.slots.length,2);for(const slot of pool.slots){assert.ok(fs.existsSync(slot.registration.mountRoot));assert.equal(fs.existsSync(slot.registration.mountRoot+'/.moria-scratch-owner'),false);}}console.log('three fresh independently fenced two-slot pools');process.exit(7);"
+]

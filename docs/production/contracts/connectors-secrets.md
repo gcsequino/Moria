@@ -6,8 +6,8 @@ This is the N09 implementation contract. The initial native pipeline profile imp
 
 The native credential implementation now accepts up to eight declared references
 with exact operator mappings. Its static checks, all nine artifact fingerprints
-and 81 native units pass on a frozen build. The real registered worker/OCI guest
-passes thirteen focused custody/checkpoint/HTTP checks, including independent typed row
+and 99 native units pass on a frozen build. The real registered worker/OCI guest
+passes fifteen focused custody/checkpoint/HTTP checks, including independent typed row
 readback, in-flight revocation and bounded provider failures; see
 [custody](../evidence/2026-11-04/connector-secret-custody/README.md) and
 [HTTP qualification](../evidence/2026-11-04/connector-http-faults/README.md).
@@ -30,7 +30,9 @@ all exact use operations. Current checks cover claim, callbacks, in-flight polli
 publication and result release. A missed disable/reenable pulse cannot revive a
 window. The cursor hashes semantic material revisions and header interpretation,
 excluding current credential bytes and approval generations. Reflected known
-material in a provider response is rejected before any guest response is released.
+material in a provider response is rejected in both raw bytes and decoded JSON
+values/keys before any guest response is released.
+[Decoded reflection proof](../evidence/2026-11-04/connector-decoded-reflection/README.md).
 
 The released `Connection` selects one immutable `connector/v1` implementation, a validated configuration, stream, coverage, write mode, output Dataset and declared SecretReferences. The accepted execution pins each of those identities, schemas and revisions. Public input cannot select a different implementation, endpoint, secret, mode, destination or actor. Configuration validation uses the same offline trusted schema registry as Source publication; schema references cannot fetch network or local files.
 

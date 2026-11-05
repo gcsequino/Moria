@@ -91,7 +91,7 @@ def main():
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGHUP, interrupted)
     try:
-        for _ in range(2):
+        for _ in range(3):
             root = Path("/tmp") / ("moria-engine-scratch-" + str(uuid.uuid4()))
             owned_roots.append(root)
             pool = json.loads(
@@ -128,7 +128,12 @@ def main():
             "MORIA_TEST_PROOF_ID=" + name,
         ]
         for variable, pool in zip(
-            ["MORIA_ENGINE_SCRATCH_POOL_JSON", "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON"], pools
+            [
+                "MORIA_ENGINE_SCRATCH_POOL_JSON",
+                "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON",
+                "MORIA_CONNECTOR_SCRATCH_POOL_JSON",
+            ],
+            pools,
         ):
             command += ["--env", variable + "=" + json.dumps(pool)]
             command += ["--mount", f"type=bind,src={pool['root']},dst={pool['root']}"]

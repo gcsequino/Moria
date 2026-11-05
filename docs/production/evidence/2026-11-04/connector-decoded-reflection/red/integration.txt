@@ -1,0 +1,194 @@
+{"controller": "moria-quality-4cd6a2d6-aa37-4dde-8552-512a39d3a2e2", "image": "sha256:999748ccbef4c132e2037d6ae74de27eb6ebe6fed1bb10f6e7ae0808820eebe0", "scratchPools": ["/tmp/moria-engine-scratch-2052883e-22cf-46dc-839f-78a85f4eda57", "/tmp/moria-engine-scratch-bc185712-c8db-418d-8854-f5cc81bb8a6a", "/tmp/moria-engine-scratch-91a517eb-acae-4b4b-9774-617c6f86f213"], "temporary": "/tmp/moria-quality-s2mnp6yu"}
+TAP version 13
+# Subtest: native Connector custody and checkpoint publication
+    # Subtest: every declared Secret needs exact operator custody and independent caller/service use before code
+    ok 1 - every declared Secret needs exact operator custody and independent caller/service use before code
+      ---
+      duration_ms: 1794.411885
+      type: 'test'
+      ...
+▶ native Connector custody and checkpoint publication
+  ✔ every declared Secret needs exact operator custody and independent caller/service use before code (1794.411885ms)
+    # Subtest: a missed approval disable/reenable pulse permanently fences an accepted window
+    ok 2 - a missed approval disable/reenable pulse permanently fences an accepted window
+      ---
+      duration_ms: 2300.25497
+      type: 'test'
+      ...
+  ✔ a missed approval disable/reenable pulse permanently fences an accepted window (2300.25497ms)
+    # Subtest: a Secret file denial fences a queued window without stopping its worker
+    ok 3 - a Secret file denial fences a queued window without stopping its worker
+      ---
+      duration_ms: 2958.983981
+      type: 'test'
+      ...
+  ✔ a Secret file denial fences a queued window without stopping its worker (2958.983981ms)
+    # Subtest: the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+    ok 4 - the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+      ---
+      duration_ms: 25797.408883
+      type: 'test'
+      ...
+  ✔ the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically (25797.408883ms)
+    # Subtest: a next window reuses its semantic cursor despite a new execution and head revision
+    ok 5 - a next window reuses its semantic cursor despite a new execution and head revision
+      ---
+      duration_ms: 32206.787116
+      type: 'test'
+      ...
+  ✔ a next window reuses its semantic cursor despite a new execution and head revision (32206.787116ms)
+    # Subtest: raw reflected material never reaches guest logs or observable events
+    ok 6 - raw reflected material never reaches guest logs or observable events
+      ---
+      duration_ms: 9370.310832
+      type: 'test'
+      ...
+  ✔ raw reflected material never reaches guest logs or observable events (9370.310832ms)
+    # Subtest: escaped reflected material never reaches guest logs or observable events
+    not ok 7 - escaped reflected material never reaches guest logs or observable events
+      ---
+      duration_ms: 9919.173142
+      type: 'test'
+      location: '/app/tests/fixtures/native-connectors/custody.ts:551:13'
+      failureType: 'testCodeFailure'
+      error: 'Missing expected rejection.'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/app/tests/fixtures/native-connectors/custody.ts:580:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.connectorCustody (/app/tests/fixtures/native-connectors/custody.ts:551:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+  ✖ escaped reflected material never reaches guest logs or observable events (9919.173142ms)
+    # Subtest: escaped-key reflected material never reaches guest logs or observable events
+    not ok 8 - escaped-key reflected material never reaches guest logs or observable events
+      ---
+      duration_ms: 10711.306088
+      type: 'test'
+      location: '/app/tests/fixtures/native-connectors/custody.ts:551:13'
+      failureType: 'testCodeFailure'
+      error: 'Missing expected rejection.'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      operator: 'rejects'
+      stack: |-
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async TestContext.<anonymous> (/app/tests/fixtures/native-connectors/custody.ts:580:9)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.connectorCustody (/app/tests/fixtures/native-connectors/custody.ts:551:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+  ✖ escaped-key reflected material never reaches guest logs or observable events (10711.306088ms)
+    # Subtest: an upstream redirect never retries code or advances published state
+    ok 9 - an upstream redirect never retries code or advances published state
+      ---
+      duration_ms: 8419.062443
+      type: 'test'
+      ...
+  ✔ an upstream redirect never retries code or advances published state (8419.062443ms)
+    # Subtest: an upstream truncated never retries code or advances published state
+    ok 10 - an upstream truncated never retries code or advances published state
+      ---
+      duration_ms: 8315.753732
+      type: 'test'
+      ...
+  ✔ an upstream truncated never retries code or advances published state (8315.753732ms)
+    # Subtest: an upstream unavailable never retries code or advances published state
+    ok 11 - an upstream unavailable never retries code or advances published state
+      ---
+      duration_ms: 9635.299683
+      type: 'test'
+      ...
+  ✔ an upstream unavailable never retries code or advances published state (9635.299683ms)
+    # Subtest: an upstream oversized never retries code or advances published state
+    ok 12 - an upstream oversized never retries code or advances published state
+      ---
+      duration_ms: 11105.81541
+      type: 'test'
+      ...
+  ✔ an upstream oversized never retries code or advances published state (11105.81541ms)
+    # Subtest: an upstream timeout never retries code or advances published state
+    ok 13 - an upstream timeout never retries code or advances published state
+      ---
+      duration_ms: 38239.971932
+      type: 'test'
+      ...
+  ✔ an upstream timeout never retries code or advances published state (38239.971932ms)
+    # Subtest: revocation closes an in-flight Connector socket and preserves the prior head and cursor
+    ok 14 - revocation closes an in-flight Connector socket and preserves the prior head and cursor
+      ---
+      duration_ms: 8274.392691
+      type: 'test'
+      ...
+  ✔ revocation closes an in-flight Connector socket and preserves the prior head and cursor (8274.392691ms)
+    1..14
+not ok 1 - native Connector custody and checkpoint publication
+  ---
+  duration_ms: 212859.64857
+  type: 'test'
+  location: '/app/tests/connector-custody-proof.ts:3:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+✖ native Connector custody and checkpoint publication (212859.64857ms)
+1..1
+# tests 15
+ℹ tests 15
+# suites 0
+ℹ suites 0
+# pass 12
+ℹ pass 12
+ℹ fail 3
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+ℹ cancelled 0
+ℹ skipped 0
+# duration_ms 223266.136291
+ℹ todo 0
+ℹ duration_ms 223266.136291
+
+✖ failing tests:
+
+test at tests/fixtures/native-connectors/custody.ts:551:13
+✖ escaped reflected material never reaches guest logs or observable events (9919.173142ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/fixtures/native-connectors/custody.ts:580:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.connectorCustody (/app/tests/fixtures/native-connectors/custody.ts:551:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /FUNCTION_OBSERVATION_INCOMPLETE/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/fixtures/native-connectors/custody.ts:551:13
+✖ escaped-key reflected material never reaches guest logs or observable events (10711.306088ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/fixtures/native-connectors/custody.ts:580:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.connectorCustody (/app/tests/fixtures/native-connectors/custody.ts:551:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /FUNCTION_OBSERVATION_INCOMPLETE/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

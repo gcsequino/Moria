@@ -3013,3 +3013,15 @@ settles explicit deferred digests, version-three run tags with version-two reads
 exact touched-row verification and bounded distributed projected-key bootstrap.
 Those remaining APIs, sparse publication and their integration proofs remain
 under implementation. Evidence: `production/evidence/2026-11-04/native-index-tombstones/`.
+
+### Decoded Connector reflection and instance-fenced test scratch
+
+The host now rejects known credential material after JSON decoding as well as in
+raw bytes, covering escaped values and keys before any guest response. The real
+15/15 Connector gate verifies absent material in logs/staged checkpoints alongside
+the existing custody, typed Dataset, HTTP and revocation cases; all99 native units
+and artifact fingerprints plus full static checks pass. Separate test instances
+now receive separate freshly provisioned scratch pools, preserving incarnation
+fencing. Evidence and retained failures are in
+`production/evidence/2026-11-04/connector-decoded-reflection`. Full Pipeline, final
+integrated quality/CI, remaining capability handlers and scale targets stay open.

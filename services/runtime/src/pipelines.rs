@@ -1562,6 +1562,19 @@ fn validate_credentials(credentials: &[Credential]) -> Result<()> {
     Ok(())
 }
 
+fn response_contains_material(value: &Value, material: &str) -> bool {
+    match value {
+        Value::String(value) => value.contains(material),
+        Value::Array(values) => values
+            .iter()
+            .any(|value| response_contains_material(value, material)),
+        Value::Object(values) => values.iter().any(|(key, value)| {
+            key.contains(material) || response_contains_material(value, material)
+        }),
+        _ => value.to_string().contains(material),
+    }
+}
+
 struct Destination {
     definition: DestinationDefinition,
     url: reqwest::Url,
@@ -1715,9 +1728,21 @@ impl Destination {
                 .any(|window| window == material.as_bytes())),
             "PIPELINE_RESPONSE_INVALID"
         );
-        Ok(
-            json!({"status":status,"body":if body.is_empty(){Value::Null}else{serde_json::from_slice::<Value>(&body).map_err(|_|anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?}}),
-        )
+        let body = if body.is_empty() {
+            Value::Null
+        } else {
+            serde_json::from_slice::<Value>(&body)
+                .map_err(|_| anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?
+        };
+        // JSON escapes must not hide reflected material from the guest boundary.
+        ensure!(
+            !self
+                .materials
+                .iter()
+                .any(|material| response_contains_material(&body, material)),
+            "PIPELINE_RESPONSE_INVALID"
+        );
+        Ok(json!({"status":status,"body":body}))
     }
 }
 struct NativePipelineBroker {
@@ -2100,6 +2125,30 @@ impl PlatformBroker for NativePipelineBroker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reflected_material_is_rejected_after_json_decoding_in_values_and_keys() {
+        for body in [
+            r#"{"value":"credential\u002dvalue"}"#,
+            r#"{"credential\u002dvalue":false}"#,
+            r#"[{"nested":["credential-value"]}]"#,
+        ] {
+            let value: Value = serde_json::from_str(body).unwrap();
+            assert!(response_contains_material(&value, "credential-value"));
+        }
+        assert!(response_contains_material(
+            &json!({"value":"quoted\"credential"}),
+            "quoted\"credential"
+        ));
+        assert!(response_contains_material(
+            &serde_json::from_str::<Value>("1e3").unwrap(),
+            "1000"
+        ));
+        assert!(!response_contains_material(
+            &json!({"value":"credential", "other":[1,null,true]}),
+            "credential-value"
+        ));
+    }
 
     fn credential(secret: Uuid, header: &str) -> Credential {
         Credential {

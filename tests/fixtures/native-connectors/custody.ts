@@ -21,6 +21,9 @@ def sync(ctx):
  assert response['status']==200
  assert set(response)=={'status','body'}
  body=response['body']
+ if body.get('_reflection_probe'):
+  ctx.checkpoint(body)
+  raise ValueError('Provider credential reflection reached the guest')
  assert body['previous']==previous
  rows=body['rows']
  ctx.write('retention/Dataset/records',pa.table({'id':pa.array([uuid.UUID(row['id']).bytes for row in rows],type=pa.uuid()),'name':pa.array([row['name'] for row in rows],type=pa.string()),'tags':pa.array([row['tags'] for row in rows],type=pa.list_(pa.string()))}))
@@ -56,9 +59,9 @@ export async function connectorCustody(t: TestContext) {
   let calls = 0,
     previous: unknown = null,
     hold = false,
-    reflect = false,
     entered = false,
     socketClosed = false;
+  let reflection: 'raw' | 'escaped' | 'escaped-key' | undefined;
   let httpFault: 'redirect' | 'truncated' | 'unavailable' | 'oversized' | 'timeout' | undefined;
   let release = () => {};
   let held = Promise.resolve();
@@ -110,13 +113,20 @@ export async function connectorCustody(t: TestContext) {
       }
       response.setHeader('content-type', 'application/json');
       response.setHeader('set-cookie', 'must-not-reach-guest');
-      response.end(
-        JSON.stringify(
-          reflect
-            ? { reflected: materials[0] }
-            : { rows: [row], previous, cursor: { offset: calls } },
-        ),
-      );
+      if (reflection) {
+        const escaped = [...materials[0]]
+          .map((character) => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'))
+          .join('');
+        response.end(
+          reflection === 'raw'
+            ? JSON.stringify({ _reflection_probe: true, reflected: materials[0] })
+            : reflection === 'escaped'
+              ? `{"_reflection_probe":true,"reflected":"${escaped}"}`
+              : `{"_reflection_probe":true,"${escaped}":"credential key"}`,
+        );
+        return;
+      }
+      response.end(JSON.stringify({ rows: [row], previous, cursor: { offset: calls } }));
     } catch (error) {
       response.destroy(error instanceof Error ? error : undefined);
     }
@@ -438,7 +448,7 @@ export async function connectorCustody(t: TestContext) {
           },
         ],
       });
-      const pool = JSON.parse(process.env.MORIA_ENGINE_SCRATCH_POOL_JSON ?? 'null');
+      const pool = JSON.parse(process.env.MORIA_CONNECTOR_SCRATCH_POOL_JSON ?? 'null');
       assert.ok(
         pool?.slots.length === 2,
         'Connector proof requires the actual dedicated ext4 pool',
@@ -537,34 +547,49 @@ export async function connectorCustody(t: TestContext) {
       await fixture.read(head, true, [row]);
     },
   );
-  await t.test('reflected material never reaches guest frames or observable events', async () => {
-    assert.ok(engine, 'The native engine must have started');
-    engine!.check();
-    reflect = true;
-    const reflected = await invoke('reflected-material');
-    await until(
-      async () =>
-        (
-          await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
-            reflected.id,
-          ])
-        ).rows[0].status === 'failed',
+  for (const variant of ['raw', 'escaped', 'escaped-key'] as const) {
+    await t.test(
+      `${variant} reflected material never reaches guest logs or observable events`,
+      async () => {
+        assert.ok(engine, 'The native engine must have started');
+        engine!.check();
+        reflection = variant;
+        const reflected = await invoke(`reflected-material-${variant}`);
+        await until(
+          async () =>
+            (
+              await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
+                reflected.id,
+              ])
+            ).rows[0].status === 'failed',
+        );
+        reflection = undefined;
+        assert.equal((await db.catalog.heads(environment, [dataset]))[0].revision, '2');
+        const stored = (
+          await db.pool.query(
+            'SELECT payload FROM moria.runtime_execution_events WHERE execution=$1',
+            [reflected.id],
+          )
+        ).rows;
+        const staged = (
+          await db.pool.query(
+            'SELECT value FROM moria.runtime_pipeline_checkpoints WHERE execution=$1',
+            [reflected.id],
+          )
+        ).rows;
+        for (const material of materials) {
+          assert.ok(
+            !JSON.stringify({ stored, staged }).includes(material),
+            'Credential material reached a guest log or staged checkpoint',
+          );
+        }
+        await assert.rejects(
+          fixture.command(['pipelines', 'events'], { token, id: reflected.id }, runtimeEnvironment),
+          /FUNCTION_OBSERVATION_INCOMPLETE/,
+        );
+      },
     );
-    reflect = false;
-    assert.equal((await db.catalog.heads(environment, [dataset]))[0].revision, '2');
-    await assert.rejects(
-      fixture.command(['pipelines', 'events'], { token, id: reflected.id }, runtimeEnvironment),
-      /FUNCTION_OBSERVATION_INCOMPLETE/,
-    );
-    const stored = (
-      await db.pool.query('SELECT payload FROM moria.runtime_execution_events WHERE execution=$1', [
-        reflected.id,
-      ])
-    ).rows;
-    for (const material of materials) {
-      assert.ok(!JSON.stringify(stored).includes(material));
-    }
-  });
+  }
   for (const fault of ['redirect', 'truncated', 'unavailable', 'oversized', 'timeout'] as const) {
     await t.test(
       `an upstream ${fault} never retries code or advances published state`,

@@ -1,0 +1,7 @@
+{
+  "expectedExitCode": 7,
+  "exitCode": 7,
+  "allThreePoolsAbsent": true,
+  "temporaryAbsent": true,
+  "controllerAbsent": true
+}
