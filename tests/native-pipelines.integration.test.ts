@@ -999,9 +999,14 @@ test(
       await until(async () => {
         assert.equal(worker.child.exitCode, null, worker.error());
         const result = await request(`/api/v1/pipeline-executions/${id}`);
-        assert.equal(result.response.status, 200, JSON.stringify(result.value));
-        value = result.value;
-        if (Date.now() - lastProgress >= 10000) {
+        const pending = result.response.status === 409;
+        if (pending) {
+          assert.equal(result.value.error?.code, 'FUNCTION_OBSERVATION_INCOMPLETE');
+        } else {
+          assert.equal(result.response.status, 200, JSON.stringify(result.value));
+          value = result.value;
+        }
+        if (!pending && Date.now() - lastProgress >= 10000) {
           lastProgress = Date.now();
           console.log(
             'PIPELINE_LIVE_CONTROL=' +
@@ -1026,7 +1031,7 @@ test(
             if (bytes > workerRssObserved) workerRssObserved = bytes;
           }
         }
-        return ['succeeded', 'failed', 'cancelled'].includes(value.status);
+        return !pending && ['succeeded', 'failed', 'cancelled'].includes(value.status);
       }, 135000);
       if (value.status === 'succeeded')
         assert.equal(

@@ -342,7 +342,12 @@ test('resource data provenance retains classification, bounds cycles and pre-adm
         '0',
       );
       const admitted = (await insert()).rows[0];
-      assert.ok(BigInt(admitted.security_epoch) > BigInt(before));
+      assert.equal(BigInt(admitted.security_epoch) - BigInt(before), 6n);
+      const replay = await db.pool.query(
+        "SELECT moria.runtime_service_dataset_edges($1,$2,$3,'transform','v1','standard',$4,$5,ARRAY['private'])::text AS epoch",
+        [service, environment, producer, inputs, outputs],
+      );
+      assert.equal(replay.rows[0].epoch, admitted.security_epoch);
       assert.equal(
         admitted.security_epoch,
         (await authority.current(environment, context.principal, context.application)).epoch,

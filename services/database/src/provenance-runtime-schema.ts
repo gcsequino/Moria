@@ -80,8 +80,18 @@ BEGIN
   UPDATE moria.environments SET security_epoch=security_epoch+1 WHERE id=NEW.environment;
   RETURN NEW;
 END $$;
+CREATE FUNCTION moria.runtime_data_edge_epochs() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE changes record;
+BEGIN
+  FOR changes IN SELECT e.environment,count(*) AS added FROM inserted_edges e
+    GROUP BY e.environment ORDER BY e.environment LOOP
+    UPDATE moria.environments SET security_epoch=security_epoch+changes.added
+    WHERE id=changes.environment;
+  END LOOP;
+  RETURN NULL;
+END $$;
 CREATE TRIGGER resource_data_edge_epoch AFTER INSERT ON moria.resource_data_edges
-  FOR EACH ROW EXECUTE FUNCTION moria.runtime_data_epoch();
+  REFERENCING NEW TABLE AS inserted_edges FOR EACH STATEMENT EXECUTE FUNCTION moria.runtime_data_edge_epochs();
 CREATE TRIGGER resource_data_label_epoch AFTER INSERT ON moria.resource_data_labels
   FOR EACH ROW EXECUTE FUNCTION moria.runtime_data_epoch();
 CREATE FUNCTION moria.runtime_namespace_classification() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -344,9 +354,9 @@ BEGIN
       OR NOT labels<@to_jsonb(markings) THEN RAISE EXCEPTION 'MARKING_DOWNGRADE'; END IF;
   END LOOP;
   FOREACH target_id IN ARRAY outputs LOOP
-    FOREACH source_id IN ARRAY inputs LOOP
-      IF target_id<>source_id THEN INSERT INTO moria.resource_data_edges VALUES(env,target_id::text,source_id::text) ON CONFLICT DO NOTHING; END IF;
-    END LOOP;
+    INSERT INTO moria.resource_data_edges(environment,derived,source)
+    SELECT env,target_id::text,source.input_id::text FROM unnest(inputs) source(input_id)
+    WHERE target_id<>source.input_id ON CONFLICT DO NOTHING;
     PERFORM moria.native_serving_resource_access_state(state,target_id::text,'write');
   END LOOP;
   RETURN (SELECT security_epoch FROM moria.environments WHERE id=env);
