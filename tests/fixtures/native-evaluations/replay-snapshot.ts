@@ -57,29 +57,44 @@ export async function evaluationReplaySnapshot(
     blocker.release();
     throw error;
   }
-  const wait = async (key: number) => {
+  const wait = async (key: number, signal: AbortSignal) => {
     while (!closed) {
+      signal.throwIfAborted();
       const { rowCount } = await pool.query(
         "SELECT 1 FROM pg_locks WHERE locktype='advisory' AND classid=0 AND objid=$1 AND objsubid=1 AND NOT granted",
         [key],
       );
       if (rowCount) return;
-      await delay(10);
+      await delay(10, undefined, { signal });
     }
     throw new Error('Evaluation replay snapshot gate closed before the expected statement');
   };
   return {
-    async replay<T>(request: () => Promise<T>, committed: Promise<void>): Promise<T> {
-      await wait(receiptGate);
-      const response = request();
-      await Promise.race([
-        wait(replayGate),
-        response.then(() => assert.fail('Evaluation replay returned before its protected read')),
-      ]);
-      await unlock(receiptGate);
-      await committed;
-      await unlock(replayGate);
-      return response;
+    async replay<T>(
+      request: () => Promise<T>,
+      committed: Promise<void>,
+      signal: AbortSignal,
+    ): Promise<T> {
+      let cancel!: () => void;
+      const aborted = new Promise<never>((_, reject) => {
+        cancel = () => reject(signal.reason);
+        if (signal.aborted) cancel();
+        else signal.addEventListener('abort', cancel, { once: true });
+      });
+      try {
+        await Promise.race([wait(receiptGate, signal), aborted]);
+        const response = request();
+        const early = response.then(() =>
+          assert.fail('Evaluation replay returned before its protected read was released'),
+        );
+        await Promise.race([wait(replayGate, signal), early, aborted]);
+        await unlock(receiptGate);
+        await Promise.race([committed, early, aborted]);
+        await unlock(replayGate);
+        return await Promise.race([response, aborted]);
+      } finally {
+        signal.removeEventListener('abort', cancel);
+      }
     },
     async close() {
       closed = true;
