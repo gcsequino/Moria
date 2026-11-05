@@ -1,6 +1,6 @@
 # Indexed staging queue focused qualification
 
-The frozen queue cohort passed the focused real lifecycle **3/3, zero skips or cancellations**, in 48.46 seconds. Full static checks, nine matching native artifacts and 106 unit tests passed. Exact hashes and cleanup are retained here. The full original 20-case indexing file is running separately and is not qualified by this checkpoint.
+The frozen queue cohort passed the focused real lifecycle **3/3, zero skips or cancellations**, in 48.46 seconds. Full static checks, nine matching native artifacts and 106 unit tests passed. Exact hashes and cleanup are retained here. The full original indexing file plus its new staging root also passed **20/20, zero skips or cancellations**, in 309.67 seconds on the identical frozen image and native artifacts. All three original/new root deadlines remained 300 seconds. Full-run controller, all three scratch pools and temporary directory cleanup were verified.
 
 Actual terminal transitions maintain a pending row for the latest immutable closure. Ready rows with unknown close time, aged known closures and deferred retries have separate partial indexes. Each call promotes at most eight due retries, makes two limited ready seeks and selects at most eight actual candidates. Captured time parameters keep range conditions indexable under generic plans. Current history policies authorize one environment; actual selected build/store/target scope is rechecked under its existing locks.
 
@@ -10,4 +10,4 @@ The real fixture checks queue retry, successor-policy continuity, completed-work
 
 The first external artifact extraction encountered a root-owned output directory; correcting that directory allowed extraction from the retained exact Cargo outputs without recompiling. This packaging failure remains in the external archive. Controller, all three scratch pools and temporary directory cleanup were verified for the focused run.
 
-The physical-storage size of an accepted near-cap typed row still needs proof against the 16-MiB storage budget, with explicit operator-blocked deferral rather than poisoning other builds. No storage budget was increased, no production capacity is certified, and the full 20-case file and independent CI remain required. The external archive is `/home/gcseq/moria-proofs/indexing-staging-gc-20261104/trial010`.
+The physical-storage size of an accepted near-cap typed row still needs proof against the 16-MiB storage budget, with explicit operator-blocked deferral rather than poisoning other builds. No storage budget was increased, no production capacity is certified, and independent CI remains required. The external archive is `/home/gcseq/moria-proofs/indexing-staging-gc-20261104/trial010`.

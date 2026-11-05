@@ -16,9 +16,21 @@
     "exitCode": 0,
     "elapsedSeconds": 48.45766305199504
   },
-  "fullOriginalFile": "running separately; not yet qualified",
+  "fullOriginalFile": {
+    "tests": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootDeadlinesMs": [
+      300000,
+      300000,
+      300000
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 309.6688063710026
+  },
   "remaining": [
-    "full original 20-case file",
     "accepted near-cap physical JSONB width vs16MiB storage budget",
     "explicit operator-blocked width deferral",
     "independent CI and capacity ladder"
