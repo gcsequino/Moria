@@ -247,15 +247,31 @@ CREATE OR REPLACE VIEW moria.runtime_sandbox_metadata AS
   UNION ALL SELECT e.execution,r.entry_id,r.release,r.definition,e.attempt_id,e.correlation_id,e.markings,false,'evaluator'::text
     FROM moria.runtime_evaluator_executions e JOIN moria.runtime_evaluations r ON r.execution=e.evaluation;
 CREATE FUNCTION moria.runtime_evaluation_case_admission(execution_id uuid) RETURNS boolean LANGUAGE plpgsql AS $$
-DECLARE parent uuid; maximum integer; active integer;
+DECLARE parent uuid; case_class text; maximum integer; active integer;
 BEGIN
-  SELECT evaluation INTO parent FROM moria.runtime_evaluation_cases WHERE execution=execution_id;
+  SELECT c.evaluation,e.resource_class INTO parent,case_class FROM moria.runtime_evaluation_cases c
+    JOIN moria.runtime_executions e ON e.id=c.execution WHERE c.execution=execution_id;
   IF NOT FOUND THEN RETURN true; END IF;
   SELECT maximum_parallel INTO maximum FROM moria.runtime_evaluations WHERE execution=parent FOR UPDATE;
   SELECT count(*) INTO active FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions e ON e.id=c.execution
     WHERE c.evaluation=parent AND c.execution<>execution_id AND
       ((e.status='preparing' AND e.lease_until>clock_timestamp()) OR (e.status='running' AND EXISTS(
         SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=e.id AND t.status='running' AND t.lease_until>clock_timestamp())));
-  RETURN active<maximum;
+  IF active>=maximum THEN RETURN false; END IF;
+  -- A case can seal between the worker's publication scan and its pending-task claim.
+  -- Under the same suite lock, let a ready sibling take the freed slot first.
+  IF EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=execution_id AND t.status='pending') THEN
+    PERFORM 1 FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions ready ON ready.id=c.execution
+      WHERE c.evaluation=parent AND c.execution<>execution_id AND c.outcome IN ('pending','running')
+        AND ready.resource_class=case_class AND ready.status='running' AND ready.deadline>clock_timestamp()
+        AND ready.spec->>'domain'='evaluation' AND moria.runtime_environment_cell_available(ready.environment)
+        AND NOT EXISTS(SELECT 1 FROM moria.runtime_sandbox_bindings b WHERE b.binding=ready.binding AND b.domain IN ('transform','sync'))
+        AND NOT EXISTS(SELECT 1 FROM moria.runtime_execution_cancellations x WHERE x.execution=ready.id)
+        AND EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=ready.id AND t.status='sealed')
+        AND NOT EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t WHERE t.execution=ready.id AND t.status<>'sealed')
+      LIMIT 1 FOR UPDATE OF ready SKIP LOCKED;
+    IF FOUND THEN RETURN false; END IF;
+  END IF;
+  RETURN true;
 END $$;
 `;
