@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-metadata-retention.integration.test.ts
+Running 1 integration test files.
+✔ young metadata compaction preserves live old-root readers and scheduling-time historical selection (27912.098098ms)
+ℹ {"metadataSnapshotsBefore":2,"metadataSnapshotsAfter":1,"oldRootUnexpired":true,"liveReaderRows":64,"currentRows":64,"idempotentNoop":true,"indexingIntent":"normal validated publication path retained"}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28412.800382

@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-05",
+  "baseCommit": "b3cc8a1cd0b521ee1ebe3d8af5c9d34cfdb3c52e",
+  "scope": "Native v3 metadata-only pruning under actual fenced maintenance authority",
+  "image": {
+    "image": "sha256:3fd8d8e8f15e9eeb5edbb9646d0d4f414a4f3f11434b4d46985f727bbddb9a98",
+    "tag": "moria-test:v3-pruning-016-20261105"
+  },
+  "nativeSourceDigest": "b4c2dcd1e200e9cd6e7403ddfb788c7b0d1e6dae0aacd8bdf93ecefd7c3277c4",
+  "nativeArtifacts": 9,
+  "nativeUnits": 113,
+  "nativeBuild": {
+    "exitCode": 0,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "network": "none"
+  },
+  "focusedCommands": [
+    "pnpm check:static",
+    "pnpm check:indexing",
+    "pnpm test:integration tests/native-dataset-v3-retention.integration.test.ts",
+    "pnpm test:integration tests/native-dataset-graph-retention.integration.test.ts",
+    "pnpm test:integration tests/native-dataset-metadata-retention.integration.test.ts"
+  ],
+  "results": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 19.711144813998544
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 9.47973320500023
+    },
+    "v3-custody-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 185.47658190400398,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "v2-custody-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 114.17643523299921,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "v2-metadata-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 29.154887629003497,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    }
+  },
+  "assertions": {
+    "actualMaintenanceRunOwnerFenceIncarnation": true,
+    "missingReadBasisRejected": "UNDECLARED_DATASET",
+    "liveHistoricalReaderAndAllRetainedStandardSnapshotDescriptorsPreserved": true,
+    "exactCurrentSnapshotIncludingStandardIndexSummaryPreserved": true,
+    "sameSelectionHashLocationAndIndexSummaryRoots": true,
+    "strictIssuedMetadataCertificateAndStagedTypedQualification": true,
+    "boundedCatalogSnapshotIdPages": 256,
+    "spillBackedStandardNameMembershipAndStreamingDirectoryPathCopy": true,
+    "parquetBytesScannedDuringPruning": false,
+    "maintenanceHeadCasHistoryExpiryReceiptAndJournalAtomic": true,
+    "realReadyStageTransferredToHistory": true,
+    "modeNullUnchangedMetadataPruneWithActualRunAndEquivalenceDigest": true,
+    "nonAdvancingExpiryHasNoFabricatedEdge": true,
+    "boundAheadOfHeadCannotExpireCurrentRootWithoutExecutionPins": true,
+    "oldStandardDataProtectedUntilActualPhysicalHeadRetirement": true,
+    "successorPolicyDrainsPriorPolicyRetirements": true,
+    "pendingPropagationSuppressesGraphCollection": true,
+    "orphanGracePreserved": true,
+    "exactSourceVersionsCollected": true,
+    "pinnedBackupVersionUsedDespiteDifferentCurrentVersion": true,
+    "prunedCurrentAndRetainedTypedReadsAfterSourceGcAndFreshPrefixRestore": true,
+    "newProviderQualificationRequired": true,
+    "originalReplacementJournalAndPrunedMaintenanceJournalRestored": true,
+    "missingBackupChildLeavesRestoreDispatchDisabled": true,
+    "conflictingTargetAndTargetReuseRejected": true,
+    "actualDeferredPublicationFailureRollsBackAndFreshRunCommits": true
+  },
+  "limitations": [
+    "Local bounded synthetic fixtures do not establish production workload capacity.",
+    "Production Dataset writer selection, sparse mutations, standard position-delete proof, distributed bootstrap and incremental Source windows remain separate gates.",
+    "Full independent PR CI and whole-instance local-model E2E remain required.",
+    "No live deployment or AWS resources were used."
+  ]
+}

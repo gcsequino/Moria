@@ -344,7 +344,7 @@ BEGIN
    OR b.warehouse_id<>n.warehouse_id OR b.table_id<>n.table_id OR b.namespace_revision<>n.revision
    OR b.physical_binding_fingerprint<>p.physical_fingerprint THEN RAISE EXCEPTION 'GC_POLICY_CHANGED'; END IF;
  RETURN jsonb_build_object('environment',p.environment,'dataset',p.dataset,'namespace',p.namespace,'physicalFingerprint',p.physical_fingerprint,
-  'retainSeconds',p.retain_seconds::text,'recheckSeconds',p.recheck_seconds,'icebergSchema',b.iceberg_schema,'tableUuid',n.iceberg_uuid::text);
+  'retainSeconds',p.retain_seconds::text,'recheckSeconds',p.recheck_seconds,'icebergSchema',b.iceberg_schema,'tableUuid',n.iceberg_uuid::text,'keySchemaHash',b.key_schema_hash,'primaryKey',to_jsonb(b.primary_key));
 END $$;
 CREATE FUNCTION moria.runtime_dataset_maintenance_check(run_id uuid,worker uuid,worker_fence bigint,instance uuid) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE r moria.runtime_dataset_maintenance_runs;state jsonb;

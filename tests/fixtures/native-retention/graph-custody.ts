@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import type { TestContext } from 'node:test';
 import pg from 'pg';
 import {
@@ -169,6 +170,151 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
     },
     fixture.operatorEnv,
   );
+  const graphMetadata = async (location: string) => {
+    const root = (
+      await db.pool.query(
+        'SELECT n.content,q.physical_version FROM moria.runtime_dataset_graph_roots g JOIN moria.runtime_dataset_graph_nodes n ON n.id=g.node JOIN moria.runtime_dataset_graph_qualifications q USING(node,physical_fingerprint,incarnation) WHERE g.root=moria.runtime_dataset_root_key($1)',
+        [location],
+      )
+    ).rows[0];
+    const read = async (content: any, version: any) => {
+      const [, versionId] = JSON.parse(version.token.slice('s3v1/'.length));
+      const object = content.object;
+      const response = await fixture.s3.client.send(
+        new GetObjectCommand({
+          Bucket: fixture.s3.bucket,
+          Key:
+            fixture.datasetStorage.prefix +
+            '/' +
+            object.warehouseId +
+            '/' +
+            object.tableId +
+            '/objects/' +
+            object.objectId,
+          VersionId: versionId,
+        }),
+      );
+      assert.equal(response.VersionId, versionId);
+      assert(response.Body);
+      return JSON.parse(Buffer.from(await response.Body.transformToByteArray()).toString());
+    };
+    const descriptor = await read(root.content, root.physical_version);
+    const metadata = (
+      await db.pool.query(
+        "SELECT q.physical_version FROM moria.runtime_dataset_graph_nodes n JOIN moria.runtime_dataset_graph_qualifications q ON q.node=n.id AND q.incarnation=(SELECT incarnation FROM moria.indexing_instance) WHERE n.content=$1 AND n.kind='content'",
+        [descriptor.metadata.content],
+      )
+    ).rows[0];
+    return {
+      descriptor,
+      metadata: await read(descriptor.metadata.content, metadata.physical_version),
+    };
+  };
+  const originalMetadata = nativeHead
+    ? await graphMetadata(second.head.metadataLocation!)
+    : undefined;
+  let beforeExpiration = second.head;
+  if (nativeHead) {
+    const binding = await fixture.bind(
+      [{ resource: dataset, revision: first.head.revision, snapshot: first.head.snapshotId }],
+      {},
+    );
+    const child = spawn(
+      fixture.harness,
+      ['--ignored', '--exact', 'catalog_publication', '--nocapture', '--test-threads=1'],
+      {
+        env: {
+          ...fixture.nativeEnv,
+          MORIA_NATIVE_CATALOG_FIXTURE: JSON.stringify({
+            root: db.root,
+            token: fixture.token,
+            binding,
+            mode: 'graph-read-held',
+            expectedRows: firstRows.length,
+            writerRows: { [dataset]: firstRows },
+            snapshots: [{ ...fixture.snapshot, snapshotId: first.head.snapshotId }],
+            s3Bindings: [fixture.datasetStorage],
+          }),
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
+    let output = '',
+      errors = '';
+    child.stdout.on('data', (part) => {
+      output = (output + part).slice(-65536);
+    });
+    child.stderr.on('data', (part) => {
+      errors = (errors + part).slice(-65536);
+    });
+    const exited = new Promise<number | null>((resolve, reject) => {
+      child.once('error', reject);
+      child.once('close', resolve);
+    });
+    t.after(async () => {
+      child.kill('SIGKILL');
+      await exited.catch(() => undefined);
+    });
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      const execution = await new Promise<string>((resolve, reject) => {
+        child.stdout.on('data', () => {
+          const line = output
+            .split('\n')
+            .find((line) => line.includes('"event":"graph_cached_ready"'));
+          if (line) resolve(JSON.parse(line.slice(line.indexOf('{'))).execution);
+        });
+        child.once('error', reject);
+        child.once('close', () =>
+          reject(new Error('Held graph reader exited: ' + errors + ' ' + output)),
+        );
+        timer = setTimeout(() => reject(new Error('Held graph pin deadline: ' + errors)), 30000);
+      });
+      const pin = (
+        await db.pool.query(
+          "SELECT moria.runtime_dataset_execution_pin_live(owner_id) AS live FROM moria.runtime_dataset_root_pins WHERE owner_kind='execution' AND owner_id=$1",
+          [execution],
+        )
+      ).rows;
+      assert.equal(pin.length, 1);
+      assert.equal(pin[0].live, true);
+      const heldPrune = await fixture.command(
+        ['dataset-retention', 'expire'],
+        {
+          policy: policy.policy,
+          requestKey: 'graph-prune-with-real-retained-pin',
+          owner: randomUUID(),
+          beforeRevision: second.head.revision,
+          maximumRoots: 64,
+          timeSeconds: 120,
+        },
+        fixture.operatorEnv,
+      );
+      assert.equal(heldPrune.headChanged, true);
+      assert.deepEqual(heldPrune.expiredRoots, []);
+      beforeExpiration = (await db.catalog.heads(environment, [dataset]))[0];
+      assert.equal(beforeExpiration.snapshotId, second.head.snapshotId);
+      const heldMetadata = await graphMetadata(beforeExpiration.metadataLocation!);
+      assert(originalMetadata);
+      assert.deepEqual(heldMetadata.metadata.snapshots, originalMetadata.metadata.snapshots);
+      assert.deepEqual(heldMetadata.metadata['metadata-log'], []);
+      assert.deepEqual(
+        heldMetadata.descriptor.indexSummary,
+        originalMetadata.descriptor.indexSummary,
+      );
+      child.stdin.end('continue\n');
+      assert.equal(await exited, 0, errors + ' ' + output);
+      await fixture.command(['execution', 'cancel'], { id: execution });
+      await ageClosedDatasetHistory(fixture);
+    } finally {
+      clearTimeout(timer);
+      child.kill('SIGKILL');
+      await exited.catch(() => undefined);
+    }
+  }
+  let prunedCapture: Awaited<ReturnType<typeof recovery.capture>> | undefined;
+  let prunedHead: typeof second.head | undefined;
+  let prunedJournal: Awaited<ReturnType<typeof journalRows>> | undefined;
   const expired = await fixture.command(
     ['dataset-retention', 'expire'],
     {
@@ -191,10 +337,117 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
     ),
   );
   if (nativeHead) {
-    assert.equal(expired.headChanged, false);
-    assert.deepEqual((await db.catalog.heads(environment, [dataset]))[0], second.head);
-    assert.equal((await journalRows(db.pool, environment, dataset)).length, 2);
+    assert.equal(expired.headChanged, true);
+    const pruned = (await db.catalog.heads(environment, [dataset]))[0];
+    assert.equal(BigInt(pruned.revision), BigInt(beforeExpiration.revision) + 1n);
+    assert.equal(pruned.snapshotId, second.head.snapshotId);
+    assert.notEqual(pruned.metadataLocation, second.head.metadataLocation);
+    const journal = await journalRows(db.pool, environment, dataset);
+    assert.equal(journal.length, 4);
+    const edge = journal[3];
+    assert.equal(edge.producer_kind, 'maintenance');
+    assert.equal(edge.commit, expired.run);
+    assert.equal(edge.maintenance, expired.run);
+    assert.equal(edge.mode, null);
+    assert.equal(edge.change_kind, 'unchanged');
+    assert.equal(edge.unchanged_reason, 'metadataPrune');
+    assert.equal(edge.equivalence_receipt.kind, 'metadataPrune');
+    assert.match(edge.equivalence_receipt.currentSnapshotHash, /^sha256:[0-9a-f]{64}$/);
+    assert.equal(edge.equivalence_receipt.snapshot, second.head.snapshotId);
+    assert.equal(String(edge.basis_revision), beforeExpiration.revision);
+    assert.equal(String(edge.result_revision), pruned.revision);
+    assert.equal(edge.basis_root, edge.equivalence_receipt.basisRoot);
+    assert.equal(edge.result_root, edge.equivalence_receipt.resultRoot);
+    assert.deepEqual(edge.sealed_receipt, expired);
+    const after = await graphMetadata(pruned.metadataLocation!);
+    assert(originalMetadata);
+    assert.deepEqual(after.descriptor.indexSummary, originalMetadata.descriptor.indexSummary);
+    for (const key of [
+      'tableUuid',
+      'snapshotId',
+      'sequence',
+      'schemaHash',
+      'keySchemaHash',
+      'primaryKey',
+      'dataFiles',
+      'rows',
+      'selections',
+      'visibility',
+    ])
+      assert.deepEqual(after.descriptor[key], originalMetadata.descriptor[key]);
+    const current = (metadata: any) =>
+      metadata.snapshots.find(
+        (snapshot: any) => String(snapshot['snapshot-id']) === second.head.snapshotId,
+      );
+    assert.deepEqual(current(after.metadata), current(originalMetadata.metadata));
+    assert.equal(after.metadata.snapshots.length, 1);
+    assert.deepEqual(after.metadata['metadata-log'], []);
+    assert.deepEqual(after.metadata.schemas, originalMetadata.metadata.schemas);
+    assert.deepEqual(after.metadata.refs, originalMetadata.metadata.refs);
+    await fixture.read(pruned);
     await assert.rejects(fixture.read(first.head), /DATASET_SNAPSHOT_EXPIRED/);
+    const stage = (
+      await db.pool.query(
+        "SELECT s.status,s.candidate,s.maintenance,(SELECT count(*) FROM moria.runtime_dataset_graph_references WHERE kind='stage' AND owner=s.id::text)::text AS stage_refs,(SELECT count(*) FROM moria.runtime_dataset_graph_references WHERE kind='history' AND owner=s.root)::text AS history_refs FROM moria.runtime_dataset_graph_stages s WHERE s.maintenance=$1",
+        [expired.run],
+      )
+    ).rows;
+    assert.equal(stage.length, 1);
+    assert.equal(stage[0].status, 'published');
+    assert.equal(stage[0].candidate, null);
+    assert.equal(stage[0].maintenance, expired.run);
+    assert.equal(stage[0].stage_refs, '0');
+    assert.equal(stage[0].history_refs, '1');
+    assert(retainedData);
+    const object = retainedData.content.object;
+    const pinned = {
+      Bucket: fixture.s3.bucket,
+      Key:
+        fixture.datasetStorage.prefix +
+        '/' +
+        object.warehouseId +
+        '/' +
+        object.tableId +
+        '/objects/' +
+        object.objectId,
+      VersionId: retainedData.versionId,
+    };
+    assert.equal(
+      (await fixture.s3.client.send(new HeadObjectCommand(pinned))).VersionId,
+      retainedData.versionId,
+    );
+    prunedHead = pruned;
+    prunedJournal = journal;
+    prunedCapture = await recovery.capture('graph-pruned-current-with-retained-history');
+    await ageClosedDatasetHistory(fixture);
+    assert.equal(
+      (
+        await db.pool.query(
+          "SELECT count(*) FROM moria.runtime_dataset_root_pins WHERE root_key=$1 AND owner_kind='execution' AND moria.runtime_dataset_execution_pin_live(owner_id)",
+          [edge.result_root],
+        )
+      ).rows[0].count,
+      '0',
+    );
+    // The previous physical head still protects history bytes until its own root is retired.
+    const retired = await fixture.command(
+      ['dataset-retention', 'expire'],
+      {
+        policy: policy.policy,
+        requestKey: 'graph-expire-previous-physical-head',
+        owner: randomUUID(),
+        beforeRevision: (BigInt(pruned.revision) + 1n).toString(),
+        maximumRoots: 64,
+        timeSeconds: 120,
+      },
+      fixture.operatorEnv,
+    );
+    assert.equal(retired.headChanged, false);
+    assert(retired.expiredRoots.includes(edge.basis_root));
+    assert(!retired.expiredRoots.includes(edge.result_root));
+    assert.deepEqual((await db.catalog.heads(environment, [dataset]))[0], pruned);
+    await fixture.read(pruned);
+    assert.equal((await journalRows(db.pool, environment, dataset)).length, 4);
   }
   const originalPolicy = policy.policy;
   await fixture.command(
@@ -233,22 +486,21 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
       ).rows[0].count,
     ) > 0n,
   );
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < (nativeHead ? 32 : 8); i++) {
     await fixture.command(
       ['dataset-retention', 'plan'],
       { policy: policy.policy, requestKey: 'graph-drain-' + i, after: null, limit: 256 },
       fixture.operatorEnv,
     );
     if (i === 0) {
-      assert.equal(
-        (
-          await db.pool.query(
-            'SELECT count(*) FROM moria.runtime_dataset_graph_retirements r JOIN moria.runtime_dataset_maintenance_runs m ON m.id=r.maintenance WHERE m.policy=$1 AND NOT r.completed',
-            [originalPolicy],
-          )
-        ).rows[0].count,
-        '0',
-      );
+      const progress = (
+        await db.pool.query(
+          'SELECT count(*) FILTER(WHERE r.completed)::text AS completed,count(*) FILTER(WHERE NOT r.completed)::text AS pending FROM moria.runtime_dataset_graph_retirements r JOIN moria.runtime_dataset_maintenance_runs m ON m.id=r.maintenance WHERE m.policy=$1',
+          [originalPolicy],
+        )
+      ).rows[0];
+      assert(BigInt(progress.completed) > 0n);
+      if (!nativeHead) assert.equal(progress.pending, '0');
       assert(
         BigInt(
           (
@@ -274,6 +526,11 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
         await db.pool.query(
           'SELECT count(*) FROM moria.runtime_dataset_graph_queue WHERE processed_at IS NULL',
         )
+      ).rows[0].count === '0' &&
+      (
+        await db.pool.query(
+          'SELECT count(*) FROM moria.runtime_dataset_graph_retirements WHERE NOT completed',
+        )
       ).rows[0].count === '0'
     )
       break;
@@ -282,6 +539,14 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
     (
       await db.pool.query(
         'SELECT count(*) FROM moria.runtime_dataset_graph_queue WHERE processed_at IS NULL',
+      )
+    ).rows[0].count,
+    '0',
+  );
+  assert.equal(
+    (
+      await db.pool.query(
+        'SELECT count(*) FROM moria.runtime_dataset_graph_retirements WHERE NOT completed',
       )
     ).rows[0].count,
     '0',
@@ -327,32 +592,77 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
   if (nativeHead) {
     assert(retainedData);
     const object = retainedData.content.object;
-    const head = await fixture.s3.client.send(
-      new HeadObjectCommand({
-        Bucket: fixture.s3.bucket,
-        Key:
-          fixture.datasetStorage.prefix +
-          '/' +
-          object.warehouseId +
-          '/' +
-          object.tableId +
-          '/objects/' +
-          object.objectId,
-        VersionId: retainedData.versionId,
-      }),
+    assert.equal(
+      (
+        await db.pool.query(
+          'SELECT live_references FROM moria.runtime_dataset_graph_counts WHERE node=$1 AND incarnation=(SELECT incarnation FROM moria.indexing_instance)',
+          [retainedData.node],
+        )
+      ).rows[0].live_references,
+      '0',
     );
-    assert.equal(head.VersionId, retainedData.versionId);
-    assert.equal(head.ContentLength, retainedData.content.size);
-    assert(
-      BigInt(
+    const dataCandidate = (
+      await db.pool.query(
+        'SELECT id FROM moria.runtime_dataset_gc_candidates WHERE policy=$1 AND object_id=$2',
+        [policy.policy, object.objectId],
+      )
+    ).rows[0];
+    assert(dataCandidate);
+    for (let i = 0; i < 128; i++) {
+      if (
         (
           await db.pool.query(
-            'SELECT live_references FROM moria.runtime_dataset_graph_counts WHERE node=$1 AND incarnation=(SELECT incarnation FROM moria.indexing_instance)',
-            [retainedData.node],
+            "SELECT count(*) FROM moria.runtime_dataset_gc_versions WHERE candidate=$1 AND result='removed'",
+            [dataCandidate.id],
           )
-        ).rows[0].live_references,
-      ) > 0n,
+        ).rows[0].count !== '0'
+      )
+        break;
+      await fixture.command(
+        ['dataset-retention', 'once'],
+        { policy: policy.policy, owner: randomUUID(), timeSeconds: 30 },
+        fixture.operatorEnv,
+      );
+    }
+    await assert.rejects(
+      fixture.s3.client.send(
+        new HeadObjectCommand({
+          Bucket: fixture.s3.bucket,
+          Key:
+            fixture.datasetStorage.prefix +
+            '/' +
+            object.warehouseId +
+            '/' +
+            object.tableId +
+            '/objects/' +
+            object.objectId,
+          VersionId: retainedData.versionId,
+        }),
+      ),
+      (error: unknown) =>
+        error instanceof S3ServiceException && error.$metadata.httpStatusCode === 404,
     );
+  }
+  if (nativeHead) {
+    assert(prunedCapture && prunedHead && prunedJournal);
+    const prunedRestore = await recovery.restore(prunedCapture.manifest);
+    try {
+      assert.deepEqual(await journalRows(prunedRestore.pool, environment, dataset), prunedJournal);
+      await prunedRestore.read(prunedHead, secondRows, 'graph-read');
+      await prunedRestore.read(prunedHead, secondRows);
+      await prunedRestore.read(second.head, secondRows, 'graph-read');
+      assert.notEqual(prunedRestore.restoredStorage.prefix, fixture.datasetStorage.prefix);
+      const qualification = (
+        await prunedRestore.pool.query(
+          'SELECT q.physical_version,old.physical_version AS old_version FROM moria.runtime_dataset_graph_roots g JOIN moria.runtime_dataset_graph_qualifications q ON q.node=g.node AND q.incarnation=g.incarnation AND q.physical_fingerprint=g.physical_fingerprint JOIN moria.runtime_dataset_graph_qualifications old ON old.node=q.node AND old.incarnation<>q.incarnation WHERE g.root=moria.runtime_dataset_root_key($1) AND q.incarnation=(SELECT incarnation FROM moria.indexing_instance)',
+          [prunedHead.metadataLocation],
+        )
+      ).rows;
+      assert.equal(qualification.length, 1);
+      assert.notDeepEqual(qualification[0].physical_version, qualification[0].old_version);
+    } finally {
+      await prunedRestore.close();
+    }
   }
   const restored = await recovery.restore(captured.manifest);
   try {
@@ -466,9 +776,12 @@ export async function graphCustody(t: TestContext, nativeHead = false) {
       sourceGraphRootExactVersionRemoved: true,
       nativeCatalogHead: nativeHead,
       backupPinnedVersionDespiteNewCurrent: nativeHead,
-      currentStandardHistoryRetainedUntilPruning: nativeHead,
+      actualMetadataPruneAdvancedUnchangedSnapshotAndJournal: nativeHead,
+      liveRetainedPinProtectedDuringPrune: nativeHead,
+      prunedCurrentAndRetainedHeadRestoredAfterSourceGc: nativeHead,
+      oldStandardDataCollectedAfterPhysicalHeadRetirement: nativeHead,
       expiredNativeHeadRejected: nativeHead,
-      noFabricatedDeltaForNonAdvancingExpiry: nativeHead,
+      noFabricatedDeltaForSecondNonAdvancingExpiry: nativeHead,
       orphanGracePreserved: true,
       freshPhysicalQualification: true,
       independentTypedGraphReadback: true,

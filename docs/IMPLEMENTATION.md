@@ -3237,3 +3237,16 @@ selection remain unchanged. The original complete v2 Source file passes 20/20
 with zero skips or cancellations under its unchanged root deadlines. Static,
 all nine matching rebuilt artifacts and 113 native units pass. Evidence:
 [qualification](production/evidence/2026-11-05/native-v3-permanent-source/summary.json).
+
+Native v3 metadata pruning (2026-11-05): expiration now uses its actual fenced
+maintenance producer to preserve retained standard snapshots and path-copy the
+exact file directory without a Parquet scan. Current snapshot/summary and all
+key/selection/index identities stay unchanged. Qualified ready stages transfer
+to history only with the atomic head, expiry, receipt and metadataPrune journal
+commit. Non-advancing expiry emits no edge; old physical heads continue to
+protect bytes until their actual graph retirement drains. The focused proof
+includes real retained-pin custody, deferred commit rollback, exact source GC,
+pruned-current/retained fresh-prefix recovery and the existing recovery
+negatives. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
+Production writer/sparse activation and production capacity remain unqualified.

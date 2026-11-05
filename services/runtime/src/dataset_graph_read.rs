@@ -141,6 +141,14 @@ impl GraphReadContext {
         let claims = json!({"kind":"maintenance","basis":"expectedHead","run":run,"owner":owner,"fence":fence.to_string(),"incarnation":incarnation});
         Self::open(db, inner, claims, cancel).await
     }
+    pub(crate) async fn staged_maintenance(
+        inner: Arc<dyn ObjectReader>,
+        grant: Arc<crate::dataset_retention::operator::Grant>,
+        stage: Uuid,
+    ) -> Result<(Self, ReadableNode)> {
+        let claims = json!({"kind":"maintenance","basis":"stage","stage":stage,"run":grant.id,"owner":grant.owner,"fence":grant.fence.to_string(),"incarnation":grant.incarnation});
+        Self::open(grant.db.clone(), inner, claims, grant.cancel.clone()).await
+    }
     /// Uses the exact immutable source revision/snapshot/root of a real live indexing build.
     pub async fn indexing(
         inner: Arc<dyn ObjectReader>,

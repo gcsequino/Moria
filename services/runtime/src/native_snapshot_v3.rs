@@ -247,6 +247,12 @@ impl NativeSnapshot {
         self.check_current().await?;
         Ok(file)
     }
+    pub(crate) fn descriptor(&self) -> &RootDescriptor {
+        &self.descriptor
+    }
+    pub(crate) fn files(&self) -> &ReadDirectory {
+        &self.files
+    }
     pub(crate) fn metadata_file(&self) -> &LogicalFile {
         &self.descriptor.metadata
     }

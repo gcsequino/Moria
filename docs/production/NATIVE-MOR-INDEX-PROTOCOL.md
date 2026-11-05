@@ -399,3 +399,46 @@ unchanged, alongside static checks, nine matching artifacts and 113 units. Evide
 This enables the qualified permanent reader path. Production Dataset writer
 selection, graph metadata pruning, sparse mutations, position-delete proof and
 incremental Source windows remain separate required gates.
+
+## Native v3 metadata pruning
+
+Expiration derives its graph producer from the actual maintenance run, owner,
+fence and incarnation. The maintenance reader admits only that run's expected
+head or qualified ready stage. Missing or unsupported read bases are rejected.
+No execution or lease is allocated for pruning.
+
+Pruning keeps the current snapshot, every unselected live historical root,
+unmapped imported snapshots and standard branch/tag references. Catalog
+lookups are paged over snapshot IDs already present in authenticated metadata.
+Standard manifest references populate a spill-backed retained-name set;
+directory descriptors stream through bounded path-copy mutations without
+reading Parquet bytes. The current snapshot descriptor, including its standard
+summary reference, stays byte-for-byte equivalent. Table, schema, ordered-key,
+selection, hash, location and metadata-independent IndexSummary identities
+remain unchanged.
+
+The new metadata receives an issued-file certificate and strict staged typed
+qualification. Its actual current snapshot/key certificate is transferred from
+the qualified prior root. The head CAS, history, expiry markers, maintenance
+receipt and unchanged/metadataPrune journal edge commit atomically. A deferred
+head constraint transfers the real ready maintenance stage's reference into
+history only for the matching committed run and receipt. Non-advancing expiry
+records no edge. Selection always excludes the actual current physical head,
+even when the requested revision bound is ahead of that head.
+
+Logical pruning does not immediately free bytes retained by an older physical
+head. Those bytes become collectible only after that root is expired and its
+real graph retirement propagates. Existing pending-work exclusion, orphan
+grace, policy succession and exact provider-version collection still apply.
+
+The focused qualification covers a live historical graph reader, preserved
+retained standard snapshot descriptors, unchanged current rows/index/summary,
+actual deferred-publication rollback, source collection and fresh-prefix
+restore of both pruned current and retained heads. Original backup-version,
+missing-child/disabled-dispatch and conflicting/reused-target checks remain.
+See [qualification](evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
+
+This bounded local gate does not establish production workload capacity.
+Production Dataset writer selection, sparse mutations, standard position-delete
+proof, distributed bootstrap and incremental Source windows remain separate
+required gates. Independent PR CI and human review remain required.

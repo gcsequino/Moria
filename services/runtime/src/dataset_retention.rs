@@ -81,10 +81,7 @@ pub(crate) async fn register_graph_root(
 ) -> Result<NativeSnapshotRef> {
     graph.check_current().await?;
     let grant = graph.grant();
-    ensure!(
-        grant.is_managed() && grant.lease().task.is_none(),
-        "COORDINATOR_REQUIRED"
-    );
+    ensure!(grant.coordinator(), "COORDINATOR_REQUIRED");
     let descriptor: crate::native_snapshot_v3::RootDescriptor =
         serde_json::from_value(graph.read_descriptor(node).await?)?;
     ensure!(
@@ -110,13 +107,13 @@ pub(crate) async fn register_graph_root(
     let mut client = grant.database().get().await?;
     let tx = client.transaction().await?;
     admission(tx.client(), false).await?;
-    ensure!(tx.query_one("SELECT EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_nodes n JOIN moria.runtime_dataset_graph_qualifications q ON q.node=n.id JOIN moria.runtime_dataset_issued_objects i ON i.producer=q.producer AND i.physical_fingerprint=q.physical_fingerprint AND i.warehouse_id=n.content->'object'->>'warehouseId' AND i.table_id=n.content->'object'->>'tableId' AND i.object_id=n.content->'object'->>'objectId' JOIN moria.runtime_dataset_producers p ON p.scope=i.producer WHERE n.id=$1 AND n.kind='root' AND n.content=$2 AND n.profile=$3 AND q.physical_fingerprint=$4 AND q.incarnation=$5 AND q.producer=$6 AND q.physical_version=$7 AND p.tombstoned_at IS NULL AND i.expected_size=$8 AND i.expected_sha256=$9)",&[&node.id(),&serde_json::to_value(node.content())?,node.profile(),&physical,&grant.lease().incarnation,&producer,&serde_json::to_value(node.physical_version())?,&i64::try_from(node.content().size)?,&node.content().sha256]).await?.get::<_,bool>(0),"GC_OBJECT_OWNERSHIP_CHANGED");
+    ensure!(tx.query_one("SELECT EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_nodes n JOIN moria.runtime_dataset_graph_qualifications q ON q.node=n.id JOIN moria.runtime_dataset_issued_objects i ON i.producer=q.producer AND i.physical_fingerprint=q.physical_fingerprint AND i.warehouse_id=n.content->'object'->>'warehouseId' AND i.table_id=n.content->'object'->>'tableId' AND i.object_id=n.content->'object'->>'objectId' JOIN moria.runtime_dataset_producers p ON p.scope=i.producer WHERE n.id=$1 AND n.kind='root' AND n.content=$2 AND n.profile=$3 AND q.physical_fingerprint=$4 AND q.incarnation=$5 AND q.producer=$6 AND q.physical_version=$7 AND p.tombstoned_at IS NULL AND i.expected_size=$8 AND i.expected_sha256=$9)",&[&node.id(),&serde_json::to_value(node.content())?,node.profile(),&physical,&grant.incarnation(),&producer,&serde_json::to_value(node.physical_version())?,&i64::try_from(node.content().size)?,&node.content().sha256]).await?.get::<_,bool>(0),"GC_OBJECT_OWNERSHIP_CHANGED");
     let value = serde_json::to_value(&reference)?;
     let key: String = tx
         .query_one("SELECT moria.runtime_dataset_root_key($1)", &[&location])
         .await?
         .get(0);
-    tx.execute("INSERT INTO moria.runtime_dataset_roots(key,environment,dataset,namespace,physical_fingerprint,metadata_location,root,snapshot_id,reader_profile,producer) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING",&[&key,&grant.session().environment(),&grant.resource(),&serde_json::to_value(ns)?,&physical,&location,&value,&descriptor.snapshot_id,&crate::native_snapshot_v3::PROFILE,&producer]).await?;
+    tx.execute("INSERT INTO moria.runtime_dataset_roots(key,environment,dataset,namespace,physical_fingerprint,metadata_location,root,snapshot_id,reader_profile,producer,retention_origin) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,COALESCE((SELECT retention_origin FROM moria.runtime_dataset_roots WHERE key=moria.runtime_dataset_root_key($11)),clock_timestamp())) ON CONFLICT DO NOTHING",&[&key,&grant.environment(),&grant.resource(),&serde_json::to_value(ns)?,&physical,&location,&value,&descriptor.snapshot_id,&crate::native_snapshot_v3::PROFILE,&producer,&grant.maintenance_basis()]).await?;
     ensure!(tx.query_one("SELECT producer=$2 AND root=$3 AND snapshot_id=$4 AND reader_profile=$5 FROM moria.runtime_dataset_roots WHERE key=$1",&[&key,&producer,&value,&descriptor.snapshot_id,&crate::native_snapshot_v3::PROFILE]).await?.get::<_,bool>(0),"GC_OBJECT_OWNERSHIP_CHANGED");
     tx.execute("INSERT INTO moria.runtime_dataset_root_members(root,warehouse_id,table_id,object_id,content,physical_version) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING",&[&key,&ns.warehouse_id,&ns.table_id,&node.content().object.object_id,&serde_json::to_value(node.content())?,&serde_json::to_value(node.physical_version())?]).await?;
     ensure!(tx.query_one("SELECT content=$3 AND physical_version=$4 FROM moria.runtime_dataset_root_members WHERE root=$1 AND object_id=$2 AND warehouse_id=$5 AND table_id=$6",&[&key,&node.content().object.object_id,&serde_json::to_value(node.content())?,&serde_json::to_value(node.physical_version())?,&ns.warehouse_id,&ns.table_id]).await?.get::<_,bool>(0),"GC_OBJECT_OWNERSHIP_CHANGED");
@@ -227,7 +224,8 @@ async fn register_root(
 }
 
 mod collect;
-mod operator;
+pub(crate) mod operator;
+mod prune_graph;
 pub async fn cli(db: Database, arguments: Vec<String>) -> Result<()> {
     use tokio::io::AsyncReadExt;
     ensure!(arguments.len() == 1, "INPUT_INVALID");
