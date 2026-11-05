@@ -624,7 +624,10 @@ impl NativeEvaluations {
         let state = Authority::current(&*tx, session).await?;
         let limits=tx.query_opt("SELECT maximum_cases,maximum_repeats,maximum_parallel FROM moria.runtime_evaluation_environments WHERE environment=$1 AND application=$2 AND enabled FOR SHARE",&[&session.environment(),&session.application()]).await?.ok_or_else(||anyhow::anyhow!("EVALUATION_ENVIRONMENT_REQUIRED"))?;
         if let Some(row)=tx.query_opt("SELECT id FROM moria.runtime_executions WHERE environment=$1 AND resource=$2 AND principal=$3 AND application=$4 AND request_key=$5",&[&session.environment(),&resource,&session.principal(),&session.application(),&key]).await?{
-            let header=Self::header(tx.client(),session,row.get(0)).await?;let marks=self.retained(&tx,session,&header).await?;let result=Self::public(tx.client(),&header,marks).await?;tx.commit().await?;admission.release().await?;return Ok(result);
+            let id = row.get(0);
+            tx.commit().await?;
+            admission.release().await?;
+            return self.get(session, id).await;
         }
         let (entry, release, definition, source_marks) =
             source(tx.client(), session, resource).await?;
