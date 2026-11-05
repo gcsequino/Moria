@@ -2901,3 +2901,28 @@ sparse C04 publication and production workloads remain open. Both Dataset
 contracts now explicitly use standard position deletes to preserve accepted
 array keys, with actual installed-reader proof required before activation.
 Evidence: `production/evidence/2026-11-04/native-projected-keys/`.
+
+Qualified native loader checkpoint (2026-11-04): retained-v2 reuse now requires
+the stored sealed reader profile, environment, Dataset and snapshot to agree
+with the actual current head. Root wrappers and pages are read at their exact
+qualified provider version with unchanged hash, canonical and structure checks.
+A real old-version deletion trace reproduced newer-current substitution before
+the fix. The corrected reader explicitly requests the old version, accepts it
+while present and rejects its actual absence without head or graph publication.
+
+Frozen trial015 passes full static checks, nine-artifact provenance, all 99
+native units and 12 integration cases across four separate sequential files
+(4 version traces, 6 qualification negatives, 1 warmed authority revocation,
+1 full C08 custody), with no skipped or cancelled cases. C08 passed in 133.71s
+root / 146.46s controller and retains exact-version collection, policy successor
+propagation, independent clean-host typed recovery, fresh qualifications and
+missing-child rejection with dispatch disabled. All controllers were removed.
+Wrong point locators, sequence, full key, digest and schema have negative units;
+a real installed Parquet two-row-group unit verifies relative selection.
+Evidence: `production/evidence/2026-11-04/native-qualified-loader/`.
+
+The earlier trial013 array-key positive remains separate evidence. No sparse
+Dataset mode or distributed bootstrap is enabled by this checkpoint. Their
+publication/journal integration, independent standard position-delete readback,
+large multi-row-group Dataset and legacy fallback fixtures, whole-platform CI
+and approved capacity ladder remain required.

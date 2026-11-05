@@ -1,0 +1,30 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-wrapper-version.integration.test.ts
+Running 1 integration test files.
+✖ a qualified native wrapper requests its actual pinned version and never substitutes a current copy (31825.479199ms)
+ℹ {"objectClass":"nativeWrapperRoot","pinnedVersion":"b8b7647f-f86c-461c-8b97-85f135f755a5","currentVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790","pinnedMissing":true,"requests":[{"method":"HEAD","requestVersion":null,"status":200,"responseVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790"},{"method":"HEAD","requestVersion":null,"status":200,"responseVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790"},{"method":"GET","requestVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790","status":206,"responseVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790"},{"method":"HEAD","requestVersion":null,"status":200,"responseVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790"},{"method":"HEAD","requestVersion":null,"status":200,"responseVersion":"a3b7ed43-4b00-4015-a30e-04f4a087c790"}]}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32274.117827
+
+✖ failing tests:
+
+test at tests/native-dataset-graph-wrapper-version.integration.test.ts:1:450
+✖ a qualified native wrapper requests its actual pinned version and never substitutes a current copy (31825.479199ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/native-dataset-graph-wrapper-version.integration.test.ts:66:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

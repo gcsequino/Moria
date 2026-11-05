@@ -567,9 +567,16 @@ pub async fn read_descriptor<T: serde::de::DeserializeOwned + Serialize>(
 ) -> Result<T> {
     validate_object(object)?;
     ensure!(object.size <= maximum as u64, "LIMIT_EXCEEDED");
-    let mut stream = reader
+    let stream = reader
         .read_object(object.object.clone(), authority, cancel)
         .await?;
+    decode_descriptor(stream, object).await
+}
+
+async fn decode_descriptor<T: serde::de::DeserializeOwned + Serialize>(
+    mut stream: futures::stream::BoxStream<'static, Result<bytes::Bytes>>,
+    object: &SealedObject,
+) -> Result<T> {
     let mut bytes = Vec::with_capacity(object.size as usize);
     let mut hash = Sha256::new();
     while let Some(frame) = stream.next().await {
@@ -597,6 +604,37 @@ pub async fn read_descriptor<T: serde::de::DeserializeOwned + Serialize>(
     Ok(result)
 }
 
+fn unsupported_immutable_version(error: &anyhow::Error) -> bool {
+    matches!(
+        error.root_cause().to_string().as_str(),
+        "INVALID_STORAGE_VERSION" | "CONDITIONAL_DELETE_UNSUPPORTED"
+    )
+}
+
+/// Wrapper metadata is read at its actual qualified version, never a substituted current copy.
+async fn read_qualified_descriptor<T: serde::de::DeserializeOwned + Serialize>(
+    reader: Arc<dyn ObjectReader>,
+    authority: Arc<dyn ReadAuthority>,
+    object: &SealedObject,
+    maximum: usize,
+    known: &dyn VerifiedVersionAuthority,
+    cancel: Cancellation,
+) -> Result<Option<T>> {
+    validate_object(object)?;
+    ensure!(object.size <= maximum as u64, "LIMIT_EXCEEDED");
+    let version = known.verified_version(object).await?;
+    match crate::storage::qualified_s3_version(&version) {
+        Ok(()) => {}
+        Err(error) if unsupported_immutable_version(&error) => return Ok(None),
+        Err(error) => return Err(error),
+    }
+    ensure!(version.size == object.size, "CONTENT_MISMATCH");
+    let stream =
+        crate::storage::versioned_stream(reader, object.object.clone(), version, authority, cancel)
+            .await?;
+    Ok(Some(decode_descriptor(stream, object).await?))
+}
+
 /// Iterate a sealed closure with constant working memory. Consumers must also enforce configured total entry/byte budgets.
 pub async fn snapshot_root(
     reader: &dyn ObjectReader,
@@ -607,6 +645,10 @@ pub async fn snapshot_root(
     reference.validate()?;
     let root: SnapshotRoot =
         read_descriptor(reader, authority, &reference.root, 16384, cancel).await?;
+    validate_snapshot_root(reference, &root)?;
+    Ok(root)
+}
+fn validate_snapshot_root(reference: &NativeSnapshotRef, root: &SnapshotRoot) -> Result<()> {
     for count in [
         root.pages,
         root.proof.closure.entries,
@@ -636,7 +678,7 @@ pub async fn snapshot_root(
             && root.proof.metadata.object.table_id == reference.root.object.table_id,
         "INVALID_NATIVE_SNAPSHOT_ROOT"
     );
-    Ok(root)
+    Ok(())
 }
 pub async fn snapshot_page(
     reader: &dyn ObjectReader,
@@ -646,6 +688,10 @@ pub async fn snapshot_page(
     cancel: Cancellation,
 ) -> Result<ClosurePage> {
     let page: ClosurePage = read_descriptor(reader, authority, object, PAGE_MAX, cancel).await?;
+    validate_snapshot_page(object, ordinal, &page)?;
+    Ok(page)
+}
+fn validate_snapshot_page(object: &SealedObject, ordinal: u64, page: &ClosurePage) -> Result<()> {
     ensure!(
         page.version == 2
             && page.ordinal == ordinal
@@ -670,7 +716,7 @@ pub async fn snapshot_page(
             "BINDING_MISMATCH"
         );
     }
-    Ok(page)
+    Ok(())
 }
 
 pub struct LoadedSnapshot {
@@ -1124,13 +1170,43 @@ async fn load_snapshot_inner(
     cancel: Cancellation,
     known: Option<&dyn VerifiedVersionAuthority>,
 ) -> Result<LoadedSnapshot> {
-    let root = snapshot_root(
-        reader.as_ref(),
-        authority.clone(),
-        reference,
-        cancel.clone(),
-    )
-    .await?;
+    reference.validate()?;
+    let mut known = known;
+    let root = if let Some(known_ref) = known {
+        match read_qualified_descriptor::<SnapshotRoot>(
+            reader.clone(),
+            authority.clone(),
+            &reference.root,
+            16384,
+            known_ref,
+            cancel.clone(),
+        )
+        .await?
+        {
+            Some(root) => {
+                validate_snapshot_root(reference, &root)?;
+                root
+            }
+            None => {
+                known = None;
+                snapshot_root(
+                    reader.as_ref(),
+                    authority.clone(),
+                    reference,
+                    cancel.clone(),
+                )
+                .await?
+            }
+        }
+    } else {
+        snapshot_root(
+            reader.as_ref(),
+            authority.clone(),
+            reference,
+            cancel.clone(),
+        )
+        .await?
+    };
     ensure!(
         root.proof.table_uuid == expected_table_uuid
             && root.proof.snapshot_id == expected_snapshot_id
@@ -1149,14 +1225,47 @@ async fn load_snapshot_inner(
     let mut current = root.last_page;
     let mut first_of_later_page: Option<String> = None;
     for ordinal in (0..root.pages).rev() {
-        let page = snapshot_page(
-            reader.as_ref(),
-            authority.clone(),
-            &current.ok_or_else(|| anyhow::anyhow!("MISSING_SNAPSHOT_PAGE"))?,
-            ordinal,
-            cancel.clone(),
-        )
-        .await?;
+        let object = current
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("MISSING_SNAPSHOT_PAGE"))?
+            .clone();
+        let page = if let Some(known_ref) = known {
+            match read_qualified_descriptor::<ClosurePage>(
+                reader.clone(),
+                authority.clone(),
+                &object,
+                PAGE_MAX,
+                known_ref,
+                cancel.clone(),
+            )
+            .await?
+            {
+                Some(page) => {
+                    validate_snapshot_page(&object, ordinal, &page)?;
+                    page
+                }
+                None => {
+                    known = None;
+                    snapshot_page(
+                        reader.as_ref(),
+                        authority.clone(),
+                        &object,
+                        ordinal,
+                        cancel.clone(),
+                    )
+                    .await?
+                }
+            }
+        } else {
+            snapshot_page(
+                reader.as_ref(),
+                authority.clone(),
+                &object,
+                ordinal,
+                cancel.clone(),
+            )
+            .await?
+        };
         ensure!(
             page.entries
                 .windows(2)
@@ -1185,12 +1294,7 @@ async fn load_snapshot_inner(
                 qualified = true;
                 closure
             }
-            Err(error)
-                if matches!(
-                    error.root_cause().to_string().as_str(),
-                    "INVALID_STORAGE_VERSION" | "CONDITIONAL_DELETE_UNSUPPORTED"
-                ) =>
-            {
+            Err(error) if unsupported_immutable_version(&error) => {
                 spool.seal(reader.as_ref(), authority.clone()).await?
             }
             Err(error) => return Err(error),

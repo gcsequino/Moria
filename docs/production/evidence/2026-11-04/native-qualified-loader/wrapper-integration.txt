@@ -1,0 +1,18 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-wrapper-version.integration.test.ts
+Running 1 integration test files.
+✔ a qualified native root rejects a missing pinned version despite a current copy (12593.027572ms)
+ℹ {"objectClass":"nativeWrapperRoot","pinnedVersion":"4316ca27-adec-485e-ade5-79f6bb6b7062","currentVersion":"049fb5e2-ec73-47e2-86f7-eefb7417e013","pinnedPresent":false,"requests":[{"method":"GET","requestVersion":"4316ca27-adec-485e-ade5-79f6bb6b7062","status":404}]}
+✔ a qualified native root reads a still-live pinned version despite a current copy (41618.630013ms)
+ℹ {"objectClass":"nativeWrapperRoot","pinnedVersion":"746a0696-e4fd-4e52-986a-d1415f83a456","currentVersion":"778f9189-d797-4229-a194-e757e8d2860e","pinnedPresent":true,"requests":[{"method":"GET","requestVersion":"746a0696-e4fd-4e52-986a-d1415f83a456","status":206,"responseVersion":"746a0696-e4fd-4e52-986a-d1415f83a456"}]}
+✔ a qualified native page rejects a missing pinned version despite a current copy (16161.672037ms)
+ℹ {"objectClass":"nativeWrapperPage","pinnedVersion":"679bbf56-8ad4-470b-8f4a-19ca8361834b","currentVersion":"d2c35f04-1d36-4835-ab2f-86c52a4eacd5","pinnedPresent":false,"requests":[{"method":"GET","requestVersion":"679bbf56-8ad4-470b-8f4a-19ca8361834b","status":404}]}
+✔ a qualified native page reads a still-live pinned version despite a current copy (46692.043636ms)
+ℹ {"objectClass":"nativeWrapperPage","pinnedVersion":"cbd6562a-cec6-4132-943a-5b2949338ace","currentVersion":"a33d3999-939c-45f3-be91-c3f845132f96","pinnedPresent":true,"requests":[{"method":"GET","requestVersion":"cbd6562a-cec6-4132-943a-5b2949338ace","status":206,"responseVersion":"cbd6562a-cec6-4132-943a-5b2949338ace"}]}
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 117600.268261

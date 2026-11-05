@@ -138,8 +138,8 @@ Frozen trial013 passes static checks, exact provenance for nine native artifacts
 its unchanged 120-second deadline. Every bootstrap locator is explicitly deferred;
 the first actual point read matches the full typed oracle and returns a verified
 digest. [Evidence](evidence/2026-11-04/native-projected-keys/summary.json) retains
-the failed projection-column guard trial and the successful focused gate. New
-loader negative cases, latest-format authority/recovery, distributed tasks,
+the failed projection-column guard trial and the successful focused gate. That earlier checkpoint did not qualify the new loader negatives or latest-format
+authority/recovery. Those proofs are recorded separately below; distributed tasks,
 provider amplification and sparse publication remain open.
 
 Initial migration cost is separate: a v2 root without authenticated chunk
@@ -147,3 +147,43 @@ receipts still needs explicit one-time byte authentication to create persisted
 exact-version certificates. Key-only decoding does not imply that those bytes
 were never read. Sparse mutations must reuse those persisted qualifications and
 must not rehash or redecode the complete population per mutation.
+
+## Qualified loader version binding checkpoint
+
+Retained-root reuse now also verifies the stored qualification row's sealed
+state, reader profile, environment, Dataset and snapshot against the actual
+current expected head. Every physical fingerprint and producer incarnation
+still matches its original exact member receipt. A synthetic profile mismatch
+was accepted before this check and is now rejected with immutable guards enabled.
+
+Root wrappers and metadata pages use explicit receipt-version GETs before full
+SHA-256, canonical encoding and structural validation. An actual regression
+trace reproduced the prior defect: after the old qualified wrapper version was
+deleted, the loader read a newer current copy and accepted it. The new loader
+requests the old version explicitly. A newer current copy is valid only while
+the old qualified version remains readable; actual missing old root/page
+versions fail closed without changing the Dataset head or publishing a graph.
+Only unsupported immutable-version formats use the original full-validation
+legacy path. Missing qualified bytes or invalid receipts never authorize that
+fallback.
+
+Frozen trial015 passes static checks, exact nine-artifact provenance and all 99
+native units. Four separate sequential integration files pass 12 cases with no
+skips or cancellations: four actual root/page version traces, six qualification
+negatives, warmed current-authority revocation and the full graph custody proof.
+The latter preserves exact-version GC, original pending-retirement authority
+across policy succession, independent clean-host typed recovery and disabled
+dispatch after a missing backup child. Every controller is absent at completion.
+The point-verifier units reject wrong file, ordinal, sequence, key, digest and
+schema; an actual installed Parquet writer/reader unit selects a row from its
+second row group. This is not a qualified large multi-row-group Dataset proof.
+[Evidence](evidence/2026-11-04/native-qualified-loader/summary.json) preserves
+the failing stored-profile and wrapper-version traces as separate trials, plus
+the earlier insufficiently specific member-version expectation. The earlier
+64-row array-key/nullable-payload positive belongs to trial013 and is not counted
+as another same-source trial015 result.
+
+Distributed bootstrap, sparse writes and C04 publication, DatasetCommitDelta
+production, the independent standard position-delete reader oracle, legacy
+fallback integration, full independent CI and production workload certification
+remain open.

@@ -1,0 +1,210 @@
+{
+  "base": "8f2d6a0eadf51582ab83d542bb8105b55269e18a",
+  "classification": "serial qualified-loader hardening, explicit root/page version reads and current authority/recovery proofs; sparse activation remains open",
+  "image": "sha256:8968b286cab93fa8ecd58ebcc3bf5f8fe680be02c1648e8ede57bbbbc45850e5",
+  "sourceManifestSha256": "11c0f5e77770c6150626cc1a521c696c2257770594da0afb32d6d961faf99c07",
+  "nativeDigest": "0505ad5f0eff7e9e0b08d19be1c2ae7ddb100eb3632fd4e9d69ea040141562e6",
+  "sourceHashes": {
+    "services/database/src/dataset-graph-schema.ts": "0232fcd58e925e3cf83483dcd69c6a7c55f664c828601d41790200a62ece83d2",
+    "services/runtime/schema.json": "c47051775c71177cbcba69cef3aab2566e92654b531a64a00f8a45226dca060d",
+    "services/runtime/src/catalog.rs": "c8c1c48798d16aa74b5deee72d0566a6e270355dec05b84ad7bcfebfcaa698cc",
+    "services/runtime/src/native_snapshot_v3/point.rs": "20446b9238aea9ee6e6669f611f7f6d20cb6e0ca2729089f05e9490101aa90ae",
+    "tests/fixtures/native-retention/qualification.ts": "67346418d970e7eac1d75dceea896bd8bf9d4095ddaa4a62f33a9bf7749cf3ec",
+    "tests/fixtures/native-retention/version-trace.ts": "30271fd6c44b424a2cdbaee461aa859eb3b3d8462875b8c257960aec3aa59acf",
+    "tests/native-dataset-graph-qualification.integration.test.ts": "d6a79c809180b34d6202378ae3c67af0f43f6026203316e51374bbab5bc6c7a3",
+    "tests/native-dataset-graph-wrapper-version.integration.test.ts": "3998fc9a921f86e0f81b0d224a4b0a25aca7acd835156e57bd9fb429b7036b8b"
+  },
+  "nativeArtifacts": {
+    "moria-indexing-tests": {
+      "sha256": "c74e8c8b6e3d1f927c554d688c5f478e30742e31e9b2abe97af007908d056922",
+      "bytes": 75994776
+    },
+    "moria-native-storage-test": {
+      "sha256": "fbc84ed7fc40dd96bfa80ff44d35e71760370e6698c57be32cb30dd015eb583b",
+      "bytes": 101861976
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "4eb9aacee8162e3df49060384b78eaeb04c9ecd3ba7385d76c98ba111dc7c32b",
+      "bytes": 57225256
+    },
+    "moria-native-retention-test": {
+      "sha256": "1e9c62739894a59017ef50105b1c2e5f4e700e95d31169550a174286995dce4e",
+      "bytes": 27013320
+    },
+    "moria-native-policy-test": {
+      "sha256": "502e2319d526455e025b7dd959d987345c16deb192eab8c183e96d8f56504e84",
+      "bytes": 22206568
+    },
+    "moria-indexing": {
+      "sha256": "a46d0c7e5c48669f4259fc75f77c7ad3d2c4c84d22578ef8869d479df9ceaf0f",
+      "bytes": 158095376
+    },
+    "moria-runtime": {
+      "sha256": "cc0365282ce10773da00df32e98cab5de3228d877d8d8f842301549a10ae9021",
+      "bytes": 158095368
+    },
+    "moria-native-catalog-test": {
+      "sha256": "4b418d48a71c0c8950ce4c7afcff483bcbbd6e72d5ad6803f0bcce0481bbd7d7",
+      "bytes": 116341488
+    },
+    "moria-native-transport-test": {
+      "sha256": "361d67c0db4a65b3d81e6803b660c928d14b5b43c92cbee618769254dac15114",
+      "bytes": 26543816
+    }
+  },
+  "validation": {
+    "static-indexing-check": {
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--cpus",
+        "2",
+        "--memory",
+        "4g",
+        "moria-test:mor-bootstrap-015-20261104",
+        "sh",
+        "-c",
+        "pnpm check:static && pnpm check:indexing"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 30.329362869262695
+    },
+    "wrapper-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 129.7724175453186,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--name",
+        "moria-mor-wrapper-015-20261104",
+        "--label",
+        "moria.test.proof=moria-mor-wrapper-015-20261104",
+        "sha256:8968b286cab93fa8ecd58ebcc3bf5f8fe680be02c1648e8ede57bbbbc45850e5",
+        "pnpm",
+        "test:integration",
+        "tests/native-dataset-graph-wrapper-version.integration.test.ts"
+      ],
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "qualification-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 124.23210716247559,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--name",
+        "moria-mor-qualification-015-20261104",
+        "--label",
+        "moria.test.proof=moria-mor-qualification-015-20261104",
+        "sha256:8968b286cab93fa8ecd58ebcc3bf5f8fe680be02c1648e8ede57bbbbc45850e5",
+        "pnpm",
+        "test:integration",
+        "tests/native-dataset-graph-qualification.integration.test.ts"
+      ],
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "authority-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 47.91346001625061,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--name",
+        "moria-mor-authority-015-20261104",
+        "--label",
+        "moria.test.proof=moria-mor-authority-015-20261104",
+        "sha256:8968b286cab93fa8ecd58ebcc3bf5f8fe680be02c1648e8ede57bbbbc45850e5",
+        "pnpm",
+        "test:integration",
+        "tests/native-dataset-graph-authority.integration.test.ts"
+      ],
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    },
+    "retention-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 146.46167039871216,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--name",
+        "moria-mor-retention-015-20261104",
+        "--label",
+        "moria.test.proof=moria-mor-retention-015-20261104",
+        "sha256:8968b286cab93fa8ecd58ebcc3bf5f8fe680be02c1648e8ede57bbbbc45850e5",
+        "pnpm",
+        "test:integration",
+        "tests/native-dataset-graph-retention.integration.test.ts"
+      ],
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    }
+  },
+  "caseCounts": {
+    "nativeLibrary": {
+      "passed": 99,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "fourSeparateSequentialIntegrationFiles": {
+      "passed": 12,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "files": {
+        "wrapperVersions": 4,
+        "qualification": 6,
+        "authority": 1,
+        "C08": 1
+      }
+    },
+    "earlierArrayNullableCore": {
+      "trial": "013",
+      "passed": 1,
+      "sameFrozenSource": false
+    }
+  },
+  "failedTrials": {
+    "storedProfile013": "accepted synthetic stored qualification profile mismatch; exact stored-root reader/environment/Dataset/snapshot checks added",
+    "memberVersion014": "5/6; initial same-byte-current existence expectation was insufficiently specific and selected an opaque root member; actual old qualified-version absence is now injected",
+    "wrapperTrace014": "old qualified root version physically deleted and HEAD404 proved; native GET instead requested new current version206 and bootstrap succeeded. Explicit receipt-version root/page reads fix the qualified-loader defect"
+  },
+  "verifiedScope": [
+    "every original root/page/closure member qualification binds actual current expected head, physical fingerprint and incarnation",
+    "stored-root reader profile, environment, Dataset and snapshot must agree",
+    "native root/page GETs explicitly request old qualified version; new current copies are never substituted",
+    "old qualified versions still present remain readable even when a new current copy exists",
+    "actual old qualified version missing causes fail-closed with unchanged head and no graph publication",
+    "head/profile/physical/incarnation/member-version/missing-membership negatives run with all immutable guards enabled",
+    "point-verifier units reject wrong file/ordinal/sequence/full key/known digest/schema",
+    "actual installed Parquet writer/reader proves non-first row-group relative selection",
+    "warmed current-format key reader denies revoked authority and releases no result",
+    "current-format exact sidecar GC, successor-policy propagation, independent-copy restore, fresh physical qualifications and missing-child disabled dispatch remain qualified"
+  ],
+  "notVerified": [
+    "qualified multi-row-group Dataset integration beyond current small fixtures",
+    "legacy unsupported-version fallback functional fixture",
+    "distributed projected-key bootstrap tasks and measured provider amplification",
+    "sparse append/upsert/delete, independent installed standard Iceberg position-delete proof",
+    "C04 DatasetCommitDelta producer journal and incremental Source activation",
+    "whole-platform pnpm check, latest independent CI and approved production workload ladder"
+  ]
+}

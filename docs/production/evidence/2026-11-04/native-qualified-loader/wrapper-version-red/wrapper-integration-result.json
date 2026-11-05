@@ -1,0 +1,21 @@
+{
+  "exitCode": 1,
+  "elapsedSeconds": 35.5159809589386,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-wrapper-red-014-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-wrapper-red-014-20261104",
+    "sha256:3f27d87d974b3ad985343b0e79e16988410aaa32ada78b84b3e0f527c3d6c56c",
+    "pnpm",
+    "test:integration",
+    "tests/native-dataset-graph-wrapper-version.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}
