@@ -19,6 +19,7 @@ import { createTransport } from '../packages/platform/src/transport.js';
 import { transactionCommitProxy } from './fixtures/runtime/postgres-proxy.js';
 import { fingerprint } from '../packages/compiler/src/index.js';
 import { evaluationResumeFixture } from './fixtures/native-evaluations/resume.js';
+import { evaluationPurposeFixture } from './fixtures/native-evaluations/purpose.js';
 
 const execute = promisify(execFile);
 async function until(check: () => Promise<boolean>, timeout = 90000) {
@@ -1372,6 +1373,7 @@ test(
             'completed',
             JSON.stringify({ result, ...(await diagnostics(firing.child)) }),
           );
+          await evaluationPurposeFixture(db.pool, firing.child);
           const cases = (
             await db.pool.query(
               'SELECT execution,agent_execution,evaluator_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1',

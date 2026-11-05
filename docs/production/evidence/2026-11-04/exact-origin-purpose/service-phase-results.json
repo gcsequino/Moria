@@ -1,0 +1,19 @@
+[
+  {
+    "event": "evaluation_resume_identity_probes",
+    "livePositive": true,
+    "wrongCase": true,
+    "wrongPurpose": true,
+    "storedMetadataNegatives": 4,
+    "productionPredicateParity": true
+  },
+  {
+    "event": "evaluation_resume_public_withheld",
+    "get": true,
+    "replay": true
+  },
+  {
+    "event": "evaluation_resume_conflict_injected",
+    "sqlstate": "40001"
+  }
+]
