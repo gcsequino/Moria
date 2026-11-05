@@ -1,0 +1,21 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 154.19091050399948,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-journal-recovery-022-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-journal-recovery-022-20261104",
+    "sha256:34ba770f80f85d61acae5cc23b88d3827cd8241a759d865fdc75deabcc240f77",
+    "pnpm",
+    "test:integration",
+    "tests/native-dataset-graph-retention.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}

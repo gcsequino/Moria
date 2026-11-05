@@ -4,7 +4,7 @@ This is the required v3 implementation contract. The current full replacement/fu
 
 ## Commit record
 
-The actual Dataset head publication transaction appends one immutable `DatasetCommitDelta` per changed output. Its identity is the real candidate/commit UUID, not a guest event ID. Grouped outputs, exact expected-head CAS, checkpoint CAS, receipt and execution completion remain atomic.
+The actual Dataset head publication transaction appends one immutable `DatasetCommitDelta` per changed output. Its identity is the real candidate UUID or maintenance-run UUID, not a guest event ID. Every actual head revision advance has one contiguous edge, including an explicitly certified unchanged result; an operation that does not advance the head fabricates no edge. Grouped outputs, exact expected-head CAS, checkpoint CAS, receipt and execution completion remain atomic.
 
 ```text
 DatasetCommitDelta {
@@ -13,23 +13,30 @@ DatasetCommitDelta {
   dataset: UUID,
   basis: { revision, snapshot?, metadataRoot? },
   result: { revision, snapshot, metadataRoot },
-  schemaHash, keySchemaHash, orderedPrimaryKey,
-  mode: replace | append | upsert | delete,
+  datasetSchemaHash, datasetSchema, bindingRevision, keySchemaHash, orderedPrimaryKey,
+  mode: replace | append | upsert | delete | null,
+  changeKind: replace | mutation | unchanged,
+  unchangedReason?: metadataPrune | compaction | noOp,
+  equivalenceReceipt?,
   completeRowsRoot?, deleteKeysRoot?,
   insertedKeys, replacedKeys, deletedKeys,
-  execution, sealedReceipt
+  producer: { kind: execution, execution, candidate }
+          | { kind: maintenance, run, policy },
+  sealedReceipt
 }
 ```
 
-Roots are opaque descriptors of actual sealed, producer-owned native output. Receivers obtain exact physical qualification through Catalog; supplying an event or checksum never grants IO. Full rows are complete typed target rows. Delete frames contain exactly the declared ordered key columns. The result root, key index, standard Iceberg data/position-delete manifests and counts must agree. Replace is a bootstrap/full-rebuild boundary. A missing event, incompatible profile or absent qualified index rejects the incremental path rather than treating missing work as empty.
+Roots are opaque descriptors of actual sealed, producer-owned native output. Receivers obtain exact physical qualification through Catalog; supplying an event or checksum never grants IO. Full rows are complete typed target rows. Delete frames contain exactly the declared ordered key columns. The result root, key index, standard Iceberg data/position-delete manifests and counts must agree. Replace is a bootstrap/full-rebuild boundary. A missing event, incompatible profile or absent qualified index rejects the incremental path rather than treating missing work as empty. A replacement edge uses its qualified complete result root as the full-rebuild boundary; it does not claim an incremental changed-row diff.
 
-The key index binds the exact resulting snapshot/file visibility, schema/key profile and current key count. Standard position deletes bind exact receiver-qualified old data-file paths and physical row ordinals, with inclusive data-sequence applicability; replacement rows live in new ordinary data files and do not match those prior locators. This explicitly replaces the earlier equality-delete proposal while preserving accepted typed array primary keys. Compaction changes physical layout while preserving logical rows; its event explicitly records that verified property, rather than asking consumers to infer it from matching counts.
+The key index binds the exact resulting snapshot/file visibility, schema/key profile and current key count. Standard position deletes bind exact receiver-qualified old data-file paths and physical row ordinals, with inclusive data-sequence applicability; replacement rows live in new ordinary data files and do not match those prior locators. This explicitly replaces the earlier equality-delete proposal while preserving accepted typed array primary keys. `datasetSchemaHash` is SHA-256 over the native canonical JSON of the actual Iceberg Schema descriptor stored in `datasetSchema`, matching the native task-partset schema hash. The actual table schema must equal the accepted binding after decoding both through the installed Iceberg Schema codec; default spellings such as an absent versus empty identifier-field list are normalized by that codec. The record also binds the exact current immutable binding revision, which commits to its accepted raw schema and key declaration. It is distinct from the Source store's composite object/layout schema hash. Ordered key descriptors retain the existing normalized key hash and complete key bytes.
+
+Compaction changes physical layout while preserving logical rows; its event explicitly records that verified property, rather than asking consumers to infer it from matching counts. Metadata pruning is a different `unchanged` edge: it preserves the exact current snapshot descriptor and non-history table metadata, while a real Dataset revision advances to its qualified new metadata root. Its receipt binds both actual root keys and a digest of that preserved current snapshot descriptor. Maintenance edges have `mode: null` only with `producer.kind: maintenance`, `changeKind: unchanged`, an actual unchanged reason and equivalence receipt; they never fabricate or inherit a Dataset write mode. Execution edges keep their exact accepted write mode even for a certified no-op. A non-advancing maintenance result produces no Dataset edge. Other no-op or compaction receipts require their own actual producer proof; snapshot IDs, matching row counts or guest assertions alone are insufficient.
 
 ## Acceptance and custody
 
 The indexer consumes a contiguous chain beginning at its actually active Dataset revision. Every event's basis must equal the preceding result, and every receipt/root must match the actual publication journal. A bounded window may combine several contiguous commits by full Dataset key, using native spill; it may publish only the net result at the selected real target snapshot. Gaps and schema/Source mapping changes require explicit bootstrap. Arrival order, a later timestamp or the current head alone cannot prove a missing interval.
 
-Actual pending indexing intents/builds pin the event's exact row/key roots until their materialized PostgreSQL result and consumer watermark commit. Lifetime follows the current enabled indexing definition and actual pending/active work; no invented lease or caller-created pin is accepted. Current authority, namespace, schema/key profile, Source mapping/release and renewable worker fence are rechecked at bounded IO and final publication. After successful materialization, ordinary Object/Function/Search reads use retained PostgreSQL versions rather than requiring physical Dataset replay. Recovery copies live delta roots and restores their real consumer state; exact replay remains idempotent by commit and consumer identity.
+Actual pending indexing intents/builds pin every intermediate event's exact row/key roots in the derived contiguous window until their materialized PostgreSQL result and consumer watermark commit. A pin of only the latest result snapshot is insufficient when older builds have been superseded. Missing or expired chain custody requires explicit rebootstrap; journal membership alone grants no IO. Lifetime follows the current enabled indexing definition and actual pending/active work; no invented lease or caller-created pin is accepted. Current authority, namespace, schema/key profile, Source mapping/release and renewable worker fence are rechecked at bounded IO and final publication. After successful materialization, ordinary Object/Function/Search reads use retained PostgreSQL versions rather than requiring physical Dataset replay. Recovery copies live delta roots and restores their real consumer state; exact replay remains idempotent by commit and consumer identity.
 
 ## Initial key map and bounded staging
 
@@ -56,3 +63,54 @@ Source/index publication is atomic for its materialized consumer state. A Datase
 ## Required proofs
 
 Actual tests must compare incremental append/upsert/delete and mixed windows against an independent complete-row oracle and an actual installed standard Iceberg reader. Record reader/library versions and prove typed array-key updates, deletes, empty results and compaction; do not infer compatibility from the native accelerator. These tests include key-to-UID changes, missing deletes, duplicate/null keys, hash-collision handling, checkpoint/head conflicts, task takeover and acknowledgement loss. Held old cursors/readers, concurrent Actions, Source/model changes and revocation must preserve the previous result or deny release without a partial generation/watermark. Recovery must replay each commit exactly once after independent-copy restore. Separate scale trials measure changed rows, files, SQL/provider calls, read/write amplification, compaction, lag and protected HTTP outcomes with unchanged offered load; no certification follows from a small functional fixture.
+
+## Publication journal checkpoint
+
+The fresh baseline installs an immutable journal for actual managed replacement
+publications and certified metadata-pruning edges. C04 records each real
+candidate UUID only after the exact historical result, publication and execution
+completion receipt agree in its existing transaction. Roots bind current
+physical/incarnation qualification; profile capture uses the accepted typed
+Iceberg Schema and current immutable binding revision. Replacement records refer
+to the qualified complete result root as a full-rebuild boundary.
+
+The actual metadata-pruning transaction records its real maintenance-run UUID,
+policy and sealed publication receipt. Native verification compares the exact
+current snapshot descriptor and every non-history table metadata field before
+producing its equivalence receipt; counts alone cannot authorize the edge. The
+stored mode is null. The native caller decodes the persisted semantics before
+committing. A deferred constraint rejects managed heads without their matching
+journal edge. Ordinary insert and immutable-update denials and a real injected
+journal failure are covered by the focused publication gate. A failure rolls
+back head, publication, execution completion and journal together.
+
+Frozen trial021 passes static checks, provenance for all nine exact native
+artifacts, 102 units and two actual PostgreSQL/MinIO integration cases with no
+skips or cancellations (64.92s controller).
+[Evidence](../evidence/2026-11-04/native-dataset-commit-journal/summary.json)
+preserves the earlier compile, parameter, receipt-path and raw-schema failures
+and the exact synthetic descriptor diagnostic. This checkpoint does not enable
+mutation deltas, execution no-op or row-file compaction production, chain-derived
+indexing pins/consumer IO, incremental Source publication or a live-instance
+migration. Independent replacement-journal recovery is recorded below; the combined
+independent gates remain required.
+
+## Replacement journal recovery checkpoint
+
+The full graph custody gate now also verifies the actual replacement journal
+from its backup snapshot after a fresh database/provider-prefix restore. The captured
+record fields, candidate/execution identity, schema/key/binding identity
+and exact publication/completion receipt is preserved. Both basis/result root
+references resolve through sealed current-physical/new-incarnation root/member
+qualifications from the actual restore producer. Independent exact-version
+HEAD/GET and SHA-256 checks read the copied wrappers at the new prefix; the old
+audit versions return 404 there. New-authority typed reads recover both heads,
+while old-incarnation journal producer reentry fails with `CANDIDATE_STALE`.
+
+Frozen TS-only overlay022 reuses the exact trial021 native artifacts, passes
+static checks and all 102 units, and passes the complete custody case under its
+unchanged 300-second deadline (152.87s root, 154.19s controller, zero skips or
+cancellations). [Evidence](../evidence/2026-11-04/native-dataset-commit-journal/recovery/summary.json).
+These are restored replacement/full-bootstrap boundaries. This backup precedes
+metadata pruning and does not claim recovery of that later edge. Mutation
+frames, actual window pins/watermarks and incremental replay remain unactivated.

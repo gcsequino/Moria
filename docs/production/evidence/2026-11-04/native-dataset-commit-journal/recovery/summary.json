@@ -1,0 +1,87 @@
+{
+  "base": "50ad961696345e21e2898b307a6581eeb4efd0d7",
+  "classification": "independent-copy restore of immutable replacement journal boundaries through actual fresh root/member qualifications; incremental replay remains disabled",
+  "image": {
+    "image": "sha256:34ba770f80f85d61acae5cc23b88d3827cd8241a759d865fdc75deabcc240f77",
+    "base": "sha256:11b6179186888dbcf8826e9f73d4aaed452b81528fd6f509cba719ef4f493eee"
+  },
+  "nativeSourceDigest": "9ceae065185fd47cf4b263f0858104e129d0decc6db891f2085662a6a94ce01b",
+  "sourceHashes": {
+    "tests/fixtures/native-retention/journal.ts": "2a45c318674fad146302d9d9ec52bd45cc736d25a2e0a6a0bc83559a2b675e78",
+    "tests/native-dataset-graph-retention.integration.test.ts": "6636f0475bb6b1b233d73885cf803cce3a3416d1f865aa234dddd1d7f06d1f62"
+  },
+  "validation": {
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 30.260019752000517,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--cpus",
+        "2",
+        "--memory",
+        "4g",
+        "sha256:34ba770f80f85d61acae5cc23b88d3827cd8241a759d865fdc75deabcc240f77",
+        "sh",
+        "-c",
+        "pnpm check:static && pnpm check:indexing"
+      ]
+    },
+    "retention-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 154.19091050399948,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--name",
+        "moria-mor-journal-recovery-022-20261104",
+        "--label",
+        "moria.test.proof=moria-mor-journal-recovery-022-20261104",
+        "sha256:34ba770f80f85d61acae5cc23b88d3827cd8241a759d865fdc75deabcc240f77",
+        "pnpm",
+        "test:integration",
+        "tests/native-dataset-graph-retention.integration.test.ts"
+      ],
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    }
+  },
+  "cases": {
+    "nativeLibrary": {
+      "passed": 102,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "existingFullCustodyWithJournalReadback": {
+      "passed": 1,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "rootSeconds": 152.867029334,
+      "deadlineSeconds": 300
+    }
+  },
+  "verifiedScope": [
+    "the two real replacement journal records present at the backup snapshot retain every captured field (created_at is excluded), actual candidate/execution UUID, schema/key/binding identity and exact publication/completion receipt after restore",
+    "every referenced basis/result root resolves through sealed qualifications matching actual current restored binding physical fingerprint and new incarnation",
+    "qualified root and member receivers bind the actual current restore and real restore producer",
+    "actual root-wrapper HEAD and GET use the fresh restored storage prefix and exact new qualified provider version, with independent content length and SHA256 checks",
+    "the original audit provider versions are different and actually return404 at the new target prefix; immutable logical refs resolve through fresh recovery mapping",
+    "actual new-authority graph reads recover both historical heads, with standard-v2 typed readback of the second head",
+    "old-incarnation journal producer reentry fails with exact CANDIDATE_STALE and journal remains unchanged",
+    "existing exact-version graph collection, grace, pending propagation, policy succession, conflicting/reused target and missing backup-child disabled-dispatch proofs remain green",
+    "no permanent historical chain pins or incremental consumer/replay activation are added"
+  ],
+  "notVerified": [
+    "the metadataPrune edge is produced after this capture point and is not claimed restored by this backup",
+    "sparse mutation changed-row/delete-key roots, actual consumer window pins/watermarks and idempotent incremental replay",
+    "distributed bootstrap, sparse v3 publication, independent standard position-delete oracle, full combined CI and production workload ladder"
+  ]
+}

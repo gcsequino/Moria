@@ -1,0 +1,21 @@
+{
+  "exitCode": 1,
+  "elapsedSeconds": 17.539139448999777,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-journal-profile-020-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-journal-profile-020-20261104",
+    "sha256:85892d5fac37841379950ad26b16975417e6366b1766db87f8c7157be99484b4",
+    "pnpm",
+    "test:integration",
+    "tests/native-dataset-commit-profile-diagnostic.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}

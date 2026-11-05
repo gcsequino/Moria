@@ -1,0 +1,67 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-commit-delta.integration.test.ts
+Running 1 integration test files.
+✖ actual replacement and metadata pruning append exact contiguous publication edges (10543.753944ms)
+✖ failure while recording a real edge rolls back Dataset publication and completion (14101.007085ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25159.920337
+
+✖ failing tests:
+
+test at tests/native-dataset-commit-delta.integration.test.ts:1:389
+✖ actual replacement and metadata pruning append exact contiguous publication edges (10543.753944ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (131) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: column reference "receipt" is ambiguous
+      DETAIL: It could refer to either a PL/pgSQL variable or a table column.
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"candidates":["bf6dc0c3-f3fe-4e74-90ef-30622dec619d"],"event":"prepared","lease":{"execution":"9cd928ff-7265-4a25-9515-47c6d046cd2c","fence":"1","incarnation":"cb1b8778-4c11-4346-817a-baf37a7a1ea4","leaseUntil":"2026-11-05 05:11:36.52873+00","owner":"673057a2-530f-4772-87fa-c190e4a29691","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 5.39s\n\n',
+    stderr: '\nthread \'catalog_publication\' (131) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: column reference "receipt" is ambiguous\n    DETAIL: It could refer to either a PL/pgSQL variable or a table column.\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }
+
+test at tests/native-dataset-commit-delta.integration.test.ts:1:4146
+✖ failure while recording a real edge rolls back Dataset publication and completion (14101.007085ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (210) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: column reference "receipt" is ambiguous
+      DETAIL: It could refer to either a PL/pgSQL variable or a table column.
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"candidates":["4b721dcf-1bf4-40ca-b7fa-107f58ab13d4"],"event":"prepared","lease":{"execution":"e22c5ad3-f164-46b8-82e2-6745a9f567dc","fence":"1","incarnation":"30526f01-1132-4804-a613-dfd16460ed0a","leaseUntil":"2026-11-05 05:11:47.196007+00","owner":"8d8b38a4-1802-4e2e-a0cc-a2add1f5c189","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 5.69s\n\n',
+    stderr: '\nthread \'catalog_publication\' (210) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: column reference "receipt" is ambiguous\n    DETAIL: It could refer to either a PL/pgSQL variable or a table column.\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

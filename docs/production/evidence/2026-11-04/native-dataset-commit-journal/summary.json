@@ -1,0 +1,148 @@
+{
+  "base": "3d69801feffaaba7b9ed63b5c429b56526868813",
+  "classification": "actual immutable Dataset publication journal for replacement and certified unchanged metadata pruning; sparse mutation deltas remain disabled",
+  "image": "sha256:11b6179186888dbcf8826e9f73d4aaed452b81528fd6f509cba719ef4f493eee",
+  "sourceManifestSha256": "ff3b1dffb03760db1550104ebb035be9f59f4895445a8e93d60bb7e43e675918",
+  "native": {
+    "sourceDigest": "9ceae065185fd47cf4b263f0858104e129d0decc6db891f2085662a6a94ce01b",
+    "protocolVersion": 1,
+    "schemaVersion": 5,
+    "schemaChecksum": "c68a50ccf3169b3d7edda3a1f31f06ed3330c0c16c65d8a62c501f33bc84c438"
+  },
+  "sourceHashes": {
+    "services/database/src/baseline.ts": "7cdac4b6dbcf94949031b40c2c3ebd63b37713ed55f29a3f7fcfece8f33ef5a4",
+    "services/database/src/dataset-commit-delta-schema.ts": "56e3b52d4de1af53a4851ed0728ceae9b9ebfc999a97bab0d1e94904d6e88f0f",
+    "services/database/src/snapshot-runtime-schema.ts": "4b210fb885d7b1d2f89b8c58c79bd45d2ea6474c1d1fb4b36f6344aabe06f1d2",
+    "services/runtime/schema.json": "8421d2053b0102d2f7c4bc4514cc2aa50232df3ac4378d428e9b20ea3c192b0f",
+    "services/runtime/src/catalog.rs": "6f868c4d87a378f01cbe5c810d3c31b4f011fd3995a383d13e3ffc3f11a48e13",
+    "services/runtime/src/dataset_commit_delta.rs": "e244cfd0a50b2a94e7a8d2aff2fad6788b1d9f945f0f77077f377e67a0eae056",
+    "services/runtime/src/dataset_retention/operator.rs": "2c0d8e22563439d954168524d34d45c8fd337775c3743f74ce4225895f1962b4",
+    "services/runtime/src/dataset_writer.rs": "aa29e75204255ce9eccd4163c2464a4d85fe90be12c6cc6b9fb4548e2a6a66d7",
+    "services/runtime/src/lib.rs": "61c3e8f250383d352b9c4992861aa26886e72c3f572262d3f81ecc3d86cb5cd1",
+    "tests/native-dataset-commit-delta.integration.test.ts": "ac9e4b4a03e92682850f85c3199cc85a92ad3a4e1f5e520055b9d3a9d31b5969"
+  },
+  "artifacts": {
+    "moria-indexing-tests": {
+      "sha256": "abc8d7576c12eba6ca3bc9862e2372ef68afbbce464cea1bbc4c64ed81b5a862",
+      "bytes": 76438112
+    },
+    "moria-native-transport-test": {
+      "sha256": "0d91a573c4621d3eb2f53ea2c27a594a209042368b13f05a47daec0b48d9663d",
+      "bytes": 26548504
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "87f6d095a2999037a035af751666a6c493204c5648610cf973eab9dd147cb75f",
+      "bytes": 57230040
+    },
+    "moria-native-storage-test": {
+      "sha256": "5b2925602383e3a89909d1d6f4797c721786e5237ca598dd8601b74520e5d1bb",
+      "bytes": 101866472
+    },
+    "moria-native-retention-test": {
+      "sha256": "a0a7a78bea08a76921d49bd0fe80809ad7a88fb378f54dbb8bb3ef949d419c90",
+      "bytes": 27017848
+    },
+    "moria-native-policy-test": {
+      "sha256": "3d3ba3b442b0150be53b47a5ec8661c2588a307152dcda157234ee9923ecbb95",
+      "bytes": 22211160
+    },
+    "moria-indexing": {
+      "sha256": "f3354cf3d2f3d681e1d1be5664179c371478ca1e689926a9fee8d71c5094d152",
+      "bytes": 158234568
+    },
+    "moria-runtime": {
+      "sha256": "d07b8b28a6e174c798d5bfa8b727cc3901836ad3536a9be902be8a1c1a78489f",
+      "bytes": 158234496
+    },
+    "moria-native-catalog-test": {
+      "sha256": "129792c555c5b36b864bf66a5be6e741a7cd631910b0f6b4e48ab9ccd61861f4",
+      "bytes": 116357192
+    }
+  },
+  "validation": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 22.153875733998575
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 31.91667072099881,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--cpus",
+        "2",
+        "--memory",
+        "4g",
+        "sha256:11b6179186888dbcf8826e9f73d4aaed452b81528fd6f509cba719ef4f493eee",
+        "sh",
+        "-c",
+        "pnpm check:static && pnpm check:indexing"
+      ]
+    },
+    "journal-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 64.92111630799991,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--name",
+        "moria-mor-journal-021-20261104",
+        "--label",
+        "moria.test.proof=moria-mor-journal-021-20261104",
+        "sha256:11b6179186888dbcf8826e9f73d4aaed452b81528fd6f509cba719ef4f493eee",
+        "pnpm",
+        "test:integration",
+        "tests/native-dataset-commit-delta.integration.test.ts"
+      ],
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false
+    }
+  },
+  "cases": {
+    "nativeLibrary": {
+      "passed": 102,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "actualJournalIntegration": {
+      "passed": 2,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0
+    }
+  },
+  "failedTrials": {
+    "016": "compile rejected TableMetadata.metadata call; corrected to current_schema",
+    "017": "actual first publication rejected ambiguous receipt parameter; parameter renamed without changing checks",
+    "018": "receipt helper assumed all accepted producers use private Job sessions; actual ordinary session now uses existing authority split with exact candidate/session and current Dataset read/write checks",
+    "019": "all-nine build succeeded; static controller intentionally stopped before integration to settle explicit maintenance mode=null",
+    "020": "raw accepted binding JSON had empty identifier-field-ids while typed Schema serialization omitted it; all other individual profile checks passed in separate actual fixture diagnostic; existing typed normalization and partset schema_hash now reused with exact current binding revision"
+  },
+  "verifiedScope": [
+    "each actual managed replacement appends its candidate UUID, exact expected/result revisions and qualified basis/result roots in the same publication/completion transaction",
+    "initial revision zero has explicit absent basis, later revisions bind the exact prior historical root",
+    "replacement roots are complete qualified full-result boundaries, not fabricated sparse change records",
+    "datasetSchemaHash reuses the actual partset hash over the installed typed Iceberg Schema serialization; accepted binding typed equality, key hash, ordered keys and current immutable binding revision are enforced",
+    "actual native publication acknowledgement replay does not append duplicate edges",
+    "ordinary direct insert and actual journal update attempt are denied",
+    "metadata pruning preserves the exact current snapshot descriptor and all non-history metadata before certifying an unchanged edge with mode=null, real maintenance run/policy and exact sealed receipt",
+    "Rust decodes the actual persisted maintenance semantics before transaction commit",
+    "an exact injected journal insert failure rolls back the Dataset head, publication, execution completion and journal together while prior typed rows remain readable",
+    "both integration roots retain their original120s deadlines; controller absent and no external scratch at completion"
+  ],
+  "notVerified": [
+    "sparse append/upsert/delete, actual changed-row/delete-key producer roots, standard Iceberg position-delete reader proof and distributed bootstrap",
+    "execution noOp and row-file compaction producers remain unsupported; no non-advancing Dataset edge is fabricated",
+    "actual indexing-window-derived chain pins, mutation consumer/root IO and incremental Source/Search activation",
+    "fresh full graph backup/restore rerun after adding this journal schema",
+    "legacy live-instance migration, combined whole-platform gate, independent current CI and production workload certification"
+  ]
+}

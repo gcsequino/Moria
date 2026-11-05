@@ -1,0 +1,27 @@
+error[E0599]: no method named `metadata` found for struct `TableMetadata` in the current scope
+   --> src/dataset_retention/operator.rs:671:15
+    |
+671 |         table.metadata().current_schema(),
+    |               ^^^^^^^^
+    |
+help: there is a method `metadata_log` with a similar name
+    |
+671 |         table.metadata_log().current_schema(),
+    |                       ++++
+
+
+error[E0599]: no method named `metadata` found for struct `TableMetadata` in the current scope
+   --> src/dataset_retention/operator.rs:671:15
+    |
+671 |         table.metadata().current_schema(),
+    |               ^^^^^^^^
+    |
+help: there is a method `metadata_log` with a similar name
+    |
+671 |         table.metadata_log().current_schema(),
+    |                       ++++
+
+
+For more information about this error, try `rustc --explain E0599`.
+
+For more information about this error, try `rustc --explain E0599`.
