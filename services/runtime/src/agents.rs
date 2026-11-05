@@ -1231,8 +1231,7 @@ impl NativeAgents {
         context.check_in(tx.client()).await?;
         let row=tx.query_one("SELECT result FROM moria.runtime_execution_tasks WHERE execution=$1 AND status='sealed'",&[&lease.execution]).await?;
         let result: Value = row.get(0);
-        self.platform.publish(&tx, &context, &result).await?;
-        let session = Authority::sandbox_session_in(tx.client(), &context).await?;
+        let session = self.platform.publish(&tx, &context, &result).await?;
         let metadata = Self::row(tx.client(), &session, lease.execution).await?;
         context.record_consumed_markings(&self.retained(&tx, &session, &metadata).await?)?;
         let labels = context.consumed_markings();

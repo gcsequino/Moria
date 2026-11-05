@@ -37,7 +37,7 @@ pub trait FunctionPolicy: PlatformBroker {
         tx: &Transaction<'_>,
         context: &SandboxContext,
         result: &Value,
-    ) -> Result<()>;
+    ) -> Result<VerifiedSession>;
     async fn retained(
         &self,
         tx: &Transaction<'_>,

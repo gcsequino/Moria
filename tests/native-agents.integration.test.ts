@@ -18,6 +18,7 @@ import type { Resource } from '../packages/contracts/types.js';
 import { requestCommitProxy, transactionCommitProxy } from './fixtures/runtime/postgres-proxy.js';
 import { agentsClient } from '../packages/platform/src/agents.js';
 import { ApiError, createTransport } from '../packages/platform/src/transport.js';
+import { publicationAuthorityChecks } from './fixtures/native-agents/publication-authority.js';
 
 const execute = promisify(execFile);
 async function until(check: () => Promise<boolean>, timeout = 10000) {
@@ -616,11 +617,17 @@ for (const group of [
           await assert.rejects(
             start(['agents', 'once'], undefined, { MORIA_AGENT_WORKER_OWNER: randomUUID() }).done,
           );
-          await once().done;
+          const checks = await publicationAuthorityChecks(
+            db.pool,
+            accepted.id,
+            connection,
+            (AGENT_DATABASE) => start(['agents', 'once'], undefined, { AGENT_DATABASE }).done,
+          );
           const result = await get(accepted.id);
           assert.equal(result.status, 'succeeded');
           assert.equal(result.result.answer, 'hello');
           assert.equal(await receipts(accepted.id), '1');
+          assert.equal(checks, 4, 'Committed Agent publication retains four fresh context checks');
           assert.equal(
             (await db.pool.query('SELECT count(*) FROM moria.runtime_function_invocations')).rows[0]
               .count,
