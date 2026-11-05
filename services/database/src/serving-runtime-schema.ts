@@ -238,6 +238,20 @@ CREATE FUNCTION moria.native_source_file_proof_immutable() RETURNS trigger LANGU
 BEGIN RAISE EXCEPTION 'IMMUTABLE_SOURCE_FILE_PROOF'; END $$;
 CREATE TRIGGER fs_source_resource_files_immutable BEFORE UPDATE OR DELETE ON moria.fs_source_resource_files
   FOR EACH ROW EXECUTE FUNCTION moria.native_source_file_proof_immutable();
+-- Extract immutable release geometry once; live policy and provenance still resolve per statement.
+CREATE FUNCTION moria.native_source_release_file_entries(snapshot jsonb) RETURNS uuid[]
+LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$
+  SELECT ARRAY(SELECT (file->'entry'->>'id')::uuid FROM jsonb_array_elements($1->'files') file)
+$$;
+CREATE FUNCTION moria.native_source_release_dependencies(snapshot jsonb) RETURNS text[]
+LANGUAGE sql IMMUTABLE SET search_path=pg_catalog AS $$
+  SELECT ARRAY(SELECT dependency->>'digest' FROM jsonb_array_elements($1->'descriptor'->'dependencies') dependency)
+$$;
+ALTER TABLE moria.fs_source_releases
+  ADD COLUMN snapshot_root_entry uuid GENERATED ALWAYS AS ((snapshot->>'rootId')::uuid) STORED,
+  ADD COLUMN snapshot_file_entries uuid[] GENERATED ALWAYS AS (moria.native_source_release_file_entries(snapshot)) STORED,
+  ADD COLUMN snapshot_dependencies text[] GENERATED ALWAYS AS (moria.native_source_release_dependencies(snapshot)) STORED;
+
 -- Recursive closure costs depend on the actual targets and release inventory.
 CREATE FUNCTION moria.native_filesystem_acl_targets_operations_state(state jsonb, target_ids uuid[], operations text[], include_inactive boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql STABLE SET plan_cache_mode=force_custom_plan AS $$
 DECLARE node record; administrator boolean;
@@ -276,8 +290,8 @@ WITH RECURSIVE origins AS (
     ) binding JOIN moria.fs_source_releases r ON r.digest=binding.digest
     UNION SELECT r.entry_id,d.digest FROM releases r
       JOIN moria.fs_source_releases parent_release ON parent_release.digest=r.digest
-      CROSS JOIN LATERAL jsonb_array_elements(parent_release.snapshot->'descriptor'->'dependencies') dependency
-      JOIN moria.fs_source_releases d ON d.digest=dependency->>'digest'
+      CROSS JOIN LATERAL unnest(parent_release.snapshot_dependencies) dependency(digest)
+      JOIN moria.fs_source_releases d ON d.digest=dependency.digest
   ), closure AS (
     SELECT unnest(target_ids) AS id UNION SELECT edge.source_id FROM closure c CROSS JOIN LATERAL (
       SELECT parent_id AS source_id FROM moria.fs_entries WHERE id=c.id AND parent_id IS NOT NULL
@@ -286,11 +300,11 @@ WITH RECURSIVE origins AS (
         JOIN moria.fs_resource_dependencies d ON d.environment=a.environment AND d.project_id=a.project_id AND d.reference=a.reference
         JOIN moria.fs_resource_bindings b ON b.environment=d.environment AND b.project_id=d.source_project_id AND b.reference=d.source_reference
         WHERE a.entry_id=c.id
-      UNION ALL SELECT (source_release.snapshot->>'rootId')::uuid FROM releases r
+      UNION ALL SELECT source_release.snapshot_root_entry FROM releases r
         JOIN moria.fs_source_releases source_release ON source_release.digest=r.digest WHERE r.entry_id=c.id
-      UNION ALL SELECT (file->'entry'->>'id')::uuid FROM releases r
+      UNION ALL SELECT file.entry_id FROM releases r
         JOIN moria.fs_source_releases source_release ON source_release.digest=r.digest
-        CROSS JOIN LATERAL jsonb_array_elements(source_release.snapshot->'files') file WHERE r.entry_id=c.id
+        CROSS JOIN LATERAL unnest(source_release.snapshot_file_entries) file(entry_id) WHERE r.entry_id=c.id
     ) edge
   ), required AS (
     SELECT unnest(target_ids) AS id UNION SELECT edge.source_id FROM required c CROSS JOIN LATERAL (
