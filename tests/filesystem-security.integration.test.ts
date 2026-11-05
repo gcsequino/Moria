@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
+import { publishedResources } from './fixtures/catalog-storage/source.js';
 import test from 'node:test';
 import { FilesystemStore } from '../services/filesystem/src/store.js';
 import { FilesystemService } from '../services/filesystem/src/service.js';
@@ -342,9 +344,20 @@ test(
             "SELECT pg_advisory_unlock(hashtextextended('moria/environment/' || $1,0))",
             [environment],
           );
-          await outcome;
-          assert.deepEqual(await store.list(target.id), []);
-          await security.setEnabled('operator', identities.agent, true);
+          try {
+            await outcome;
+            assert.deepEqual(await store.list(target.id), []);
+          } finally {
+            await security.setEnabled('operator', identities.agent, true);
+            await assert.rejects(service.get(contexts.agent, target.id), {
+              code: 'UNAUTHENTICATED',
+            });
+            const renewed = await sessions.mint(
+              { environment, principal: 'agent', application },
+              'operator',
+            );
+            contexts.agent = { session: await sessions.authenticate(`Bearer ${renewed.token}`) };
+          }
           await blocker.query(
             "SELECT pg_advisory_lock(hashtextextended('moria/environment/' || $1,0))",
             [environment],
@@ -462,21 +475,21 @@ test(
     await t.test(
       'runtime-resource IDs enforce current inherited markings through domain access',
       async () => {
-        const scope = await create(filesystemRoot, 'runtime', false, {
-          projectId: 'project-a',
-          environmentId: environment,
-        });
-        const resourceId = randomUUID();
-        await store.apply({ environment, principal: 'operator', application }, randomUUID(), [
-          {
-            op: 'create',
-            parentId: scope.id,
-            expectedParentRevision: scope.revision,
-            name: 'dataset',
-            kind: 'resource',
-            resourceId,
-          },
-        ]);
+        const [entry] = await publishedResources(
+          db.catalog,
+          join(db.root, 'source-files'),
+          environment,
+          [
+            {
+              apiVersion: 'moria/v1alpha2',
+              kind: 'Dataset',
+              metadata: { namespace: 'fixture', name: 'dataset' },
+              spec: { columns: { uid: { type: 'uid', nullable: false } }, writeModes: ['replace'] },
+            },
+          ],
+        );
+        const scope = await store.get(entry.parentId!);
+        const resourceId = entry.resourceId!;
         await policy(scope.id, [grant('reader', ['read'])]);
         const domainOperations = [...operations, `${resourceId}:read`];
         await authority.setApplication(environment, 'operator', application, domainOperations);

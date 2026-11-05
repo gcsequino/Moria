@@ -88,6 +88,10 @@ for (const provider of ['local', 's3'] as const) {
       const sessions = new WorkloadSessions(authority),
         token = await sessions.mint({ environment, application, principal }, 'operator');
       const context = { session: await sessions.authenticate(`Bearer ${token.token}`) };
+      const renewSession = async () => {
+        const renewed = await sessions.mint({ environment, application, principal }, 'operator');
+        context.session = await sessions.authenticate(`Bearer ${renewed.token}`);
+      };
       const binding = {
         root: join(db.root, 'files'),
         warehouseId: 'filesystem',
@@ -212,6 +216,8 @@ for (const provider of ['local', 's3'] as const) {
           await assert.rejects(reader.read());
           reader.releaseLock();
           await security.setEnabled('operator', instanceId, true);
+          await assert.rejects(service.readFile(context, fileId), { code: 'UNAUTHENTICATED' });
+          await renewSession();
           const parent = await store.get(filesystemRoot),
             key = randomUUID();
           let cancelled = false,
@@ -245,6 +251,8 @@ for (const provider of ['local', 's3'] as const) {
           assert.equal(source.locked, false);
           assert.equal((await store.get(filesystemRoot)).revision, parent.revision);
           await security.setEnabled('operator', instanceId, true);
+          await assert.rejects(service.readFile(context, fileId), { code: 'UNAUTHENTICATED' });
+          await renewSession();
         },
       );
 

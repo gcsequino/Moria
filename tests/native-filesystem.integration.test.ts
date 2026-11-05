@@ -604,12 +604,19 @@ for (const provider of ['posix', 's3'] as const)
           );
           await checked(
             request(b, `/entries/${first.home.id}`, 'GET', undefined, undefined, token),
-            403,
+            401,
           );
           await checked(
             request(b, '/principals', 'POST', { id: first.principalId, enabled: true }),
           );
-          await get(a, first.home.id, token);
+          await checked(
+            request(a, `/entries/${first.home.id}`, 'GET', undefined, undefined, token),
+            401,
+          );
+          const renewed = (
+            await sessions.mint({ environment, principal: user, application }, 'fixture')
+          ).token;
+          await get(a, first.home.id, renewed);
         },
       );
       await t.test(

@@ -1,0 +1,12 @@
+{"controller": "moria-quality-b295d916-7fe4-4b92-a467-e5afd590a840", "image": "sha256:c5d2c0251bf5df4415c651da150a18cc4ee07502534ead4bf199438ce517932e", "scratchPools": ["/tmp/moria-engine-scratch-1866a679-1cc8-4555-9f9b-5fdaf55bea03", "/tmp/moria-engine-scratch-488a9ee8-203e-4d89-a3ca-be81783e9ff1"], "temporary": "/tmp/moria-quality-dr3svoqh"}
+$ node scripts/test-files.mjs integration tests/native-vector-engine.integration.test.ts
+Running 1 integration test files.
+✔ the pinned PostgreSQL engine provides real pgvector exact cosine (3182.057312ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3508.519438
