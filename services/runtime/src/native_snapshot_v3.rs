@@ -35,6 +35,18 @@ pub(crate) struct VisibilityIndex {
     pub hashes: Option<NodeReference>,
     pub locations: Option<NodeReference>,
 }
+impl VisibilityIndex {
+    fn validate(&self, rows: u64) -> Result<()> {
+        ensure!(
+            self.rows == rows
+                && self.rows <= 9_007_199_254_740_991
+                && (self.rows == 0 || self.hashes.is_some())
+                && self.hashes.is_some() == self.locations.is_some(),
+            "DATASET_KEY_INDEX_INVALID"
+        );
+        Ok(())
+    }
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct RootDescriptor {
@@ -97,13 +109,7 @@ impl NativeSnapshot {
             "DATASET_KEY_INDEX_INVALID"
         );
         if let Some(index) = &descriptor.visibility {
-            ensure!(
-                index.rows == descriptor.rows
-                    && index.rows <= 9_007_199_254_740_991
-                    && (index.rows == 0) == (index.hashes.is_none() && index.locations.is_none())
-                    && index.hashes.is_some() == index.locations.is_some(),
-                "DATASET_KEY_INDEX_INVALID"
-            );
+            index.validate(descriptor.rows)?;
         }
         let files_node = context.child(&root, "files").await?;
         let files =
@@ -630,5 +636,41 @@ impl Storage for GraphFiles {
     }
     fn new_output(&self, _: &str) -> iceberg::Result<OutputFile> {
         Err(denied())
+    }
+}
+
+#[cfg(test)]
+mod index_tests {
+    use super::*;
+    #[test]
+    fn empty_result_keeps_paired_tombstone_directories_without_inventing_live_rows() {
+        let reference = NodeReference {
+            content: SealedObject {
+                object: crate::storage::LogicalObject::new("w", "t", "index").unwrap(),
+                size: 1,
+                sha256: format!("sha256:{}", "a".repeat(64)),
+            },
+            entries: 1,
+            logical_bytes: 1,
+            nodes: 1,
+        };
+        let mut index = VisibilityIndex {
+            rows: 0,
+            hashes: None,
+            locations: None,
+        };
+        index.validate(0).unwrap();
+        index.hashes = Some(reference.clone());
+        assert!(index.validate(0).is_err());
+        index.locations = Some(reference);
+        index.validate(0).unwrap();
+        assert!(index.validate(1).is_err());
+        index.rows = 1;
+        index.validate(1).unwrap();
+        index.hashes = None;
+        index.locations = None;
+        assert!(index.validate(1).is_err());
+        index.rows = 9_007_199_254_740_992;
+        assert!(index.validate(index.rows).is_err());
     }
 }

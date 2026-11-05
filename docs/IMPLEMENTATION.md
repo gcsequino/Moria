@@ -2856,3 +2856,16 @@ C04 v3 publication, sparse writers, distributed projected-key bootstrap, Source
 delta publication, full independent gates and production capacity remain open.
 See `production/NATIVE-MOR-PRIMITIVES.md` and
 `production/evidence/2026-11-04/native-graph-custody/` for exact scope/results.
+
+Native key-index correction (2026-11-04): bounded and streaming partial compaction
+now retain tombstones so untouched older levels cannot resurrect deleted keys.
+The actual v3 root validator permits paired tombstone directories with zero live
+rows while preserving positive-row, pairing and count checks. All three new
+regressions fail on prior behavior (91 existing units pass) and pass after the
+fix; frozen trial009 passes all 94 native units, nine-artifact provenance and
+full static checks. This is library correctness evidence, not an activated
+all-deleted Dataset mutation proof. `production/NATIVE-MOR-INDEX-PROTOCOL.md`
+settles explicit deferred digests, version-three run tags with version-two reads,
+exact touched-row verification and bounded distributed projected-key bootstrap.
+Those remaining APIs, sparse publication and their integration proofs remain
+under implementation. Evidence: `production/evidence/2026-11-04/native-index-tombstones/`.

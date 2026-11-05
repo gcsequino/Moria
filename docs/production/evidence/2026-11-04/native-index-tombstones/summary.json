@@ -1,0 +1,76 @@
+{
+  "base": "ae0bed19fae12459ad23d873ae910af8bc437178",
+  "classification": "partial compaction and empty-result index correctness; sparse writer activation remains open",
+  "image": "sha256:bee238996bc7bd407f97eef2513ecf7e27fcbbdb47caa18079a882695900b570",
+  "sourceManifestSha256": "d5b155b78964885950beaf302037214684ec8b4ec045b366f4fdc1466c1f8e49",
+  "nativeDigest": "b4097f84797cc7da9e25b1884ffc3059e8d6661d15dc6d2e183c4aae2658549c",
+  "sourceHashes": {
+    "services/runtime/src/dataset_writer/key_run.rs": "de8e0311d9be6476fe0940068f2ac0bd63d48932f0b7753b28766943946205a1",
+    "services/runtime/src/dataset_writer/key_run_merge.rs": "32b2928f265ba86f8c5f4432355aeb844c72618d12fd36d8ae5ee8130e15dfba",
+    "services/runtime/src/native_snapshot_v3.rs": "5f329b022e1c3597e7dd87f534cb813a9b980f364399f4f7b950ac90df1a4123"
+  },
+  "nativeArtifacts": {
+    "moria-indexing-tests": {
+      "sha256": "b66ee33bce9a9f103f9f68766dd48cb138485f2756fce1a826797218d7c8d35e",
+      "bytes": 62226520
+    },
+    "moria-indexing": {
+      "sha256": "ccbf1a431981ebe9ba701a6bf2eb3e1b5474de8790e8ba0d2e7e0a26d1db9765",
+      "bytes": 158060040
+    },
+    "moria-runtime": {
+      "sha256": "02d1d06c14d1c1a0a05f110f550d21aa7d13797f390028c4131b4904732af1b9",
+      "bytes": 158060032
+    },
+    "moria-native-transport-test": {
+      "sha256": "5e5d5bb74880af0665e04c2b74837ab8db5e982c69ce80d604e47f5828c3569d",
+      "bytes": 26538552
+    },
+    "moria-native-catalog-test": {
+      "sha256": "5f285ced2cab4b44ef9aa8085ca0b196f2988452d861de052f68c36ea517a83d",
+      "bytes": 115980056
+    },
+    "moria-native-storage-test": {
+      "sha256": "43de1aebb432a673c0b7ce6fa2968be4089d9494ea5e46d31a72d2dfddad59ef",
+      "bytes": 101856104
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "82c847a12c3eb2cc63aa04058f82d17cade864c7b9b023be498525ab47cb9019",
+      "bytes": 57219344
+    },
+    "moria-native-retention-test": {
+      "sha256": "1e71d9a105638cefaf028fc70165a649124a8c582b1fe4e84cb7ef924ebb77ac",
+      "bytes": 27007480
+    },
+    "moria-native-policy-test": {
+      "sha256": "b1ac2937b62c3d23ab3475a61f09e22c68626c4f21bfef56e752e16c318ca67b",
+      "bytes": 22200816
+    }
+  },
+  "red": {
+    "existingUnitsPassed": 91,
+    "newRegressionsFailed": 3,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "green": {
+    "fullStaticCheck": true,
+    "allNineNativeArtifactsMatch": true,
+    "unitsPassed": 94,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "proved": [
+    "both bounded and streamed partial compaction retain deletion above untouched older levels",
+    "zero live rows permit paired tombstone directories",
+    "positive live rows require paired directories; mismatched row counts and unsafe counts fail"
+  ],
+  "notVerified": [
+    "all-deleted live Dataset mutation followed by append/upsert",
+    "deferred-digest/version3 run implementation",
+    "distributed projected-key bootstrap",
+    "v3 Catalog publication and sparse writer activation",
+    "full pnpm check and production workload ladder"
+  ]
+}

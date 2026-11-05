@@ -440,7 +440,7 @@ pub fn decode_partition(
     Ok(output)
 }
 /// Merge already bounded sorted partition slices newest-first. Equal sequence runs are invalid;
-/// compaction emits the same exact visible mapping, with no implicit last-row wins inside a run.
+/// compaction preserves tombstones for untouched older levels, with no implicit last-row wins inside a run.
 pub fn merge_partition(
     kind: RunKind,
     bucket: u8,
@@ -508,13 +508,8 @@ pub fn merge_partition(
     }
     let mut output = visible
         .into_iter()
-        .filter_map(|(key, value)| {
-            if value == RunValue::Deleted {
-                None
-            } else {
-                Some(RunEntry { key, value })
-            }
-        })
+        // A partial merge cannot prove that untouched older levels lack this key.
+        .map(|(key, value)| RunEntry { key, value })
         .collect::<Vec<_>>();
     output.sort_by(|a, b| compare_keys(&a.key, &b.key));
     Ok(output)
@@ -634,7 +629,7 @@ mod tests {
         }
         assert_eq!(actual, entries);
         let key = b"key".to_vec();
-        assert!(
+        assert_eq!(
             merge_partition(
                 RunKind::Hashes,
                 partition(&key),
@@ -656,8 +651,9 @@ mod tests {
                 ],
                 10
             )
-            .unwrap()
-            .is_empty()
+            .unwrap()[0]
+                .value,
+            RunValue::Deleted
         );
         assert_eq!(
             merge_partition(
@@ -685,6 +681,38 @@ mod tests {
                 .value,
             RunValue::Hash([2; 32])
         );
+    }
+    #[test]
+    fn partial_compaction_retains_deletion_above_untouched_older_runs() {
+        let key = b"retired".to_vec();
+        let tombstone = RunEntry {
+            key: key.clone(),
+            value: RunValue::Deleted,
+        };
+        let partial = merge_partition(
+            RunKind::Hashes,
+            partition(&key),
+            &[(3, vec![tombstone.clone()]), (2, vec![])],
+            10,
+        )
+        .unwrap();
+        let final_merge = merge_partition(
+            RunKind::Hashes,
+            partition(&key),
+            &[
+                (4, partial),
+                (
+                    1,
+                    vec![RunEntry {
+                        key,
+                        value: RunValue::Hash([1; 32]),
+                    }],
+                ),
+            ],
+            10,
+        )
+        .unwrap();
+        assert_eq!(final_merge, vec![tombstone]);
     }
     #[test]
     fn duplicates_malformed_counts_and_unknown_operations_rejected() {

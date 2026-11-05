@@ -59,6 +59,13 @@ its unchanged 120-second root deadline; broad concurrency and scale remain open.
 The initial primitives-only [evidence](evidence/2026-11-04/native-mor-primitives/summary.json)
 remains a historical checkpoint before baseline installation.
 
+The subsequent partial-compaction correction preserves tombstones in both merge
+paths and permits paired tombstone directories with zero live rows. Its three
+regressions reproduce red on prior behavior; all 94 units, nine native artifacts
+and static checks pass on trial009. This does not prove an activated all-deleted
+Dataset mutation. See the [index protocol](NATIVE-MOR-INDEX-PROTOCOL.md) and
+[focused evidence](evidence/2026-11-04/native-index-tombstones/summary.json).
+
 ## Remaining activation requirements
 
 - Complete sparse append/upsert/delete, changed-row selections, tombstone-safe

@@ -51,39 +51,36 @@ impl Merge<'_> {
             }
             self.started = true;
         }
-        loop {
-            let smallest = self
-                .sources
-                .iter()
-                .enumerate()
-                .filter_map(|(index, source)| source.head.as_ref().map(|head| (index, head)))
-                .min_by(|(_, a), (_, b)| compare_keys(&a.key, &b.key))
-                .map(|(index, _)| index);
-            let Some(index) = smallest else {
-                return Ok(None);
-            };
-            let key = self.sources[index].head.as_ref().unwrap().key.clone();
-            // Sources are newest first; full key equality resolves routing-hash collisions.
-            let chosen = self
-                .sources
-                .iter()
-                .position(|source| source.head.as_ref().is_some_and(|head| head.key == key))
-                .unwrap();
-            let entry = self.sources[chosen].head.take().unwrap();
-            for source_index in 0..self.sources.len() {
-                if source_index == chosen
-                    || self.sources[source_index]
-                        .head
-                        .as_ref()
-                        .is_some_and(|head| head.key == key)
-                {
-                    self.advance(source_index).await?;
-                }
-            }
-            if entry.value != RunValue::Deleted {
-                return Ok(Some((entry, self)));
+        let smallest = self
+            .sources
+            .iter()
+            .enumerate()
+            .filter_map(|(index, source)| source.head.as_ref().map(|head| (index, head)))
+            .min_by(|(_, a), (_, b)| compare_keys(&a.key, &b.key))
+            .map(|(index, _)| index);
+        let Some(index) = smallest else {
+            return Ok(None);
+        };
+        let key = self.sources[index].head.as_ref().unwrap().key.clone();
+        // Sources are newest first; full key equality resolves routing-hash collisions.
+        let chosen = self
+            .sources
+            .iter()
+            .position(|source| source.head.as_ref().is_some_and(|head| head.key == key))
+            .unwrap();
+        let entry = self.sources[chosen].head.take().unwrap();
+        for source_index in 0..self.sources.len() {
+            if source_index == chosen
+                || self.sources[source_index]
+                    .head
+                    .as_ref()
+                    .is_some_and(|head| head.key == key)
+            {
+                self.advance(source_index).await?;
             }
         }
+        // A partial merge cannot prove that untouched older levels lack this key.
+        Ok(Some((entry, self)))
     }
 }
 fn ordered_merge<'a>(
@@ -157,6 +154,45 @@ mod tests {
         )
     }
     #[tokio::test]
+    async fn partial_compaction_retains_deletion_above_untouched_older_runs() {
+        let key = b"retired".to_vec();
+        let bucket = key_route(&key)[0];
+        let tombstone = RunEntry {
+            key: key.clone(),
+            value: RunValue::Deleted,
+        };
+        let partial = ordered_merge(
+            vec![input(3, vec![tombstone.clone()]), input(2, vec![])],
+            RunKind::Hashes,
+            bucket,
+            10,
+        )
+        .unwrap()
+        .try_collect::<Vec<_>>()
+        .await
+        .unwrap();
+        let final_merge = ordered_merge(
+            vec![
+                input(4, partial),
+                input(
+                    1,
+                    vec![RunEntry {
+                        key,
+                        value: RunValue::Hash([1; 32]),
+                    }],
+                ),
+            ],
+            RunKind::Hashes,
+            bucket,
+            10,
+        )
+        .unwrap()
+        .try_collect::<Vec<_>>()
+        .await
+        .unwrap();
+        assert_eq!(final_merge, vec![tombstone]);
+    }
+    #[tokio::test]
     async fn streaming_compaction_keeps_newest_exact_keys_and_fails_ambiguity_or_budget() {
         let mut keys = (0..1000u64)
             .map(|i| i.to_be_bytes().to_vec())
@@ -191,9 +227,11 @@ mod tests {
         .try_collect::<Vec<_>>()
         .await
         .unwrap();
-        assert_eq!(rows.len(), keys.len() - 1);
-        assert_eq!(rows[0].key, keys[1]);
-        assert_eq!(rows[0].value, RunValue::Hash([2; 32]));
+        assert_eq!(rows.len(), keys.len());
+        assert_eq!(rows[0].key, keys[0]);
+        assert_eq!(rows[0].value, RunValue::Deleted);
+        assert_eq!(rows[1].key, keys[1]);
+        assert_eq!(rows[1].value, RunValue::Hash([2; 32]));
         assert!(
             ordered_merge(
                 vec![input(2, old.clone()), input(2, vec![])],
