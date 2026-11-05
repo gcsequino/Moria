@@ -60,6 +60,36 @@ impl Drop for Keys {
             .execute_batch(&format!("DROP TABLE IF EXISTS {}", self.table));
     }
 }
+fn finish_key(values: Vec<Value>) -> Result<Vec<u8>> {
+    let bytes = canonical_json(&json!(values))?.into_bytes();
+    ensure!(bytes.len() <= KEY_MAX, "DATASET_PRIMARY_KEY_LIMIT");
+    Ok(bytes)
+}
+
+/// The Source key map uses exactly the Dataset full-key encoding, including typed normalization.
+pub(crate) fn encoded_json_key(row: &Value, keys: &[String], columns: &Value) -> Result<Vec<u8>> {
+    ensure!(
+        !keys.is_empty() && keys.len() <= 256,
+        "DATASET_PRIMARY_KEY_INVALID"
+    );
+    let mut values = Vec::with_capacity(keys.len());
+    for key in keys {
+        let value = row
+            .get(key)
+            .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
+        ensure!(!value.is_null(), "DATASET_PRIMARY_KEY_NULL");
+        let descriptor = columns
+            .get(key)
+            .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
+        let mut value = values::normalize(value, descriptor)?;
+        if descriptor["type"] == "float64" && value.as_f64() == Some(0.0) {
+            value = json!(0.0);
+        }
+        values.push(value);
+    }
+    finish_key(values)
+}
+
 pub(crate) fn encoded_key(
     batch: &arrow_array::RecordBatch,
     row: usize,
@@ -78,9 +108,7 @@ pub(crate) fn encoded_key(
         }
         values.push(value);
     }
-    let bytes = canonical_json(&json!(values))?.into_bytes();
-    ensure!(bytes.len() <= KEY_MAX, "DATASET_PRIMARY_KEY_LIMIT");
-    Ok(bytes)
+    finish_key(values)
 }
 pub(crate) async fn validate_primary_keys(
     spool: &ClosureSpool,
@@ -168,6 +196,34 @@ mod tests {
                 .to_string()
                 .contains("DATASET_PRIMARY_KEY_NULL")
         );
+        assert_eq!(
+            key,
+            encoded_json_key(
+                &json!({"id":"東京","sequence":"7"}),
+                &["id".into(), "sequence".into()],
+                &columns
+            )?
+        );
+        assert_ne!(
+            key,
+            encoded_json_key(
+                &json!({"id":"東京","sequence":"8"}),
+                &["id".into(), "sequence".into()],
+                &columns
+            )?
+        );
+        assert!(
+            encoded_json_key(&json!({"id":null,"sequence":"7"}), &["id".into()], &columns)
+                .unwrap_err()
+                .to_string()
+                .contains("DATASET_PRIMARY_KEY_NULL")
+        );
+        assert!(
+            encoded_json_key(&json!({"sequence":"7"}), &["id".into()], &columns)
+                .unwrap_err()
+                .to_string()
+                .contains("DATASET_PRIMARY_KEY_MISSING")
+        );
         let db = rusqlite::Connection::open_in_memory()?;
         db.execute_batch("CREATE TABLE keys(value BLOB PRIMARY KEY NOT NULL) WITHOUT ROWID")?;
         let mut keys = Keys {
@@ -196,6 +252,40 @@ mod tests {
         assert_eq!(
             encoded_key(&batch, 0, &["value".into()], &columns)?,
             encoded_key(&batch, 1, &["value".into()], &columns)?
+        );
+        assert_eq!(
+            encoded_key(&batch, 0, &["value".into()], &columns)?,
+            encoded_json_key(&json!({"value":-0.0}), &["value".into()], &columns)?
+        );
+        Ok(())
+    }
+    #[test]
+    fn json_and_arrow_array_keys_preserve_complete_order_and_int64_identity() -> Result<()> {
+        use arrow_array::builder::{Int64Builder, ListBuilder};
+        let mut builder = ListBuilder::new(Int64Builder::new());
+        for values in [[i64::MAX, 1], [1, i64::MAX]] {
+            for value in values {
+                builder.values().append_value(value);
+            }
+            builder.append(true);
+        }
+        let batch = arrow_array::RecordBatch::try_from_iter(vec![(
+            "ids",
+            Arc::new(builder.finish()) as arrow_array::ArrayRef,
+        )])?;
+        let columns = json!({"ids":{"type":"array","nullable":false,"items":{"type":"int64","nullable":false}}});
+        let first = encoded_key(&batch, 0, &["ids".into()], &columns)?;
+        assert_eq!(
+            first,
+            encoded_json_key(
+                &json!({"ids":[i64::MAX.to_string(),"1"]}),
+                &["ids".into()],
+                &columns
+            )?
+        );
+        assert_ne!(first, encoded_key(&batch, 1, &["ids".into()], &columns)?);
+        assert!(
+            encoded_json_key(&json!({"ids":[i64::MAX,"1"]}), &["ids".into()], &columns).is_err()
         );
         Ok(())
     }

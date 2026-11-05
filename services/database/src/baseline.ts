@@ -324,6 +324,7 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${changeRuntimeSchema}
   ${modelRuntimeSchema}
   ${projectionRuntimeSchema}
+  ${sourceStoreSchema}
   ${linkConstraintSchema}
   ${searchRuntimeSchema}
   ${searchProjectorSchema}
@@ -365,6 +366,7 @@ import { actionAdmissionSchema } from './action-admission-schema.js';
 import { indexingJobRuntimeSchema } from './indexing-job-runtime-schema.js';
 
 import { sourceRuntimeSchema } from './source-runtime-schema.js';
+import { sourceStoreSchema } from './source-store-schema.js';
 
 import { searchProjectorSchema } from './search-projector-schema.js';
 

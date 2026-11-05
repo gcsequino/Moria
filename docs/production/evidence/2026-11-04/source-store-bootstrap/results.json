@@ -1,0 +1,68 @@
+{
+  "image": "sha256:653ea3516fbe42efbcbbc1d3ffe91561c492fee896bf5197f6db09b2dc9288d6",
+  "nativeSourceDigest": "d492cdad0dcf6cf84c7dd61589f60ac2165aea3aaeddc9517f898ff8ac6cf796",
+  "buildSeconds": 15.11,
+  "nativeUnits": 99,
+  "fullIntegration": {
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "rootTimeoutMs": 300000
+  },
+  "runs": {
+    "trial001": {
+      "exitCode": 1,
+      "elapsedSeconds": 83.96231332100069,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "diagnostic002": {
+      "exitCode": 1,
+      "elapsedSeconds": 15.748077260999708,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "diagnostic002b": {
+      "exitCode": 1,
+      "elapsedSeconds": 16.105959052998514,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "trial004": {
+      "exitCode": 1,
+      "elapsedSeconds": 181.36357653400046,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "trial005": {
+      "exitCode": 1,
+      "elapsedSeconds": 179.6996863639979,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "trial006": {
+      "exitCode": 0,
+      "elapsedSeconds": 263.01102945800085,
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "tree": "808c3bf073414ff701b90d734598c93806715915",
+  "firstParent": "26fcc5a8073485b39e373ce94565ade3d72d6e50",
+  "secondParent": "3fb5da947010d3ac042d34c24e7fcdb76f9590d7",
+  "nativeSourceDigest": "1cec26500fb618508c7ea08a34de70d6db54b873e8c99d419ced01ce0cb706cd",
+  "image": "sha256:88bc36047da72f130960b766eec3d251f924d68358f870bd17c6e134e7aac1a1",
+  "nativeArtifacts": 9,
+  "nativeUnitTests": {
+    "passed": 106,
+    "failed": 0,
+    "ignored": 0
+  },
+  "static": "passed",
+  "proof": "/home/gcseq/moria-proofs/combined-source-store-20261105",
+  "composedAndCapacityQualification": "pending"
+}
