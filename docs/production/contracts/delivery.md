@@ -146,6 +146,14 @@ provider-reconciliation claim. Worker peers must not receive this privilege.
 `worker` runs the Rust dispatcher until SIGINT/SIGTERM. Host/process loss after
 the sent marker is recovered according to the destination capability above.
 
+Run `reconcile` separately with `MORIA_INDEXING_DATABASE_SECRET_REF` resolving
+to an operator database login with `CREATE` on the `moria` schema. Only this
+delivery command uses the operator schema lease; the dispatcher and ordinary
+commands still require a non-owning runtime login. PostgreSQL checks the
+operator login, exact uncertain fence and evidence, and records the transition
+and its history in one transaction. A worker cannot reopen an uncertain delivery
+by updating its row or writing reconciliation history directly.
+
 | Command            | Input                                                                 |
 | ------------------ | --------------------------------------------------------------------- |
 | `once`, `claim`    | `{owner:"UUID"}`; owner comes from authenticated peer identity on RPC |

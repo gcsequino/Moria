@@ -44,7 +44,7 @@ async fn run() -> Result<()> {
         );
         return Ok(());
     }
-    let db = if [
+    let operator_command = [
         "recovery",
         "secret",
         "restore-from",
@@ -54,7 +54,8 @@ async fn run() -> Result<()> {
         "filesystem-retention",
     ]
     .contains(&command.as_str())
-    {
+        || (command == "delivery" && env::args().nth(2).as_deref() == Some("reconcile"));
+    let db = if operator_command {
         Database::configured_recovery()?
     } else {
         Database::configured()?
@@ -62,16 +63,7 @@ async fn run() -> Result<()> {
     if command == "restore-from" {
         return crate::recovery_control::restore_from(db).await;
     }
-    if [
-        "recovery",
-        "secret",
-        "retention",
-        "dataset-retention",
-        "history-retention",
-        "filesystem-retention",
-    ]
-    .contains(&command.as_str())
-    {
+    if operator_command {
         db.recovery_schema_lease().await?;
     } else {
         db.schema_lease().await?;
