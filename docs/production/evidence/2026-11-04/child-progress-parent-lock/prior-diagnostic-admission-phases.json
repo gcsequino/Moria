@@ -1,0 +1,15 @@
+[
+  {
+    "event": "function_admission_failure_phases",
+    "phases": [
+      {
+        "code": "CONCURRENT_MODIFICATION",
+        "constraint": null,
+        "execution": "294ac01b-ac85-40df-bbcf-826077610497",
+        "phase": "service_claim_authority",
+        "publication": false,
+        "sqlstate": "40001"
+      }
+    ]
+  }
+]

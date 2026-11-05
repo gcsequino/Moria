@@ -20,6 +20,7 @@ import { transactionCommitProxy } from './fixtures/runtime/postgres-proxy.js';
 import { fingerprint } from '../packages/compiler/src/index.js';
 import { evaluationResumeFixture } from './fixtures/native-evaluations/resume.js';
 import { evaluationPurposeFixture } from './fixtures/native-evaluations/purpose.js';
+import { childProgressLockFixture } from './fixtures/native-evaluations/child-progress-lock.js';
 
 const execute = promisify(execFile);
 async function until(check: () => Promise<boolean>, timeout = 90000) {
@@ -1303,6 +1304,7 @@ test(
           MORIA_AUTOMATION_HOST_ID: host,
         };
         let resume: Awaited<ReturnType<typeof evaluationResumeFixture>> | undefined;
+        const progressLock = await childProgressLockFixture(db.pool, tool);
         try {
           const configuration = {
             serviceAuthority: service,
@@ -1367,7 +1369,11 @@ test(
             'succeeded',
           );
           resume = await evaluationResumeFixture(db.pool, firing.child, api, publicToken);
-          const [result] = await Promise.all([terminal(firing.child), resume.done]);
+          const [result] = await Promise.all([
+            terminal(firing.child),
+            resume.done,
+            progressLock.done,
+          ]);
           assert.equal(
             result.status,
             'completed',
@@ -1480,6 +1486,7 @@ test(
           );
           await assert.rejects(native('get', { id: firing.child }), /EVALUATION_SERVICE_REVOKED/);
         } finally {
+          await progressLock.close();
           await resume?.close();
           await db.pool.query(
             'UPDATE moria.runtime_source_automation_schedules SET enabled=false WHERE resource=$1',

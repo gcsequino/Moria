@@ -928,9 +928,13 @@ impl NativeFunctions {
         parent: &SandboxContext,
         id: Uuid,
     ) -> Result<ChildProgress> {
+        // Child startup needs a shared parent row while progress authorization is running.
+        let session = {
+            let client = self.db.get().await?;
+            Authority::sandbox_session_in(&client, parent).await?
+        };
         let mut admission = Admission::begin(&self.db, parent.environment(), false, None).await?;
         let tx = admission.client.as_mut().unwrap().transaction().await?;
-        let session = Authority::sandbox_session_in(tx.client(), parent).await?;
         let row = Self::row(tx.client(), &session, id).await?;
         ensure!(
             row.get::<_, Option<Uuid>>("parent_id") == Some(parent.lease().execution)

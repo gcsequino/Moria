@@ -1,0 +1,15 @@
+{"controller": "moria-quality-c4abc24e-6ebb-4362-a230-0aacf5b37f5b", "image": "sha256:51f5fb0c65e8147271203e97042437bf6cf8cd95a1c3e18a39b425f88ebc41c0", "scratchPools": ["/tmp/moria-engine-scratch-786db23e-3108-4b60-8fc5-1e2770bf369c", "/tmp/moria-engine-scratch-d3791805-61f4-460d-834f-cd7fe4cf781b", "/tmp/moria-engine-scratch-bbcfe6f0-31b7-4d9f-adb9-33ccc044479b"], "temporary": "/tmp/moria-quality-3bnz6f63"}
+$ node scripts/test-files.mjs integration tests/native-child-progress-lock.integration.test.ts
+Running 1 integration test files.
+{"event":"child_progress_parent_lock","pid":391,"parent":"953619d8-5b49-4610-83cc-da6ad7030641","sharedProbe":true,"exclusiveProbeBlocked":true}
+▶ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ✔ a native child progress read preserves a shared parent authority fence during slow child authorization (25924.135433ms)
+✔ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts (60989.030125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61649.14788

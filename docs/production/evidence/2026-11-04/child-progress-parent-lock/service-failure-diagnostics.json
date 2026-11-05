@@ -1,0 +1,189 @@
+[
+  {
+    "error": "{\"worker\":\"{\\\"error\\\":\\\"RESOURCE_BUSY\\\"}\\n\",\"states\":[{\"id\":\"6dc99a3f-4ca3-44f8-93c1-2cd6add10bf9\",\"domain\":\"evaluation\",\"status\":\"preparing\",\"error\":null},{\"id\":\"f018de00-a174-4a4a-bb53-6ee2be00f162\",\"domain\":\"evaluation\",\"status\":\"failed\",\"error\":\"EVALUATION_FAILED\"},{\"id\":\"acc6c49b-2818-4f51-b769-2b64dfa91b5f\",\"domain\":\"evaluation\",\"status\":\"running\",\"error\":null},{\"id\":\"d8735c05-11af-4cc6-b1de-b10c0db0df04\",\"domain\":\"evaluation\",\"status\":\"running\",\"error\":null},{\"id\":\"b6801689-bed4-4c53-aba4-48049d60c007\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"f2f42161-4bca-404b-8a87-9c5d2b85a218\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"cf12b58d-7612-4338-9d50-3cd8f8711415\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"6e455d2f-94fc-4582-82ec-373aee1a5b8b\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"a1882353-d7ae-4be4-9af1-834c1394a938\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"57642ad9-225c-4b12-aa69-65bad210c061\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"d673ab2b-a313-4cea-a574-d1ace4bed353\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"d48d1b93-a9b2-495a-a395-db5b5f5cbfff\",\"domain\":\"agent\",\"status\":\"failed\",\"error\":\"AGENT_PUBLICATION_FAILED\"},{\"id\":\"30b8b2de-dee3-40c1-8316-a4a4f4b1e50c\",\"domain\":\"agent\",\"status\":\"preparing\",\"error\":null},{\"id\":\"ad841d75-744e-4c87-8bd0-4f08e0af1141\",\"domain\":\"agent\",\"status\":\"succeeded\",\"error\":null},{\"id\":\"53c931c9-ec3a-43a9-a72b-78c41a842b53\",\"domain\":\"function\",\"status\":\"succeeded\",\"error\":null},{\"id\":\"ed3cdac7-0651-4b97-9c87-d8df6fb0d37c\",\"domain\":\"function\",\"status\":\"succeeded\",\"error\":null}],\"failures\":[{\"id\":\"f018de00-a174-4a4a-bb53-6ee2be00f162\",\"domain\":\"evaluation\",\"kind\":\"failed\",\"payload\":{\"code\":\"EVALUATION_FAILED\",\"cause\":\"CONCURRENT_MODIFICATION\",\"sqlstate\":\"40001\"}},{\"id\":\"d48d1b93-a9b2-495a-a395-db5b5f5cbfff\",\"domain\":\"agent\",\"kind\":\"failed\",\"payload\":{\"cause\":\"JOB_LEASE_LOST\",\"error\":\"AGENT_PUBLICATION_FAILED\",\"sqlstate\":\"P0001\"}}],\"agentModelCalls\":[],\"gatewayCalls\":[{\"state\":\"succeeded\",\"error\":null}],\"sandboxObservations\":[{\"id\":\"d48d1b93-a9b2-495a-a395-db5b5f5cbfff\",\"domain\":\"agent\",\"status\":\"failed\",\"case_id\":\"pass\",\"repeat\":0,\"state\":\"sealed\",\"error\":null,\"observation_pending\":null,\"observation_blocked\":false},{\"id\":\"30b8b2de-dee3-40c1-8316-a4a4f4b1e50c\",\"domain\":\"agent\",\"status\":\"preparing\",\"case_id\":\"pass\",\"repeat\":1,\"state\":\"sealed\",\"error\":null,\"observation_pending\":null,\"observation_blocked\":false},{\"id\":\"53c931c9-ec3a-43a9-a72b-78c41a842b53\",\"domain\":\"function\",\"status\":\"succeeded\",\"case_id\":null,\"repeat\":null,\"state\":\"sealed\",\"error\":null,\"observation_pending\":null,\"observation_blocked\":false},{\"id\":\"ed3cdac7-0651-4b97-9c87-d8df6fb0d37c\",\"domain\":\"function\",\"status\":\"succeeded\",\"case_id\":null,\"repeat\":null,\"state\":\"sealed\",\"error\":null,\"observation_pending\":null,\"observation_blocked\":false},{\"id\":\"ad841d75-744e-4c87-8bd0-4f08e0af1141\",\"domain\":\"agent\",\"status\":\"succeeded\",\"case_id\":\"fail\",\"repeat\":0,\"state\":\"sealed\",\"error\":null,\"observation_pending\":null,\"observation_blocked\":false}]}",
+    "states": [
+      {
+        "id": "6dc99a3f-4ca3-44f8-93c1-2cd6add10bf9",
+        "domain": "evaluation",
+        "status": "preparing",
+        "error": null
+      },
+      {
+        "id": "f018de00-a174-4a4a-bb53-6ee2be00f162",
+        "domain": "evaluation",
+        "status": "failed",
+        "error": "EVALUATION_FAILED"
+      },
+      {
+        "id": "acc6c49b-2818-4f51-b769-2b64dfa91b5f",
+        "domain": "evaluation",
+        "status": "running",
+        "error": null
+      },
+      {
+        "id": "d8735c05-11af-4cc6-b1de-b10c0db0df04",
+        "domain": "evaluation",
+        "status": "running",
+        "error": null
+      },
+      {
+        "id": "b6801689-bed4-4c53-aba4-48049d60c007",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "f2f42161-4bca-404b-8a87-9c5d2b85a218",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "cf12b58d-7612-4338-9d50-3cd8f8711415",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "6e455d2f-94fc-4582-82ec-373aee1a5b8b",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "a1882353-d7ae-4be4-9af1-834c1394a938",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "57642ad9-225c-4b12-aa69-65bad210c061",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "d673ab2b-a313-4cea-a574-d1ace4bed353",
+        "domain": "evaluation",
+        "status": "queued",
+        "error": null
+      },
+      {
+        "id": "d48d1b93-a9b2-495a-a395-db5b5f5cbfff",
+        "domain": "agent",
+        "status": "failed",
+        "error": "AGENT_PUBLICATION_FAILED"
+      },
+      {
+        "id": "30b8b2de-dee3-40c1-8316-a4a4f4b1e50c",
+        "domain": "agent",
+        "status": "preparing",
+        "error": null
+      },
+      {
+        "id": "ad841d75-744e-4c87-8bd0-4f08e0af1141",
+        "domain": "agent",
+        "status": "succeeded",
+        "error": null
+      },
+      {
+        "id": "53c931c9-ec3a-43a9-a72b-78c41a842b53",
+        "domain": "function",
+        "status": "succeeded",
+        "error": null
+      },
+      {
+        "id": "ed3cdac7-0651-4b97-9c87-d8df6fb0d37c",
+        "domain": "function",
+        "status": "succeeded",
+        "error": null
+      }
+    ],
+    "failures": [
+      {
+        "id": "f018de00-a174-4a4a-bb53-6ee2be00f162",
+        "domain": "evaluation",
+        "kind": "failed",
+        "payload": {
+          "code": "EVALUATION_FAILED",
+          "cause": "CONCURRENT_MODIFICATION",
+          "sqlstate": "40001"
+        }
+      },
+      {
+        "id": "d48d1b93-a9b2-495a-a395-db5b5f5cbfff",
+        "domain": "agent",
+        "kind": "failed",
+        "payload": {
+          "cause": "JOB_LEASE_LOST",
+          "error": "AGENT_PUBLICATION_FAILED",
+          "sqlstate": "P0001"
+        }
+      }
+    ],
+    "agentModelCalls": [],
+    "gatewayCalls": [
+      {
+        "state": "succeeded",
+        "error": null
+      }
+    ],
+    "sandboxObservations": [
+      {
+        "id": "d48d1b93-a9b2-495a-a395-db5b5f5cbfff",
+        "domain": "agent",
+        "status": "failed",
+        "case_id": "pass",
+        "repeat": 0,
+        "state": "sealed",
+        "error": null,
+        "observation_pending": null,
+        "observation_blocked": false
+      },
+      {
+        "id": "30b8b2de-dee3-40c1-8316-a4a4f4b1e50c",
+        "domain": "agent",
+        "status": "preparing",
+        "case_id": "pass",
+        "repeat": 1,
+        "state": "sealed",
+        "error": null,
+        "observation_pending": null,
+        "observation_blocked": false
+      },
+      {
+        "id": "53c931c9-ec3a-43a9-a72b-78c41a842b53",
+        "domain": "function",
+        "status": "succeeded",
+        "case_id": null,
+        "repeat": null,
+        "state": "sealed",
+        "error": null,
+        "observation_pending": null,
+        "observation_blocked": false
+      },
+      {
+        "id": "ed3cdac7-0651-4b97-9c87-d8df6fb0d37c",
+        "domain": "function",
+        "status": "succeeded",
+        "case_id": null,
+        "repeat": null,
+        "state": "sealed",
+        "error": null,
+        "observation_pending": null,
+        "observation_blocked": false
+      },
+      {
+        "id": "ad841d75-744e-4c87-8bd0-4f08e0af1141",
+        "domain": "agent",
+        "status": "succeeded",
+        "case_id": "fail",
+        "repeat": 0,
+        "state": "sealed",
+        "error": null,
+        "observation_pending": null,
+        "observation_blocked": false
+      }
+    ]
+  }
+]
