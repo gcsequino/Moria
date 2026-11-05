@@ -59,9 +59,14 @@ export async function connectorCustody(t: TestContext) {
     reflect = false,
     entered = false,
     socketClosed = false;
+  let httpFault: 'redirect' | 'truncated' | 'unavailable' | 'oversized' | 'timeout' | undefined;
   let release = () => {};
   let held = Promise.resolve();
-  const row = { id: randomUUID(), name: 'approved Connector row', tags: ['typed', 'private'] };
+  const row = {
+    id: randomUUID(),
+    name: 'approved Connector row',
+    tags: ['typed', 'private'],
+  };
   const provider = createServer(async (request, response) => {
     calls++;
     try {
@@ -77,6 +82,31 @@ export async function connectorCustody(t: TestContext) {
       if (hold) {
         entered = true;
         await held;
+      }
+      if (httpFault === 'redirect') {
+        response.writeHead(307, { location: '/must-not-follow' });
+        response.end();
+        return;
+      }
+      if (httpFault === 'truncated') {
+        response.writeHead(200, {
+          'content-type': 'application/json',
+          'content-length': '1024',
+          connection: 'close',
+        });
+        response.end('{"rows":');
+        return;
+      }
+      if (httpFault === 'timeout') return;
+      if (httpFault === 'oversized') {
+        response.setHeader('content-type', 'application/json');
+        response.end(JSON.stringify({ payload: 'x'.repeat(768 * 1024) }));
+        return;
+      }
+      if (httpFault === 'unavailable') {
+        response.writeHead(503, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ unavailable: true }));
+        return;
       }
       response.setHeader('content-type', 'application/json');
       response.setHeader('set-cookie', 'must-not-reach-guest');
@@ -144,7 +174,10 @@ export async function connectorCustody(t: TestContext) {
     apiVersion: 'moria/v1alpha2',
     kind: 'SecretReference',
     metadata: { namespace: 'connector', name: `Credential${i}` },
-    spec: { binding: `logical-credential-${i}`, consumers: ['connector/Connection/Rows'] },
+    spec: {
+      binding: `logical-credential-${i}`,
+      consumers: ['connector/Connection/Rows'],
+    },
   }));
   const published = await publishNativeSource(
     fixture.baseUrl,
@@ -158,7 +191,10 @@ export async function connectorCustody(t: TestContext) {
           namespace: 'connector',
           runtime: 'python-duckdb-v1',
           dependencies: [
-            { rootId: fixture.published.root.id, digest: fixture.published.publication.digest },
+            {
+              rootId: fixture.published.root.id,
+              digest: fixture.published.publication.digest,
+            },
           ],
         }),
       },
@@ -433,7 +469,10 @@ export async function connectorCustody(t: TestContext) {
         '0',
       );
       assert.equal(calls, 0);
-      await security.setPolicy('fixture', entry, '1', { markings: [], grants: [] });
+      await security.setPolicy('fixture', entry, '1', {
+        markings: [],
+        grants: [],
+      });
       accepted = await invoke('after-file-restored');
     },
   );
@@ -526,6 +565,70 @@ export async function connectorCustody(t: TestContext) {
       assert.ok(!JSON.stringify(stored).includes(material));
     }
   });
+  for (const fault of ['redirect', 'truncated', 'unavailable', 'oversized', 'timeout'] as const) {
+    await t.test(
+      `an upstream ${fault} never retries code or advances published state`,
+      async () => {
+        assert.ok(engine, 'The native engine must have started');
+        const head = (await db.catalog.heads(environment, [dataset]))[0];
+        const checkpoints = (
+          await db.pool.query(
+            'SELECT version::text,value FROM moria.checkpoints WHERE environment=$1 AND connection=$2',
+            [environment, resource],
+          )
+        ).rows;
+        const before = calls;
+        httpFault = fault;
+        try {
+          const failed = await invoke(`http-${fault}`);
+          await until(async () => {
+            engine!.check();
+            return (
+              (
+                await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
+                  failed.id,
+                ])
+              ).rows[0].status === 'failed'
+            );
+          });
+          assert.equal(
+            calls,
+            before + 1,
+            'The provider must be called once with no redirect or retry',
+          );
+          assert.equal(
+            (
+              await db.pool.query(
+                'SELECT count(*) FROM moria.runtime_sandbox_attempts WHERE execution=$1',
+                [failed.id],
+              )
+            ).rows[0].count,
+            '1',
+          );
+          assert.equal(
+            (
+              await db.pool.query('SELECT count(*) FROM moria.publications WHERE execution=$1', [
+                failed.id,
+              ])
+            ).rows[0].count,
+            '0',
+          );
+          assert.deepEqual((await db.catalog.heads(environment, [dataset]))[0], head);
+          assert.deepEqual(
+            (
+              await db.pool.query(
+                'SELECT version::text,value FROM moria.checkpoints WHERE environment=$1 AND connection=$2',
+                [environment, resource],
+              )
+            ).rows,
+            checkpoints,
+          );
+        } finally {
+          httpFault = undefined;
+        }
+      },
+    );
+  }
   await t.test(
     'revocation closes an in-flight Connector socket and preserves the prior head and cursor',
     async () => {

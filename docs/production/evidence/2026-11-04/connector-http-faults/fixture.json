@@ -1,0 +1,7 @@
+{
+  "path": "tests/fixtures/native-connectors/custody.ts",
+  "sha256": "81301ec8b321e1b1ea81a5b6df597880fe739bb72d3672aa4a66fdfef3eaf5cf",
+  "sourceDigest": "03350b38d341089293929338588d009497d2523c0bf552f536308641daec7c20",
+  "nativeUnits": 81,
+  "baseHead": "0f6db6bd4e9690e1e1f01d264fab942e2b46426d"
+}

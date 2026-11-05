@@ -2948,3 +2948,14 @@ rollback, lineage and independent browser-origin fixtures passed the full SQL
 file, 48/48 with zero skips, plus all nine artifacts, 79 native units and static
 checks. Original and interrupted failures are retained under
 `production/evidence/2026-11-04/sql-provenance-contracts`.
+
+### Connector bounded HTTP failures and capability membership
+
+The actual registered Sync/OCI guest fixture now passes 13/13 checks, adding
+redirect, truncated-response, HTTP503, oversized-body and original HTTP-timeout
+failures with exactly one request/attempt and unchanged prior head/checkpoint.
+Batch admission accepts an unordered implementation capability set containing
+`batchRead`; other operation dispatch remains unavailable. The exact all-nine/81
+unit build, static checks and runtime evidence are retained in
+`production/evidence/2026-11-04/connector-http-faults`. This remains functional
+replace/full qualification, with the remaining N09 scope recorded there.

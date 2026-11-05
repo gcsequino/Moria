@@ -7,8 +7,10 @@ This is the N09 implementation contract. The initial native pipeline profile imp
 The native credential implementation now accepts up to eight declared references
 with exact operator mappings. Its static checks, all nine artifact fingerprints
 and 81 native units pass on a frozen build. The real registered worker/OCI guest
-passes eight focused custody/checkpoint checks, including independent typed row
-readback and in-flight revocation; see [evidence](../evidence/2026-11-04/connector-secret-custody/README.md).
+passes thirteen focused custody/checkpoint/HTTP checks, including independent typed row
+readback, in-flight revocation and bounded provider failures; see
+[custody](../evidence/2026-11-04/connector-secret-custody/README.md) and
+[HTTP qualification](../evidence/2026-11-04/connector-http-faults/README.md).
 Other write modes, coverage and capabilities remain unavailable. This checkpoint
 must not be presented as complete N09 qualification.
 
@@ -34,7 +36,7 @@ The released `Connection` selects one immutable `connector/v1` implementation, a
 
 | Source capability | Required operational behavior                                                                                                                                                                                                                    | Current qualification                                                                                |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full Sync typed publication, cursor reuse and custody revocation pass; HTTP/acknowledgement/supervisor fault coverage remains required. |
+| `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full typed publication, cursor reuse, custody revocation and HTTP failure checks pass; acknowledgement/supervisor fault coverage remains required. |
 | `schemaDiscovery` | Read-only bounded discovery through the same fixed transport and current SecretReference grants. Proposed schemas are typed metadata and cannot silently mutate an accepted output schema or publish data.                                       | Rejected before code; implementation and proof required.                                             |
 | `continuousRead`  | Bounded execution windows with durable source cursor/watermark, explicit restart boundary and backpressure. Each window publishes its output and cursor atomically. A worker replacement cannot transparently rerun arbitrary started user code. | Rejected before code; implementation and proof required.                                             |
 | `writeback`       | Explicit external side-effect intents, destination policy, idempotency capability and uncertain-outcome reconciliation. A successful Dataset publication does not prove an external effect occurred exactly once.                                | Rejected before code; implementation and proof required.                                             |
