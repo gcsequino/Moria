@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import test from 'node:test';
-import type { PoolClient } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -235,6 +235,59 @@ test(
         measured.release();
       }
     });
+    await t.test(
+      'private state helpers retain the existing database privilege boundary',
+      async () => {
+        const limitedRole = `job_limited_${randomUUID().replaceAll('-', '')}`;
+        const limitedPassword = randomUUID();
+        await db.pool.query(
+          `CREATE ROLE ${limitedRole} LOGIN PASSWORD '${limitedPassword}'; GRANT USAGE ON SCHEMA moria TO ${limitedRole}`,
+        );
+        const trusted = new Pool({ connectionString: connection });
+        const limited = new Pool({
+          ...db.pool.options,
+          user: limitedRole,
+          password: limitedPassword,
+        });
+        try {
+          const { origin, state } = (
+            await trusted.query(
+              'SELECT moria.runtime_job_session_origin($1) origin,moria.native_serving_job_delegation($2) state',
+              [hash, job.id],
+            )
+          ).rows[0];
+          const probes: [string, unknown[], unknown][] = [
+            [
+              'SELECT moria.runtime_binding_authority_state($1,$2,$3,$4) AS value',
+              [registered, state.securityEpoch, state.instanceEpoch, job.id],
+              state,
+            ],
+            ['SELECT moria.runtime_execution_check_state($1) AS value', [job.id], state],
+            [
+              'SELECT moria.runtime_job_session_resolution($1) AS value',
+              [hash],
+              { origin, validatedState: state },
+            ],
+          ];
+          for (const [sql, values, expected] of probes) {
+            assert.deepEqual((await trusted.query(sql, values)).rows[0].value, expected);
+            await assert.rejects(limited.query(sql, values), { code: '42501' });
+          }
+          assert.equal(
+            (
+              await trusted.query(
+                'SELECT moria.runtime_binding_authority_state($1,$2,$3,NULL) AS value',
+                [registered, state.securityEpoch, state.instanceEpoch],
+              )
+            ).rows[0].value,
+            null,
+          );
+        } finally {
+          await Promise.all([trusted.end(), limited.end()]);
+          await db.pool.query(`DROP OWNED BY ${limitedRole}; DROP ROLE ${limitedRole}`);
+        }
+      },
+    );
     await t.test(
       'unregistered legacy bindings and mismatched purposes cannot acquire a service capability',
       async () => {
