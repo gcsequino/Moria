@@ -470,8 +470,7 @@ async fn program(
                 && implementation["spec"]["abiVersion"] == "connector/v1"
                 && implementation["spec"]["capabilities"]
                     .as_array()
-                    .is_some_and(|values| !values.is_empty()
-                        && values.iter().all(|value| value == "batchRead")),
+                    .is_some_and(|values| values.iter().any(|value| value == "batchRead")),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
         crate::filesystem::validate_configuration(

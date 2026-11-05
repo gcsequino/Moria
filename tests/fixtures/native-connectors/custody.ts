@@ -122,7 +122,7 @@ export async function connectorCustody(t: TestContext) {
     spec: {
       artifact: image.artifact,
       abiVersion: 'connector/v1',
-      capabilities: ['batchRead'],
+      capabilities: ['writeback', 'schemaDiscovery', 'batchRead', 'continuousRead'],
       configurationSchema: { type: 'object', additionalProperties: false },
     },
   };
