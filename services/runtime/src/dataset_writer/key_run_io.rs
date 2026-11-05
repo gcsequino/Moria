@@ -8,6 +8,7 @@ use crate::{
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::sync::Arc;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -45,6 +46,9 @@ pub(crate) async fn write_run(
     for entry in entries {
         writer.push(entry)?;
     }
+    seal_run(graph, writer).await
+}
+pub(crate) async fn seal_run(graph: &NativeGraph, writer: RunWriter) -> Result<QualifiedRun> {
     let (descriptor, bytes) = writer.finish()?;
     // Independently decode every emitted block/fence before receiver registration.
     verify_complete_run(&descriptor, &bytes)?;
@@ -66,6 +70,58 @@ pub(crate) async fn write_run(
     graph.check_current().await?;
     Ok(QualifiedRun { descriptor, node })
 }
+/// Stream only the admitted partition from a producer's exact run certificate.
+pub(crate) async fn producer_partition(
+    graph: &NativeGraph,
+    node: &QualifiedNode,
+    key_schema_hash: &str,
+    kind: RunKind,
+    partition: u8,
+) -> Result<(
+    RunDescriptor,
+    futures::stream::BoxStream<'static, Result<Vec<RunEntry>>>,
+)> {
+    ensure!(node.kind() == "keyRun", "DATASET_GRAPH_ANCESTRY_REQUIRED");
+    let stored: StoredRun = serde_json::from_value(graph.read_descriptor(node).await?)?;
+    ensure!(
+        stored.version == 2
+            && stored.descriptor.kind == kind
+            && stored.descriptor.key_schema_hash == key_schema_hash
+            && stored.descriptor.entries == node.entries()
+            && stored.descriptor.size == stored.content.size,
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    let certificate = graph.child(node, "certificate").await?;
+    let (content, mut window) = graph.file_window(&certificate).await?;
+    ensure!(content == stored.content, "DATASET_GRAPH_ANCESTRY_REQUIRED");
+    let header = window.read(0..8).await?;
+    validate_header(&stored.descriptor, &header, content.size)?;
+    let descriptor = Arc::new(stored.descriptor);
+    let blocks = descriptor
+        .blocks
+        .iter()
+        .filter(|block| block.partition == partition)
+        .cloned()
+        .collect::<Vec<_>>();
+    ensure!(!blocks.is_empty(), "DATASET_KEY_INDEX_INVALID");
+    let proof = descriptor.clone();
+    let stream = futures::stream::try_unfold(
+        (window, blocks.into_iter()),
+        move |(mut window, mut blocks)| {
+            let descriptor = descriptor.clone();
+            async move {
+                let Some(block) = blocks.next() else {
+                    return Ok(None);
+                };
+                let bytes: bytes::Bytes = window.read(block.start..block.end).await?;
+                let rows = decode_block(&descriptor, &block, &bytes)?;
+                Ok(Some((rows, (window, blocks))))
+            }
+        },
+    );
+    Ok((proof.as_ref().clone(), Box::pin(stream)))
+}
+
 /// Root-path-bound run reader. Every independent operation freshly checks accepted authority.
 #[derive(Debug)]
 pub struct RunReader {

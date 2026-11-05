@@ -211,6 +211,7 @@ mod tests {
                 locations: None,
             }),
             index_summary: None,
+            mutation_footprint: None,
         };
         let summary = IndexSummary {
             version: 1,

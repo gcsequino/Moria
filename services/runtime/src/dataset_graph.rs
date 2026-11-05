@@ -473,10 +473,7 @@ impl NativeGraph {
         })
         .await
     }
-    pub(crate) async fn write_index_bytes(
-        &self,
-        bytes: &[u8],
-    ) -> Result<(QualifiedFile, QualifiedNode)> {
+    async fn write_bytes(&self, bytes: &[u8]) -> Result<SealedObject> {
         self.check_current().await?;
         ensure!(
             !bytes.is_empty() && bytes.len() <= 16 * 1024 * 1024,
@@ -498,7 +495,21 @@ impl NativeGraph {
         for chunk in bytes.chunks(1024 * 1024) {
             writer.append(chunk).await?;
         }
-        let content = writer.seal().await?;
+        writer.seal().await
+    }
+    pub(crate) async fn write_parquet_bytes(
+        &self,
+        bytes: &[u8],
+    ) -> Result<(SealedObject, QualifiedNode)> {
+        let content = self.write_bytes(bytes).await?;
+        let certificate = self.certify_new_file(content.clone()).await?;
+        Ok((content, certificate))
+    }
+    pub(crate) async fn write_index_bytes(
+        &self,
+        bytes: &[u8],
+    ) -> Result<(QualifiedFile, QualifiedNode)> {
+        let content = self.write_bytes(bytes).await?;
         let file = crate::authenticated_file::certify_new_index_file(
             self.store.clone(),
             self.grant.execution()?,
@@ -755,6 +766,28 @@ impl NativeGraph {
             physical_fingerprint: file.physical_fingerprint,
             incarnation: file.incarnation,
         })
+    }
+    /// An admitted producer file can be streamed only through its exact immutable
+    /// certificate/version and the same live Dataset grant.
+    pub(crate) async fn file_window(
+        &self,
+        certificate: &QualifiedNode,
+    ) -> Result<(SealedObject, crate::storage::ObjectReadWindow)> {
+        let proof = self.file_proof(certificate).await?;
+        let content = proof.certificate.content().clone();
+        let reader = Arc::new(
+            crate::authenticated_file::AuthenticatedFileReader::from_qualified_file(
+                self.store.clone(),
+                QualifiedFile::from_producer_graph(proof)?,
+            )?,
+        );
+        let window = crate::storage::ObjectReadWindow::new(
+            content.object.clone(),
+            reader,
+            self.grant.execution()?,
+            self.cancel.clone(),
+        );
+        Ok((content, window))
     }
     pub async fn register_task_root(&self, node: &QualifiedNode) -> Result<()> {
         self.check_node(node)?;

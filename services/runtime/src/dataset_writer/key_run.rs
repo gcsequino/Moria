@@ -27,7 +27,13 @@ pub struct Locator {
     pub data_sequence: u64,
     pub row_hash: Option<[u8; 32]>,
 }
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(
+    rename_all = "camelCase",
+    tag = "kind",
+    content = "value",
+    deny_unknown_fields
+)]
 pub enum RunValue {
     Deleted,
     Hash([u8; 32]),

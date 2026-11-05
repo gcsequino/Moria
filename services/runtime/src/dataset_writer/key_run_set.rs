@@ -13,6 +13,8 @@ use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+pub(super) mod update;
+
 pub(crate) type RunCache = tokio::sync::Mutex<Option<(SealedObject, Arc<RunReader>)>>;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

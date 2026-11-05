@@ -202,6 +202,9 @@ pub(super) async fn expire(
     files = directory.apply(files.as_ref(), mutations).await?;
     let files = files.ok_or_else(|| anyhow::anyhow!("DATASET_GRAPH_INVALID"))?;
     let mut descriptor = snapshot.descriptor().clone();
+    // A metadata-only edge keeps the standard snapshot and indexes, not a previous
+    // mutation's revision-bound footprint. The original result root remains pinnable.
+    descriptor.mutation_footprint = None;
     descriptor.metadata = LogicalFile {
         name: metadata_name,
         content: metadata,
