@@ -320,13 +320,14 @@ BEGIN
   RETURN moria.native_serving_accepted_delegation(proof);
 END $$;
 
-CREATE FUNCTION moria.runtime_job_session_origin(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE s moria.runtime_job_sessions; e moria.runtime_executions; proof jsonb;
+CREATE FUNCTION moria.runtime_job_session_resolution(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE s moria.runtime_job_sessions; e moria.runtime_executions; proof jsonb; validated_state jsonb;
 BEGIN
   SELECT * INTO s FROM moria.runtime_job_sessions WHERE token_hash=private_hash;
   IF NOT FOUND THEN
     IF to_regprocedure('moria.runtime_indexing_job_session_origin(text)') IS NOT NULL THEN
-      RETURN moria.runtime_indexing_job_session_origin(private_hash);
+      proof:=moria.runtime_indexing_job_session_origin(private_hash);
+      IF proof IS NOT NULL THEN RETURN jsonb_build_object('origin',proof); END IF;
     END IF;
     RETURN NULL;
   END IF;
@@ -352,13 +353,19 @@ BEGIN
     'acceptedMarkings',to_jsonb(d.accepted_markings)) INTO proof FROM moria.runtime_job_delegations d WHERE d.execution=e.id;
   IF NOT FOUND THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
   BEGIN
-    PERFORM moria.runtime_execution_check(e.id);
+    validated_state:=moria.runtime_execution_check_state(e.id);
   EXCEPTION WHEN raise_exception THEN
     -- Keep purpose revocation ahead of execution epoch errors on denied credentials.
     PERFORM moria.runtime_job_delegation_guard(e.id);
     RAISE;
   END;
-  RETURN proof;
+  IF validated_state IS NULL THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
+  RETURN jsonb_build_object('origin',proof,'validatedState',validated_state);
+END $$;
+
+CREATE FUNCTION moria.runtime_job_session_origin(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN moria.runtime_job_session_resolution(private_hash)->'origin';
 END $$;
 
 CREATE FUNCTION moria.runtime_job_delegation_accept(execution_id uuid) RETURNS void LANGUAGE plpgsql AS $$
