@@ -1505,6 +1505,59 @@ test(
         }
       },
     );
+    await t.test('unready roots leave two control workers available for actual cases', async () => {
+      await db.pool.query(
+        'INSERT INTO moria.runtime_evaluation_environments(environment,application,maximum_cases,maximum_repeats,maximum_parallel) VALUES($1,$2,12,4,2) ON CONFLICT(environment) DO NOTHING',
+        [environment, application],
+      );
+      const previousWorker = evaluationWorker;
+      if (previousWorker?.child.exitCode === null) {
+        previousWorker.child.kill('SIGTERM');
+        await previousWorker.done;
+      }
+      const ids: string[] = [];
+      let worker: ReturnType<typeof start> | undefined;
+      try {
+        for (const key of ['concurrent-first', 'concurrent-second']) {
+          const accepted = await native('invoke', { resource: suite, key });
+          assert.equal(accepted.status, 'queued');
+          ids.push(accepted.id);
+        }
+        const activeWorker = start(['evaluations', 'worker'], undefined, {
+          MORIA_EVALUATION_CONCURRENCY: '2',
+        });
+        worker = activeWorker;
+        await until(async () => {
+          assert.equal(activeWorker.child.exitCode, null, activeWorker.error());
+          const { rows } = await db.pool.query(
+            "SELECT root.status,fixture.status AS fixture_status,EXISTS(SELECT 1 FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions child ON child.id=c.execution WHERE c.evaluation=root.id AND c.outcome IN ('pending','running') AND child.status IN ('queued','running','preparing')) AS has_unfinished_cases,EXISTS(SELECT 1 FROM moria.runtime_evaluation_cases c JOIN moria.runtime_job_delegations d ON d.execution=c.agent_execution AND d.parent_execution=c.execution WHERE c.evaluation=root.id) AS accepted_case_agent FROM moria.runtime_executions root JOIN moria.runtime_execution_tasks fixture ON fixture.execution=root.id WHERE root.id=ANY($1::uuid[])",
+            [ids],
+          );
+          assert.equal(rows.length, 2);
+          for (const row of rows) {
+            if (row.has_unfinished_cases) {
+              assert.equal(row.status, 'running', JSON.stringify(rows));
+            }
+          }
+          return (
+            rows.every((row) => row.fixture_status === 'sealed') &&
+            rows.some((row) => row.accepted_case_agent)
+          );
+        });
+      } finally {
+        try {
+          for (const id of ids) {
+            assert.deepEqual(await native('cancel', { id }), { id, cancelRequested: true });
+          }
+        } finally {
+          if (worker?.child.exitCode === null) {
+            worker.child.kill('SIGTERM');
+            await worker.done;
+          }
+          if (previousWorker) evaluationWorker = start(['evaluations', 'worker']);
+        }
+      }
+    });
     await t.test(
       'current clearance and registration protect retained case scores, summaries and events',
       async () => {
