@@ -1,0 +1,8 @@
+{
+  "services/ontology/src/indexer.ts": "3898c89f47023cd6762c851e7a2b32be3966bca4c93f7aa5af09fa8b20b63a75",
+  "services/snotel/src/service.ts": "67213b55e0c9ab0978ad9b0eb63950211be44674c19f0752543189e772619dcb",
+  "tests/fixtures/lineage-checks.ts": "7e3a0c6b390e156a22ed292d6822e452f6061f439ef34c3b99f5c186b34496eb",
+  "tests/fixtures/management-auth-checks.ts": "52b989f9f183df0710d91b93911ab9e7558abd4c9eb7f1226021d5b70550c5a4",
+  "tests/fixtures/auth-checks.ts": "a8e879e156ca484b8a8f381f50ff7d3c53d883a234d7ef09400b3aaaa5c2a80b",
+  "tests/sql.integration.test.ts": "5f982ebd4889eb0d223ce92bcbdcd0de399f1f96c80ef157a560de948ecd4c16"
+}

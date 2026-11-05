@@ -1,0 +1,29 @@
+{"controller": "moria-quality-16e15e87-398a-4d91-a384-5946f1ea3358", "image": "sha256:92310785ce9e98e5df7d3708c5a4a3602c9441a2b9905f98c61cf8c28fffa839", "scratchPools": ["/tmp/moria-engine-scratch-f5660460-da25-49a1-8698-2aeceb851ad7", "/tmp/moria-engine-scratch-9d957ea7-22e2-4b03-96c2-92e3d0ae2fde"], "temporary": "/tmp/moria-quality-t9b2e98x"}
+$ node scripts/test-files.mjs integration tests/functions.integration.test.ts
+Running 1 integration test files.
+▶ published TypeScript functions execute in real isolated containers with durable authorized outcomes
+  ✔ invalid native values fail before JSON can coerce them into nullable results (2212.201575ms)
+  ✔ versioned structured values remain exact through real function pipes and typed replay (2034.146225ms)
+  ✔ CLI invokes, inspects and cancels real containers through authenticated HTTP (11367.523055ms)
+  ✔ typed result, retained identity, ordered events and exact-key replay (912.912182ms)
+  ✔ malformed input never reserves a key, and code/output/protocol failures never publish results (17447.430672ms)
+  ✔ worker cannot access host credentials, root writes, daemon socket, external or host network (1354.159791ms)
+  ✔ real container OSDK reads retain current classifications and cannot bypass revocation (1005.928282ms)
+  ✔ generated ontology types hydrate references and await promised object/list results in real containers (2554.921904ms)
+  ✔ generated OSDK and raw platform transports run inside real containers (19727.34315ms)
+  ✔ real function containers compose through the platform API with bounded parent identity (2134.829624ms)
+  ✔ CPU, memory and process limits terminate or reject actual resource exhaustion (5311.756888ms)
+  ✔ competing identical invocations accept one attempt and redeployment cannot replace its result (913.697229ms)
+  ✔ cancellation persists, timeout kills code, and revoked authority blocks result access (2125.325935ms)
+  ✔ expired worker fences cannot publish or reexecute, and expired results retain their keys (1336.506883ms)
+  ✔ a killed supervisor is fenced and a replacement removes its surviving sandbox without rerunning code (18569.730919ms)
+  ✔ unknown artifact schemes fail without launching alternate host commands (0.2989ms)
+✔ published TypeScript functions execute in real isolated containers with durable authorized outcomes (92330.56253ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92889.429275

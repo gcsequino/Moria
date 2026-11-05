@@ -2929,3 +2929,22 @@ revocation. The caller needs exact logical operations without filesystem browsin
 retain the failed readback trial and exact artifact/fixture identities. Optional
 capabilities, other write modes, full HTTP/worker fault coverage and scale testing
 remain open; this is not complete N09 qualification.
+
+
+Function cancellation fixture checkpoint (2026-11-04): the real CLI/API test now
+checks the accepted cancellation control receipt and separately verifies terminal
+state through authenticated CLI wait, retaining actual Docker cleanup checks.
+The full file passed 17/17 with zero skips; all nine artifact checks, 79 native
+units and static checks passed. Evidence and the original failed expectation are
+under `production/evidence/2026-11-04/function-cancellation-control`.
+
+
+SQL provenance checkpoint (2026-11-04): external Snow imports preserve durable
+request/configuration/raw-pin audit without presenting audit field names as
+Dataset lineage. Fixed internal source-to-object pairs use current verified
+provenance admission. The legacy indexer checks current permissions/session
+before classification SQL and retains final publication checks. Reconciled
+rollback, lineage and independent browser-origin fixtures passed the full SQL
+file, 48/48 with zero skips, plus all nine artifacts, 79 native units and static
+checks. Original and interrupted failures are retained under
+`production/evidence/2026-11-04/sql-provenance-contracts`.
