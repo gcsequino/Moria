@@ -1,0 +1,54 @@
+error[E0433]: cannot find type `Arc` in this scope
+  --> src/dataset_writer/key_run_io.rs:98:22
+   |
+98 |     let descriptor = Arc::new(stored.descriptor);
+   |                      ^^^ use of undeclared type `Arc`
+   |
+help: consider importing one of these structs
+   |
+ 2 + use crate::dataset_writer::Arc;
+   |
+ 2 + use std::sync::Arc;
+   |
+
+
+error[E0277]: the size for values of type `[u8]` cannot be known at compilation time
+   --> src/dataset_writer/key_run_io.rs:115:21
+    |
+115 |                 let bytes = window.read(block.start..block.end).await?;
+    |                     ^^^^^ doesn't have a size known at compile-time
+    |
+    = help: the trait `Sized` is not implemented for `[u8]`
+    = note: all local variables must have a statically known size
+
+
+error[E0277]: the size for values of type `[u8]` cannot be known at compilation time
+   --> src/dataset_writer/key_run_io.rs:115:29
+    |
+115 |                 let bytes = window.read(block.start..block.end).await?;
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ doesn't have a size known at compile-time
+    |
+    = help: the trait `Sized` is not implemented for `[u8]`
+    = note: all local variables must have a statically known size
+
+
+error[E0277]: the size for values of type `[u8]` cannot be known at compilation time
+   --> src/dataset_writer/key_run_io.rs:115:70
+    |
+115 |                 let bytes = window.read(block.start..block.end).await?;
+    |                                                                      ^ doesn't have a size known at compile-time
+    |
+    = help: the trait `Sized` is not implemented for `[u8]`
+note: required by an implicit `Sized` bound in `ControlFlow`
+   --> /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/control_flow.rs:89:0
+
+
+error[E0277]: the size for values of type `[u8]` cannot be known at compilation time
+   --> src/dataset_writer/key_run_io.rs:115:29
+    |
+115 |                 let bytes = window.read(block.start..block.end).await?;
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ doesn't have a size known at compile-time
+    |
+    = help: the trait `Sized` is not implemented for `[u8]`
+note: required by an implicit `Sized` bound in `ControlFlow`
+   --> /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/control_flow.rs:89:0

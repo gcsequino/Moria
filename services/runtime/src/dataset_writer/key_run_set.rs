@@ -13,8 +13,7 @@ use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-mod update;
-pub(crate) use update::{BucketWrite, CompactionBudget, update_value};
+pub(super) mod update;
 
 pub(crate) type RunCache = tokio::sync::Mutex<Option<(SealedObject, Arc<RunReader>)>>;
 #[derive(Clone, Debug, Serialize, Deserialize)]

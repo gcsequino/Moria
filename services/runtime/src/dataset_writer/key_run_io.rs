@@ -8,6 +8,7 @@ use crate::{
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::sync::Arc;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -112,7 +113,7 @@ pub(crate) async fn producer_partition(
                 let Some(block) = blocks.next() else {
                     return Ok(None);
                 };
-                let bytes = window.read(block.start..block.end).await?;
+                let bytes: bytes::Bytes = window.read(block.start..block.end).await?;
                 let rows = decode_block(&descriptor, &block, &bytes)?;
                 Ok(Some((rows, (window, blocks))))
             }
