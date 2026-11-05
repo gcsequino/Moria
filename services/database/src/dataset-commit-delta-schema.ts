@@ -150,7 +150,8 @@ BEGIN
  THEN RAISE EXCEPTION 'DATASET_DELTA_PUBLICATION_REQUIRED';END IF;
  RETURN NEW;
 END $$;
-CREATE CONSTRAINT TRIGGER runtime_dataset_commit_edge_required AFTER INSERT OR UPDATE ON moria.dataset_heads
+-- Deferred checks fire in trigger-name order: preserve the head publication contract before requiring its journal edge.
+CREATE CONSTRAINT TRIGGER runtime_dataset_head_delta_required AFTER INSERT OR UPDATE ON moria.dataset_heads
  DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION moria.runtime_dataset_commit_edge_required();
 REVOKE ALL ON FUNCTION moria.runtime_dataset_commit_profile_check(text,text,jsonb) FROM PUBLIC;
 REVOKE ALL ON FUNCTION moria.runtime_dataset_commit_root_check(text,text,text,text,bigint) FROM PUBLIC;

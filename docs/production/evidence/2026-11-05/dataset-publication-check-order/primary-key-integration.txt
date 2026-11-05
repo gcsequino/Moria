@@ -1,0 +1,14 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-primary-key.integration.test.ts
+Running 1 integration test files.
+✔ declared Dataset keys constrain native replacement and every head publication (32947.705357ms)
+ℹ {"rows":64,"duplicateRejectedBeforeHead":true,"certificateCurrent":true,"rawHeadWithoutHistoryDenied":true}
+✔ composite declared keys preserve C03 scalar equality and exact boundary values (24063.57773ms)
+ℹ {"rows":3,"adjacentInt64BeyondSafeIntegerDistinct":true,"compositeOrdered":true,"decimalAndTimestampCanonicalDuplicatesDenied":true,"nullKeyDenied":true,"nullableNonKeyPreserved":true,"headAndTypedRowsPreserved":true}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57473.489531
