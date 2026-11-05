@@ -3158,3 +3158,23 @@ No v3 head or sparse mode is activated by these checks. Actual stage-bound
 preparation, root qualification/publication, Worker/attestation, recovery/pruning
 and runtime integration remain pending before activation. This is a bounded
 foundation checkpoint rather than completion of N09 or N18.
+
+V3 custody checkpoint (2026-11-05): trial039 qualifies two actual v3 published
+heads through backup, non-advancing expiry, exact source root-version collection
+and fresh-prefix restore. Capture, full byte/hash copy and post-copy validation
+use persisted receiver-qualified versions; an identical newer current version
+cannot replace them. A missing selected version yields the exact enumeration
+failure with no sealed capture or head change. Fresh restore qualifications,
+typed current/retained graph reads, journal root remapping, original successor
+policy/propagation behavior and dispatch-disabled failure cases are exercised.
+The original v2 sidecar custody regression uses the same exact image. Static
+checks and all 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-custody/summary.json).
+
+Production output selection remains unchanged. V3 expiry retains current
+standard metadata/history files until graph metadata pruning is implemented;
+it fabricates neither a revision nor a delta edge. A separately identified
+closed unpublished attached-candidate expiry/retirement origin mismatch remains
+pending a genuine prepare/cancel/GC regression. V3 reader integration, sparse
+position-delete writes, distributed bootstrap, incremental Source chains,
+production scale qualification and full independent CI remain required.

@@ -1,0 +1,13 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-retention.integration.test.ts
+Running 1 integration test files.
+✔ qualified v3 Catalog heads survive exact source collection and new-prefix recovery (86772.058745ms)
+ℹ {"phase":"backupPinnedVersionDespiteCurrentCopy","requests":[{"method":"GET","requestVersion":"43fcdbb0-e168-4b5e-8bd1-ef0e4df519fb","status":206,"responseVersion":"43fcdbb0-e168-4b5e-8bd1-ef0e4df519fb"},{"method":"GET","requestVersion":"43fcdbb0-e168-4b5e-8bd1-ef0e4df519fb","status":206,"responseVersion":"43fcdbb0-e168-4b5e-8bd1-ef0e4df519fb"},{"method":"GET","requestVersion":"43fcdbb0-e168-4b5e-8bd1-ef0e4df519fb","status":206,"responseVersion":"43fcdbb0-e168-4b5e-8bd1-ef0e4df519fb"}]}
+ℹ {"heads":2,"allGraphBytesBackedUp":true,"sourceGraphRootExactVersionRemoved":true,"nativeCatalogHead":true,"backupPinnedVersionDespiteNewCurrent":true,"currentStandardHistoryRetainedUntilPruning":true,"expiredNativeHeadRejected":true,"noFabricatedDeltaForNonAdvancingExpiry":true,"orphanGracePreserved":true,"freshPhysicalQualification":true,"independentTypedGraphReadback":true,"immutableReplacementJournalRestored":true,"journalRootsResolveFreshProviderVersions":true,"oldProducerReplayRejected":true,"incrementalReplayActivated":false,"successorPolicyDrainsOriginalWork":true,"pendingPropagationProtectsGraphObjects":true,"conflictingTargetVersionRejected":true,"reusedTargetRejected":true,"missingGraphBackupChildRejectedWithDispatchDisabled":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87254.384479

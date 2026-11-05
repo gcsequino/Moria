@@ -128,6 +128,19 @@ impl GraphReadContext {
         let claims = json!({"kind":"execution","basis":"stage","stage":stage,"session":grant.session().session_hash(),"execution":lease.execution,"task":lease.task,"owner":lease.owner,"fence":lease.fence,"incarnation":lease.incarnation,"warehouse":ns.warehouse_id,"table":ns.table_id,"revision":ns.revision});
         Self::open(grant.database().clone(), inner, claims, cancel).await
     }
+    /// Read only the real maintenance run's current expected head, without inventing an execution.
+    pub(crate) async fn maintenance(
+        inner: Arc<dyn ObjectReader>,
+        db: Database,
+        run: Uuid,
+        owner: Uuid,
+        fence: i64,
+        incarnation: Uuid,
+        cancel: Cancellation,
+    ) -> Result<(Self, ReadableNode)> {
+        let claims = json!({"kind":"maintenance","basis":"expectedHead","run":run,"owner":owner,"fence":fence.to_string(),"incarnation":incarnation});
+        Self::open(db, inner, claims, cancel).await
+    }
     /// Uses the exact immutable source revision/snapshot/root of a real live indexing build.
     pub async fn indexing(
         inner: Arc<dyn ObjectReader>,

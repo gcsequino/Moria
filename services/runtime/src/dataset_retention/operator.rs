@@ -212,19 +212,27 @@ pub(super) async fn approve(db: &Database, input: Approval) -> Result<Value> {
     let head: i64 = binding.get("head_revision");
     let mut after = 0i64;
     loop {
-        let rows=client.query("SELECT h.revision,r.key,l.physical_fingerprint,r.reader_profile,l.sealed FROM moria.snapshot_history h LEFT JOIN moria.runtime_dataset_roots r ON r.key=moria.runtime_dataset_root_key(h.metadata_location) LEFT JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.physical_fingerprint=$5 AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=r.key WHERE h.environment=$1 AND h.dataset=$2 AND h.revision>$3 AND h.revision<=$4 AND e.root IS NULL ORDER BY h.revision LIMIT 256",&[&input.environment,&dataset,&after,&head,&physical]).await?;
+        let rows=client.query("SELECT h.revision,h.metadata_location,r.key,r.root,r.sealed AS root_sealed,l.physical_fingerprint,r.reader_profile,l.sealed FROM moria.snapshot_history h LEFT JOIN moria.runtime_dataset_roots r ON r.key=moria.runtime_dataset_root_key(h.metadata_location) AND r.environment=h.environment AND r.dataset=h.dataset AND r.metadata_location=h.metadata_location LEFT JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.physical_fingerprint=$5 AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=r.key WHERE h.environment=$1 AND h.dataset=$2 AND h.revision>$3 AND h.revision<=$4 AND e.root IS NULL ORDER BY h.revision LIMIT 256",&[&input.environment,&dataset,&after,&head,&physical]).await?;
         if rows.is_empty() {
             break;
         }
         for row in &rows {
+            let reference = NativeSnapshotRef::decode(&row.get::<_, String>("metadata_location"))?;
+            let profile = match reference.version {
+                2 => "iceberg-v2-cow-flat-bounded-v2",
+                3 => crate::native_snapshot_v3::PROFILE,
+                _ => anyhow::bail!("GC_UNTRACKED_ROOT"),
+            };
             ensure!(
                 row.get::<_, Option<String>>("key").is_some()
+                    && row.get::<_, Option<Value>>("root")
+                        == Some(serde_json::to_value(&reference)?)
+                    && row.get::<_, Option<bool>>("root_sealed") == Some(true)
                     && row
                         .get::<_, Option<String>>("physical_fingerprint")
                         .as_deref()
                         == Some(&physical)
-                    && row.get::<_, Option<String>>("reader_profile").as_deref()
-                        == Some("iceberg-v2-cow-flat-bounded-v2")
+                    && row.get::<_, Option<String>>("reader_profile").as_deref() == Some(profile)
                     && row.get::<_, Option<bool>>("sealed") == Some(true),
                 "GC_UNTRACKED_ROOT"
             );
@@ -493,6 +501,30 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
         "GC_PROVIDER_CHANGED"
     );
     let old_ref = NativeSnapshotRef::decode(old_location)?;
+    if old_ref.version == 3 {
+        let (context, root) = crate::dataset_graph_read::GraphReadContext::maintenance(
+            store.clone(),
+            grant.db.clone(),
+            grant.id,
+            grant.owner,
+            grant.fence,
+            grant.incarnation,
+            grant.cancel.clone(),
+        )
+        .await?;
+        let snapshot = crate::native_snapshot_v3::NativeSnapshot::open(context, root).await?;
+        let schema: iceberg::spec::Schema =
+            serde_json::from_value(grant.state["icebergSchema"].clone())?;
+        ensure!(
+            snapshot.metadata().current_schema().as_ref() == &schema
+                && snapshot.metadata().uuid().to_string()
+                    == grant.state["tableUuid"].as_str().unwrap(),
+            "SCHEMA_CHANGED"
+        );
+        snapshot.check_current().await?;
+        // Expiry retires selected old roots. Current standard history stays retained until graph metadata pruning is qualified.
+        return commit_without_head(grant, input, &selected).await;
+    }
     let old_root = catalog::snapshot_root(
         store.as_ref(),
         grant.clone(),

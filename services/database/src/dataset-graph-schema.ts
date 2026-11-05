@@ -364,6 +364,15 @@ BEGIN
   ELSE RAISE EXCEPTION 'UNDECLARED_DATASET';END IF;
   IF history.dataset IS NULL THEN RAISE EXCEPTION 'INPUT_PIN_CHANGED';END IF;
   binding:=state->'datasetBinding';table_uuid:=state->>'icebergUuid';
+ ELSIF claims->>'kind'='maintenance' THEN
+  IF claims->>'basis' IS DISTINCT FROM 'expectedHead' THEN RAISE EXCEPTION 'UNDECLARED_DATASET';END IF;
+  state:=moria.runtime_dataset_maintenance_check((claims->>'run')::uuid,(claims->>'owner')::uuid,(claims->>'fence')::bigint,(claims->>'incarnation')::uuid);
+  env:=state->>'environment';resource_id:=state->>'dataset';instance_inc:=(claims->>'incarnation')::uuid;
+  SELECT h.* INTO history FROM moria.snapshot_history h JOIN moria.dataset_heads current_head USING(environment,dataset,revision)
+   WHERE h.environment=env AND h.dataset=resource_id AND h.revision::text=state->>'expectedRevision' AND h.metadata_location=state->>'oldMetadata';
+  IF NOT FOUND THEN RAISE EXCEPTION 'HEAD_CONFLICT';END IF;
+  binding:=moria.runtime_dataset_binding(env,resource_id,state->'namespace'->>'warehouseId',state->'namespace'->>'tableId',state->'namespace'->>'revision');
+  table_uuid:=state->>'tableUuid';
  ELSIF claims->>'kind'='indexing' THEN
   PERFORM moria.native_storage_check((claims->>'build')::uuid,(claims->>'task')::uuid,(claims->>'owner')::uuid,(claims->>'fence')::bigint,claims->>'warehouse',claims->>'table',claims->>'revision',false);
   SELECT * INTO build FROM moria.indexing_builds WHERE id=(claims->>'build')::uuid;

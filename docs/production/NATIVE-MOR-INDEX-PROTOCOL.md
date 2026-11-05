@@ -284,3 +284,38 @@ Production output selection remains unchanged while actual v3 custody,
 pruning and remaining reader integrations are qualified. This checkpoint does
 not certify position deletes, sparse writes, distributed bootstrap, incremental
 Source consumption or production throughput.
+
+## V3 custody and non-advancing expiry
+
+V3 backup starts only from the actual retained Catalog root, its matching stored
+reader profile and exact receiver qualification. Its durable bounded graph walk
+copies every reachable node once and records each original immutable provider
+version. A newer current provider version does not substitute for the selected
+receipt version. Restore must derive fresh root and descendant qualifications
+from actual copied bytes, the target mapping and new incarnation before enabling
+dispatch. V2 flat closure capture remains separate.
+
+A maintenance read derives only the actual run's current expected head, owner,
+fence and incarnation. It does not issue an execution or accept a supplied root
+as authority. The initial v3 expiry path retires selected expired Catalog roots
+without changing the current head. Current standard metadata and its historical
+file references remain retained. Such an operation has no Dataset revision or
+commit-delta edge; headChanged is false. This is not metadata pruning or row-file
+compaction. V3 graph metadata pruning remains a required gate before production
+output activation.
+
+Trial039 qualifies actual v3 backup, non-advancing expiry, exact source root
+version collection and fresh-prefix restore under the original 300-second root.
+A request trace proves capture, full copy and final revalidation all use the
+qualified old version despite an identical newer current copy. Deleting that
+qualified version causes the exact enumeration failure and leaves capture
+unsealed; the newer copy is never substituted. The original v2 sidecar custody
+regression runs on the same nine-artifact image. See
+[evidence](evidence/2026-11-05/native-v3-custody/summary.json).
+
+The closed unpublished attached-candidate cleanup path has a separate pending
+lifecycle correction: private GC-plan expiry must not be interpreted as a
+published-history maintenance retirement. It requires a real prepared/cancelled
+producer regression before production activation. Sparse mutations, independent
+standard position-delete proof, distributed bootstrap and incremental Source
+chains remain unqualified.
