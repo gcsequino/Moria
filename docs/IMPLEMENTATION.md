@@ -23,6 +23,12 @@ and PyArrow. The full test passed in 130.970 seconds, including the empty
 replacement, retained snapshot, and journal checks. The native readback
 deadline stayed at 120 seconds.
 
+The native recovery suite passed all seven tests against isolated stores.
+The filesystem and S3-compatible clean-host restores verified multipart
+metadata, exact content, and keys before enabling dispatch. The lost pause
+acknowledgement test preserved fencing and reconciled the exact retry.
+An already-applied external effect stayed uncertain without repeat dispatch.
+
 Hosted Linux CI on the integrated revision remains required. Evaluation
 qualification and whole-instance browser testing are running locally.
 
