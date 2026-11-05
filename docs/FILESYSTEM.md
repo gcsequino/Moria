@@ -1,14 +1,8 @@
 # Platform filesystem
 
-**Status: complete for the agreed first release, accepted October 28.** Functional
-and adversarial verification passed the complete Linux gate with 449 runtime tests.
-Production capacity validation is a separate milestone; operating bounds and
-release exclusions are documented below.
-
 Moria stores its namespace, policies and immutable metadata history in PostgreSQL,
 and verified immutable file bytes in local storage or S3. Entries have stable
-UUIDs; paths are names, not identities. Schema version 3 requires a fresh development
-database. There is no migration or backfill of older instances.
+UUIDs; paths are names, not identities. Use the [database guide](DATABASE.md) for the current schema and initialization requirements.
 
 The filesystem organizes source, configuration and runtime resource placements.
 Dataset rows remain in Iceberg; ontology rows and overrides stay in their existing
@@ -16,11 +10,11 @@ stores. Secrets belong in external secret stores, never source files or dotfiles
 
 ## Namespace and types
 
-| Entry | Meaning |
-|---|---|
-| Directory | Named container, inherited policy and optional managed role. |
-| File | Immutable bytes behind a versioned head, size, SHA-256 digest and media type. |
-| Resource | Environment placement of a permanent logical resource UUID; its definition resolves from an active release. |
+| Entry     | Meaning                                                                                                     |
+| --------- | ----------------------------------------------------------------------------------------------------------- |
+| Directory | Named container, inherited policy and optional managed role.                                                |
+| File      | Immutable bytes behind a versioned head, size, SHA-256 digest and media type.                               |
+| Resource  | Environment placement of a permanent logical resource UUID; its definition resolves from an active release. |
 
 The canonical root contains `/system`, `/groups` and `/users`. Verified identities
 receive a private home at `/users/<instance-principal-id>`, with configuration,

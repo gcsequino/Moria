@@ -65,9 +65,8 @@ regressions passed 9/9 in immutable source `20261031T103716307840Z`, including
 external-script recovery retry without an inline/eval CSP exception. Provider,
 application and principal disable pulses permanently revoke old browser/workload
 credentials. The focused real IdP/queued-human-origin proof passed 3/3 in
-`native-browser/auth-revocation-20261031T091705Z`. Interactive React workflows are
-being checked against a disposable default native launcher; failed fixture
-trials are retained separately from product results.
+`native-browser/auth-revocation-20261031T091705Z`. The November 5 composed fixture passed its backend checks and timed out waiting
+for interactive browser verification. [Current evidence](../IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026)
 
 Ordinary scalar and typed single/multi-target overlay Actions now prepare under
 shared admission and recheck their complete observed footprint before short

@@ -2,13 +2,9 @@
 
 An open-source, self-hosted data and ontology platform. Named for a dwarven civilization of foundries: delve too greedily and too deep, and awaken a Balrog.
 
-**Status: runnable local asset workspace and management console; broader platform and production deployment remain unfinished.** The accepted design is in [docs/spec/README.md](docs/spec/README.md); current evidence and next steps are in [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
+The default Linux launcher runs the native management API, bundled React console and scheduler. Use [the local instance guide](apps/local/README.md) to start a fresh workspace and sign in. The [implementation checkpoint](docs/IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026) records which workflows passed and which release gates remain open.
 
-Run `pnpm start` after installing the development prerequisites below. Open the printed local URL to import CSV/JSON into Iceberg, browse assets with server-enforced administrator permissions, and save property overrides that survive refreshes and restarts. PostgreSQL starts automatically and persists with the warehouse in `.local/workspace/`. See the [local workspace guide](apps/local/README.md) for the complete walkthrough, input format, and boundaries.
-
-Implemented so far: validate/compile CLI, contextual policy checking, real PostgreSQL/Iceberg integration, transactional publication, permanent UIDs, versioned source/overlay storage, current security authority, protected point reads/actions, cursor storage and a local model gateway. A narrow workload HTTP server factory adds short-lived bearer sessions; human OIDC login is implemented for the bundled apps; production deployment is pending. Windows and non-root Linux tests cover process crashes, concurrency and authorization. Persistence/administration methods remain trusted internal interfaces. Performance evidence and remaining bottlenecks are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
-
-Default startup hosts management only. The bundled Snow/weather POC is retired; no domain warehouse, identities, keys, listeners or handlers are created. See the [retirement scope and coverage matrix](docs/production/SNOW-RETIREMENT.md). Historical domain build and test fixtures remain.
+Default startup hosts management only. The bundled Snow/weather application is retired. [Retirement scope](docs/production/SNOW-RETIREMENT.md)
 
 ## Development
 
@@ -27,17 +23,12 @@ the API. Its first supported input is copy-on-write Iceberg on shared POSIX stor
 [TypeScript functions](docs/FUNCTIONS.md) connect repository exports to private,
 versioned invocations through API/SDK/CLI and the Files console. An explicit
 function worker owns container execution; API processes do not control Docker.
-Docker is the current injected backend; Firecracker is the planned production backend.
-Implementation and local acceptance are complete, including real container tests
-and the full Linux quality gate. The Linux CI quality container receives the
-ephemeral runner's Docker socket for these tests; function sandboxes receive no socket.
+Docker is the current injected backend. Stronger production isolation remains part of the [sandbox contract](docs/production/contracts/sandbox.md).
 
 The [shared value model](docs/spec/core-contracts.md#c03--values-rows-and-schema-evolution)
 defines exact scalar encodings, stored scalar arrays, structured API/function
 envelopes, schema compatibility and versioned typed fingerprints. TypeScript and
 Python codecs share conformance cases; generated SDKs include runtime decoding.
-
-For a visual tour of the implemented components, read the [technical diagrams](docs/TECHNICAL-DIAGRAMS.md): architecture, protected queries, actions, Iceberg indexing, and object state.
 
 Linux is the supported development and target hosting OS. Use Node 24,
 pnpm 11.25.0, and Python 3.11. On Windows hosts, develop inside a Linux container
@@ -116,18 +107,7 @@ An actual OpenHands session remains a separate integration check.
 
 Start with one bounded task and submit a PR for human review. Do not supply live
 instance directories, production credentials, or merge/deployment authority.
-Hooks do not enforce GitHub permissions. Suggested next tasks, in dependency order:
-
-- PERF-01 slice: parse the versioned workload manifest and reject unsupported
-  capabilities explicitly; verify invalid profiles with deterministic fixtures.
-- PERF-01 slice: implement scheduled-arrival accounting with injected saturation
-  and timeouts; prove offered work is never silently omitted from results.
-- M1-01 slice: extract validated database configuration with redacted errors;
-  preserve the embedded development launcher and add external-DB regression tests.
-
-These are slices of issues #20 and #13, not permission to close either parent issue.
-Authorization, migrations, publication, retention, and recovery changes require
-review against their specific invariants before merge.
+Hooks do not enforce GitHub permissions. Use the [roadmap](https://github.com/gcsequino/Moria/issues/1) and [current checkpoint](docs/IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026) to choose a bounded issue. Authorization, migrations, publication, retention and recovery require review against their invariants before merge.
 
 ### Formatting
 
@@ -142,22 +122,22 @@ For Python, install the development formatter with
 Use the virtual environment's Python executable. The Go and Rust benchmark
 sources use `gofmt` and `cargo fmt --manifest-path benchmarks/ontology/rust/Cargo.toml`.
 
-Dataset format: Apache Iceberg with Parquet files. PostgreSQL is the planned transactional authority. Restricted views are terminal read resources and may back object types, but cannot be transform inputs. React applications and agents will share generated OSDK contracts.
+Dataset format: Apache Iceberg with Parquet files. PostgreSQL is the transactional authority. Restricted views are terminal read resources and may back object types, but cannot be transform inputs. React applications and agents use generated OSDK contracts.
 
 Licensed under Apache-2.0; see [LICENSE](LICENSE). Dependency/model licenses are separate. No third-party model, credential, dataset or binary is checked into this repository.
 
 Google sign-in for management: run `pnpm moria auth setup` and follow [the auth guide](docs/AUTH.md). `pnpm moria auth recover` provides temporary local access independently of Google.
 
-Management uses the same Google provider with explicit administrator invitations: `pnpm moria auth grant-admin --email "you@gmail.com"`. Register the additional port-3210 callback described in [the auth guide](docs/AUTH.md). `pnpm moria auth recover --app management` retains independent local recovery.
+Management uses the same Google provider with explicit administrator invitations: `pnpm moria auth grant-admin --email "you@gmail.com"`. Register the exact callback printed by `pnpm moria auth setup`. The native default uses port 3211. [Authentication guide](docs/AUTH.md) `pnpm moria auth recover --app management` retains independent local recovery.
 
 Public HTTPS deployment and restart instructions: [PUBLIC-HOSTING.md](docs/PUBLIC-HOSTING.md).
 
 Generate a typed, scoped client for hosted apps with the [OSDK workflow](docs/OSDK.md). Management and retained historical fixtures use it; `pnpm sdk:generate` updates their clients and `pnpm check` detects stale output.
 
-The management console now includes execution controls and lineage. See [administration](docs/ADMIN-CONSOLE.md), [trusted platform execution](docs/EXECUTION.md), and [data/workflow lineage](docs/LINEAGE.md). Workloads require explicit trusted server composition; operator CLI recovery remains available.
+The management console includes Files and Source, native resource forms, and runtime status. See [administration](docs/ADMIN-CONSOLE.md), [trusted platform execution](docs/EXECUTION.md), and the [native caller audit](docs/production/NATIVE-CALLER-AUDIT.md). Configure required workers explicitly.
 
 For custom-app development, see the runnable [Station Explorer starter](examples/station-explorer/README.md). For backup scope, an isolated restore drill and current relocation limitations, see [BACKUP-RESTORE.md](docs/BACKUP-RESTORE.md).
 
 ## Production roadmap
 
-The [production contract](docs/production/README.md) and [GitHub goal](https://github.com/gcsequino/Moria/issues/1) track the long-term portable deployment architecture. Proposed calibration targets are not production certifications. See the [source baseline record](docs/SOURCE-BASELINE.md) for this snapshot's scope and validation.
+The [production contract](docs/production/README.md) and [GitHub goal](https://github.com/gcsequino/Moria/issues/1) track the long-term portable deployment architecture. The approved workload targets and their evidence requirements are in the [workload contract](docs/production/WORKLOADS.md).

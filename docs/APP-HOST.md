@@ -39,32 +39,13 @@ Stable entry URLs redirect to `/releases/<version>/...` with path/query preserve
 
 Each custom app gets a separate origin, rather than sharing the management console's origin/session storage. Static delivery uses a restrictive CSP and does not allow service workers. Management uses shared OIDC/cookie authentication; see [AUTH.md](AUTH.md). Static shells remain publicly readable on loopback. Management also uses Google sessions with separate explicit admin invitations, retaining the independent local operator credential for CLI recovery. Separate ports do not isolate cookies; production deployments of untrusted apps need separate hostnames.
 
-## Management versus object APIs
+## Management and application authority
 
-The console uses a generated app-specific OSDK; see [OSDK.md](OSDK.md). Its endpoint bindings call:
+The native console uses the management runtime status and resource-specific
+routes. Each operation checks current app and principal authority. The native
+launcher can host an explicitly configured published application. The CLI
+static preview serves assets only. [Administration console](ADMIN-CONSOLE.md) ·
+[Native composition](production/NATIVE-INSTANCE-COMPOSITION.md)
 
-- `GET /api/management/v1/workspace`: readiness/status for an authenticated administrator.
-- `GET /api/management/v1/apps`: app inventory, gated by the current `instance:manage` grant and application scope.
-- `POST /api/management/v1/datasets/assets/import`: real Iceberg ingestion, gated by administrative and dataset-write permissions.
-- `/api/v1/objects/...` and `/api/v1/actions/...`: existing protected query/action service.
-
-`/local/status` and `/local/import` remain compatibility aliases. Being bundled does not confer a server-side grant. The Applications page is read-only; the CLI owns publishing, promotion and recovery. Human login is implemented for management through the shared auth host. Legacy management paths remain available to the authenticated local CLI. Complete management OpenAPI/client generation, deployed ownership, production TLS and general application release bindings remain future platform work.
-
-## Verification
-
-Tests cover two releases, deterministic publication, promotion, rollback, old asset URLs, SPA fallback, missing assets, traversal, tamper rejection, release/pointer recovery, busy locks, invalid imports and independent CLI bootstrap/recovery. The real PostgreSQL/Iceberg HTTP test also exercises management-route permissions, canonical import, authorization, persistent overrides and database restart. Windows browser QA covers the React edit and refresh flow and Applications inventory. Linux has not been revalidated for this checkpoint.
-
-## Scoped SNOTEL binding
-
-Default startup composes management only. Custom application hosting retains the
-trusted `createScopedAppServer` seam, shared browser authentication and explicit
-server-selected object bindings. Publishing a static artifact cannot register
-handlers or grant scopes. Generic `apps serve` remains static-only.
-
-`pnpm moria apps recover management` rebuilds the bundled console. Startup preserves
-existing promoted artifacts; after upgrading from the Snow composition, run this
-command explicitly to replace the old management UI. `apps recover snotel` fails
-because bundled Snow recovery is retired. Existing artifacts and data are retained.
-
-Stable routes serve the active HTML with no-store caching and a release-pinned
-asset base. Explicit release URLs remain available for pinned views.
+`pnpm moria apps recover management` rebuilds and promotes the bundled console.
+Explicit release URLs continue to serve their pinned assets. [Current verification](IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026)

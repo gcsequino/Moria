@@ -1107,7 +1107,7 @@ both bundled application builds and the starter hosting check passed. The cached
 test image's missing declared Black dependency was installed in the isolated test
 workspace before the successful run; no acceptance gate was disabled.
 
-For the current review summary, start with [the October 15 morning report](MORNING-REPORT-2026-10-15.md). The sections below preserve chronological checkpoints; later entries supersede earlier status and remaining-work notes.
+The sections below preserve dated checkpoints. For current integration status and open gates, see [the November 5 checkpoint](#native-integration-and-production-goals--november-5-2026).
 
 Current work is an internal prototype, not the completed first slice. Private remote: gcsequino/Moria. User authorized autonomous local development, WSL/Docker and local inference. No shared deployment or paid model use.
 

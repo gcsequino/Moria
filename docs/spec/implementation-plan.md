@@ -1,6 +1,6 @@
 # Implementation phases and acceptance plan
 
-Status: reviewed defaults accepted; D03 is finalized and Iceberg integration requires Phase 0 proof. No platform code has been implemented by this review package. Each phase ends in runnable evidence; earlier phases are internal milestones, not a launch with missing security. The full first slice requires all phases below.
+This plan records the original first-slice acceptance phases. D03 finalizes the restricted-view boundary. See the [implementation checkpoint](../IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026) for execution results. Each phase ends in runnable evidence; earlier phases are internal milestones, not a launch with missing security. The full first slice requires all phases below.
 
 ## Phase 0 — prove mechanisms and pin dependencies
 

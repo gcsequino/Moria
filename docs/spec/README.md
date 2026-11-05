@@ -2,7 +2,7 @@
 
 # Moria — implementation-readiness package
 
-Prepared October 14, 2026. Status: **reviewed defaults accepted, Iceberg adopted, restricted-view boundary finalized; no platform implementation yet**.
+The October 14 review established the first-slice contracts. Current implementation and acceptance results are tracked in the [implementation checkpoint](../IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026).
 
 This package turns the foundation into implementable contracts. It preserves the accepted scope in [reference/accepted-scope.md](reference/accepted-scope.md). The user accepted the unchallenged defaults, selected Iceberg, and named the project Moria. Restricted views are finalized as terminal data-consumption resources that cannot be used as transform inputs. This package replaces conflicting foundation v0.1 proposals; its implementation mechanisms still require runtime validation and are not claims about Palantir internals. The historical research pack remains evidence/background.
 
