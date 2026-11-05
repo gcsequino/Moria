@@ -2358,7 +2358,16 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                   },
                   body: JSON.stringify(input),
                 },
-              );
+              ).catch((error: unknown) => {
+                console.error(
+                  JSON.stringify({
+                    event: 'whole-instance-search-listener-failed',
+                    operation,
+                    process: browserManagement.diagnostics(),
+                  }),
+                );
+                throw error;
+              });
               assert.equal(response.status, 200, await response.clone().text());
               return response.json();
             };
