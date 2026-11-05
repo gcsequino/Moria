@@ -16,9 +16,15 @@ heads and accepted 64 outputs in 25.487 seconds against the original
 tests passed, including grouped publication, spill recovery, and revocation
 on replay. [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
 
-Hosted Linux CI on the integrated revision remains required. The Dataset v3
-and Evaluation timing fixes are under local qualification. Whole-instance
-browser and clean-host recovery tests are queued behind those gates.
+The Dataset v3 readback harness keeps four scalar checks in flight. Its
+isolated run compared all 64 keys with the batch result, verified the first
+row's digest, and checked all 64 typed rows independently through PyIceberg
+and PyArrow. The full test passed in 130.970 seconds, including the empty
+replacement, retained snapshot, and journal checks. The native readback
+deadline stayed at 120 seconds.
+
+Hosted Linux CI on the integrated revision remains required. Evaluation
+qualification and whole-instance browser testing are running locally.
 
 ## November 5 Agent publication identity reuse
 
@@ -3330,7 +3336,6 @@ pruned-current/retained fresh-prefix recovery and the existing recovery
 negatives. Evidence:
 [qualification](production/evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
 Production writer/sparse activation and production capacity remain unqualified.
-
 
 ## Source commit-window custody
 
