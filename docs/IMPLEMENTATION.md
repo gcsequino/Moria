@@ -22,6 +22,9 @@ row's digest, and checked all 64 typed rows independently through PyIceberg
 and PyArrow. The full test passed in 130.970 seconds, including the empty
 replacement, retained snapshot, and journal checks. The native readback
 deadline stayed at 120 seconds.
+The original graph bootstrap file also passed in 77.691 seconds against
+its 120-second deadline. It verified all 64 ordered array keys, nullable
+non-key data, and standard Iceberg readback of the retained head.
 
 The native recovery suite passed all seven tests against isolated stores.
 The filesystem and S3-compatible clean-host restores verified multipart
