@@ -16,6 +16,7 @@ use std::{
     collections::BTreeMap,
     io::{BufRead, Write},
     sync::Arc,
+    time::Duration,
 };
 use uuid::Uuid;
 mod capacity;
@@ -409,20 +410,43 @@ async fn run() -> Result<()> {
         fixture.registered_host.is_some() == fixture.registered_owner.is_some(),
         "Incomplete registered worker fixture"
     );
-    let task = match (fixture.registered_host, fixture.registered_owner) {
-        (Some(host), Some(owner)) => {
-            execution
-                .claim_registered(owner, host, &[Domain::Sync], false, Some(id))
-                .await?
+    let registered = fixture.registered_host.zip(fixture.registered_owner);
+    let claim = |publication| {
+        let execution = &execution;
+        async move {
+            tokio::time::timeout(Duration::from_secs(5), async {
+                // Other live workers can briefly hold the same resource-class lock.
+                loop {
+                    let claim = match registered {
+                        Some((host, owner)) => {
+                            execution
+                                .claim_registered(
+                                    owner,
+                                    host,
+                                    &[Domain::Sync],
+                                    publication,
+                                    Some(id),
+                                )
+                                .await?
+                        }
+                        None => {
+                            execution
+                                .claim(Uuid::new_v4(), &[Domain::Sync], publication)
+                                .await?
+                        }
+                    };
+                    if let Some(claim) = claim {
+                        ensure!(claim.lease.execution == id);
+                        return Ok(claim);
+                    }
+                    tokio::time::sleep(Duration::from_millis(50)).await;
+                }
+            })
+            .await
+            .context("FIXTURE_CLAIM_TIMEOUT")?
         }
-        _ => {
-            execution
-                .claim(Uuid::new_v4(), &[Domain::Sync], false)
-                .await?
-        }
-    }
-    .unwrap();
-    ensure!(task.lease.execution == id);
+    };
+    let task = claim(false).await?;
     let session = match fixture.registered_host {
         Some(host) => moria_runtime::execution::job_session(&db, &task.lease, host).await?,
         None => session,
@@ -441,21 +465,9 @@ async fn run() -> Result<()> {
             execution
                 .seal(&task.lease, json!({"complete":true}), &"b".repeat(64))
                 .await?;
-            let coordinator = match (fixture.registered_host, fixture.registered_owner) {
-                (Some(host), Some(owner)) => {
-                    execution
-                        .claim_registered(owner, host, &[Domain::Sync], true, Some(id))
-                        .await?
-                }
-                _ => {
-                    execution
-                        .claim(Uuid::new_v4(), &[Domain::Sync], true)
-                        .await?
-                }
-            }
-            .ok_or_else(|| anyhow::anyhow!("FIXTURE_COORDINATOR_REQUIRED"))?;
+            let coordinator = claim(true).await?;
             ensure!(
-                coordinator.lease.execution == id && coordinator.lease.task.is_none(),
+                coordinator.lease.task.is_none(),
                 "FIXTURE_COORDINATOR_REQUIRED"
             );
             let coordinator_session = match fixture.registered_host {
