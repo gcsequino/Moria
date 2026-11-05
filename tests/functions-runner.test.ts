@@ -31,6 +31,7 @@ test(
       child.once('close', resolve);
     });
     const messages: any[] = [];
+    const nonce = '00000000-0000-4000-8000-000000000001';
     let errors = '';
     child.stderr.on('data', (chunk) => {
       errors += String(chunk);
@@ -48,7 +49,7 @@ test(
           }) + '\n',
         );
       if (message.type === 'result')
-        child.stdin.write(JSON.stringify({ version: 1, type: 'complete' }) + '\n');
+        child.stdin.write(JSON.stringify({ version: 1, type: 'complete', nonce }) + '\n');
     });
     child.stdin.write(
       JSON.stringify({
@@ -64,11 +65,54 @@ test(
     assert.equal(await closed, 0, errors);
     assert.deepEqual(
       messages.map((message) => message.type),
-      ['log', 'osdk', 'result'],
+      ['log', 'osdk', 'result', 'completed'],
     );
     assert.ok(messages.every((message) => message.version === 1));
-    assert.deepEqual(messages.at(-1).value, { value: 42 });
+    assert.deepEqual(messages[2].value, { value: 42 });
+    assert.deepEqual(messages[3], { version: 1, type: 'completed', nonce });
     assert.equal(messages[1].path, '/api/v1/objects/records/record');
     assert.equal(messages[1].input, null);
+    await t.test(
+      'completion requires an exact valid challenge before a flushed acknowledgement',
+      async () => {
+        const simple = join(directory, 'simple.ts');
+        await writeFile(simple, 'export default () => ({value:1});');
+        for (const completion of [
+          { version: 1, type: 'complete' },
+          { version: 1, type: 'complete', nonce: 'not-a-uuid' },
+          { version: 1, type: 'complete', nonce: true },
+          { version: 1, type: 'complete', nonce, extra: true },
+        ]) {
+          const invalid = spawn(process.execPath, [join(runtime, 'runner.mjs'), simple], {
+            stdio: ['pipe', 'pipe', 'pipe'],
+          });
+          t.after(() => invalid.kill('SIGKILL'));
+          const exit = new Promise<number | null>((resolve, reject) => {
+            invalid.once('error', reject);
+            invalid.once('close', resolve);
+          });
+          const output: any[] = [];
+          invalid.stderr.resume();
+          createInterface({ input: invalid.stdout }).on('line', (line) => {
+            const message = JSON.parse(line);
+            output.push(message);
+            if (message.type === 'result') invalid.stdin.write(JSON.stringify(completion) + '\n');
+          });
+          invalid.stdin.write(
+            JSON.stringify({
+              version: 1,
+              type: 'start',
+              valueVersion: 1,
+              invocationId: 'invalid-completion',
+              input: {},
+              inputs: {},
+              outputs: { value: { type: 'float64', nullable: false } },
+            }) + '\n',
+          );
+          assert.notEqual(await exit, 0);
+          assert.equal(output.filter((message) => message.type === 'completed').length, 0);
+        }
+      },
+    );
   },
 );

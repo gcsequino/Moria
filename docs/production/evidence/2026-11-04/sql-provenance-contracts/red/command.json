@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "600s",
+  "python3",
+  "/home/gcseq/moria-proofs/baseline-contract-reconciliation-20261104/trial001/source/deploy/test/run-quality.py",
+  "sha256:aaa70d92633735539673bbd9e30c0348251888c36c5a35f06e6d4b9a7b6964ac",
+  "pnpm",
+  "test:integration",
+  "tests/sql.integration.test.ts"
+]

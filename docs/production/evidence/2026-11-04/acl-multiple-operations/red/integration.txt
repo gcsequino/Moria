@@ -1,0 +1,56 @@
+{"controller": "moria-quality-844eebf4-8409-49c5-8712-486122095b79", "image": "sha256:a7d89bc0918adfc4d9bd5429121c26269e425bc2b0e95dc7e76320897ed59114", "scratchPools": ["/tmp/moria-engine-scratch-3a1483f2-0166-4b11-81e2-50fb67cadd3f", "/tmp/moria-engine-scratch-c57d0187-a5f4-4b3e-ac43-413bf3c017d6"], "temporary": "/tmp/moria-quality-_xoen8sh"}
+$ node scripts/test-files.mjs integration tests/filesystem-source.integration.test.ts
+Running 1 integration test files.
+▶ managed source roots checkout, publish, plan and activate coherent definitions
+  ✔ ACL graph duplicates and cycles retain live markings and denies (189.068489ms)
+  ✔ registered roots preserve metadata dotfiles and allocate stable exported resource identities (948.869438ms)
+  ✔ sibling roots are independent and duplicate/nested source registration is rejected (713.094812ms)
+  ✔ plans bind release, principal, current policy and expected active revision (306.387475ms)
+  ✔ missing declarations are retained until explicit dependency-checked deletion (517.45041ms)
+  ✖ mixed-operation data access shares geometry without sharing authority across calls (2666.939731ms)
+  ✔ repeated Source history keeps current classification checks authoritative (5141.954441ms)
+  ✔ replacement retains future restrictions on its original source (1625.960547ms)
+{"event":"source_declaration_same_call_counters","requests":2,"scalar":[{"funcname":"native_filesystem_acl_targets_state","calls":2,"self_time":41.679},{"funcname":"native_serving_session","calls":2,"self_time":0.136}],"batch":[{"funcname":"native_filesystem_acl_targets_state","calls":1,"self_time":6.936},{"funcname":"native_serving_session","calls":1,"self_time":0.007}],"scope":"actual metadata checks only; no model inference timing attribution"}
+  ✔ fresh replacement uses live declaration files while pinned historical files remain protected (3051.448907ms)
+  ✔ omitted definitions retain future restrictions on their declaration directory (2644.217939ms)
+  ✔ activation respects a resource-level publish deny (4752.62957ms)
+  ✔ activation respects a resource-level delete deny (4380.736026ms)
+  ✔ identical namespaces in independent projects activate without identity collisions (6053.109347ms)
+  ✔ pinned cross-project inputs retain their owning project classifications (4883.781306ms)
+  ✔ identical imported names from different projects require explicit disambiguation (1594.233227ms)
+  ✔ active transitive dependencies prevent retirement, and retired consumers release that protection (5817.275269ms)
+  ✔ same-project pinned source dependencies remain usable (1497.542621ms)
+  ✔ cross-project transform outputs require active writable placements and inherit producer restrictions (7128.237476ms)
+  ✔ code repositories publish CI export manifests without loading source modules (2225.777134ms)
+✖ managed source roots checkout, publish, plan and activate coherent definitions (58664.025626ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 18
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 59152.293473
+
+✖ failing tests:
+
+test at tests/filesystem-source.integration.test.ts:1:13017
+✖ mixed-operation data access shares geometry without sharing authority across calls (2666.939731ms)
+  AssertionError [ERR_ASSERTION]: Each current origin graph is traversed once for all requested operations
+
+  3 !== 1
+
+      at TestContext.<anonymous> (/app/tests/filesystem-source.integration.test.ts:521:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/filesystem-source.integration.test.ts:435:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

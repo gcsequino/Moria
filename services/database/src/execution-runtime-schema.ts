@@ -104,7 +104,7 @@ BEGIN
 END $$;
 
 CREATE FUNCTION moria.runtime_binding_authority(binding_id uuid, environment_epoch bigint, instance_epoch bigint, execution_proof uuid DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $$
-DECLARE b moria.runtime_execution_bindings; p record; valid boolean; delegated jsonb;
+DECLARE b moria.runtime_execution_bindings; p record; valid boolean; delegated jsonb; purpose_delegated boolean;
 BEGIN
   SELECT * INTO b FROM moria.runtime_execution_bindings WHERE id=binding_id;
   IF NOT FOUND OR NOT b.enabled THEN RAISE EXCEPTION 'BINDING_CHANGED'; END IF;
@@ -123,10 +123,18 @@ BEGIN
     OR (p.kind='human' AND p.synced_at<=clock_timestamp()-interval '60 seconds')
     OR NOT b.operations<@p.scopes OR NOT b.operations<@p.grants OR NOT b.markings<@p.markings
     THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
-  IF b.context->>'automationFiring' IS NOT NULL THEN PERFORM moria.runtime_automation_binding_guard(b.id); END IF;
-  IF b.context->>'evaluationCase' IS NOT NULL THEN PERFORM moria.runtime_evaluation_service_binding_guard(b.id); END IF;
-  IF b.context->>'serviceParentExecution' IS NOT NULL THEN PERFORM moria.runtime_sandbox_service_child_binding_guard(b.id); END IF;
+  purpose_delegated:=execution_proof IS NOT NULL AND EXISTS(
+    SELECT 1 FROM moria.runtime_executions e JOIN moria.runtime_job_delegations d ON d.execution=e.id
+    WHERE e.id=execution_proof AND e.binding=b.id AND e.context=b.context
+      AND d.origin_kind='service' AND d.origin_binding=b.id
+      AND ROW(d.environment,d.principal,d.application)=ROW(b.environment,b.context->>'principal',b.context->>'application'));
+  IF NOT purpose_delegated THEN
+    IF b.context->>'automationFiring' IS NOT NULL THEN PERFORM moria.runtime_automation_binding_guard(b.id); END IF;
+    IF b.context->>'evaluationCase' IS NOT NULL THEN PERFORM moria.runtime_evaluation_service_binding_guard(b.id); END IF;
+    IF b.context->>'serviceParentExecution' IS NOT NULL THEN PERFORM moria.runtime_sandbox_service_child_binding_guard(b.id); END IF;
+  END IF;
   IF execution_proof IS NOT NULL THEN
+    BEGIN
       IF NOT EXISTS(SELECT 1 FROM moria.runtime_executions e JOIN moria.runtime_job_delegations d ON d.execution=e.id
         WHERE e.id=execution_proof AND e.binding=b.id AND e.context=b.context
           AND ROW(d.environment,d.principal,d.application)=ROW(b.environment,b.context->>'principal',b.context->>'application'))
@@ -137,6 +145,15 @@ BEGIN
         OR NOT to_jsonb(b.operations)<@(delegated->'identity'->'grantedOperations')
         OR NOT to_jsonb(b.operations)<@(delegated->'identity'->'applicationScopes')
         OR NOT to_jsonb(b.markings)<@(delegated->'identity'->'markings') THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
+    EXCEPTION WHEN raise_exception THEN
+      -- Preserve direct purpose error precedence while validating a successful delegation once.
+      IF purpose_delegated THEN
+        IF b.context->>'automationFiring' IS NOT NULL THEN PERFORM moria.runtime_automation_binding_guard(b.id); END IF;
+        IF b.context->>'evaluationCase' IS NOT NULL THEN PERFORM moria.runtime_evaluation_service_binding_guard(b.id); END IF;
+        IF b.context->>'serviceParentExecution' IS NOT NULL THEN PERFORM moria.runtime_sandbox_service_child_binding_guard(b.id); END IF;
+      END IF;
+      RAISE;
+    END;
   ELSIF b.context->>'sessionHash' IS NOT NULL THEN
     SELECT EXISTS(SELECT 1 FROM moria.workload_sessions s WHERE s.token_hash=b.context->>'sessionHash'
       AND s.environment=b.environment AND s.principal=b.context->>'principal' AND s.application=b.context->>'application'

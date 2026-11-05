@@ -185,6 +185,41 @@ BEGIN
  END LOOP;
  RETURN state;
 END $$;
+-- A controller resumes identity only; retained child data stays behind its ordinary release gate.
+CREATE FUNCTION moria.runtime_evaluation_agent_resume(private_hash text,case_execution_id uuid) RETURNS uuid
+ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+DECLARE state jsonb; selected record; accepted uuid;
+BEGIN
+ state:=moria.native_serving_session(private_hash);
+ SELECT c.*,r.agent_resource,r.agent_pin INTO selected FROM moria.runtime_evaluation_cases c
+   JOIN moria.runtime_evaluations r ON r.execution=c.evaluation
+   JOIN moria.runtime_executions e ON e.id=c.execution
+   JOIN moria.runtime_job_sessions credential ON credential.execution=e.id
+     AND credential.token_hash=private_hash AND credential.task IS NOT NULL
+   WHERE c.execution=case_execution_id AND e.status='running'
+     AND ROW(e.environment,e.principal,e.application)=ROW(state->>'environment',state->>'principal',state->>'application');
+ IF NOT FOUND THEN RAISE EXCEPTION 'EVALUATION_CASE_AUTHORITY'; END IF;
+ IF selected.agent_execution IS NULL THEN RETURN NULL; END IF;
+ SELECT e.id INTO accepted FROM moria.runtime_executions e
+   JOIN moria.runtime_agent_executions a ON a.execution=e.id
+   JOIN moria.runtime_execution_bindings b ON b.id=e.binding AND b.enabled
+   JOIN moria.runtime_job_delegations d ON d.execution=e.id AND d.parent_execution=case_execution_id
+   JOIN moria.indexing_instance incarnation ON incarnation.incarnation=b.incarnation
+   WHERE e.id=selected.agent_execution AND e.resource=selected.agent_resource AND e.spec->>'domain'='agent'
+     AND e.request_key='evaluation/'||case_execution_id::text||'/agent'
+     AND e.context->>'parentExecution'=case_execution_id::text AND e.input_hash=selected.input_hash
+     AND ROW(e.environment,e.principal,e.application)=ROW(state->>'environment',state->>'principal',state->>'application')
+     AND ROW(d.environment,d.principal,d.application)=ROW(e.environment,e.principal,e.application)
+     AND b.environment=e.environment AND b.resource=e.resource AND b.spec=e.spec AND b.context=e.context
+     AND ROW(a.entry_id::text,a.release,a.adapter_id::text,a.application_id::text,a.model_resource)
+       IS NOT DISTINCT FROM ROW(selected.agent_pin->>'entryId',selected.agent_pin->>'release',
+         selected.agent_pin->>'adapterId',selected.agent_pin->>'applicationId',selected.agent_pin->>'modelResource')
+     AND a.definition=selected.agent_pin->'definition' AND a.adapter_definition=selected.agent_pin->'adapterDefinition'
+     AND a.model_binding=selected.agent_pin->'modelBinding'
+     AND a.model_secret_approval IS NOT DISTINCT FROM NULLIF(selected.agent_pin->'modelSecretApproval','null'::jsonb);
+ IF NOT FOUND THEN RAISE EXCEPTION 'EVALUATION_PIN_INVALID'; END IF;
+ RETURN accepted;
+END $$;
 CREATE FUNCTION moria.runtime_evaluation_service_link_child() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE child moria.runtime_executions; changed integer;
 BEGIN

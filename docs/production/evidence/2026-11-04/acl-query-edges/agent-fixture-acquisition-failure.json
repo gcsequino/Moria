@@ -1,0 +1,6 @@
+{
+  "exitCode": 1,
+  "elapsedSeconds": 7.201657576999423,
+  "expectedControlledFailure": true,
+  "scope": "All three real Agent fixture roots acquire and migrate PostgreSQL, image acquisition fails before child/provider setup, then database cleanup permits process exit."
+}

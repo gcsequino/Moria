@@ -1,0 +1,7 @@
+{
+  "archiveSha256": "a07deaa45ffeaa41e1507772778d92ac0d0eabd37b3bcebd4ef283a3cf98b08f",
+  "manifestSha256": "1600fedc9f9a6116ed3515b0fc231ca54ac69ed98509f826f6b1e10ed297e102",
+  "nativeInputDigest": "481751a1e49e398ff5dea1ee62da57894536158445cc1fd1a3d42139808fdd6a",
+  "archive": "/home/gcseq/moria-proofs/exact-origin-purpose-native-20261105/source.tar.gz",
+  "manifest": "/home/gcseq/moria-proofs/exact-origin-purpose-native-20261105/source.tar.manifest.json"
+}

@@ -1,0 +1,61 @@
+{"controller": "moria-quality-9856d207-cd9e-4177-b56c-f6202da72a38", "image": "sha256:cf7935cb1ba46be73834bcc32307bf1d81695637f74f4b6d062be5c6eb0cc5d3", "scratchPools": ["/tmp/moria-engine-scratch-85615b0b-6d5c-4f02-b215-307e45c452b5", "/tmp/moria-engine-scratch-9e26a1fd-684c-4e77-b121-01325cfb4680"], "temporary": "/tmp/moria-quality-q4ot5cyt"}
+$ node scripts/test-files.mjs integration tests/filesystem-source.integration.test.ts
+Running 1 integration test files.
+▶ managed source roots checkout, publish, plan and activate coherent definitions
+  ✔ ACL graph duplicates and cycles retain live markings and denies (179.915647ms)
+  ✔ registered roots preserve metadata dotfiles and allocate stable exported resource identities (699.907008ms)
+  ✔ sibling roots are independent and duplicate/nested source registration is rejected (479.209121ms)
+  ✔ plans bind release, principal, current policy and expected active revision (261.721364ms)
+  ✔ missing declarations are retained until explicit dependency-checked deletion (397.176191ms)
+  ✖ mixed-operation data access shares geometry without sharing authority across calls (1798.576639ms)
+  ✔ repeated Source history keeps current classification checks authoritative (3391.068875ms)
+  ✔ replacement retains future restrictions on its original source (1384.770028ms)
+{"event":"source_declaration_same_call_counters","requests":2,"scalar":[{"funcname":"native_filesystem_acl_targets_state","calls":2,"self_time":0.089},{"funcname":"native_serving_session","calls":2,"self_time":0.069}],"batch":[{"funcname":"native_filesystem_acl_targets_state","calls":1,"self_time":0.004},{"funcname":"native_serving_session","calls":1,"self_time":0.005}],"scope":"actual metadata checks only; no model inference timing attribution"}
+  ✔ fresh replacement uses live declaration files while pinned historical files remain protected (2347.656755ms)
+  ✔ omitted definitions retain future restrictions on their declaration directory (1822.061042ms)
+  ✔ activation respects a resource-level publish deny (3369.82757ms)
+  ✔ activation respects a resource-level delete deny (3273.514793ms)
+  ✔ identical namespaces in independent projects activate without identity collisions (4466.050855ms)
+  ✔ pinned cross-project inputs retain their owning project classifications (4084.383569ms)
+  ✔ identical imported names from different projects require explicit disambiguation (1319.429984ms)
+  ✔ active transitive dependencies prevent retirement, and retired consumers release that protection (4559.975884ms)
+  ✔ same-project pinned source dependencies remain usable (1193.329529ms)
+  ✔ cross-project transform outputs require active writable placements and inherit producer restrictions (5807.965446ms)
+  ✔ code repositories publish CI export manifests without loading source modules (1870.811942ms)
+✖ managed source roots checkout, publish, plan and activate coherent definitions (44310.954028ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 18
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44767.860608
+
+✖ failing tests:
+
+test at tests/filesystem-source.integration.test.ts:1:13017
+✖ mixed-operation data access shares geometry without sharing authority across calls (1798.576639ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+  +   'publish',
+      'read',
+  +   'write'
+    ]
+
+      at TestContext.<anonymous> (/app/tests/filesystem-source.integration.test.ts:570:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/filesystem-source.integration.test.ts:435:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'publish', 'read', 'write' ],
+    expected: [ 'read' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

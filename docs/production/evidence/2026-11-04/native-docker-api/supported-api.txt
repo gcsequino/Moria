@@ -1,0 +1,10 @@
+HTTP/1.1 404 Not Found
+Api-Version: 1.48
+Content-Type: application/json
+Docker-Experimental: false
+Ostype: linux
+Server: Docker/28.0.4 (linux)
+Date: Thu, 05 Nov 2026 00:26:18 GMT
+Content-Length: 40
+
+{"message":"No such container: absent"}

@@ -1,0 +1,112 @@
+{"controller": "moria-quality-9b8f1397-5e5f-4b00-8435-9d775cf5b3d1", "image": "sha256:94a816350224911226821b9bb0231d96bc84d316024f9c5c2b8d00b8328eaf70", "scratchPools": ["/tmp/moria-engine-scratch-c14ec3e4-2f70-4feb-a9d2-a6a50995e21f", "/tmp/moria-engine-scratch-3b976e3a-3a10-4ee3-ae67-59ddea4b0ad5"], "temporary": "/tmp/moria-quality-77genfsa"}
+TAP version 13
+# Subtest: native Connector custody and checkpoint publication
+    # Subtest: every declared Secret needs exact operator custody and independent caller/service use before code
+    ok 1 - every declared Secret needs exact operator custody and independent caller/service use before code
+      ---
+      duration_ms: 1938.558246
+      type: 'test'
+      ...
+▶ native Connector custody and checkpoint publication
+  ✔ every declared Secret needs exact operator custody and independent caller/service use before code (1938.558246ms)
+    # Subtest: a missed approval disable/reenable pulse permanently fences an accepted window
+    ok 2 - a missed approval disable/reenable pulse permanently fences an accepted window
+      ---
+      duration_ms: 2633.36944
+      type: 'test'
+      ...
+  ✔ a missed approval disable/reenable pulse permanently fences an accepted window (2633.36944ms)
+    # Subtest: a Secret file denial fences a queued window without stopping its worker
+    ok 3 - a Secret file denial fences a queued window without stopping its worker
+      ---
+      duration_ms: 3681.770652
+      type: 'test'
+      ...
+  ✔ a Secret file denial fences a queued window without stopping its worker (3681.770652ms)
+    # Subtest: the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+    ok 4 - the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically
+      ---
+      duration_ms: 32025.319784
+      type: 'test'
+      ...
+  ✔ the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically (32025.319784ms)
+    # Subtest: a next window reuses its semantic cursor despite a new execution and head revision
+    ok 5 - a next window reuses its semantic cursor despite a new execution and head revision
+      ---
+      duration_ms: 42011.710342
+      type: 'test'
+      ...
+  ✔ a next window reuses its semantic cursor despite a new execution and head revision (42011.710342ms)
+    # Subtest: reflected material never reaches guest frames or observable events
+    ok 6 - reflected material never reaches guest frames or observable events
+      ---
+      duration_ms: 10121.964392
+      type: 'test'
+      ...
+  ✔ reflected material never reaches guest frames or observable events (10121.964392ms)
+    # Subtest: an upstream redirect never retries code or advances published state
+    ok 7 - an upstream redirect never retries code or advances published state
+      ---
+      duration_ms: 9105.974372
+      type: 'test'
+      ...
+  ✔ an upstream redirect never retries code or advances published state (9105.974372ms)
+    # Subtest: an upstream truncated never retries code or advances published state
+    ok 8 - an upstream truncated never retries code or advances published state
+      ---
+      duration_ms: 9504.841937
+      type: 'test'
+      ...
+  ✔ an upstream truncated never retries code or advances published state (9504.841937ms)
+    # Subtest: an upstream unavailable never retries code or advances published state
+    ok 9 - an upstream unavailable never retries code or advances published state
+      ---
+      duration_ms: 10460.843035
+      type: 'test'
+      ...
+  ✔ an upstream unavailable never retries code or advances published state (10460.843035ms)
+    # Subtest: an upstream oversized never retries code or advances published state
+    ok 10 - an upstream oversized never retries code or advances published state
+      ---
+      duration_ms: 13062.888425
+      type: 'test'
+      ...
+  ✔ an upstream oversized never retries code or advances published state (13062.888425ms)
+    # Subtest: an upstream timeout never retries code or advances published state
+    ok 11 - an upstream timeout never retries code or advances published state
+      ---
+      duration_ms: 40017.044184
+      type: 'test'
+      ...
+  ✔ an upstream timeout never retries code or advances published state (40017.044184ms)
+    # Subtest: revocation closes an in-flight Connector socket and preserves the prior head and cursor
+  ✔ revocation closes an in-flight Connector socket and preserves the prior head and cursor (8713.045912ms)
+    ok 12 - revocation closes an in-flight Connector socket and preserves the prior head and cursor
+      ---
+      duration_ms: 8713.045912
+      type: 'test'
+      ...
+    1..12
+ok 1 - native Connector custody and checkpoint publication
+✔ native Connector custody and checkpoint publication (218156.92127ms)
+  ---
+  duration_ms: 218156.92127
+  type: 'test'
+  ...
+1..1
+# tests 13
+ℹ tests 13
+# suites 0
+ℹ suites 0
+# pass 13
+ℹ pass 13
+# fail 0
+# cancelled 0
+ℹ fail 0
+ℹ cancelled 0
+# skipped 0
+ℹ skipped 0
+# todo 0
+ℹ todo 0
+# duration_ms 228405.064272
+ℹ duration_ms 228405.064272

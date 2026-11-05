@@ -1,0 +1,73 @@
+{"controller": "moria-quality-ed57db91-4832-409e-9423-3b41cf3de493", "image": "sha256:bce33d12abef8a3f85d9a6cff990eaa0f349bae3bdf55e1a36aa4df22b794660", "scratchPools": ["/tmp/moria-engine-scratch-19d4867a-f644-47d7-9920-8588a66d026a", "/tmp/moria-engine-scratch-547f371d-0957-43e2-a63f-37369a9d5819", "/tmp/moria-engine-scratch-ef7c49e2-c0ca-4b38-844a-b4a5c2a198b5"], "temporary": "/tmp/moria-quality-iqstmuge"}
+TAP version 13
+# {"event":"whole-instance-phase","phase":"plan"}
+{"event":"whole-instance-phase","phase":"plan"}
+# {"event":"whole-instance-phase","phase":"configure"}
+{"event":"whole-instance-phase","phase":"configure"}
+# {"event":"whole-instance-phase","phase":"chat-approval"}
+{"event":"whole-instance-phase","phase":"chat-approval"}
+# {"event":"whole-instance-phase","phase":"chat-probe"}
+{"event":"whole-instance-phase","phase":"chat-probe"}
+# {"event":"whole-instance-phase","phase":"embedding-approval"}
+{"event":"whole-instance-phase","phase":"embedding-approval"}
+# {"event":"whole-instance-phase","phase":"embedding-probe"}
+{"event":"whole-instance-phase","phase":"embedding-probe"}
+# {"event":"whole-instance-phase","phase":"logic-configure"}
+{"event":"whole-instance-phase","phase":"logic-configure"}
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    not ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 135125.501341
+      type: 'test'
+      location: '/app/tests/native-source-runtime.integration.test.ts:662:13'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      ...
+▶ native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ✖ action creation allocates once and enforces source attachment and required overrides (135125.501341ms)
+    1..1
+not ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 148197.586138
+  type: 'test'
+  location: '/app/tests/native-source-runtime.integration.test.ts:44:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+✖ native source composition requires explicit current Dataset/index authority and installs all bindings atomically (148197.586138ms)
+1..1
+# tests 2
+ℹ tests 2
+# suites 0
+ℹ suites 0
+# pass 0
+ℹ pass 0
+# fail 2
+ℹ fail 2
+# cancelled 0
+ℹ cancelled 0
+ℹ skipped 0
+# skipped 0
+# todo 0
+ℹ todo 0
+# duration_ms 148994.95116
+ℹ duration_ms 148994.95116
+
+✖ failing tests:
+
+test at tests/native-source-runtime.integration.test.ts:662:13
+✖ action creation allocates once and enforces source attachment and required overrides (135125.501341ms)
+  [TypeError [Error]: fetch failed] {
+    [cause]: Error: connect ECONNREFUSED 127.0.0.1:41107
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2083:16) {
+      errno: -111,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 41107
+    }
+  }

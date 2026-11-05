@@ -344,8 +344,20 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
   ELSIF e.status<>'preparing' OR e.owner IS DISTINCT FROM s.owner OR e.fence<>s.fence OR e.lease_until IS NULL OR e.lease_until<=clock_timestamp()
     THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
-  proof:=moria.runtime_job_delegation_guard(e.id);
-  PERFORM moria.runtime_execution_check(e.id);
+  -- Execution validation traverses the same immutable delegation before this payload is returned.
+  SELECT jsonb_build_object('execution',d.execution,'originKind',d.origin_kind,'originSessionHash',d.origin_session_hash,
+    'serviceAuthority',d.service_authority,'originBinding',d.origin_binding,
+    'environment',d.environment,'principal',d.principal,'application',d.application,
+    'acceptedGrants',to_jsonb(d.accepted_grants),'acceptedScopes',to_jsonb(d.accepted_scopes),
+    'acceptedMarkings',to_jsonb(d.accepted_markings)) INTO proof FROM moria.runtime_job_delegations d WHERE d.execution=e.id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
+  BEGIN
+    PERFORM moria.runtime_execution_check(e.id);
+  EXCEPTION WHEN raise_exception THEN
+    -- Keep purpose revocation ahead of execution epoch errors on denied credentials.
+    PERFORM moria.runtime_job_delegation_guard(e.id);
+    RAISE;
+  END;
   RETURN proof;
 END $$;
 
@@ -483,7 +495,7 @@ BEGIN
    OR binding.context->>'parentExecution' IS DISTINCT FROM binding.context->>'serviceParentExecution' THEN RAISE EXCEPTION 'SERVICE_PURPOSE_REVOKED'; END IF;
  SELECT * INTO selected FROM moria.runtime_execution_services s WHERE s.binding=binding_id;
  PERFORM moria.runtime_service_binding_guard(binding_id);
- SELECT * INTO child FROM moria.runtime_executions WHERE binding=binding_id;
+ SELECT e.* INTO child FROM moria.runtime_executions e WHERE e.binding=binding_id;
  IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM moria.runtime_job_delegations WHERE execution=child.id) THEN
    proof:=moria.runtime_sandbox_service_child_metadata(binding.context->>'serviceParentHash',binding.resource);
    IF proof IS NULL OR ROW(proof->>'parent',proof->>'task',proof->>'owner',proof->>'fence',proof->>'incarnation',proof->>'authority',proof->>'revision')

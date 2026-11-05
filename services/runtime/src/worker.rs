@@ -126,6 +126,68 @@ fn planning_phase(error: &anyhow::Error) -> Option<&'static str> {
 }
 
 impl Worker {
+    async fn admit_candidate(
+        tx: &tokio_postgres::Transaction<'_>,
+        build: Uuid,
+        unit: Uuid,
+        owner: Option<Uuid>,
+        fence: i64,
+    ) -> Result<bool> {
+        // The selected candidate remains locked across a failed authority check.
+        tx.batch_execute("SAVEPOINT indexing_candidate_admission")
+            .await?;
+        match tx
+            .query_one("SELECT moria.indexing_check($1)", &[&build])
+            .await
+        {
+            Ok(_) => {
+                tx.batch_execute("RELEASE SAVEPOINT indexing_candidate_admission")
+                    .await?;
+                Ok(true)
+            }
+            Err(error) => {
+                let rejection = error
+                    .as_db_error()
+                    .filter(|error| error.code().code() == "P0001")
+                    .and_then(|error| {
+                        [
+                            "AUTHORIZATION_CHANGED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "BINDING_CHANGED",
+                            "INCARNATION_CHANGED",
+                            "BUILD_INACTIVE",
+                            "MARKING_DOWNGRADE",
+                            "INDEXING_ACCEPTANCE_REQUIRED",
+                            "INDEXING_DELEGATION_INACTIVE",
+                            "INDEXING_AUTHORITY_CHANGED",
+                            "DATASET_UNKNOWN",
+                            "DATASET_BINDING_CHANGED",
+                            "WHOLE_DATASET_REQUIRED",
+                            "JOB_DELEGATION_INACTIVE",
+                            "SERVICE_PURPOSE_REVOKED",
+                        ]
+                        .into_iter()
+                        .find(|code| *code == error.message())
+                    });
+                let Some(code) = rejection else {
+                    return Err(error.into());
+                };
+                tx.batch_execute("ROLLBACK TO SAVEPOINT indexing_candidate_admission; RELEASE SAVEPOINT indexing_candidate_admission").await?;
+                let failed = tx.execute("UPDATE moria.indexing_builds SET status='failed',error=$2 WHERE id=$1 AND status NOT IN ('active','failed','cancelled','superseded','conflicted')", &[&build, &code]).await?;
+                if failed == 1 {
+                    if let Some(owner) = owner {
+                        tx.execute("UPDATE moria.indexing_attempts SET outcome=$5,finished_at=clock_timestamp() WHERE build=$1 AND unit=$2 AND owner=$3 AND fence=$4 AND outcome='running'", &[&build, &unit, &owner, &fence, &code]).await?;
+                    }
+                    eprintln!(
+                        "{}",
+                        json!({"build":build,"error":code,"phase":"admission"})
+                    );
+                }
+                Ok(false)
+            }
+        }
+    }
     async fn audit_claim(
         &self,
         tx: &tokio_postgres::Transaction<'_>,
@@ -160,12 +222,21 @@ impl Worker {
     pub async fn plan(&self) -> Result<bool> {
         let mut client = self.db.get().await?;
         let transaction = client.transaction().await?;
-        let row=transaction.query_opt("SELECT id FROM moria.indexing_builds WHERE (status='pending' OR (status='planning' AND lease_until<=clock_timestamp())) AND moria.runtime_environment_cell_available(environment) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1",&[]).await?;
+        let row=transaction.query_opt("SELECT id,owner,fence FROM moria.indexing_builds WHERE (status='pending' OR (status='planning' AND lease_until<=clock_timestamp())) AND moria.runtime_environment_cell_available(environment) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1",&[]).await?;
         let Some(row) = row else { return Ok(false) };
         let build: Uuid = row.get(0);
-        transaction
-            .query_one("SELECT moria.indexing_check($1)", &[&build])
-            .await?;
+        if !Self::admit_candidate(
+            &transaction,
+            build,
+            build,
+            row.get("owner"),
+            row.get("fence"),
+        )
+        .await?
+        {
+            transaction.commit().await?;
+            return Ok(true);
+        }
         let row=transaction.query_one("UPDATE moria.indexing_builds SET status='planning',owner=$2,fence=fence+1,lease_until=clock_timestamp()+interval '30 seconds' WHERE id=$1 RETURNING *",&[&build,&self.owner]).await?;
         self.audit_claim(&transaction, build, build, "coordinator", row.get("fence"))
             .await?;
@@ -335,6 +406,11 @@ impl Worker {
             tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND status='planning' AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
             tx.query_one("SELECT moria.indexing_check($1)", &[&build])
                 .await?;
+            tx.query_one(
+                "SELECT moria.runtime_source_store_open($1,$2,$3)",
+                &[&build, &self.owner, &fence],
+            )
+            .await?;
             tx.execute("DELETE FROM moria.indexing_tasks WHERE build=$1", &[&build])
                 .await?;
             tx.commit().await?;
@@ -381,14 +457,21 @@ impl Worker {
     pub async fn task(&self) -> Result<bool> {
         let mut client = self.db.get().await?;
         let tx = client.transaction().await?;
-        let row=tx.query_opt("SELECT t.id FROM moria.indexing_tasks t JOIN moria.indexing_builds b ON b.id=t.build WHERE b.status='running' AND moria.runtime_environment_cell_available(b.environment) AND (t.plan->>'kind'='scan' OR NOT EXISTS(SELECT 1 FROM moria.indexing_tasks s WHERE s.build=t.build AND s.plan->>'kind'='scan' AND s.status<>'sealed')) AND (t.status='pending' OR (t.status='running' AND t.lease_until<=clock_timestamp())) ORDER BY b.created_at,t.ordinal FOR UPDATE OF t SKIP LOCKED LIMIT 1",&[]).await?;
+        let row=tx.query_opt("SELECT t.id,t.build,t.owner,t.fence FROM moria.indexing_tasks t JOIN moria.indexing_builds b ON b.id=t.build WHERE b.status='running' AND moria.runtime_environment_cell_available(b.environment) AND (t.plan->>'kind'='scan' OR NOT EXISTS(SELECT 1 FROM moria.indexing_tasks s WHERE s.build=t.build AND s.plan->>'kind'='scan' AND s.status<>'sealed')) AND (t.status='pending' OR (t.status='running' AND t.lease_until<=clock_timestamp())) ORDER BY b.created_at,t.ordinal FOR UPDATE OF t SKIP LOCKED LIMIT 1",&[]).await?;
         let Some(row) = row else { return Ok(false) };
         let task: Uuid = row.get(0);
-        tx.query_one(
-            "SELECT moria.indexing_check((SELECT build FROM moria.indexing_tasks WHERE id=$1))",
-            &[&task],
+        if !Self::admit_candidate(
+            &tx,
+            row.get("build"),
+            task,
+            row.get("owner"),
+            row.get("fence"),
         )
-        .await?;
+        .await?
+        {
+            tx.commit().await?;
+            return Ok(true);
+        }
         let row=tx.query_one("UPDATE moria.indexing_tasks SET status='running',owner=$2,fence=fence+1,lease_until=clock_timestamp()+interval '30 seconds' WHERE id=$1 RETURNING *",&[&task,&self.owner]).await?;
         self.audit_claim(&tx, row.get("build"), task, "task", row.get("fence"))
             .await?;
@@ -606,6 +689,7 @@ impl Worker {
         let target: String = origin.get(0);
         let environment: String = origin.get(1);
         let source: String = origin.get(2);
+        let store = crate::source_store::SourceStore::task(&**client, &scope).await?;
         let duplicate=client.query_opt("SELECT r.uid FROM moria.indexing_rows r JOIN moria.indexing_tasks t ON t.id=r.task AND t.fence=r.fence WHERE r.build=$1 AND t.build=$1 AND t.status='sealed' AND t.plan->>'kind'='scan' AND r.partition=$2 GROUP BY r.uid HAVING count(*)>1 LIMIT 1",&[&build,&partition]).await?;
         ensure!(duplicate.is_none(), "Duplicate canonical UID");
         drop(client);
@@ -656,6 +740,9 @@ impl Worker {
             tx.execute("INSERT INTO moria.object_homes(uid,object_type) SELECT unnest($1::uuid[]),$2 ON CONFLICT(uid) DO NOTHING",&[&ids,&target]).await?;
             ensure!(tx.query_opt("SELECT 1 FROM moria.object_homes WHERE uid=ANY($1) AND object_type<>$2 LIMIT 1",&[&ids,&target]).await?.is_none(),"UID home conflict");
             tx.execute("INSERT INTO moria.staged_source_rows(stage,uid,value,source_value) SELECT $1,* FROM unnest($2::uuid[],$3::jsonb[],$4::jsonb[]) ON CONFLICT(stage,uid) DO UPDATE SET value=EXCLUDED.value,source_value=EXCLUDED.source_value",&[&build,&ids,&values,&sources]).await?;
+            if let Some(store) = &store {
+                store.keys(&*tx, &scope, &ids, &values, &sources).await?;
+            }
             tx.commit().await?;
             for ((id, value), source) in ids.iter().zip(&values).zip(&sources) {
                 digest.update(id.as_bytes());
@@ -685,8 +772,10 @@ impl Worker {
         let row=tx.query_opt("SELECT b.* FROM moria.indexing_builds b WHERE b.status IN ('running','ready') AND moria.runtime_environment_cell_available(b.environment) AND (b.owner=$1 OR b.lease_until<=clock_timestamp()) AND NOT EXISTS(SELECT 1 FROM moria.indexing_tasks t WHERE t.build=b.id AND t.status<>'sealed') ORDER BY b.created_at FOR UPDATE OF b SKIP LOCKED LIMIT 1",&[&self.owner]).await?;
         let Some(row) = row else { return Ok(false) };
         let build: Uuid = row.get("id");
-        tx.query_one("SELECT moria.indexing_check($1)", &[&build])
-            .await?;
+        if !Self::admit_candidate(&tx, build, build, row.get("owner"), row.get("fence")).await? {
+            tx.commit().await?;
+            return Ok(true);
+        }
         let fence:i64=tx.query_one("UPDATE moria.indexing_builds SET owner=$2,fence=fence+1,lease_until=clock_timestamp()+interval '30 seconds' WHERE id=$1 RETURNING fence",&[&build,&self.owner]).await?.get(0);
         self.audit_claim(&tx, build, build, "coordinator", fence)
             .await?;
@@ -811,6 +900,14 @@ impl Worker {
             .get(0);
         let expected:i64=self.db.get().await?.query_one("SELECT COALESCE(sum(row_count),0)::bigint FROM moria.indexing_tasks WHERE build=$1 AND plan->>'kind'='scan' AND status='sealed'",&[&build]).await?.get(0);
         ensure!(count == expected, "Incomplete generation");
+        self.db
+            .get()
+            .await?
+            .query_one(
+                "SELECT moria.runtime_source_store_seal($1,$2,$3)",
+                &[&build, &self.owner, &fence],
+            )
+            .await?;
         crate::projection::prepare(
             &self.db,
             build,

@@ -1,0 +1,15 @@
+$ pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter
+$ prettier --check "**/*.{ts,tsx,js,mjs,json,yml,yaml}"
+Checking formatting...
+All matched files use Prettier code style!
+$ tsx scripts/check-architecture.ts
+Protected boundary architecture checks passed.
+$ tsx scripts/generate-sdk.ts --check
+$ tsc --noEmit
+$ node scripts/check-python.mjs
+would reformat /app/deploy/test/run-quality.py
+
+Oh no! 💥 💔 💥
+1 file would be reformatted, 17 files would be left unchanged.
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

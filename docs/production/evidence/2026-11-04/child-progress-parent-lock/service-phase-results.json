@@ -1,0 +1,26 @@
+[
+  {
+    "event": "child_progress_parent_lock",
+    "pid": 390,
+    "parent": "d48d1b93-a9b2-495a-a395-db5b5f5cbfff",
+    "sharedProbe": true,
+    "exclusiveProbeBlocked": true
+  },
+  {
+    "event": "evaluation_resume_identity_probes",
+    "livePositive": true,
+    "wrongCase": true,
+    "wrongPurpose": true,
+    "storedMetadataNegatives": 4,
+    "productionPredicateParity": true
+  },
+  {
+    "event": "evaluation_resume_public_withheld",
+    "get": true,
+    "replay": true
+  },
+  {
+    "event": "evaluation_resume_conflict_injected",
+    "sqlstate": "40001"
+  }
+]

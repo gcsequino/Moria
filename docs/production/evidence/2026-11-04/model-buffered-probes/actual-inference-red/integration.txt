@@ -1,0 +1,92 @@
+{"controller": "moria-quality-adaa00a1-79be-4a2f-a746-2b401107d57d", "image": "sha256:2cfbe01b5ea718059511524f1b03dac4a81a90288f6b15b2a93db09534b6e010", "scratchPools": ["/tmp/moria-engine-scratch-708ffdf5-3994-4cb6-8c80-b12fb04dd39c", "/tmp/moria-engine-scratch-adf80523-a81a-40e8-9c13-db920ad2c745", "/tmp/moria-engine-scratch-74ac6235-18a1-45e3-b00f-030d3e7ce0e1"], "temporary": "/tmp/moria-quality-znqm3kel"}
+TAP version 13
+# {"event":"whole-instance-phase","phase":"plan"}
+{"event":"whole-instance-phase","phase":"plan"}
+# {"event":"whole-instance-phase","phase":"configure"}
+{"event":"whole-instance-phase","phase":"configure"}
+# {"event":"whole-instance-phase","phase":"chat-approval"}
+{"event":"whole-instance-phase","phase":"chat-approval"}
+# {"event":"whole-instance-phase","phase":"chat-probe"}
+{"event":"whole-instance-phase","phase":"chat-probe"}
+{"event":"whole-instance-probe-calls","model":"chat","calls":[{"state":"succeeded","uncertain":false,"capability":"chat","elapsed_ms":"3752.905000"},{"state":"succeeded","uncertain":false,"capability":"stream","elapsed_ms":"67652.482000"},{"state":"succeeded","uncertain":false,"capability":"streamStructured","elapsed_ms":"42774.402000"},{"state":"running","uncertain":true,"capability":null,"elapsed_ms":"20736.861000"}]}
+# {"event":"whole-instance-probe-calls","model":"chat","calls":[{"state":"succeeded","uncertain":false,"capability":"chat","elapsed_ms":"3752.905000"},{"state":"succeeded","uncertain":false,"capability":"stream","elapsed_ms":"67652.482000"},{"state":"succeeded","uncertain":false,"capability":"streamStructured","elapsed_ms":"42774.402000"},{"state":"running","uncertain":true,"capability":null,"elapsed_ms":"20736.861000"}]}
+# {"event":"whole-instance-phase-failed","phase":"chat-probe","elapsedMs":135525,"causeCode":"UNCLASSIFIED","process":{"exitCode":null,"errors":""}}
+{"event":"whole-instance-phase-failed","phase":"chat-probe","elapsedMs":135525,"causeCode":"UNCLASSIFIED","process":{"exitCode":null,"errors":""}}
+# Subtest: native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+    # Subtest: action creation allocates once and enforces source attachment and required overrides
+    not ok 1 - action creation allocates once and enforces source attachment and required overrides
+      ---
+      duration_ms: 218192.022251
+      type: 'test'
+      location: '/app/tests/native-source-runtime.integration.test.ts:662:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        {"error":"MODEL_INCOMPLETE"}
+
+        502 !== 200
+
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 200
+      actual: 502
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (/app/tests/native-source-runtime.integration.test.ts:1848:26)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async TestContext.<anonymous> (/app/tests/native-source-runtime.integration.test.ts:662:5)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      ...
+▶ native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ✖ action creation allocates once and enforces source attachment and required overrides (218192.022251ms)
+    1..1
+not ok 1 - native source composition requires explicit current Dataset/index authority and installs all bindings atomically
+  ---
+  duration_ms: 231477.779668
+  type: 'test'
+  location: '/app/tests/native-source-runtime.integration.test.ts:44:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+✖ native source composition requires explicit current Dataset/index authority and installs all bindings atomically (231477.779668ms)
+1..1
+# tests 2
+ℹ tests 2
+# suites 0
+ℹ suites 0
+# pass 0
+ℹ pass 0
+# fail 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+# cancelled 0
+# skipped 0
+# todo 0
+ℹ todo 0
+# duration_ms 232300.701123
+ℹ duration_ms 232300.701123
+
+✖ failing tests:
+
+test at tests/native-source-runtime.integration.test.ts:662:13
+✖ action creation allocates once and enforces source attachment and required overrides (218192.022251ms)
+  AssertionError [ERR_ASSERTION]: {"error":"MODEL_INCOMPLETE"}
+
+  502 !== 200
+
+      at TestContext.<anonymous> (/app/tests/native-source-runtime.integration.test.ts:1848:26)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-source-runtime.integration.test.ts:662:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 502,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

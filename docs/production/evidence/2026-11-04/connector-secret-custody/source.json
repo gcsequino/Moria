@@ -1,0 +1,21 @@
+{
+  "baseHead": "2564dc98164d067e2d1f92497e462d7dd64c875a",
+  "baseImage": "sha256:592c0ba2a82785d8aaa9be4a4a30f55d0461506841abde42fa1dd23d16afccfe",
+  "focusedImage": "sha256:f95fdd96a5772902cf4fc8b1bcc48c455c09a87b22252408c006aff4a84123da",
+  "sourceDigest": "c95a3df1fa095008bdb779a72c79063b945450edb1747f8d11a0f707dda82669",
+  "manifestSha256": "371647bc057533b6419667ecdc1fe5d4a55ce22a3c8af63379e1529bbed4cb9b",
+  "fixtureOverlay": [
+    {
+      "path": "tests/fixtures/native-connectors/custody.ts",
+      "sha256": "0e6ae5486f48dc6445752a82567475546382ee0f75edf0c044b9eb280e1c3aa7"
+    },
+    {
+      "path": "tests/fixtures/native-instance/engine.ts",
+      "sha256": "9f0dad2192168282980c6e7b204b748a5bcd61c34846d73732a548dc5b062c2d"
+    },
+    {
+      "path": "tests/fixtures/native-retention/dataset.ts",
+      "sha256": "aac1b421219214806056ba874b1a6718b14dda040a27d13a39c9c6273cdd7827"
+    }
+  ]
+}

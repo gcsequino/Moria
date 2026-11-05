@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "600s",
+  "python3",
+  "/home/gcseq/moria-proofs/service-evaluation-resume-native-20261105/source/deploy/test/run-quality.py",
+  "sha256:a68b998c8f20845cb69df361684f65f55d482b25e21691a2fbc2fcc0a7cacb7b",
+  "pnpm",
+  "test:integration",
+  "tests/native-evaluation-resume-focused.integration.test.ts"
+]

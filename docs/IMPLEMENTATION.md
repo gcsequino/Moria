@@ -1,5 +1,59 @@
 # Implementation checkpoint
 
+## November 4 private-origin repeated validation
+
+Current private credentials now traverse accepted delegation once on successful
+resolution, returning the identical immutable proof only after complete execution
+validation. Domain failures preserve the previous service/parent revocation error
+precedence. Worker, lease, fence, incarnation, purpose and current capability
+intersection remain checked; no authorization cache or deadline change is added.
+A real PostgreSQL counter regression fails against the old two-traversal resolver
+and passes against one traversal with exact proof equality. All 12 authority cases,
+complete static checks, nine artifact fingerprints and 77 native units pass on the
+frozen component source. Automation still fails child dispatch and remains under
+investigation. See `production/evidence/2026-11-04/job-origin-single-traversal`.
+
+
+## November 4 filesystem authority and current integration results
+
+The filesystem authority resolver now removes eight redundant inner edge
+deduplications while retaining recursive UNION cycle/duplicate elimination.
+Actual graph sets, labels and required proofs agree across three dependency
+geometries; the measured leaf plan falls from 20.356 ms to 2.782 ms. The complete
+filesystem/Source suite passes 19/19 including duplicate paths, cycles, live deny
+and marking changes. Static checks, exact nine artifacts and 77 native units pass.
+
+The repaired four-file runtime run executes all 52 results with zero skips or
+cancellations: 46 pass and six fail including parent results. Full Functions pass
+18/18, including lost-COMMIT cases; Agent passes 20/21 subcases. Evaluation's
+first ten-case run passes, but repeat/version comparison and service Automation
+composition remain open. Pipeline setup expires during its first 16-head producer
+at 14 completed heads, before Pipeline subcases. Its widths and original producer
+deadline remain unchanged. The earlier exact first-group diagnostic passed; it
+is insufficient qualification of the full file.
+
+The Pipeline fixture gives its two producers separate output Datasets while
+retaining 64-input/64-output admission. Agent setup now closes its database when
+image acquisition fails; a real controlled acquisition failure exits promptly.
+An interrupted test run and local Docker bridge recovery remain recorded. See
+`production/evidence/2026-11-04/acl-query-edges` for raw results and exact identities.
+
+
+## November 4 complete cold baseline and build budget
+
+The complete cold baseline on frozen `54d839e` builds all nine release artifacts,
+passes static checks and 77 native units, then fails its full functional suite:
+1,196 pass, 67 fail including parent results, zero skips/cancellations. The runner
+is stopped. Independent CI on `4e2b661` passes static/build/bootstrap but reaches
+the outer 45-minute job watchdog before the complete suite finishes. The measured
+preparation plus suite requires about an hour, so aggregate CI/hook budgets now
+allow completion without changing individual test or operation deadlines.
+Native artifact preparation batches the library and six harnesses in one Cargo
+invocation; actual JSON selection preserves all nine executable hashes. A new
+cold release timing remains unmeasured. See
+`production/evidence/2026-11-04/cold-baseline` for exact source/results/failures.
+
+
 ## November 4 current private-session lock correction
 
 A measured Evaluation failure came from repeated private credential issuance
@@ -2822,6 +2876,88 @@ Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed
 
 Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.
 
+
+### Current Source and revocation fixture reconciliation (2026-11-04)
+
+Catalog and filesystem classification fixtures now register, publish and apply
+actual Source definitions before exercising domain access. Their inherited-label,
+atomic publication and live-revocation assertions retain the production active
+resource binding checks. Fixtures that disable a principal assert that its old
+credential remains revoked after reenable and mint a new credential for later
+independent operations. Native PostgreSQL vector setup tolerates the extension
+that the quality image already installs, while retaining its exact engine and
+cosine assertions. Focused results and the initial failed expectation are retained
+in `production/evidence/2026-11-04/source-fixture-contracts`. These functional
+checks do not certify production capacity; the complete independent quality gate
+remains required for the integrated revision.
+## November 4 Connector custody implementation checkpoint
+
+Connector acceptance now binds up to eight exact operator credential slots to
+current caller/service use grants, immutable approval generations and semantic
+cursor revisions. Fresh guards cover claim, callback, in-flight work, publication
+and result release; material remains in the native HTTP host. Known reflected
+material is withheld. The operator can inspect exact Connector approval requests
+without reading credentials. Full replacement remains the supported write profile;
+other modes and capabilities still require implementation and qualification.
+
+The frozen source compiles all nine native artifacts, passes complete static
+checks, provenance and all 79 native units. The new real Sync/Dataset/checkpoint
+fixture is written and typechecks but has not yet run. Runtime proof, latest full
+quality gates and production-scale evidence remain open; this checkpoint does
+not complete N09.
+
+The first composed Connector trial passes custody and generation fencing but
+fails engine setup: the shared instance fixture supplied an administrative DB
+connection to scratch registration, which requires a non-owning runtime role.
+Both fixture callers now use that required role. The next diagnostic exposes
+Secret use incorrectly entering a data-operation-only batch helper. Secret use
+now calls the existing exact Secret-aware filesystem authority helper, retaining
+its kind, operation, markings and current file checks. Expected claim denials are
+classified so one denied job cannot stop the worker. A queued Secret file denial
+and subsequent successful window are added to the real fixture; fresh combined
+native build and runtime qualification are pending. No runtime restriction or
+individual deadline is relaxed.
+
+### Connector custody and checkpoint qualification
+
+The registered native replace/full Sync profile now passes eight focused checks
+with eight exact operator-approved credentials, a real isolated Python/Arrow
+guest, typed Dataset readback, durable semantic cursor reuse and live socket
+revocation. The caller needs exact logical operations without filesystem browsing.
+[Proof and remaining scope](production/evidence/2026-11-04/connector-secret-custody/README.md)
+retain the failed readback trial and exact artifact/fixture identities. Optional
+capabilities, other write modes, full HTTP/worker fault coverage and scale testing
+remain open; this is not complete N09 qualification.
+
+
+Function cancellation fixture checkpoint (2026-11-04): the real CLI/API test now
+checks the accepted cancellation control receipt and separately verifies terminal
+state through authenticated CLI wait, retaining actual Docker cleanup checks.
+The full file passed 17/17 with zero skips; all nine artifact checks, 79 native
+units and static checks passed. Evidence and the original failed expectation are
+under `production/evidence/2026-11-04/function-cancellation-control`.
+
+
+SQL provenance checkpoint (2026-11-04): external Snow imports preserve durable
+request/configuration/raw-pin audit without presenting audit field names as
+Dataset lineage. Fixed internal source-to-object pairs use current verified
+provenance admission. The legacy indexer checks current permissions/session
+before classification SQL and retains final publication checks. Reconciled
+rollback, lineage and independent browser-origin fixtures passed the full SQL
+file, 48/48 with zero skips, plus all nine artifacts, 79 native units and static
+checks. Original and interrupted failures are retained under
+`production/evidence/2026-11-04/sql-provenance-contracts`.
+
+### Connector bounded HTTP failures and capability membership
+
+The actual registered Sync/OCI guest fixture now passes 13/13 checks, adding
+redirect, truncated-response, HTTP503, oversized-body and original HTTP-timeout
+failures with exactly one request/attempt and unchanged prior head/checkpoint.
+Batch admission accepts an unordered implementation capability set containing
+`batchRead`; other operation dispatch remains unavailable. The exact all-nine/81
+unit build, static checks and runtime evidence are retained in
+`production/evidence/2026-11-04/connector-http-faults`. This remains functional
+replace/full qualification, with the remaining N09 scope recorded there.
 Native MOR primitives checkpoint (2026-11-04): the library now includes
 receiver-qualified graph traversal, authenticated bounded range reads,
 path-copy directories, packed key/locator runs, streamed merge, exact row
@@ -2857,6 +2993,14 @@ delta publication, full independent gates and production capacity remain open.
 See `production/NATIVE-MOR-PRIMITIVES.md` and
 `production/evidence/2026-11-04/native-graph-custody/` for exact scope/results.
 
+Indexing admission checkpoint (2026-11-04): revoked preclaim work now becomes a
+durable failed build instead of terminating the shared drain. Known authority
+rejections use savepoint isolation under the selected row lock; unknown/schema
+errors still propagate, and no lease is fabricated. The schema-lease test watches
+its actual PostgreSQL blocker while retaining migration fencing assertions.
+All original indexing cases plus actual plan/task/advance failure-isolation
+regressions passed 16/16, with all nine artifacts, 79 native units and static
+checks. Evidence: `production/evidence/2026-11-04/indexing-preclaim-isolation`.
 Native key-index correction (2026-11-04): bounded and streaming partial compaction
 now retain tombstones so untouched older levels cannot resurrect deleted keys.
 The actual v3 root validator permits paired tombstone directories with zero live
@@ -2870,6 +3014,29 @@ exact touched-row verification and bounded distributed projected-key bootstrap.
 Those remaining APIs, sparse publication and their integration proofs remain
 under implementation. Evidence: `production/evidence/2026-11-04/native-index-tombstones/`.
 
+### Decoded Connector reflection and instance-fenced test scratch
+
+The host now rejects known credential material after JSON decoding as well as in
+raw bytes, covering escaped values and keys before any guest response. The real
+15/15 Connector gate verifies absent material in logs/staged checkpoints alongside
+the existing custody, typed Dataset, HTTP and revocation cases; all99 native units
+and artifact fingerprints plus full static checks pass. Separate test instances
+now receive separate freshly provisioned scratch pools, preserving incarnation
+fencing. Evidence and retained failures are in
+`production/evidence/2026-11-04/connector-decoded-reflection`. Full Pipeline, final
+integrated quality/CI, remaining capability handlers and scale targets stay open.
+
+### Bounded model capability probes
+
+Probes now buffer their bounded provider stream under the existing independent
+live guard and protected completion fence, avoiding duplicate full authorization
+per token. Full Models19/19 and Secret custody11/11 pass, including actual held
+probe revocation; all99 native units/artifact fingerprints and static checks pass.
+The real local Qwen3/Nomic trial now completes all chat/stream/tool/structured and
+embedding probes before a later logic-configuration API failure. Retained failed
+composed trials and exact component proof are in
+`production/evidence/2026-11-04/model-buffered-probes`; full platform and capacity
+qualification remain open.
 Deferred digest format checkpoint (2026-11-04): new native runs use explicit
 version-three tags for deferred hash/locator entries. Locators represent a
 missing digest explicitly; a verified all-zero digest is still a known digest.

@@ -1,0 +1,14 @@
+[
+  {
+    "gate": "models",
+    "controllerAbsent": true,
+    "threePoolsAbsent": true,
+    "temporaryAbsent": true
+  },
+  {
+    "gate": "secrets",
+    "controllerAbsent": true,
+    "threePoolsAbsent": true,
+    "temporaryAbsent": true
+  }
+]

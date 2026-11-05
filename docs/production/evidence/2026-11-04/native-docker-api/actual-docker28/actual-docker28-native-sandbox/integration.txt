@@ -1,0 +1,21 @@
+{"controller": "moria-quality-441f6359-a834-48fe-8041-8e5deb7cb076", "image": "sha256:c391776c90e69d561048bbfd1a680621447c89d0b5c42dcea9f3983b0c3266fa", "scratchPools": ["/tmp/moria-engine-scratch-2b00e971-7147-4477-8394-911133abe8c1", "/tmp/moria-engine-scratch-c2905b88-2543-4c48-a931-e3569da4bf05"], "temporary": "/tmp/moria-quality-7sj5f11i"}
+$ node scripts/test-files.mjs integration tests/native-sandbox.integration.test.ts
+Running 1 integration test files.
+▶ native OCI supervision enforces real isolation and owner-bound single attempts
+  ✔ typed results, real native object reads and protected logs cross the guest protocol (3418.884113ms)
+  ✔ Docker enforces UID, namespaces, credentials, root, memory, PID and CPU boundaries (5742.617143ms)
+  ✔ malformed frames, bounded logs and invalid results fail closed (9919.204641ms)
+  ✔ a result requires the completion handshake and successful exit without trailing output (10343.351251ms)
+  ✔ foreign owners cannot start code and cancellation removes the container within ten seconds (1630.756824ms)
+  ✔ deadlines and local cancellation signals clean up without rerunning code (3298.397607ms)
+  ✔ supervisor process death fences the only attempt and durable host cleanup removes the orphan (1313.765237ms)
+  ✔ revoked sessions stop live code before protected output can seal (835.760432ms)
+✔ native OCI supervision enforces real isolation and owner-bound single attempts (43876.183461ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44398.843937

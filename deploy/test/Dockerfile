@@ -12,14 +12,19 @@ COPY --chown=builder:builder tests/fixtures/ /build/tests/fixtures/
 USER builder
 RUN --mount=type=cache,target=/home/builder/.cargo/registry,uid=1000,gid=1000 \
     --mount=type=cache,target=/build/services/runtime/target,uid=1000,gid=1000 \
-    cargo fmt --check && cargo build --release --locked -j 2 \
-    && cargo test --release --locked --lib --no-run -j 2 --message-format=json > /tmp/indexing-tests.json \
-    && mkdir /build/out && cp target/release/moria-indexing target/release/moria-runtime /build/out/ \
-    && test_binary="$(sed -n '/"kind":\["lib"\]/s/^.*"executable":"\([^"]*\)".*$/\1/p' /tmp/indexing-tests.json)" \
+    cargo fmt --check \
+    && cargo test --release --locked --lib --test native_policy --test native_storage \
+         --test native_transport --test native_catalog --test native_sandbox --test native_retention \
+         --no-run -j 2 --message-format=json > /tmp/indexing-artifacts.json \
+    && mkdir /build/out \
+    && for binary in moria-indexing moria-runtime; do \
+         executable="$(grep -F "\"name\":\"$binary\"" /tmp/indexing-artifacts.json | sed -n 's/^.*"executable":"\([^"]*\)".*$/\1/p')" \
+         && test -x "$executable" && cp "$executable" "/build/out/$binary" || exit 1; \
+       done \
+    && test_binary="$(sed -n '/"kind":\["lib"\]/s/^.*"executable":"\([^"]*\)".*$/\1/p' /tmp/indexing-artifacts.json)" \
     && test -x "$test_binary" && cp "$test_binary" /build/out/moria-indexing-tests \
     && for harness in policy storage transport catalog sandbox retention; do \
-         cargo test --release --locked --test "native_$harness" --no-run -j 2 --message-format=json > "/tmp/native-$harness.json" \
-         && test_binary="$(sed -n '/"kind":\["test"\]/s/^.*"executable":"\([^"]*\)".*$/\1/p' "/tmp/native-$harness.json")" \
+         test_binary="$(grep -F "\"name\":\"native_$harness\"" /tmp/indexing-artifacts.json | sed -n 's/^.*"executable":"\([^"]*\)".*$/\1/p')" \
          && test -x "$test_binary" \
          && cp "$test_binary" "/build/out/moria-native-$harness-test" || exit 1; \
        done

@@ -1,0 +1,35 @@
+{
+  "exitCode": 1,
+  "elapsedSeconds": 547.2812923130004,
+  "tests": 52,
+  "passed": 46,
+  "failed": 6,
+  "cancelled": 0,
+  "skipped": 0,
+  "failures": [
+    {
+      "file": "native-agents.integration.test.ts",
+      "case": "Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement",
+      "cause": "Native agent did not reach its real lifecycle barrier",
+      "wrapperAlsoFails": true
+    },
+    {
+      "file": "native-evaluations.integration.test.ts",
+      "case": "repeats stay separate and comparison rejects a different evaluator version",
+      "cause": "FUNCTION_OBSERVATION_INCOMPLETE"
+    },
+    {
+      "file": "native-evaluations.integration.test.ts",
+      "case": "a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes",
+      "cause": "Native evaluation did not reach its real lifecycle barrier",
+      "wrapperAlsoFails": true
+    },
+    {
+      "file": "native-pipelines.integration.test.ts",
+      "case": "fixture seeding before Pipeline acceptance subcases",
+      "cause": "EXECUTION_INACTIVE after fourteen candidate registrations in first sixteen-head producer group",
+      "producerSeconds": 112.67,
+      "rootMilliseconds": 177453.516339
+    }
+  ]
+}

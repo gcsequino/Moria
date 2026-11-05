@@ -51,6 +51,7 @@ pub(crate) mod secrets;
 pub mod serving;
 pub mod snapshot;
 pub mod source_runtime;
+pub(crate) mod source_store;
 pub mod storage;
 pub mod transport;
 pub mod values;

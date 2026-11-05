@@ -234,7 +234,12 @@ impl NativeSearch {
         let principal = requester.map_or(service.principal(), VerifiedSession::principal);
         let application = requester.map_or(service.application(), VerifiedSession::application);
         let schema:Value=client.query_one("SELECT object_schema FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision=$3::text::bigint AND stage=$4",&[&environment,&pin.object_resource,&pin.source_revision,&pin.source_stage]).await?.get(0);
-        client.execute("INSERT INTO moria.native_search_rebuilds(generation,execution,environment,resource,principal,application,request_key,source_stage,source_revision,source_schema,partitions,markings,projector_binding) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::text::bigint,$10,$11,$12,$13)",&[&generation,&execution,&environment,&resource,&principal,&application,&key,&pin.source_stage,&pin.source_revision,&schema,&(partitions as i32),&labels,&pin.projector_binding]).await?;
+        let request_key = if requester.is_some() {
+            key.to_owned()
+        } else {
+            format!("{key}/{generation}")
+        };
+        client.execute("INSERT INTO moria.native_search_rebuilds(generation,execution,environment,resource,principal,application,request_key,source_stage,source_revision,source_schema,partitions,markings,projector_binding) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::text::bigint,$10,$11,$12,$13)",&[&generation,&execution,&environment,&resource,&principal,&application,&request_key,&pin.source_stage,&pin.source_revision,&schema,&(partitions as i32),&labels,&pin.projector_binding]).await?;
         client.execute("INSERT INTO moria.native_search_execution_sources(execution,generation,kind,target_revision,model_secret_approval) VALUES($1,$2,'rebuild',$3,$4)",&[&execution,&generation,&base_revision,&model_secret_approval]).await?;
         for row in client.query("SELECT id,ordinal FROM moria.runtime_execution_tasks WHERE execution=$1 ORDER BY ordinal",&[&execution]).await?{
    let ordinal=row.get::<_,i32>(1) as u128;let lower=Uuid::from_u128((ordinal*256/partitions as u128)<<120);

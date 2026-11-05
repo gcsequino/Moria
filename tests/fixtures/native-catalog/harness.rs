@@ -55,6 +55,7 @@ struct Fixture {
     #[serde(default)]
     writer_rows: BTreeMap<String, Vec<Value>>,
     expected_rows: Option<usize>,
+    expected_markings: Option<Vec<String>>,
     #[serde(default)]
     s3_bindings: Vec<S3Binding>,
     allocation: Option<capacity::Allocation>,
@@ -702,7 +703,11 @@ async fn run() -> Result<()> {
         ensure!(
             selected.resource.to_string() == source.resource
                 && selected.table_uuid == source.table_uuid
-                && selected.markings == vec!["private"]
+                && selected.markings
+                    == fixture
+                        .expected_markings
+                        .clone()
+                        .unwrap_or_else(|| vec!["private".into()])
         );
         let loaded = read_pinned_dataset(
             db.clone(),
@@ -714,7 +719,11 @@ async fn run() -> Result<()> {
         .await?;
         ensure!(
             loaded.pin.metadata_location == fixture.native_ref.as_ref().unwrap().as_str()
-                && loaded.consumed_markings == vec!["private"]
+                && loaded.consumed_markings
+                    == fixture
+                        .expected_markings
+                        .clone()
+                        .unwrap_or_else(|| vec!["private".into()])
         );
         let pin_revision = loaded.pin.revision.clone();
         let loaded = loaded.snapshot;

@@ -10,8 +10,8 @@ import {
 } from '../services/catalog/src/storage-publication.js';
 import { Authority } from '../services/security/src/authority.js';
 import { FilesystemAuthority } from '../services/security/src/filesystem.js';
-import { FilesystemStore } from '../services/filesystem/src/store.js';
 import { filesystemRoot } from '../packages/contracts/filesystem.js';
+import { publishedResources } from './fixtures/catalog-storage/source.js';
 import { WorkloadSessions } from '../services/security/src/sessions.js';
 import {
   createAuthorizedLocalStorage,
@@ -167,9 +167,8 @@ for (const provider of ['local', 's3'] as const) {
     await t.test(
       'filesystem input classifications cannot be omitted from publication outputs',
       async () => {
-        const f = await setup([randomUUID(), randomUUID()]);
+        const f = await setup();
         const security = new FilesystemAuthority(authority);
-        const store = new FilesystemStore(catalog);
         const instanceId = await security.createPrincipal('admin', 'workload');
         await security.bindPrincipal('admin', f.environment, 'engine', instanceId);
         const operations = [
@@ -196,32 +195,21 @@ for (const provider of ['local', 's3'] as const) {
             },
           ],
         });
-        const actor = { environment: f.environment, principal: 'admin', application: 'app' };
-        const parent = (
-          await store.apply(actor, randomUUID(), [
-            {
-              op: 'create',
-              kind: 'directory',
-              parentId: filesystemRoot,
-              expectedParentRevision: (await store.get(filesystemRoot)).revision,
-              name: `publication-${randomUUID()}`,
-              scope: { projectId: randomUUID(), environmentId: f.environment },
+        const entries = await publishedResources(
+          catalog,
+          join(db.root, 'source-files'),
+          f.environment,
+          ['a', 'b'].map((name) => ({
+            apiVersion: 'moria/v1alpha2',
+            kind: 'Dataset',
+            metadata: { namespace: 'test', name },
+            spec: {
+              columns: { value: { type: 'string', nullable: false } },
+              writeModes: ['replace'],
             },
-          ])
-        ).entries.find((entry) => entry.parentId === filesystemRoot)!;
-        for (const [index, dataset] of f.datasets.entries()) {
-          const entry = (
-            await store.apply(actor, randomUUID(), [
-              {
-                op: 'create',
-                kind: 'resource',
-                parentId: parent.id,
-                expectedParentRevision: (await store.get(parent.id)).revision,
-                name: `dataset-${index}`,
-                resourceId: dataset,
-              },
-            ])
-          ).entries.find((entry) => entry.resourceId === dataset)!;
+          })),
+        );
+        for (const [index, entry] of entries.entries()) {
           await security.setPolicy('admin', entry.id, '0', {
             markings: index === 0 ? [{ environment: f.environment, marking: 'classified' }] : [],
             grants: [],

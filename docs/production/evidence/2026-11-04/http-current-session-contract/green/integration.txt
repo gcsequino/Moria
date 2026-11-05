@@ -1,0 +1,22 @@
+{"controller": "moria-quality-09942a64-db3c-4bb4-a774-2c2489426cb3", "image": "sha256:c76cf717f32e1f7d92dd1f64c31bb3218e14111e791c1b4f4843726451a798c8", "scratchPools": ["/tmp/moria-engine-scratch-c008575c-f4fa-40ce-8b8b-aa011aa97a1d", "/tmp/moria-engine-scratch-254588c3-b378-434e-abf4-997b5d1075a3"], "temporary": "/tmp/moria-quality-ensxll48"}
+$ node scripts/test-files.mjs integration tests/native-http-admission.integration.test.ts
+Running 1 integration test files.
+▶ native HTTP admission bounds pending bodies across shared and component routes
+  ✔ local CLI profiles use real revocable workload sessions (93.16332ms)
+  ✔ a missed CLI approval disable pulse permanently fences its issued session (24.982822ms)
+  ✔ app-bound browser cookies enforce exact origin and current session (63.550757ms)
+  ✔ managed cells serialize ownership, fence transfer and fail closed on a real DB partition (4787.568962ms)
+  ✔ four compiler requests hold their slots through an incomplete body (116.832923ms)
+  ✔ model admission retains its separate32 request budget (372.53223ms)
+  ✔ the shared64 request budget rejects additional work before buffering (660.671633ms)
+  ✔ readiness is current, metrics require instance authority and disabled CLI approval survives restart (190.924468ms)
+  ✔ SIGTERM bounds drain while an actual admitted body is unfinished (2014.804825ms)
+✔ native HTTP admission bounds pending bodies across shared and component routes (10061.876138ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10469.078516

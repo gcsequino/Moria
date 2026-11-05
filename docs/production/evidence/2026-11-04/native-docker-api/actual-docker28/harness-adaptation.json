@@ -1,0 +1,15 @@
+{
+  "originalSha256": "775685a33a8b2cbe1e9ed980213fc5c19822eb7e786326904c0d293cab89c548",
+  "adaptedSha256": "ad705dc41d8ca55b781f36a1f4917635f89ac8964f0fe2c182c0567e31b54fa7",
+  "changes": [
+    "Bind exact owned Docker28 Unix socket into controller at canonical /var/run/docker.sock",
+    "Use actual owned socket group id"
+  ],
+  "unmodified": [
+    "scratch provisioner",
+    "all pool sizes and guards",
+    "controller isolation/labels",
+    "command execution and owned cleanup",
+    "tests and assertions"
+  ]
+}

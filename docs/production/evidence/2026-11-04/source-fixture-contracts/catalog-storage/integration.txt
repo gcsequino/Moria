@@ -1,0 +1,44 @@
+{"controller": "moria-quality-5f375acb-8dc2-453b-9812-7fcf74a5587c", "image": "sha256:0fc2d0f7430be9009a80025f9898de0037171b31fbab10af54e485c304a06824", "scratchPools": ["/tmp/moria-engine-scratch-a63c4f3f-a67a-4967-89a1-d59a9d539343", "/tmp/moria-engine-scratch-e97fd299-4f28-4b4b-a40f-8755c5dd4fd4"], "temporary": "/tmp/moria-quality-_uzdyygc"}
+$ node scripts/test-files.mjs integration tests/catalog-storage.integration.test.ts
+Running 1 integration test files.
+✔ metadata location encoding is strict and versioned (1.128774ms)
+▶ local: published catalog metadata with real authority and storage
+  ✔ unpublished candidates cannot be read and inputs cannot choose objects (17.012135ms)
+  ✔ standard Iceberg metadata and provenance; publication does not switch a live stream (566.098902ms)
+  ✔ racing reads and publications always return a matching history pair (375.933586ms)
+  ✔ session, environment, application and marking denials precede storage (6.98705ms)
+  ✔ authenticated sessions cannot be rebound to another granted application (17.882996ms)
+  ✔ resolved adapter scope denies other objects and create operations (73.447658ms)
+  ✔ failed publication leaves an orphan unreachable and history mismatches fail closed (88.74351ms)
+  ✔ revoke stops existing streams and denies new reads (55.055705ms)
+  ✔ expire stops existing streams and denies new reads (53.10497ms)
+  ✔ grants stops existing streams and denies new reads (50.796795ms)
+  ✔ application stops existing streams and denies new reads (51.481836ms)
+  ✔ markings stops existing streams and denies new reads (53.468542ms)
+  ✔ bad published references fail before factory; missing objects and cancellation cleanly fail (198.217127ms)
+  ✔ filesystem classifications are returned and changes abort even a cleared reader mid-stream (1224.348859ms)
+✔ local: published catalog metadata with real authority and storage (6953.691419ms)
+▶ s3: published catalog metadata with real authority and storage
+  ✔ unpublished candidates cannot be read and inputs cannot choose objects (13.239612ms)
+  ✔ standard Iceberg metadata and provenance; publication does not switch a live stream (556.108845ms)
+  ✔ racing reads and publications always return a matching history pair (397.611999ms)
+  ✔ session, environment, application and marking denials precede storage (6.734918ms)
+  ✔ authenticated sessions cannot be rebound to another granted application (17.272104ms)
+  ✔ resolved adapter scope denies other objects and create operations (76.757404ms)
+  ✔ failed publication leaves an orphan unreachable and history mismatches fail closed (91.18802ms)
+  ✔ revoke stops existing streams and denies new reads (46.908907ms)
+  ✔ expire stops existing streams and denies new reads (42.96207ms)
+  ✔ grants stops existing streams and denies new reads (41.308653ms)
+  ✔ application stops existing streams and denies new reads (43.194817ms)
+  ✔ markings stops existing streams and denies new reads (42.112987ms)
+  ✔ bad published references fail before factory; missing objects and cancellation cleanly fail (189.280094ms)
+  ✔ filesystem classifications are returned and changes abort even a cleared reader mid-stream (883.095157ms)
+✔ s3: published catalog metadata with real authority and storage (5125.65319ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12586.613328

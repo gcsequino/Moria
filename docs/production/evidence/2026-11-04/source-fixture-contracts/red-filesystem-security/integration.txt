@@ -1,0 +1,76 @@
+{"controller": "moria-quality-1795091a-3157-4fc0-a7fe-d47057dd75c5", "image": "sha256:0fc2d0f7430be9009a80025f9898de0037171b31fbab10af54e485c304a06824", "scratchPools": ["/tmp/moria-engine-scratch-5fcbd4c0-ea0c-41bc-be46-ece34e454b40", "/tmp/moria-engine-scratch-a6c93b98-63d1-49b9-ac55-d53cddf8f935"], "temporary": "/tmp/moria-quality-xdjgn9he"}
+$ node scripts/test-files.mjs integration tests/filesystem-security.integration.test.ts
+Running 1 integration test files.
+▶ protected filesystem composes current identities, inherited policy and atomic mutations
+  ✔ ID lookup, paths, versions and listings agree without revealing hidden entries (268.02337ms)
+  ✔ markings tighten existing descendants, old versions and current group eligibility (113.302242ms)
+  ✔ moving marked content retains restrictions, including receipt replay and tombstone history (276.230837ms)
+  ✔ application scopes, base permissions and every delegated identity remain required (63.948705ms)
+  ✔ listing continuations are opaque, identity-bound, policy-bound and preserve expiry (856.446059ms)
+  ✖ queued operations see committed revocation and marking changes before their snapshot (28.282098ms)
+  ✖ ordinary mutations cannot register scopes, inject content or bypass current replay permission (6.424742ms)
+  ✔ file copies retain provenance when a source is marked or deleted later (183.944727ms)
+  ✔ runtime-resource IDs enforce current inherited markings through domain access (653.247023ms)
+✖ protected filesystem composes current identities, inherited policy and atomic mutations (4212.987913ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 7
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4675.95854
+
+✖ failing tests:
+
+test at tests/filesystem-security.integration.test.ts:1:10835
+✖ queued operations see committed revocation and marking changes before their snapshot (28.282098ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    Comparison {
+  +   code: 'FORBIDDEN'
+  -   code: 'UNAUTHENTICATED'
+    }
+
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/filesystem-security.integration.test.ts:347:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/filesystem-security.integration.test.ts:322:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: MoriaError: Identity or application is unavailable
+        at Authority.current (/app/services/security/src/authority.ts:273:13)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async FilesystemAuthority.current (/app/services/security/src/filesystem.ts:344:21)
+        at async Object.current (/app/services/filesystem/src/service.ts:538:19)
+        at async mutate (/app/services/filesystem/src/store.ts:300:9)
+        at async Catalog.transaction (/app/services/catalog/src/catalog.ts:127:24)
+        at async FilesystemStore.apply (/app/services/filesystem/src/store.ts:437:11)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (/app/tests/filesystem-security.integration.test.ts:347:11),
+    expected: { code: 'UNAUTHENTICATED' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/filesystem-security.integration.test.ts:1:12363
+✖ ordinary mutations cannot register scopes, inject content or bypass current replay permission (6.424742ms)
+  Error [MoriaError]: Identity or application is unavailable
+      at Authority.current (/app/services/security/src/authority.ts:273:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async FilesystemAuthority.current (/app/services/security/src/filesystem.ts:344:21)
+      at async Object.current (/app/services/filesystem/src/service.ts:538:19)
+      at async mutate (/app/services/filesystem/src/store.ts:300:9)
+      at async Catalog.transaction (/app/services/catalog/src/catalog.ts:127:24)
+      at async FilesystemStore.apply (/app/services/filesystem/src/store.ts:437:11)
+      at async TestContext.<anonymous> (/app/tests/filesystem-security.integration.test.ts:387:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/filesystem-security.integration.test.ts:374:5) {
+    code: 'FORBIDDEN',
+    details: undefined
+  }
+[ELIFECYCLE] Command failed with exit code 1.

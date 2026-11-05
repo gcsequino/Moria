@@ -1,0 +1,16 @@
+{
+  "gitBase": "4e2b6617c4158ed8a3de6df2d84e1ca281917184",
+  "nativeSourceDigest": "c7d3b3d8ff0dbbe20312e5d9918745083830493bc768f62d8bb6b187f4f0dd06",
+  "schema": {
+    "version": 5,
+    "checksum": "29da11d097f65fabf7d513aff4fc0621f1101e116fbcfe2d6170103cc3e7f00b"
+  },
+  "baseImage": "sha256:2b984d841bdba6b258031c1735a5a9e56d7419767d077ecd0b1bff679748608e",
+  "agentFixtureOverlay": {
+    "image": "sha256:274459c03d01e38050dcf97814b71fabf23452238c84c4ab0409fa788a6b73ef",
+    "fixtureSha256": "fe5ae02f3029425ad3dc2555da8ef9f803f5a443bb07e141a7113b92201c9f8c"
+  },
+  "buildProfile": "debug",
+  "nativeUnits": 77,
+  "nativeArtifacts": 9
+}

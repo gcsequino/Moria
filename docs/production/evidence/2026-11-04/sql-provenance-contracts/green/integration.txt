@@ -1,0 +1,59 @@
+{"controller": "moria-quality-02d4f072-69ad-49cd-9d73-6e90fbe2858b", "image": "sha256:9fe8d910a0af4d52d14636b23be1c52bb00c8c7057e9a57d97fd839fb726f365", "scratchPools": ["/tmp/moria-engine-scratch-cd8221d0-28a6-4497-b9ba-e58657c97595", "/tmp/moria-engine-scratch-633c0eb5-4cce-4083-a815-79be49ed850e"], "temporary": "/tmp/moria-quality-r01j9xfr"}
+$ node scripts/test-files.mjs integration tests/sql.integration.test.ts
+Running 1 integration test files.
+✔ shared reader admission releases its session lock and rolls back on failure (2025.525445ms)
+✔ policy reference evaluator agrees with real PostgreSQL three-valued truth tables (6.962917ms)
+✔ absent attributes never resolve inherited JavaScript object properties (0.599175ms)
+✔ numeric and Unicode comparisons match PostgreSQL without precision loss (1.726772ms)
+✔ timestamps, array equality and null membership agree with PostgreSQL (4.598756ms)
+✔ real database rollback atomically protects multiple publication heads and checkpoints (6.491387ms)
+✔ two concurrent compare-and-swap writers cannot both publish the same expected head (7.173595ms)
+✔ permanent UID allocator resolves concurrent requests to the same identity (10.60856ms)
+✔ catalog commits multiple heads plus checkpoint and deduplicates lost acknowledgment (70.187176ms)
+✔ catalog stale second output rolls back first output and checkpoint (39.370531ms)
+✔ revocation and stale worker fence block publication (73.971382ms)
+✔ action idempotency survives revision changes, conflicts on input changes and never reuses expired keys (19.49755ms)
+✔ real Iceberg snapshots publish atomically, preserve history, and hide failed staged outputs (2363.527208ms)
+✔ source disappearance preserves overlays, null differs from clear, tombstones survive refresh (110.011856ms)
+✔ pinned Iceberg streams feed object staging with wire values and reject mismatched snapshots (7727.150175ms)
+✔ competing action conditions re-evaluate under serialization and only one commits (33.885915ms)
+✔ streamed same-schema refresh stays invisible and publishes across concurrent edits (98.606022ms)
+✔ refresh source-head CAS rejects competing stages and schema migration races (112.535898ms)
+✔ ontology stage publication enforces persisted worker fences and renewal cannot revive expiry (50.920182ms)
+✔ failed streams and cross-batch duplicates cannot publish partial generations (88.881523ms)
+✔ additive stage migration preserves legacy generations and retained edit validation (64.609072ms)
+✔ cursor pins survive data changes, bind identity/query, never extend expiry and invalidate on revocation (26.480244ms)
+✔ killed publisher rolls back before COMMIT and lost acknowledgment recovers after COMMIT (1480.009172ms)
+✔ current authority keeps scopes separate from grants, audits revocation and fails stale identities closed (33.214861ms)
+✔ twenty concurrent writers queue before their snapshot without exhausting serialization retries (103.495103ms)
+✔ integrated service enforces current markings, row/property policies, action conditions and revocation (102.742723ms)
+✔ workload HTTP authenticates server-side identity and rechecks revoked sessions inside operations (1125.993065ms)
+✔ SQL query pages pin data, recheck current source/overlays and bind cursor identity, contract and lifetime (288.121454ms)
+✔ catalog-resolved Iceberg indexing preserves provenance and rechecks access at publication (1517.93227ms)
+✔ local lease supervision renews a live fence and aborts on replacement (42.396933ms)
+✔ supervision deadlines cancel work without reclassifying a committed result (112.484103ms)
+✔ published markings constrain reads, queries, action replay and subsequent refreshes (156.583701ms)
+✔ local workspace HTTP preserves overrides through Iceberg refresh and restart, enforcing demo access (4420.464083ms)
+✔ external PostgreSQL workspace HTTP preserves overrides through Iceberg refresh and restart, enforcing demo access (3733.27038ms)
+✔ SNOTEL sync persists Iceberg, atomically serves corrections and enforces app scope (6609.435746ms)
+✔ related serving stages roll back together when publication completion fails (46.240681ms)
+✔ OIDC browser sessions, scoped grants, refresh, revocation and CLI recovery use real PostgreSQL (436.926438ms)
+✔ management Google sessions enforce admin grants, data writes, app isolation and CLI recovery (2469.838749ms)
+✔ durable jobs coalesce, recover, fence and preserve atomic publication (634.911105ms)
+✔ weather publication rolls back and replays safely after restart (11.672928ms)
+✔ lineage exposes persisted publication and index relationships without private metadata (58.995774ms)
+✔ durable SNOTEL resumes published Iceberg snapshots without redownload or duplicate serving (4529.54579ms)
+✔ external PostgreSQL runs bundled Snow and weather at the minimum pool with a schema lease (2047.77032ms)
+✔ migration ownership, versioned idempotence and compatibility use real PostgreSQL (229.970285ms)
+✔ unversioned empty schema is rejected without changing schema or data (468.717195ms)
+✔ unversioned partial schema is rejected without changing schema or data (101.567644ms)
+✔ unversioned complete schema is rejected without changing schema or data (785.291753ms)
+✔ lease loss during an active HTTP transaction keeps migration fenced until drain (62.956376ms)
+ℹ tests 48
+ℹ suites 0
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45275.945791

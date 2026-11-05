@@ -1,0 +1,38 @@
+{"controller": "moria-quality-aa076e37-1914-401a-b34b-c60745252144", "image": "sha256:38372466c54779526cba0648d7007f269d6a89a04ecebad1b55619be7317b037", "scratchPools": ["/tmp/moria-engine-scratch-cb86be0b-338a-48a8-8104-6af7ea638be0", "/tmp/moria-engine-scratch-38ec81e3-9332-4933-b0a4-a256e1855943", "/tmp/moria-engine-scratch-4a926952-e553-4ed8-aee1-c0e86f81a074"], "temporary": "/tmp/moria-quality-xsau467n"}
+$ node scripts/test-files.mjs integration tests/native-evaluation-purpose.integration.test.ts
+Running 1 integration test files.
+▶ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ✖ a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes (1128.467854ms)
+✖ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts (36025.928802ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36603.637595
+
+✖ failing tests:
+
+test at tests/native-evaluation-purpose.integration.test.ts:7:3219
+✖ a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes (1128.467854ms)
+  AssertionError [ERR_ASSERTION]: One binding check must traverse its exact purpose once
+
+  2 !== 1
+
+      at evaluationPurposeFixture (/app/tests/fixtures/native-evaluations/purpose.ts:42:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/native-evaluation-purpose.integration.test.ts:882:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-evaluation-purpose.integration.test.ts:778:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.
