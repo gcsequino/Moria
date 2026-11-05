@@ -47,6 +47,11 @@ incorrectly attempted to reenable a revoked session. The revocation guard correc
 rejected that cleanup. The final test now asserts irreversible revocation and
 continued denial. The earlier run is preserved in the raw evidence directory.
 
-The full original Agent file is running separately on the same image. Evaluation,
-whole-instance composition and the complete independent quality gate remain open;
-this checkpoint does not claim their completion or production capacity.
+The complete original Agent file also passes **24/24**, zero skips/cancellations,
+334.443 seconds including the driver. Its three roots finish in 79.017, 130.146
+and 123.191 seconds with their original 300-second limits. All original SDK/CLI,
+LangGraph, durable intent, child isolation, lease/worker fencing, cancellation,
+SIGKILL, lost COMMIT, Source automation and pinned descriptor/current authority
+checks execute on the same qualified native image. All owned resources are
+verified absent after cleanup. Evaluation, whole-instance composition and the
+complete independent quality gate remain open.

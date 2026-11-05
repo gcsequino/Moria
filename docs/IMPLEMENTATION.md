@@ -15,8 +15,9 @@ actual task fences, private helper permissions, Source proofs, classifications,
 policy denies and irreversible revocation remain checked. The full original
 Functions file passes 18/18; all fixtures are cleaned. The combined `9aba9569` base
 plus this change passes static checks, all nine fingerprints and 117 native units.
-The full Agent file is running; Evaluation, whole-instance and independent complete
-quality gates remain open. See
+The complete original Agent file also passes 24/24 on the same native artifacts,
+with no skips/cancellations and all fixture cleanup verified. Evaluation,
+whole-instance and independent complete quality gates remain open. See
 [Function authority evidence](production/evidence/2026-11-04/function-source-authority/README.md).
 
 ## November 5 bounded Connector schema discovery

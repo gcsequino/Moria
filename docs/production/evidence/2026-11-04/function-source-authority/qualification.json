@@ -76,8 +76,25 @@
   },
   "rawProofDirectory": "/home/gcseq/moria-proofs/authority-grouped-20261105",
   "remaining": [
-    "Full original Agent file is running on the same native image.",
     "Ten-case Evaluation, whole-instance and independent complete quality gates remain required.",
     "No production throughput or capacity certification is implied by the isolated SQL count or functional results."
-  ]
+  ],
+  "fullAgents": {
+    "exitCode": 0,
+    "wallSeconds": 334.4432218599977,
+    "tests": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootWallSeconds": [
+      79.01708271,
+      130.146001137,
+      123.191376735
+    ],
+    "rootDeadlineSeconds": 300,
+    "controllerAbsent": true,
+    "labelledChildrenAbsent": true,
+    "scratchPoolsAndTemporaryAbsent": true
+  }
 }
