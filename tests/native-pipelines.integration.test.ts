@@ -1,3 +1,4 @@
+import { connectorCustody } from './fixtures/native-connectors/custody.js';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
@@ -1237,3 +1238,5 @@ test(
     );
   },
 );
+
+test('native Connector custody and checkpoint publication', { timeout: 300000 }, connectorCustody);

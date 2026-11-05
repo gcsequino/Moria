@@ -495,41 +495,7 @@ impl SandboxContext {
             return Ok(());
         }
         if self.domain.engine() {
-            client
-                .query_one(
-                    "SELECT moria.runtime_pipeline_current($1)",
-                    &[&self.lease.execution],
-                )
-                .await?;
-            let session = crate::authority::Authority::stored_session_in(
-                client,
-                self.session_hash
-                    .as_deref()
-                    .ok_or_else(|| anyhow::anyhow!("UNAUTHENTICATED"))?,
-                &self.environment,
-                &self.principal,
-                &self.application,
-            )
-            .await?;
-            let resource: String = client
-                .query_one(
-                    "SELECT resource::text FROM moria.runtime_executions WHERE id=$1",
-                    &[&self.lease.execution],
-                )
-                .await?
-                .get(0);
-            let labels =
-                crate::authority::Authority::resource_access(client, &session, &resource, "read")
-                    .await?;
-            self.record_consumed_markings(
-                &labels
-                    .into_iter()
-                    .map(|marking| ConsumedMarking {
-                        environment: self.environment.clone(),
-                        marking,
-                    })
-                    .collect::<Vec<_>>(),
-            )?;
+            crate::pipelines::check_context(client, self).await?;
             return Ok(());
         }
         if let Some(hash) = self.session_hash.as_deref()

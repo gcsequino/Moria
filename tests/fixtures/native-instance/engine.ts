@@ -26,6 +26,7 @@ export async function startInstanceEngine(input: {
   host: string;
   runtimeEnvironment: NodeJS.ProcessEnv;
   operatorEnvironment: NodeJS.ProcessEnv;
+  pool?: Pool;
 }) {
   const controller = process.env.MORIA_TEST_CONTROLLER;
   assert.ok(controller, 'A task-owned controller is required for the privileged scratch janitor');
@@ -82,7 +83,7 @@ export async function startInstanceEngine(input: {
     void done.catch(() => {});
     return { child, done, output: () => output };
   };
-  const pool = instanceEnginePool();
+  const pool = input.pool ?? instanceEnginePool();
   for (const slot of pool.slots) {
     await start(['scratch', 'register'], input.operatorEnvironment, {
       ...slot.registration,

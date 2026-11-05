@@ -403,6 +403,7 @@ export async function managedRetentionDataset(
       return { binding, execution, out };
     };
     return {
+      baseUrl: serving.url,
       db,
       s3,
       environment,

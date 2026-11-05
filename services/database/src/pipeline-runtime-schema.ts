@@ -4,6 +4,7 @@ CREATE TABLE moria.runtime_pipeline_destinations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),environment text NOT NULL REFERENCES moria.environments(id),resource uuid NOT NULL,
   revision text NOT NULL,endpoint_ref text NOT NULL CHECK(endpoint_ref~'^[A-Za-z_][A-Za-z0-9_]{0,127}$'),
   secret_ref text NOT NULL CHECK(secret_ref~'^[A-Za-z_][A-Za-z0-9_]{0,127}$'),
+  credentials jsonb NOT NULL DEFAULT '[]' CHECK(jsonb_typeof(credentials)='array' AND jsonb_array_length(credentials)<=8),
   methods text[] NOT NULL CHECK(cardinality(methods) BETWEEN 1 AND 2 AND methods<@ARRAY['GET','POST']),
   paths text[] NOT NULL CHECK(cardinality(paths) BETWEEN 1 AND 32),
   markings text[] NOT NULL CHECK(cardinality(markings)<=256),allowed_markings text[] NOT NULL CHECK(cardinality(allowed_markings)<=256),enabled boolean NOT NULL DEFAULT true,
@@ -25,6 +26,7 @@ CREATE TABLE moria.runtime_pipeline_executions (
   entry_id uuid NOT NULL REFERENCES moria.fs_entries(id),release text NOT NULL REFERENCES moria.fs_source_releases(digest),
   definition jsonb NOT NULL,code_resource uuid,inputs jsonb NOT NULL,outputs jsonb NOT NULL,configuration jsonb NOT NULL,
   checkpoint jsonb,destination_fingerprint text,requester jsonb NOT NULL,markings jsonb NOT NULL,
+  secret_approvals jsonb NOT NULL DEFAULT '[]' CHECK(jsonb_typeof(secret_approvals)='array' AND jsonb_array_length(secret_approvals)<=8),
   attempt_id uuid NOT NULL DEFAULT gen_random_uuid(),correlation_id uuid NOT NULL DEFAULT gen_random_uuid()
 );
 CREATE TABLE moria.runtime_pipeline_outputs (
@@ -86,6 +88,17 @@ BEGIN
     IF NOT EXISTS(SELECT 1 FROM moria.native_storage_namespaces n WHERE n.environment=e.environment AND n.resource=item->>'resource'
       AND n.warehouse_id=item->'namespace'->>'warehouseId' AND n.table_id=item->'namespace'->>'tableId'
       AND n.revision=item->'namespace'->>'revision' AND n.enabled) THEN RAISE EXCEPTION 'STORAGE_NAMESPACE_REVOKED'; END IF;
+  END LOOP;
+  FOR item IN SELECT value FROM jsonb_array_elements(r.secret_approvals) LOOP
+    IF NOT EXISTS(SELECT 1 FROM moria.native_secret_approvals a
+      WHERE a.id::text=item->'approval'->>'id' AND a.generation::text=item->'approval'->>'generation'
+        AND a.incarnation::text=item->'approval'->>'incarnation' AND a.incarnation=(SELECT incarnation FROM moria.indexing_instance)
+        AND a.environment=e.environment AND a.consumer=e.resource AND a.secret::text=item->'request'->>'secret'
+        AND a.owner_kind='connector' AND a.owner_profile::text=item->'request'->>'ownerProfile'
+        AND a.owner_revision=item->'request'->>'ownerRevision' AND a.destination_fingerprint=r.destination_fingerprint
+        AND a.material_ref=item->'request'->>'materialRef' AND a.material_revision=item->>'materialRevision' AND a.enabled)
+      THEN RAISE EXCEPTION 'SECRET_APPROVAL_REVOKED'; END IF;
+    requests:=requests||jsonb_build_array(jsonb_build_object('resource',item->'request'->>'secret','operation','use'));
   END LOOP;
   PERFORM moria.native_serving_resource_access_batch_state(state,requests);
 END $$;

@@ -2822,3 +2822,20 @@ Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed
 
 
 Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.
+
+
+## November 4 Connector custody implementation checkpoint
+
+Connector acceptance now binds up to eight exact operator credential slots to
+current caller/service use grants, immutable approval generations and semantic
+cursor revisions. Fresh guards cover claim, callback, in-flight work, publication
+and result release; material remains in the native HTTP host. Known reflected
+material is withheld. The operator can inspect exact Connector approval requests
+without reading credentials. Full replacement remains the supported write profile;
+other modes and capabilities still require implementation and qualification.
+
+The frozen source compiles all nine native artifacts, passes complete static
+checks, provenance and all 79 native units. The new real Sync/Dataset/checkpoint
+fixture is written and typechecks but has not yet run. Runtime proof, latest full
+quality gates and production-scale evidence remain open; this checkpoint does
+not complete N09.
