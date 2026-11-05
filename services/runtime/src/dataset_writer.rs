@@ -1096,6 +1096,7 @@ pub mod key_run;
 pub mod key_run_io;
 pub mod key_run_merge;
 pub mod key_run_set;
+mod position_delete;
 mod replace_graph;
 pub mod row_selection;
 pub mod rows;

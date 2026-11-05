@@ -441,6 +441,7 @@ impl ReplacementGraph {
             files: files.clone(),
             visibility: self.visibility(),
             index_summary: Some(index.clone()),
+            mutation_footprint: None,
         };
         let mut children = self.index_children().await?;
         children.push((

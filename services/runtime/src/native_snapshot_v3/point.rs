@@ -33,6 +33,7 @@ pub struct VerifiedKeyRow {
 /// independently verified typed key. It is not a whole-row digest or a reusable read grant.
 #[derive(Clone, Debug)]
 pub(crate) struct VerifiedPosition {
+    basis: SealedObject,
     path: String,
     row: u64,
     data_sequence: u64,
@@ -40,6 +41,9 @@ pub(crate) struct VerifiedPosition {
     physical_version: ObjectVersion,
 }
 impl VerifiedPosition {
+    pub(crate) fn basis(&self) -> &SealedObject {
+        &self.basis
+    }
     pub(crate) fn into_parts(self) -> (String, u64, u64, SealedObject, ObjectVersion) {
         (
             self.path,
@@ -86,6 +90,7 @@ impl NativeSnapshot {
                 == selection.physical_rows(),
             "PARQUET_COUNT_MISMATCH"
         );
+        let chunks = parquet_bounds::metadata(builder.metadata(), file.content().size)?;
         let (group, row, rows) = locate_row_group(builder.metadata(), locator.row)?;
         let ranges = builder
             .metadata()
@@ -94,7 +99,7 @@ impl NativeSnapshot {
             .iter()
             .map(|column| column.byte_range())
             .collect::<BTreeSet<_>>();
-        verify_pages(&file, builder.metadata(), &ranges).await?;
+        verify_pages(&file, &chunks, &ranges).await?;
         let selectors = RowSelection::from(vec![
             RowSelector::skip(usize::try_from(row)?),
             RowSelector::select(1),
@@ -185,6 +190,7 @@ impl NativeSnapshot {
                     == selection.physical_rows(),
                 "PARQUET_COUNT_MISMATCH"
             );
+            let chunks = parquet_bounds::metadata(builder.metadata(), file.content().size)?;
             let physical_schema = builder.parquet_schema();
             let roots: Vec<_> = physical_schema
                 .root_schema()
@@ -211,7 +217,7 @@ impl NativeSnapshot {
                     }
                 }
             }
-            verify_pages(&file, builder.metadata(), &ranges).await?;
+            verify_pages(&file, &chunks, &ranges).await?;
             let mut stream = builder
                 .with_row_groups(groups)
                 .with_projection(projection)
@@ -237,6 +243,7 @@ impl NativeSnapshot {
                     );
                     let locator = locators[index].as_ref().unwrap();
                     verified[index] = Some(VerifiedPosition {
+                        basis: self.root.content().clone(),
                         path: name.clone(),
                         row: locator.row,
                         data_sequence: locator.data_sequence,
@@ -255,10 +262,9 @@ impl NativeSnapshot {
 
 async fn verify_pages(
     file: &GraphFile,
-    metadata: &ParquetMetaData,
+    chunks: &[parquet_bounds::Chunk],
     ranges: &BTreeSet<(u64, u64)>,
 ) -> Result<()> {
-    let chunks = parquet_bounds::metadata(metadata, file.content().size)?;
     let mut headers = file.window();
     for chunk in chunks
         .iter()

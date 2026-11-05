@@ -28,6 +28,9 @@ mod validate;
 pub(crate) use index_summary::{INDEX_SUMMARY_PROPERTY, IndexSummary, IndexSummaryRef};
 pub use point::VerifiedKeyRow;
 mod batch;
+mod mutation;
+pub(crate) use mutation::MutationFootprintRef;
+pub(crate) use point::VerifiedPosition;
 pub(crate) use scan::GraphScanFile;
 
 pub const PROFILE: &str = "iceberg-v2-native-mor-bounded-v3";
@@ -76,6 +79,8 @@ pub(crate) struct RootDescriptor {
     pub visibility: Option<VisibilityIndex>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub index_summary: Option<IndexSummaryRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mutation_footprint: Option<MutationFootprintRef>,
 }
 #[derive(Clone, Debug)]
 pub struct NativeSnapshot {
