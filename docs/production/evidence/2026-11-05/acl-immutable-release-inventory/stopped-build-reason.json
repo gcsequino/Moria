@@ -1,0 +1,8 @@
+{
+  "reason": "Coordinator intentionally stopped verified frozen build after observed memory thrashing; not an attributed compiler code error or inferred OOM",
+  "container": "26ae2256f680",
+  "observedMemory": "3.98GiB / 4GiB",
+  "observedCPU": "176.55%",
+  "observedBlockIO": "339GB / 3.21GB",
+  "retry": "same inputs/resources; one compiler job"
+}

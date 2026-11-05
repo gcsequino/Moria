@@ -1,5 +1,47 @@
 # Implementation checkpoint
 
+## November 5 grouped Function Source authority
+
+Function authorization now resolves current session state and its operation Source
+labels within one credential-bound SQL statement. Exact environment/principal/
+application identity is checked before Source lookup. The native permission checks,
+preceding resource existence check and final fresh authority check remain intact;
+there is no cross-call authority cache or limit/lock/isolation change.
+
+A real PostgreSQL composition passes 8/8: actual ordinary and private job credentials
+traverse session resolution three times before grouping and twice after grouping,
+with exact state/labels and the final fresh finish retained. Ordered errors, stale
+actual task fences, private helper permissions, Source proofs, classifications,
+policy denies and irreversible revocation remain checked. The full original
+Functions file passes 18/18; all fixtures are cleaned. The combined `9aba9569` base
+plus this change passes static checks, all nine fingerprints and 117 native units.
+The full Agent file is running; Evaluation, whole-instance and independent complete
+quality gates remain open. See
+[Function authority evidence](production/evidence/2026-11-04/function-source-authority/README.md).
+
+## November 5 bounded Connector schema discovery
+
+The native Connection runtime now implements explicit `schemaDiscovery` alongside
+replace/full `batchRead`. Discovery uses the current Connection and exact Secret
+use grants through the existing approved transport, has a read-only sandbox
+binding and no Dataset IO pins, and returns a typed bounded schema proposal.
+Actual single-task sealing and current authority gate completion and retained
+result release; Dataset schema, head and checkpoint state remain unchanged.
+SDK, CLI and native HTTP entry points select the capability explicitly. Neutral
+readiness requires an executable capability/profile pair. Continuous read,
+writeback and additional batch write modes remain unavailable.
+
+The frozen component based on `0118a645` passes static checks, all nine native
+artifact fingerprints and 113 native units. Its complete real Source/HTTP/OCI/SQL
+file passes 15/15 with no skips or cancellations, including cancellation,
+revocation, typed proposal rejection, identical-key capability isolation, normal
+batch typed publication and lost-COMMIT replay. All original limits remain intact
+and every owned fixture is cleaned. The original Connector custody regression
+also passes 15/15 on identical native inputs and its unchanged fixture body, in
+216.438 seconds within the original 300-second root limit. Current-platform
+integration and independent complete quality checks remain required. See
+[discovery evidence](production/evidence/2026-11-04/connector-schema-discovery/README.md).
+
 ## November 4 private-origin repeated validation
 
 Current private credentials now traverse accepted delegation once on successful
@@ -3194,7 +3236,7 @@ and 113 native units pass. Evidence:
 
 The managed full-build Source bootstrap checkpoint publishes immutable generation aliases and complete declared-key maps over the existing staged population. Static checks, all nine matching native artifacts, 99 units and the full 17-case real indexing service file passed, including compound Dataset keys, maximum-width unkeyed rows, Action tombstones, registered FullObjectSource/Search access, fresh-backend recovery and published-history cleanup. The scoped contract and retained evidence are in `docs/production/NATIVE-SOURCE-STORES.md` and `docs/production/evidence/2026-11-04/source-store-bootstrap/`.
 
-Closed-build staging core correctness passed the focused 3/3 real native lifecycle with all nine artifacts, 106 units and full static checks: published builds retain all aliased data while temporary spills are removed; expired unpublished builds require real closure/policy/reference checks and write barriers before bounded payload/projection cleanup. Actual policy successor, write/backup barriers, private payload/orphan cleanup and published-data preservation assertions passed; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-core/`. Indexed pending discovery with bounded legacy reconciliation passed focused 3/3 with six index access-path checks; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-queue/`. The full 20-case indexing service file passed with zero skips or cancellations in 309.67 seconds and all original root deadlines unchanged. Accepted near-cap physical-width proof and explicit width-blocked deferral remain required before complete collector qualification. Sparse Source/Dataset delta activation remains closed. No production capacity certification is inferred from the local correctness populations.
+Closed-build staging core correctness passed the focused 3/3 real native lifecycle with all nine artifacts, 106 units and full static checks: published builds retain all aliased data while temporary spills are removed; expired unpublished builds require real closure/policy/reference checks and write barriers before bounded payload/projection cleanup. Actual policy successor, write/backup barriers, private payload/orphan cleanup and published-data preservation assertions passed; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-core/`. Indexed pending discovery with bounded legacy reconciliation passed focused 3/3 with six index access-path checks; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-queue/`. The full 20-case indexing service file passed with zero skips or cancellations in 309.67 seconds and all original root deadlines unchanged. The added near-cap profile passes 3/3 with all nine exact artifacts, 106 units and full static checks. A genuinely admitted typed-array row has 4,194,273 decoded value bytes; ordinary stored spill size is 471,656 bytes while inline source JSONB is 25,165,867 bytes. A separately controlled identical-content legacy EXTERNAL layout exceeds the unchanged 16 MiB collection budget, receives bounded operator-blocked diagnostics with an unchanged cursor/payload, and does not strand another eligible build. All test resources were removed. Evidence: `production/evidence/2026-11-05/indexing-staging-width/`. Universal accepted physical-width bounds and automatic oversized legacy-row reclamation remain unqualified; this is not complete collector capacity evidence. Sparse Source/Dataset delta activation remains closed. No production capacity certification is inferred from the local correctness populations.
 
 Native journal/Source integration (2026-11-05): trial046 combines the committed
 Source staging/renewal baseline with v3 C04/C08 work. The first complete Source

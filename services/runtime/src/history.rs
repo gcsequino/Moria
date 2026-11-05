@@ -87,7 +87,7 @@ pub async fn cli(db: Database, arguments: Vec<String>) -> Result<()> {
                 json!({"collection":id})
             }
             "once" => tx.query_one("SELECT moria.runtime_history_step($1)", &[&request.id]).await?.get::<_,Value>(0),
-            "inspect" => tx.query_opt("SELECT to_jsonb(p)||jsonb_build_object('retainSeconds',p.retain_seconds::text,'collections',COALESCE((SELECT jsonb_agg(to_jsonb(c)||jsonb_build_object('floor',c.floor::text,'removedRows',c.removed_rows::text,'droppedTables',c.dropped_tables::text)) FROM (SELECT * FROM moria.runtime_history_collections WHERE policy=p.id ORDER BY observed_at DESC,id DESC LIMIT 20)c),'[]'::jsonb)) FROM moria.runtime_history_policies p WHERE p.id=$1", &[&request.id]).await?.ok_or_else(||anyhow::anyhow!("NOT_FOUND"))?.get(0),
+            "inspect" => tx.query_opt("SELECT to_jsonb(p)||jsonb_build_object('retainSeconds',p.retain_seconds::text,'indexingStagingBlockedSample',COALESCE((SELECT jsonb_agg(jsonb_build_object('build',q.build,'closure',q.closure,'block',q.last_block,'retryAt',q.retry_at)) FROM (SELECT build,closure,last_block,retry_at FROM moria.runtime_indexing_staging_pending WHERE environment=p.environment AND last_block IS NOT NULL ORDER BY build LIMIT 20)q),'[]'::jsonb),'collections',COALESCE((SELECT jsonb_agg(to_jsonb(c)||jsonb_build_object('floor',c.floor::text,'removedRows',c.removed_rows::text,'droppedTables',c.dropped_tables::text)) FROM (SELECT * FROM moria.runtime_history_collections WHERE policy=p.id ORDER BY observed_at DESC,id DESC LIMIT 20)c),'[]'::jsonb)) FROM moria.runtime_history_policies p WHERE p.id=$1", &[&request.id]).await?.ok_or_else(||anyhow::anyhow!("NOT_FOUND"))?.get(0),
             _ => anyhow::bail!("INPUT_INVALID"),
         }
     };

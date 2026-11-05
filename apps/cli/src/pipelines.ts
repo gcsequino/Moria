@@ -8,15 +8,17 @@ export async function pipelinesCommand(
 ) {
   const [command, id, ...extra] = args;
   if (!id || extra.length)
-    throw new MoriaError('USAGE', 'moria pipelines invoke|get|events|cancel|wait <uuid>');
+    throw new MoriaError('USAGE', 'moria pipelines invoke|discover|get|events|cancel|wait <uuid>');
   const client = pipelinesClient((await filesystemConnection(values)).transport);
-  if (command === 'invoke') {
+  if (command === 'invoke' || command === 'discover') {
     if (!values.key)
       throw new MoriaError(
         'USAGE',
-        'pipelines invoke <resource-uuid> --key <stable-key> [--async]',
+        `pipelines ${command} <resource-uuid> --key <stable-key> [--async]`,
       );
-    return client.invoke(id, { idempotencyKey: values.key, wait: !values.async });
+    return command === 'discover'
+      ? client.discover(id, { idempotencyKey: values.key, wait: !values.async })
+      : client.invoke(id, { idempotencyKey: values.key, wait: !values.async });
   }
   if (command === 'get') return client.get(id);
   if (command === 'events') return client.events(id, values.cursor ?? '0');

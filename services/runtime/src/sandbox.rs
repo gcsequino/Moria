@@ -1090,13 +1090,16 @@ impl SandboxSupervisor {
         );
         let client = self.db.get().await?;
         context.check_in(&client).await?;
-        let outputs: Value = client
-            .query_one(
-                "SELECT outputs FROM moria.runtime_pipeline_executions WHERE execution=$1",
-                &[&context.lease.execution],
-            )
-            .await?
-            .get(0);
+        let accepted = client.query_one(
+            "SELECT outputs,capability FROM moria.runtime_pipeline_executions WHERE execution=$1",
+            &[&context.lease.execution],
+        ).await?;
+        if accepted.get::<_, String>("capability") == "schemaDiscovery" {
+            let result = crate::pipelines::discovery::sealed_result_in(&client, context).await?;
+            context.check_in(&client).await?;
+            return Ok(result);
+        }
+        let outputs: Value = accepted.get("outputs");
         let expected = outputs
             .as_object()
             .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?

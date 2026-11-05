@@ -269,6 +269,13 @@ test(
           (resource) => resource.reference === 'stations/ObjectType/Station',
         )!.id;
         assert.deepEqual(await source.publish(context, ontology.id, checkout.digest), release);
+        await assert.rejects(
+          db.pool.query(
+            'UPDATE moria.fs_source_releases SET snapshot_file_entries=ARRAY[]::uuid[] WHERE digest=$1',
+            [release.digest],
+          ),
+          { code: '428C9' },
+        );
         assert.equal(
           (await source.getRelease(context, release.digest)).snapshot.role.deploymentUnitId,
           role.deploymentUnitId,

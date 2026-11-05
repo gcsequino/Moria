@@ -1,0 +1,18 @@
+{"controller": "moria-quality-51cf9c9e-0f64-4240-a0aa-5273a60f916e", "image": "sha256:691320d08e4de429d08aa6484c76d694542504de559a9997e389713710b148df", "scratchPools": ["/tmp/moria-engine-scratch-c5dfb420-4e28-4cde-b3ae-f6089b5a44b5", "/tmp/moria-engine-scratch-c218c1dd-fb9a-4f0d-9828-3d2904171367", "/tmp/moria-engine-scratch-cd8d0bda-1c42-419f-9ee7-5a9642fec71a"], "temporary": "/tmp/moria-quality-7t_t_l6i"}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (near-cap storage)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (23956.050005ms)
+  ✔ accepted decoded-boundary typed arrays expose physical amplification and defer a controlled legacy layout without poisoning another real build (11994.168964ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (near-cap storage) (40103.789869ms)
+ℹ {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"adbc6ba6-19dd-4464-8684-2c6dec35bf05","event":"reducer_batches","maxWireBytes":"6291882","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"a47d0fba-d91b-4225-9b9b-cb14e29b9abf"}]}
+ℹ {"profile":"native-admitted-decoded-boundary","decodedValueBytes":4194273,"perArrayElements":99862,"arrays":21,"measured":[{"uid":"56651d9b-9041-43c7-86fe-0a785470c932","wire_bytes":"6291882","value_storage":"70","source_storage":"471586","storage_bytes":"471656","inline_source_storage":"25165867","source_hash":"435add83bb9b0594a242e59e59b5aa997b1d976fb2894e5d56e4ab9d0e2ee1e9"},{"uid":"6a3fe8d1-3ccb-4fd1-8c73-1b37621043b2","wire_bytes":"6291882","value_storage":"70","source_storage":"471586","storage_bytes":"471656","inline_source_storage":"25165867","source_hash":"feb02e28c62e6c1d1e0e57e2506e0b49dcdddb27b39d1eb62744f3d7eced4af3"}]}
+ℹ {"profile":"native-admitted-canonical-storage","measured":[{"value_storage":"70","source_storage":"471586","wire_bytes":"6291882"},{"value_storage":"70","source_storage":"471586","wire_bytes":"6291882"}]}
+ℹ {"profile":"controlled-legacy-external-layout","measured":[{"uid":"56651d9b-9041-43c7-86fe-0a785470c932","wire_bytes":"6291882","value_storage":"70","source_storage":"25165863","storage_bytes":"25165933","inline_source_storage":"25165867","source_hash":"435add83bb9b0594a242e59e59b5aa997b1d976fb2894e5d56e4ab9d0e2ee1e9"},{"uid":"6a3fe8d1-3ccb-4fd1-8c73-1b37621043b2","wire_bytes":"6291882","value_storage":"70","source_storage":"25165863","storage_bytes":"25165933","inline_source_storage":"25165867","source_hash":"feb02e28c62e6c1d1e0e57e2506e0b49dcdddb27b39d1eb62744f3d7eced4af3"}]}
+ℹ {"profile":"legacy-layout-width-blocked-not-reclaimed","blocked":{"block":{"candidate":{"fence":"1","partition":0,"task":"1e2ace7e-e162-4558-8d52-f4925257278a","uid":"56651d9b-9041-43c7-86fe-0a785470c932"},"closure":"610bc133-87d0-4851-a035-d1757dcb4a0f","cursor":{},"fence":"3","incarnation":"12e162d5-c092-45a6-b945-e742f853a89c","limitBytes":"16777216","observedAt":"2026-11-05T15:46:52.629204+00:00","owner":"1d283ad6-6915-44fe-ae7c-8dc591e0d090","phase":"spills","policy":"8f68b3e5-2285-4196-afdd-bd7f481e0f36","reason":"rowStorageBudget","scopeHash":"a743a128f43ebc81e90b0940ced24b64a23cd76f0e545d158fba3c3175a4f54b","storageBytes":"25165933"},"build":"adbc6ba6-19dd-4464-8684-2c6dec35bf05","closure":"610bc133-87d0-4851-a035-d1757dcb4a0f","nextRetryAt":"2026-11-05T15:47:52.629204+00:00","pending":true,"state":"operatorBlocked","worked":false}}
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40569.241698
