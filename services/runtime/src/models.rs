@@ -382,9 +382,8 @@ impl NativeModels {
     ) -> Result<ModelAdmission> {
         let definition: Value = client.query_opt("SELECT definition FROM moria.native_model_bindings WHERE environment=$1 AND resource=$2 AND enabled", &[&session.environment(), &resource]).await?.ok_or_else(|| anyhow::anyhow!("NOT_FOUND"))?.get(0);
         let route: Route = serde_json::from_value(definition)?;
-        let (state, labels, secret) =
+        let (_, labels, secret) =
             Self::authorized_in(client, session, resource, &route, &BTreeSet::new(), None).await?;
-        Authority::finish(client, session, &state).await?;
         Ok(ModelAdmission::from_grant(labels, secret))
     }
 
