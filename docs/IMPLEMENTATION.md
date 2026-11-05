@@ -2992,3 +2992,12 @@ C04 v3 publication, sparse writers, distributed projected-key bootstrap, Source
 delta publication, full independent gates and production capacity remain open.
 See `production/NATIVE-MOR-PRIMITIVES.md` and
 `production/evidence/2026-11-04/native-graph-custody/` for exact scope/results.
+
+Indexing admission checkpoint (2026-11-04): revoked preclaim work now becomes a
+durable failed build instead of terminating the shared drain. Known authority
+rejections use savepoint isolation under the selected row lock; unknown/schema
+errors still propagate, and no lease is fabricated. The schema-lease test watches
+its actual PostgreSQL blocker while retaining migration fencing assertions.
+All original indexing cases plus actual plan/task/advance failure-isolation
+regressions passed 16/16, with all nine artifacts, 79 native units and static
+checks. Evidence: `production/evidence/2026-11-04/indexing-preclaim-isolation`.

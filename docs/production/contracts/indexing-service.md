@@ -42,3 +42,11 @@ environment, target UUID, expected current binding revision and registered
 service target revision. It reconstructs current accepted schemas and policies;
 provider configuration remains operator-owned. Public workload/browser requests
 cannot submit metadata authority or private indexing credentials.
+
+
+Candidate admission failures remain local to their accepted build. A known
+immutable authorization or build rejection discovered before a claim marks that
+selected build failed under its existing row lock, without inventing a worker
+owner/fence or overwriting a committed success. The drain continues with other
+work after that failure commits. Unknown SQL, connection and schema failures
+still stop the process. Publication retains its full current-authority checks.

@@ -1,0 +1,66 @@
+{"controller": "moria-quality-e4a2293f-058f-40f9-9cbf-568a30f521ea", "image": "sha256:a341452c95314c67fc8ab8f0ecba68a4e84a796b80e7e4154e07b4ea688df688", "scratchPools": ["/tmp/moria-engine-scratch-bb8ae227-ce7e-4bad-8f6c-3be35c82833d", "/tmp/moria-engine-scratch-6fc5df26-63a1-4733-acc6-119ccf1d96fb"], "temporary": "/tmp/moria-quality-xipa288d"}
+$ node scripts/test-files.mjs integration tests/indexing-rust.integration.test.ts
+Running 1 integration test files.
+▶ Rust indexing publishes complete native Iceberg partitions through the shared authority
+  ✔ source publication rollback leaves neither a new head nor indexing intent (11.98622ms)
+  ✔ replacement fences a paused Rust executor without a second upload (1051.04673ms)
+  ✔ a newer accepted snapshot supersedes an older prepared attempt (1287.521269ms)
+  ✔ actual COMMIT survives killing Rust before its acknowledgment arrives (7831.736715ms)
+  ✔ duplicate UIDs across different Iceberg files prevent activation (977.018379ms)
+  ✔ operator retry reuses pinned input after a real file access failure (1017.407789ms)
+  ✔ cancellation prevents activation and cannot revoke a committed success (257.13746ms)
+  ✔ corrupt binary task plans fail before any object generation is exposed (355.669763ms)
+  ✖ loss of the lifetime schema lease stops admission while checked-out connections fence migration (2369.386146ms)
+  ℹ [{"pid":296,"state":"idle","wait_event_type":"Client","query":"SELECT rolsuper OR rolbypassrls OR rolcreatedb OR rolcreaterole OR EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='moria' AND pg_has_role(current_user,c.relowner,'MEMBER')) OR has_schema_privilege(current_user,'moria','CREATE') OR EXISTS(SELECT 1 FROM pg_roles r WHERE (r.rolsuper OR r.rolbypassrls OR r.rolcreatedb OR r.rolcreaterole) AND pg_has_role(current_user,r.oid,'MEMBER')) FROM pg_roles WHERE rolname=current_user","blockers":[]},{"pid":297,"state":"active","wait_event_type":"Lock","query":"SELECT moria.indexing_check((SELECT build FROM moria.indexing_tasks WHERE id=$1))","blockers":[85]}]
+  ✖ revocation before release preserves the previous object head (350.585213ms)
+  ✖ generic imports persist source/served status and recover in a new workspace instance (683.43876ms)
+✖ Rust indexing publishes complete native Iceberg partitions through the shared authority (19214.54904ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 8
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21169.981633
+
+✖ failing tests:
+
+test at tests/indexing-rust.integration.test.ts:1:15936
+✖ loss of the lifetime schema lease stops admission while checked-out connections fence migration (2369.386146ms)
+  AssertionError [ERR_ASSERTION]: Rust must hold a checked-out connection at the SQL barrier
+
+  false !== true
+
+      at TestContext.<anonymous> (/app/tests/indexing-rust.integration.test.ts:642:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/indexing-rust.integration.test.ts:607:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/indexing-rust.integration.test.ts:1:18322
+✖ revocation before release preserves the previous object head (350.585213ms)
+  Error: Rust drain failed (1): {"error":"AUTHORIZATION_CHANGED"}
+
+      at ChildProcess.<anonymous> (/app/tests/indexing-rust.integration.test.ts:175:22)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+
+test at tests/indexing-rust.integration.test.ts:1:19064
+✖ generic imports persist source/served status and recover in a new workspace instance (683.43876ms)
+  Error: Rust drain failed (1): {"error":"AUTHORIZATION_CHANGED"}
+
+      at ChildProcess.<anonymous> (/app/tests/indexing-rust.integration.test.ts:175:22)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12)
+[ELIFECYCLE] Command failed with exit code 1.

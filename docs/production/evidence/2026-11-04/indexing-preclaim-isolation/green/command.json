@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "600s",
+  "python3",
+  "/home/gcseq/moria-proofs/baseline-contract-reconciliation-20261104/indexing-green-001/source/deploy/test/run-quality.py",
+  "sha256:307b46beec546e5d8d4d3bfa9d2ee86f1d57748464d429741f51d42e3d5673ff",
+  "pnpm",
+  "test:integration",
+  "tests/indexing-rust.integration.test.ts"
+]
