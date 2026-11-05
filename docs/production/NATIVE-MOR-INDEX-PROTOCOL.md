@@ -354,3 +354,21 @@ match. Evidence:
 V3 Source graph-reader integration remains a separate pending runtime gate.
 Production output activation, graph metadata pruning, standard position-delete
 proof, sparse writes and distributed bootstrap remain closed.
+
+## Retained full-build Source graph reads
+
+Trial054 qualifies the retained legacy full-build indexing contract against
+actual v3 heads. Real native identity allocation precedes publication; native
+graph planning/scan/reduction produces canonical rows for array-key data with
+nullable payloads. A second actual empty v3 head emits the explicit empty scan
+witness, publishes an empty current Source generation and retains the populated
+historical generation. Dataset head and journal remain unchanged by indexing.
+All nine binaries are byte-identical to trial046; static, provenance and
+113 units pass. Evidence:
+[qualification](evidence/2026-11-05/native-v3-legacy-source-reader/summary.json).
+
+This retained target contract intentionally has no managed Source row/key store.
+The separate accepted ObjectType/permanent service profile must qualify its
+complete declared-key map and service authority. Its v3 service-origin admission
+restriction remains unchanged pending that actual red/green gate. Production
+writer and sparse-window activation remain closed.

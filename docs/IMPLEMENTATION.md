@@ -3214,3 +3214,13 @@ No v3 production writer or sparse Source window is enabled by this checkpoint.
 Actual v3 Source reader integration and graph metadata pruning remain pending,
 along with sparse standard position-delete production, distributed bootstrap,
 production workload qualification and independent full CI.
+
+Retained full-build v3 reader (2026-11-05): trial054 passes actual native graph
+scan/reduction over array-key and nullable-row v3 heads with real registered
+identities. Empty current and populated historical Source generations pass;
+indexing does not mutate Dataset head or journal. The retained legacy contract
+is tested explicitly; managed complete key maps and permanent service-origin
+v3 admission remain separate pending runtime gates. This is a test-only
+checkpoint with all nine binaries reused byte-for-byte from qualified trial046,
+full static checks and 113 native units. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-legacy-source-reader/summary.json).
