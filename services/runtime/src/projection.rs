@@ -323,6 +323,12 @@ async fn step(
 ) -> Result<Row> {
     let mut client = db.get().await?;
     let tx = client.transaction().await?;
+    tx.batch_execute("SET LOCAL lock_timeout='250ms'").await?;
+    tx.query_one(
+        "SELECT moria.runtime_indexing_staging_shared($1)",
+        &[&stage],
+    )
+    .await?;
     let remaining: i64 = tx.query_one("SELECT LEAST($2::bigint,ceil(extract(epoch FROM (deadline-clock_timestamp()))*1000)::bigint) FROM moria.indexing_builds WHERE id=$1", &[&stage,&i64::from(time_ms)]).await?.get(0);
     ensure!(remaining > 0, "DEADLINE_EXCEEDED");
     tx.query_one("SELECT set_config('statement_timeout',$1,true),set_config('maintenance_work_mem','64MB',true)",&[&format!("{remaining}ms")]).await?;

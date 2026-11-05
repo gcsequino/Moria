@@ -24,6 +24,29 @@ pub async fn cli(db: Database, arguments: Vec<String>) -> Result<()> {
     let mut bytes = Vec::new();
     stdin().take(16385).read_to_end(&mut bytes).await?;
     ensure!(bytes.len() <= 16384, "INPUT_INVALID");
+    if arguments[0] == "once" {
+        let request: Reference = serde_json::from_slice(&bytes)?;
+        let staging = bounded_step(
+            &db,
+            request.id,
+            "SELECT moria.runtime_indexing_staging_once($1)",
+        )
+        .await?;
+        let mut history =
+            bounded_step(&db, request.id, "SELECT moria.runtime_history_step($1)").await?;
+        if matches!(history["state"].as_str(), Some("complete" | "planRequired"))
+            && staging["pending"] == true
+        {
+            history["state"] = if matches!(staging["state"].as_str(), Some("busy" | "backupBusy")) {
+                json!("busy")
+            } else {
+                json!("indexingStaging")
+            };
+        }
+        history["indexingStaging"] = staging;
+        println!("{history}");
+        return Ok(());
+    }
     let mut client = db.get().await?;
     let tx = client.transaction().await?;
     tx.batch_execute("SET LOCAL statement_timeout='5s'; SET LOCAL idle_in_transaction_session_timeout='5s'; SET LOCAL lock_timeout='250ms'").await?;
@@ -71,4 +94,15 @@ pub async fn cli(db: Database, arguments: Vec<String>) -> Result<()> {
     tx.commit().await?;
     println!("{result}");
     Ok(())
+}
+
+async fn bounded_step(db: &Database, policy: Uuid, statement: &str) -> Result<Value> {
+    let mut client = db.get().await?;
+    let tx = client.transaction().await?;
+    tx.batch_execute("SET LOCAL statement_timeout='5s'; SET LOCAL idle_in_transaction_session_timeout='5s'; SET LOCAL lock_timeout='250ms'").await?;
+    tx.query_one("SELECT moria.runtime_history_operator()", &[])
+        .await?;
+    let result = tx.query_one(statement, &[&policy]).await?.get(0);
+    tx.commit().await?;
+    Ok(result)
 }

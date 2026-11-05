@@ -403,6 +403,11 @@ impl Worker {
         {
             let mut client = self.db.get().await?;
             let tx = client.transaction().await?;
+            tx.query_one(
+                "SELECT moria.runtime_indexing_staging_shared($1)",
+                &[&build],
+            )
+            .await?;
             tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND status='planning' AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
             tx.query_one("SELECT moria.indexing_check($1)", &[&build])
                 .await?;
@@ -437,6 +442,11 @@ impl Worker {
             let wire = crate::wire::scan_plan(task).context("INDEXING_PLAN_WIRE")?;
             let mut client = self.db.get().await?;
             let tx = client.transaction().await?;
+            tx.query_one(
+                "SELECT moria.runtime_indexing_staging_shared($1)",
+                &[&build],
+            )
+            .await?;
             tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
             tx.query_one("SELECT moria.indexing_check($1)", &[&build])
                 .await?;
@@ -657,6 +667,11 @@ impl Worker {
     }
 
     async fn lock_task(&self, tx: &tokio_postgres::Transaction<'_>, scope: &Scope) -> Result<()> {
+        tx.query_one(
+            "SELECT moria.runtime_indexing_staging_shared($1)",
+            &[&scope.build],
+        )
+        .await?;
         tx.query_one("SELECT 1 FROM moria.indexing_tasks WHERE id=$1 AND owner=$2 AND fence=$3 AND status='running' AND lease_until>clock_timestamp() FOR UPDATE",&[&scope.task.unwrap(),&self.owner,&scope.fence]).await?;
         tx.query_one("SELECT moria.indexing_check($1)", &[&scope.build])
             .await?;
@@ -836,6 +851,11 @@ impl Worker {
         let definition: Value = row.get("definition");
         if reductions == 0 {
             let tx = client.transaction().await?;
+            tx.query_one(
+                "SELECT moria.runtime_indexing_staging_shared($1)",
+                &[&build],
+            )
+            .await?;
             tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
             tx.query_one("SELECT moria.indexing_check($1)", &[&build])
                 .await?;
@@ -931,8 +951,9 @@ impl Worker {
             )
             .await?;
             let tx=client.transaction().await?;
-            tx.query_one("SELECT moria.indexing_check($1)",&[&build]).await?;
-            tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
+            tx.query_one("SELECT moria.runtime_indexing_staging_shared($1)", &[&build]).await?;
+            tx.query_one("SELECT 1 FROM moria.indexing_builds WHERE id=$1 AND owner=$2 AND fence=$3 AND status IN ('running','preparing','ready') AND lease_until>clock_timestamp() FOR UPDATE",&[&build,&self.owner,&fence]).await?;
+            tx.query_one("SELECT moria.indexing_claim_check($1,NULL,$2,$3)", &[&build,&self.owner,&fence]).await?;
             tx.execute("UPDATE moria.source_stages SET status='ready' WHERE id=$1 AND status='loading'",&[&build]).await?;
             tx.execute("UPDATE moria.indexing_builds SET status='ready' WHERE id=$1",&[&build]).await?;
             let receipt:Value=tx.query_one("SELECT moria.indexing_activate($1,$2,$3)",&[&build,&self.owner,&fence]).await?.get(0);
