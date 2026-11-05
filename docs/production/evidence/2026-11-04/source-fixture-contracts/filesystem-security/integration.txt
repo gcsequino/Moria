@@ -1,0 +1,22 @@
+{"controller": "moria-quality-8f3a5b12-3798-4262-b4f6-3dc17d3c2df3", "image": "sha256:e7ab403ef3975a9a55f849ae12708613daccb0219b54d65f1880542ca3c5fd88", "scratchPools": ["/tmp/moria-engine-scratch-0d78ce0e-5616-4add-af77-80e8e949e11c", "/tmp/moria-engine-scratch-7efdb5f6-5709-42e9-b49c-dde0e32501a0"], "temporary": "/tmp/moria-quality-kray6fge"}
+$ node scripts/test-files.mjs integration tests/filesystem-security.integration.test.ts
+Running 1 integration test files.
+▶ protected filesystem composes current identities, inherited policy and atomic mutations
+  ✔ ID lookup, paths, versions and listings agree without revealing hidden entries (262.713352ms)
+  ✔ markings tighten existing descendants, old versions and current group eligibility (108.567609ms)
+  ✔ moving marked content retains restrictions, including receipt replay and tombstone history (272.902907ms)
+  ✔ application scopes, base permissions and every delegated identity remain required (64.74183ms)
+  ✔ listing continuations are opaque, identity-bound, policy-bound and preserve expiry (880.082286ms)
+  ✔ queued operations see committed revocation and marking changes before their snapshot (64.524676ms)
+  ✔ ordinary mutations cannot register scopes, inject content or bypass current replay permission (118.771336ms)
+  ✔ file copies retain provenance when a source is marked or deleted later (95.795483ms)
+  ✔ runtime-resource IDs enforce current inherited markings through domain access (646.152948ms)
+✔ protected filesystem composes current identities, inherited policy and atomic mutations (4215.315764ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4686.436938

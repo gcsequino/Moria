@@ -1,0 +1,9 @@
+{
+  "tests/catalog-storage-publication.integration.test.ts": "b96bdcea45676ca86b05b2c50bfd78f1992c5aed89e6b096ed479173e77e3c09",
+  "tests/catalog-storage.integration.test.ts": "26f3b2d3d70aaba657d3738977d23a30b6d32b67e0ad3654d2c3e3b4237bf51b",
+  "tests/filesystem-security.integration.test.ts": "86add1d33bb746449a88a75e07ab9e364eae1fc508f1afa8f9b5d767cbb2d67b",
+  "tests/filesystem-content.integration.test.ts": "973f542303281fc53e73f4f9ee083e09cbbc9da3bcfcac558581bc63a0040523",
+  "tests/native-vector-engine.integration.test.ts": "3a8357cbef086e40e4367975cdd2f9b48023c42b07220a7e622bd44dac670b07",
+  "tests/native-filesystem.integration.test.ts": "7e340f0113a47758f845a270e52e8ce236db931d09b145d333a3097cb7acb5ce",
+  "tests/fixtures/catalog-storage/source.ts": "74b10e5fd8be14f23ebe6be51fa0c5c0190249892f12d74a2cb6d1ee846f352c"
+}

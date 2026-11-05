@@ -1,0 +1,20 @@
+{
+  "baseCommit": "a6fb68ffc503f0c16e0ec0f7c86c65966d3441c2",
+  "nativeSourceDigest": "cb62839d7ead0ebd726285793b4a322ed0646b3db0121fb38da785bca94796e9",
+  "nativeArtifacts": 9,
+  "nativeUnitsPassed": 79,
+  "nativeUnitsIgnored": 0,
+  "integrationFiles": 6,
+  "integrationTestsPassed": 127,
+  "integrationTestsFailed": 0,
+  "integrationTestsSkipped": 0,
+  "integrationTestsCancelled": 0,
+  "images": {
+    "catalogStorage": "sha256:0fc2d0f7430be9009a80025f9898de0037171b31fbab10af54e485c304a06824",
+    "publicationContentVectorNativeFilesystem": "sha256:c5d2c0251bf5df4415c651da150a18cc4ee07502534ead4bf199438ce517932e",
+    "finalFilesystemSecurity": "sha256:e7ab403ef3975a9a55f849ae12708613daccb0219b54d65f1880542ca3c5fd88"
+  },
+  "staticPassed": true,
+  "productionCapacityCertified": false,
+  "fullIntegratedQualityGate": "required separately"
+}

@@ -1,0 +1,30 @@
+{"controller": "moria-quality-7b558da3-83b7-4d3c-8bb8-926ef4256878", "image": "sha256:c5d2c0251bf5df4415c651da150a18cc4ee07502534ead4bf199438ce517932e", "scratchPools": ["/tmp/moria-engine-scratch-24f06121-4b5f-457a-9075-384592bb8547", "/tmp/moria-engine-scratch-b5d18146-649b-42d5-93f3-77f8180cd63d"], "temporary": "/tmp/moria-quality-rixd8rrf"}
+$ node scripts/test-files.mjs integration tests/filesystem-content.integration.test.ts
+Running 1 integration test files.
+▶ local: protected file content verifies integrity, replays and revokes during transfer
+  ✔ verified bytes publish once and identical retries retain the original receipt (1551.224453ms)
+  ✔ digest/size failures, stale revisions and oversized requests preserve the current head (1058.922236ms)
+  ✔ revocation blocks the next read demand and cancels an in-progress upload (226.926859ms)
+  ✔ orphan collection preserves every retained file revision and removes failed or replay candidates (383.704202ms)
+  ✔ empty files and explicit transfer cancellation remain supported (298.072035ms)
+  ✔ competing uploads publish one head while concurrent identical retries share one receipt (1765.42709ms)
+  ✔ a producer cannot mutate already-verified bytes during an authorization await (355.180604ms)
+✔ local: protected file content verifies integrity, replays and revokes during transfer (8526.787014ms)
+▶ s3: protected file content verifies integrity, replays and revokes during transfer
+  ✔ verified bytes publish once and identical retries retain the original receipt (1593.453291ms)
+  ✔ digest/size failures, stale revisions and oversized requests preserve the current head (1160.495708ms)
+  ✔ revocation blocks the next read demand and cancels an in-progress upload (222.949601ms)
+  ✔ orphan collection preserves every retained file revision and removes failed or replay candidates (331.476938ms)
+  ✔ empty files and explicit transfer cancellation remain supported (315.034286ms)
+  ✔ competing uploads publish one head while concurrent identical retries share one receipt (1841.817985ms)
+  ✔ a producer cannot mutate already-verified bytes during an authorization await (382.317661ms)
+  ✔ configured S3 instances share bytes and reject storage relocation (27.532589ms)
+✔ s3: protected file content verifies integrity, replays and revokes during transfer (9125.170211ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18097.792881
