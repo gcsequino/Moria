@@ -602,8 +602,7 @@ for (const group of [
         if (key === 'httpStatus' || key === 'exitCode')
           return typeof value === 'number' && Number.isSafeInteger(value);
         return (
-          typeof value === 'boolean' &&
-          ['running', 'oomKilled', 'completionWritten'].includes(key)
+          typeof value === 'boolean' && ['running', 'oomKilled', 'completionWritten'].includes(key)
         );
       });
       t.diagnostic(JSON.stringify({ id, state, accounting: Object.fromEntries(safe) }));
