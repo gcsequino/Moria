@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { readlink, realpath } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import { agentImage } from './fixtures/agents/image.js';
 import { database } from './fixtures/catalog-storage/database.js';
 import { createLocalFilesystem } from '../services/filesystem/src/local.js';
@@ -546,7 +546,111 @@ for (const group of [
       assert.equal(result.response.status, 200, JSON.stringify(result.value));
       return result.value;
     };
+    const sdk = agentsClient(
+      createTransport({
+        baseUrl: api,
+        fetch: (url, options) =>
+          fetch(url, {
+            ...options,
+            headers: { ...options?.headers, authorization: `Bearer ${user.token}` },
+          }),
+      }),
+    );
     const once = () => start(['agents', 'once']);
+    const agentStatus = async (id: string) =>
+      (await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [id])).rows[0]
+        ?.status;
+    const isActive = (status: string) => ['queued', 'running', 'preparing'].includes(status);
+    const cancelOpenAgent = async (id: string | undefined) => {
+      if (!id || !isActive(await agentStatus(id))) return;
+      await sdk.cancel(id);
+      assert.equal(isActive(await agentStatus(id)), false, 'Agent cancellation left active work');
+    };
+    const agentFailure = async (
+      t: TestContext,
+      id: string | undefined,
+      worker: ChildProcess | undefined,
+      stderr = '',
+      stdout = '',
+    ) => {
+      const processState = worker && {
+        pid: worker.pid,
+        exitCode: worker.exitCode,
+        signal: worker.signalCode,
+      };
+      try {
+        const errors = stderr
+          .split('\n')
+          .flatMap((line) => {
+            try {
+              const event = JSON.parse(line);
+              if (event.event !== 'agentWorkerFailure') return [];
+              return [
+                { code: event.code, sandboxCode: event.sandboxCode, sqlstate: event.sqlstate },
+              ];
+            } catch {
+              return [];
+            }
+          })
+          .slice(-8);
+        let worked: boolean | undefined;
+        try {
+          const result = JSON.parse(stdout);
+          if (typeof result.worked === 'boolean') worked = result.worked;
+        } catch {
+          // The worker may still be running or may have exited before its summary.
+        }
+        const state =
+          id &&
+          (
+            await db.pool.query(
+              `SELECT e.status,e.error,e.created_at,e.finished_at,e.deadline,
+                    t.id AS task,t.status AS task_status,t.attempts,t.owner,t.fence,t.worker_generation,t.lease_until,
+                    s.state AS sandbox,s.error AS sandbox_error,s.creation_state,s.cleaned,
+                    s.created_at AS sandbox_started,s.finished_at AS sandbox_finished,
+                    s.observation_pending IS NOT NULL AS observation_pending,s.observation_blocked
+               FROM moria.runtime_executions e
+               LEFT JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+               LEFT JOIN moria.runtime_sandbox_attempts s ON s.execution=e.id WHERE e.id=$1
+               ORDER BY t.ordinal LIMIT 4`,
+              [id],
+            )
+          ).rows;
+        const events =
+          id &&
+          (
+            await db.pool.query(
+              'SELECT kind,created_at FROM moria.runtime_execution_events WHERE execution=$1 ORDER BY sequence DESC LIMIT 16',
+              [id],
+            )
+          ).rows;
+        const queue = (
+          await db.pool.query(
+            `SELECT e.id,e.status,e.created_at FROM moria.runtime_executions e
+               JOIN moria.runtime_agent_executions a ON a.execution=e.id
+              WHERE e.environment=$1 AND e.status IN ('queued','running','preparing')
+              ORDER BY e.created_at,e.id LIMIT 16`,
+            [environment],
+          )
+        ).rows;
+        t.diagnostic(JSON.stringify({ id, processState, worked, errors, state, events, queue }));
+      } catch {
+        t.diagnostic(JSON.stringify({ id, processState, diagnosticUnavailable: true }));
+      }
+    };
+    const completeAgentOnce = async (t: TestContext, id: string, status: string) => {
+      const worker = once();
+      try {
+        await worker.done;
+        const result = await get(id);
+        assert.equal(result.status, status);
+        return result;
+      } catch (error) {
+        await agentFailure(t, id, worker.child, worker.error(), worker.output());
+        await cancelOpenAgent(id);
+        throw error;
+      }
+    };
     const running = (id: string) =>
       until(
         async () =>
@@ -637,7 +741,7 @@ for (const group of [
       );
       await t.test(
         'SDK and CLI use the persistent native API and the agent worker replaces its Node launcher',
-        async () => {
+        async (t) => {
           const binary =
             process.env.MORIA_RUNTIME_BINARY ??
             process.env.MORIA_INDEXING_BINARY ??
@@ -668,6 +772,7 @@ for (const group of [
             );
           });
           void done.catch(() => {});
+          let id: string | undefined;
           try {
             await until(async () => {
               assert.equal(child.exitCode, null, stderr);
@@ -680,22 +785,13 @@ for (const group of [
               });
             });
             assert.equal(await readlink(`/proc/${child.pid}/exe`), await realpath(binary));
-            const sdk = agentsClient(
-              createTransport({
-                baseUrl: api,
-                fetch: (url, options) =>
-                  fetch(url, {
-                    ...options,
-                    headers: { ...options?.headers, authorization: `Bearer ${user.token}` },
-                  }),
-              }),
-            );
             const accepted = await sdk.invoke(
               resource,
               { mode: 'normal', prompt: 'SDK native graph', uid },
               { idempotencyKey: 'sdk-agent', wait: false },
             );
-            ids.add(accepted.id);
+            id = accepted.id;
+            ids.add(id);
             assert.equal(accepted.resourceId, resource);
             assert.equal(accepted.valueVersion, 1);
             await until(async () => {
@@ -730,24 +826,35 @@ for (const group of [
               { env: { PATH: process.env.PATH, MORIA_API_TOKEN: user.token } },
             );
             assert.equal(JSON.parse(cli.stdout).id, accepted.id);
+            id = undefined;
+          } catch (error) {
+            await agentFailure(t, id, child, stderr);
+            throw error;
           } finally {
             child.kill('SIGTERM');
-            await done;
+            try {
+              await done;
+            } finally {
+              await cancelOpenAgent(id);
+            }
           }
         },
       );
       await t.test(
         'a durable model intent commits before gateway admission while public callback data stays withheld',
-        async () => {
+        async (t) => {
           const control = await db.pool.connect();
-          await control.query('BEGIN');
-          await control.query(
-            "SELECT 1 FROM moria.runtime_resource_classes WHERE name='models' FOR UPDATE",
-          );
-          const before = calls;
-          const job = await enqueue('model');
-          const worker = once();
+          let id: string | undefined;
+          let worker: ReturnType<typeof once> | undefined;
           try {
+            await control.query('BEGIN');
+            await control.query(
+              "SELECT 1 FROM moria.runtime_resource_classes WHERE name='models' FOR UPDATE",
+            );
+            const before = calls;
+            const job = await enqueue('model');
+            id = job.id;
+            worker = once();
             await until(async () => {
               const trace = (
                 await db.pool.query(
@@ -810,31 +917,30 @@ for (const group of [
             await worker.done;
             assert.equal((await get(job.id)).status, 'succeeded');
             assert.equal(calls, before + 1);
+            id = undefined;
+          } catch (error) {
+            await agentFailure(t, id, worker?.child, worker?.error(), worker?.output());
+            throw error;
           } finally {
-            await control.query('ROLLBACK');
-            control.release();
-            await worker.done;
+            try {
+              await control.query('ROLLBACK');
+            } finally {
+              control.release();
+              try {
+                await cancelOpenAgent(id);
+              } finally {
+                await worker?.done;
+              }
+            }
           }
         },
       );
       await t.test(
         'actual LangGraph model/tool callbacks retain read classification, usage and committed tool effects',
-        async () => {
+        async (t) => {
           const before = calls;
           const read = await enqueue('read-model');
-          await once().done;
-          const result = await get(read.id);
-          assert.equal(
-            result.status,
-            'succeeded',
-            JSON.stringify({
-              result,
-              events:
-                result.status === 'succeeded'
-                  ? undefined
-                  : (await request(`/api/v1/agent-executions/${read.id}/events?after=0`)).value,
-            }),
-          );
+          const result = await completeAgentOnce(t, read.id, 'succeeded');
           assert.equal(result.result.answer, 'native agent answer');
           assert.equal(calls, before + 1);
           assert.deepEqual(result.markings, [{ environment, marking: 'agents/Marking/Private' }]);
@@ -903,8 +1009,7 @@ for (const group of [
             await authority.setGrants(environment, 'fixture', principal, application, operations);
           }
           const failed = await enqueue('write-fail');
-          await once().done;
-          assert.equal((await get(failed.id)).status, 'failed');
+          await completeAgentOnce(t, failed.id, 'failed');
           assert.equal(await receipts(failed.id), '0');
           const object = await request(`/api/v1/objects/records/${uid}`);
           assert.equal(object.value.object.value, 43);
@@ -928,7 +1033,7 @@ for (const group of [
       );
       await t.test(
         'Agent admission captures approved material before code and a missed approval pulse cannot revive it',
-        async () => {
+        async (t) => {
           const before = calls;
           await authority.setApplication(
             environment,
@@ -1001,8 +1106,7 @@ for (const group of [
           );
           secretApproval = await approveSecret();
           const fresh = await enqueue('model', 'secret-reapproved');
-          await once().done;
-          assert.equal((await get(fresh.id)).status, 'succeeded');
+          await completeAgentOnce(t, fresh.id, 'succeeded');
           const captured = (
             await db.pool.query(
               'SELECT model_secret_approval FROM moria.runtime_agent_executions WHERE execution=$1',
@@ -1025,7 +1129,7 @@ for (const group of [
       );
       await t.test(
         'exact Agent invocation scope admits required dependencies without filesystem browsing',
-        async () => {
+        async (t) => {
           const scoped = [`${resource}:invoke`, `${model}:invoke`, `${secret}:use`];
           await authority.setApplication(environment, 'fixture', application, scoped);
           await authority.setGrants(environment, 'fixture', principal, application, scoped);
@@ -1042,8 +1146,7 @@ for (const group of [
               ).rows[0].operations,
               scoped,
             );
-            await once().done;
-            assert.equal((await get(job.id)).status, 'succeeded');
+            await completeAgentOnce(t, job.id, 'succeeded');
             assert.notEqual((await request('/api/management/v1/fs/home')).response.status, 200);
           } finally {
             if (
@@ -1805,16 +1908,27 @@ for (const group of [
             assert.ok(withFunction.child);
             const parentWorker = once();
             let functionId = '';
-            await until(async () => {
-              functionId =
-                (
-                  await db.pool.query(
-                    'SELECT execution FROM moria.runtime_function_invocations WHERE parent_id=$1',
-                    [withFunction.child],
-                  )
-                ).rows[0]?.execution ?? '';
-              return !!functionId;
-            });
+            try {
+              await until(async () => {
+                functionId =
+                  (
+                    await db.pool.query(
+                      'SELECT execution FROM moria.runtime_function_invocations WHERE parent_id=$1',
+                      [withFunction.child],
+                    )
+                  ).rows[0]?.execution ?? '';
+                return !!functionId;
+              });
+            } catch (error) {
+              await agentFailure(
+                t,
+                withFunction.child,
+                parentWorker.child,
+                parentWorker.error(),
+                parentWorker.output(),
+              );
+              throw error;
+            }
             const functionWorker = start(['functions', 'once']);
             await Promise.all([parentWorker.done, functionWorker.done]);
             const observed = await get(withFunction.child);
