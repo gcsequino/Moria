@@ -506,6 +506,68 @@ test(
           return value;
         };
         await t.test(
+          'background Search retries a revoked initial build at the same source revision',
+          async () => {
+            const before = batches.length;
+            await (
+              await worker('once')
+            ).done;
+            const initial = (
+              await db.pool.query(
+                "SELECT execution,generation,request_key,source_revision::text FROM moria.native_search_rebuilds WHERE environment=$1 AND resource=$2 AND request_key LIKE 'initial/%'",
+                [environment, collection],
+              )
+            ).rows;
+            assert.equal(initial.length, 1);
+            await start(['secret', 'disable'], { id: approval.id }, operatorEnv).done;
+            await (
+              await worker('once')
+            ).done;
+            assert.equal(
+              (
+                await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
+                  initial[0].execution,
+                ])
+              ).rows[0].status,
+              'failed',
+            );
+            approval = await approveMaterial();
+            await (
+              await worker('once')
+            ).done;
+            const retries = (
+              await db.pool.query(
+                "SELECT r.execution,r.generation,r.request_key,r.source_revision::text,e.status FROM moria.native_search_rebuilds r JOIN moria.runtime_executions e ON e.id=r.execution WHERE r.environment=$1 AND r.resource=$2 AND r.request_key LIKE 'initial/%' AND r.execution<>$3",
+                [environment, collection, initial[0].execution],
+              )
+            ).rows;
+            assert.equal(retries.length, 1, 'exactly one background retry is admitted');
+            assert.notEqual(retries[0].generation, initial[0].generation);
+            assert.notEqual(retries[0].request_key, initial[0].request_key);
+            assert.equal(retries[0].source_revision, initial[0].source_revision);
+            assert.equal(retries[0].status, 'queued');
+            assert.equal(
+              batches.length,
+              before,
+              'revoked background attempts perform no provider IO',
+            );
+            await start(['secret', 'disable'], { id: approval.id }, operatorEnv).done;
+            await (
+              await worker('once')
+            ).done;
+            assert.equal(
+              (
+                await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
+                  retries[0].execution,
+                ])
+              ).rows[0].status,
+              'failed',
+            );
+            assert.equal(batches.length, before);
+            approval = await approveMaterial();
+          },
+        );
+        await t.test(
           'accepted Search pins exact credential authority and never revives after an approval pulse',
           async () => {
             const pending = await post(`/api/v1/search/${collection}/rebuild`, {}, randomUUID());
