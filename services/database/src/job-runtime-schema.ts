@@ -320,17 +320,11 @@ BEGIN
   RETURN moria.native_serving_accepted_delegation(proof);
 END $$;
 
-CREATE FUNCTION moria.runtime_job_session_resolution(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE s moria.runtime_job_sessions; e moria.runtime_executions; proof jsonb; validated_state jsonb;
+CREATE FUNCTION moria.runtime_job_session_lease(private_hash text) RETURNS moria.runtime_job_sessions LANGUAGE plpgsql AS $$
+DECLARE s moria.runtime_job_sessions; e moria.runtime_executions;
 BEGIN
   SELECT * INTO s FROM moria.runtime_job_sessions WHERE token_hash=private_hash;
-  IF NOT FOUND THEN
-    IF to_regprocedure('moria.runtime_indexing_job_session_origin(text)') IS NOT NULL THEN
-      proof:=moria.runtime_indexing_job_session_origin(private_hash);
-      IF proof IS NOT NULL THEN RETURN jsonb_build_object('origin',proof); END IF;
-    END IF;
-    RETURN NULL;
-  END IF;
+  IF NOT FOUND THEN RETURN NULL; END IF;
   SELECT * INTO e FROM moria.runtime_executions WHERE id=s.execution FOR SHARE;
   IF NOT FOUND OR s.expires_at<=clock_timestamp() OR s.expires_at>e.deadline
     OR s.incarnation<>(SELECT incarnation FROM moria.indexing_instance)
@@ -345,22 +339,66 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
   ELSIF e.status<>'preparing' OR e.owner IS DISTINCT FROM s.owner OR e.fence<>s.fence OR e.lease_until IS NULL OR e.lease_until<=clock_timestamp()
     THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
+  RETURN s;
+END $$;
+
+CREATE FUNCTION moria.runtime_job_session_resolution(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE s moria.runtime_job_sessions; proof jsonb; validated_state jsonb;
+BEGIN
+  s:=moria.runtime_job_session_lease(private_hash);
+  IF s.token_hash IS NULL THEN
+    IF to_regprocedure('moria.runtime_indexing_job_session_origin(text)') IS NOT NULL THEN
+      proof:=moria.runtime_indexing_job_session_origin(private_hash);
+      IF proof IS NOT NULL THEN RETURN jsonb_build_object('origin',proof); END IF;
+    END IF;
+    RETURN NULL;
+  END IF;
   -- Execution validation traverses the same immutable delegation before this payload is returned.
   SELECT jsonb_build_object('execution',d.execution,'originKind',d.origin_kind,'originSessionHash',d.origin_session_hash,
     'serviceAuthority',d.service_authority,'originBinding',d.origin_binding,
     'environment',d.environment,'principal',d.principal,'application',d.application,
     'acceptedGrants',to_jsonb(d.accepted_grants),'acceptedScopes',to_jsonb(d.accepted_scopes),
-    'acceptedMarkings',to_jsonb(d.accepted_markings)) INTO proof FROM moria.runtime_job_delegations d WHERE d.execution=e.id;
+    'acceptedMarkings',to_jsonb(d.accepted_markings)) INTO proof FROM moria.runtime_job_delegations d WHERE d.execution=s.execution;
   IF NOT FOUND THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
   BEGIN
-    validated_state:=moria.runtime_execution_check_state(e.id);
+    validated_state:=moria.runtime_execution_check_state(s.execution);
   EXCEPTION WHEN raise_exception THEN
     -- Keep purpose revocation ahead of execution epoch errors on denied credentials.
-    PERFORM moria.runtime_job_delegation_guard(e.id);
+    PERFORM moria.runtime_job_delegation_guard(s.execution);
     RAISE;
   END;
   IF validated_state IS NULL THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
   RETURN jsonb_build_object('origin',proof,'validatedState',validated_state);
+END $$;
+
+-- An Agent task validates one execution authority and retains its write locks through
+-- the exact private credential check. Ordinary and unrelated resolver paths stay current.
+CREATE FUNCTION moria.runtime_agent_task_session_check(task_id uuid, execution_id uuid, worker uuid, worker_fence bigint,
+  host uuid, expected_incarnation uuid, private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE checked_state jsonb; s moria.runtime_job_sessions;
+BEGIN
+  PERFORM moria.runtime_function_worker_check(worker,host,(SELECT resource_class FROM moria.runtime_executions WHERE id=execution_id),'agent');
+  IF NOT EXISTS(SELECT 1 FROM moria.indexing_instance WHERE incarnation=expected_incarnation)
+    THEN RAISE EXCEPTION 'INCARNATION_CHANGED'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM moria.runtime_execution_tasks t JOIN moria.runtime_executions e ON e.id=t.execution
+    WHERE t.id=task_id AND t.execution=execution_id AND e.spec->>'domain'='agent')
+    THEN RAISE EXCEPTION 'FUNCTION_LEASE_INVALID'; END IF;
+  checked_state:=moria.runtime_task_check_state(task_id,worker,worker_fence);
+  BEGIN
+    RETURN moria.native_serving_session_origin(private_hash,false);
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM<>'UNAUTHENTICATED' THEN RAISE; END IF;
+  END;
+  s:=moria.runtime_job_session_lease(private_hash);
+  IF s.token_hash IS NULL THEN RETURN moria.native_serving_session(private_hash); END IF;
+  IF ROW(s.execution,s.task,s.owner,s.fence,s.host_id,s.incarnation)
+    IS DISTINCT FROM ROW(execution_id,task_id,worker,worker_fence,host,expected_incarnation)
+    THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
+  IF checked_state IS NULL OR NOT EXISTS(SELECT 1 FROM moria.environments e,moria.instance_state i
+    WHERE e.id=checked_state->>'environment' AND e.security_epoch::text=checked_state->>'securityEpoch'
+      AND i.security_epoch::text=checked_state->>'instanceEpoch')
+    THEN RETURN moria.native_serving_session(private_hash); END IF;
+  RETURN checked_state||jsonb_build_object('privateValidatedExecution',execution_id);
 END $$;
 
 CREATE FUNCTION moria.runtime_job_session_origin(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$

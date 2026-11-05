@@ -162,19 +162,27 @@ pub(crate) async fn current_labels(
     Ok(labels.into_iter().collect())
 }
 
-pub(crate) async fn check_context(client: &Client, context: &SandboxContext) -> Result<()> {
+pub(crate) async fn check_context(
+    client: &Client,
+    context: &SandboxContext,
+    session: Option<VerifiedSession>,
+) -> Result<()> {
     ensure!(context.domain() == "agent", "AGENT_CONTEXT_INVALID");
-    let hash = context
-        .session_hash()
-        .ok_or_else(|| anyhow::anyhow!("UNAUTHENTICATED"))?;
-    let session = Authority::stored_session_in(
-        client,
-        hash,
-        context.environment(),
-        context.principal(),
-        context.application(),
-    )
-    .await?;
+    let session = if let Some(session) = session {
+        session
+    } else {
+        let hash = context
+            .session_hash()
+            .ok_or_else(|| anyhow::anyhow!("UNAUTHENTICATED"))?;
+        Authority::stored_session_in(
+            client,
+            hash,
+            context.environment(),
+            context.principal(),
+            context.application(),
+        )
+        .await?
+    };
     let labels = current_labels(client, &session, context.lease().execution).await?;
     context.record_consumed_markings(&labels)?;
     let resource: Uuid = client

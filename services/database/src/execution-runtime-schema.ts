@@ -317,12 +317,12 @@ BEGIN
   RETURN n;
 END $$;
 
-CREATE FUNCTION moria.runtime_task_check(task_id uuid, worker uuid, worker_fence bigint) RETURNS void LANGUAGE plpgsql AS $$
-DECLARE execution_id uuid; accepted_generation bigint;
+CREATE FUNCTION moria.runtime_task_check_state(task_id uuid, worker uuid, worker_fence bigint) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE execution_id uuid; accepted_generation bigint; delegated jsonb;
 BEGIN
   SELECT execution INTO execution_id FROM moria.runtime_execution_tasks WHERE id=task_id;
   PERFORM 1 FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
-  PERFORM moria.runtime_execution_check(execution_id);
+  delegated:=moria.runtime_execution_check_state(execution_id);
   SELECT worker_generation INTO accepted_generation FROM moria.runtime_execution_tasks WHERE id=task_id AND owner=worker AND fence=worker_fence
     AND status='running' AND lease_until>clock_timestamp() FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
@@ -330,6 +330,12 @@ BEGIN
     PERFORM 1 FROM moria.runtime_workers w WHERE w.owner=worker AND w.generation=accepted_generation AND w.enabled AND w.expires_at>clock_timestamp() FOR SHARE;
     IF NOT FOUND THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
   END IF;
+  RETURN delegated;
+END $$;
+
+CREATE FUNCTION moria.runtime_task_check(task_id uuid, worker uuid, worker_fence bigint) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM moria.runtime_task_check_state(task_id,worker,worker_fence);
 END $$;
 
 CREATE FUNCTION moria.runtime_execution_complete(execution_id uuid, worker uuid, worker_fence bigint, completion jsonb) RETURNS jsonb LANGUAGE plpgsql AS $$

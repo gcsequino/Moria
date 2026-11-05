@@ -73,6 +73,39 @@ impl Authority {
         context.check_in(client).await?;
         Ok(session)
     }
+    pub(crate) async fn agent_task_session_in(
+        client: &tokio_postgres::Client,
+        context: &crate::sandbox::SandboxContext,
+        task: uuid::Uuid,
+        host: uuid::Uuid,
+        fence: i64,
+        hash: &str,
+    ) -> Result<VerifiedSession> {
+        let lease = context.lease();
+        let state: Value = client
+            .query_one(
+                "SELECT moria.runtime_agent_task_session_check($1,$2,$3,$4,$5,$6,$7)",
+                &[
+                    &task,
+                    &lease.execution,
+                    &lease.owner,
+                    &fence,
+                    &host,
+                    &lease.incarnation,
+                    &hash,
+                ],
+            )
+            .await?
+            .get(0);
+        let session = VerifiedSession {
+            environment: context.environment().into(),
+            principal: context.principal().into(),
+            application: context.application().into(),
+            token_hash: hash.into(),
+        };
+        Self::validate_snapshot(&session, state)?;
+        Ok(session)
+    }
     pub(crate) async fn stored_session_in(
         client: &tokio_postgres::Client,
         hash: &str,
@@ -119,6 +152,9 @@ impl Authority {
             )
             .await?
             .get(0);
+        Self::validate_snapshot(session, value)
+    }
+    fn validate_snapshot(session: &VerifiedSession, value: Value) -> Result<SecuritySnapshot> {
         let snapshot: SecuritySnapshot = serde_json::from_value(value)?;
         ensure!(
             snapshot.environment == session.environment
