@@ -77,6 +77,7 @@ test(
       binding: reader,
       mode: 'graph-read',
       standardExport,
+      graphSerialParity: process.env.MORIA_TEST_GRAPH_SERIAL_PARITY === '1',
       expectedRows: rows.length,
       writerRows: { [fixture.dataset]: rows },
       snapshots: [{ ...fixture.snapshot, snapshotId: first.head.snapshotId }],
@@ -84,6 +85,10 @@ test(
     });
     assert.match(graph, /"event":"graph_bootstrap_read"/);
     assert.match(graph, /"event":"standard_iceberg_export"/);
+    for (const line of graph.split('\n')) {
+      if (/"event":"graph_(scan_complete|batch_keys_complete|key_parity_checked)"/.test(line))
+        t.diagnostic(line);
+    }
     const { stdout } = await promisify(execFile)(resolve('.venv/bin/python'), [
       resolve('tests/fixtures/native-retention/iceberg_oracle.py'),
       join(standardExport, 'export.json'),
