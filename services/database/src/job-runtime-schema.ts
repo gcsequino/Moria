@@ -104,7 +104,8 @@ BEGIN
   RETURN state;
 END $$;
 CREATE FUNCTION moria.runtime_service_resource_labels(service_id uuid,env text,target uuid,job_domain text,target_revision text,class_name text,
-  requested_resource text,requested_operation text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+  requested_resource text,requested_operation text,additional_operation text) RETURNS jsonb LANGUAGE plpgsql
+  SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE state jsonb; labels jsonb; permission text;
 BEGIN
   state:=moria.runtime_service_target_authority(service_id,env,target,job_domain,target_revision,class_name);
@@ -113,8 +114,18 @@ BEGIN
     THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   labels:=moria.native_serving_resource_access_state(state,requested_resource,'read');
   IF NOT labels<@(state->'identity'->'markings') THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  -- Both registered operations require the same current data and filesystem read.
+  IF additional_operation IS NOT NULL THEN
+    permission:=requested_resource||':'||additional_operation;
+    IF NOT (state->'identity'->'grantedOperations' ? permission) OR NOT (state->'identity'->'applicationScopes' ? permission)
+      THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  END IF;
   RETURN labels;
 END $$;
+CREATE FUNCTION moria.runtime_service_resource_labels(service_id uuid,env text,target uuid,job_domain text,target_revision text,class_name text,
+  requested_resource text,requested_operation text) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+  SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8,NULL::text)
+$$;
 
 CREATE FUNCTION moria.runtime_service_binding_guard(binding_id uuid) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE b moria.runtime_execution_bindings; registered record; state jsonb;

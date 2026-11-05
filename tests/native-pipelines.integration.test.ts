@@ -804,6 +804,38 @@ test(
               ).rows[0].labels,
             );
           assert.deepEqual(await batch(), expected);
+          const output = id('Dataset', 'Detail');
+          const serviceArgs = [
+            service,
+            environment,
+            id('Transform', 'Join'),
+            'transform',
+            'v1',
+            'engine-spill',
+            output,
+            'read',
+          ];
+          const paired = () =>
+            client.query(
+              'SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8,$9) AS labels',
+              [...serviceArgs, 'write'],
+            );
+          const read = () =>
+            client.query(
+              'SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8) AS labels',
+              serviceArgs,
+            );
+          const readLabels = (await read()).rows;
+          assert.deepEqual((await paired()).rows, readLabels);
+          await client.query('SAVEPOINT output_write_scope');
+          const revokedWrite = await client.query(
+            'UPDATE moria.permissions SET operations=array_remove(operations,$4) WHERE environment=$1 AND principal=$2 AND application=$3',
+            [environment, principal, serviceApp, output + ':write'],
+          );
+          assert.equal(revokedWrite.rowCount, 1);
+          assert.deepEqual((await read()).rows, readLabels);
+          await assert.rejects(paired(), (error: any) => error.message === 'FORBIDDEN');
+          await client.query('ROLLBACK TO SAVEPOINT output_write_scope');
           const sessionHash = createHash('sha256').update(user.token).digest('hex');
           const sessionBatch = async () =>
             (
@@ -1071,7 +1103,31 @@ test(
           }
         }
         return !pending && ['succeeded', 'failed', 'cancelled'].includes(value.status);
-      }, 135000);
+      }, 135000).catch(async (error: unknown) => {
+        const lifecycle = (
+          await db.pool.query(
+            `SELECT e.status,e.error,t.status AS task_status,t.attempts,s.state AS sandbox_state,
+               s.error AS sandbox_error,s.observation_pending IS NOT NULL AS observation_pending,
+               s.observation_blocked,s.cleaned,e.finished_at<=e.deadline AS within_deadline
+             FROM moria.runtime_executions e
+             LEFT JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+             LEFT JOIN moria.runtime_sandbox_attempts s ON s.execution=e.id
+             WHERE e.id=$1 AND e.environment=$2`,
+            [id, environment],
+          )
+        ).rows;
+        const events = (
+          await db.pool.query(
+            `SELECT v.kind,v.payload->>'phase' AS phase,v.payload->>'error' AS error,
+               v.payload->>'code' AS code,v.payload->>'elapsedMillis' AS elapsed_millis
+             FROM moria.runtime_execution_events v JOIN moria.runtime_executions e ON e.id=v.execution
+             WHERE e.id=$1 AND e.environment=$2 AND v.kind IN('enginePhase','brokerFailed','failed')
+             ORDER BY v.sequence DESC LIMIT 12`,
+            [id, environment],
+          )
+        ).rows;
+        throw new Error(JSON.stringify({ lifecycle, events }), { cause: error });
+      });
       if (value.status === 'succeeded')
         assert.equal(
           (

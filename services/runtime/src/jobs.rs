@@ -126,9 +126,19 @@ impl RegisteredService {
         resource: &str,
         operation: &str,
     ) -> Result<Vec<String>> {
+        self.resource_labels_for_operations_in(client, resource, operation, None)
+            .await
+    }
+    pub(crate) async fn resource_labels_for_operations_in(
+        &self,
+        client: &Client,
+        resource: &str,
+        operation: &str,
+        additional_operation: Option<&str>,
+    ) -> Result<Vec<String>> {
         let labels: Value = client
             .query_one(
-                "SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8)",
+                "SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8,$9)",
                 &[
                     &self.authority,
                     &self.environment,
@@ -138,6 +148,7 @@ impl RegisteredService {
                     &self.resource_class,
                     &resource,
                     &operation,
+                    &additional_operation,
                 ],
             )
             .await?

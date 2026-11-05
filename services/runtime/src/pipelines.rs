@@ -776,6 +776,7 @@ impl NativePipelines {
             .transpose()?;
         let mut input_ids = BTreeMap::new();
         let mut output_ids = BTreeMap::new();
+        let mut output_definitions = BTreeMap::new();
         let mut labels = BTreeSet::new();
         let mut accepted_secrets = Vec::new();
         let mut material_semantics = Vec::new();
@@ -828,28 +829,34 @@ impl NativePipelines {
         }
         labels.extend(
             service
-                .resource_labels_in(tx.client(), &resource.to_string(), "read")
+                .resource_labels_for_operations_in(
+                    tx.client(),
+                    &resource.to_string(),
+                    "read",
+                    Some(operation),
+                )
                 .await?,
         );
-        labels.extend(
-            service
-                .resource_labels_in(tx.client(), &resource.to_string(), operation)
-                .await?,
-        );
-        for (reference, ids, operations) in [
-            (&program.inputs, &mut input_ids, vec!["read"]),
-            (&program.outputs, &mut output_ids, vec!["read", "write"]),
+        for (reference, ids, additional_operation) in [
+            (&program.inputs, &mut input_ids, None),
+            (&program.outputs, &mut output_ids, Some("write")),
         ] {
             for name in reference {
                 let id = reference_in(tx.client(), &release, name).await?;
                 let (_, _, dataset) = source_in(tx.client(), session.environment(), id).await?;
                 ensure!(dataset["kind"] == "Dataset", "PIPELINE_INPUT_KIND");
-                for operation in &operations {
-                    labels.extend(
-                        service
-                            .resource_labels_in(tx.client(), &id.to_string(), operation)
-                            .await?,
-                    );
+                labels.extend(
+                    service
+                        .resource_labels_for_operations_in(
+                            tx.client(),
+                            &id.to_string(),
+                            "read",
+                            additional_operation,
+                        )
+                        .await?,
+                );
+                if additional_operation.is_some() {
+                    output_definitions.insert(id, dataset);
                 }
                 ids.insert(name.clone(), id);
             }
@@ -908,7 +915,7 @@ impl NativePipelines {
         }
         for (name, id) in output_ids {
             let output = &profile.outputs[&name];
-            let (_, _, dataset) = source_in(tx.client(), session.environment(), id).await?;
+            let dataset = &output_definitions[&id];
             ensure!(
                 dataset["spec"]["writeModes"]
                     .as_array()
@@ -1094,41 +1101,32 @@ impl NativePipelines {
             },
             &labels,
         )?;
+        let inputs: Value = row.get("inputs");
+        let inputs = inputs
+            .as_object()
+            .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
         let outputs: Value = row.get("outputs");
-        let output_reads = outputs
+        let reads = outputs
             .as_object()
             .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
             .values()
-            .map(|output| {
-                let resource = output["resource"]
+            .chain(inputs.values())
+            .map(|dataset| {
+                let resource = dataset["resource"]
                     .as_str()
                     .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
                 Ok(json!({"resource":resource,"operation":"read"}))
             })
             .collect::<Result<Vec<_>>>()?;
-        if !output_reads.is_empty() {
+        if !reads.is_empty() {
             client
                 .query_one(
                     "SELECT moria.native_serving_resource_access_batch($1,$2,true)",
-                    &[&session.session_hash(), &json!(output_reads)],
+                    &[&session.session_hash(), &json!(reads)],
                 )
                 .await?;
         }
-        for input in row
-            .get::<_, Value>("inputs")
-            .as_object()
-            .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
-            .values()
-        {
-            Authority::resource_access_for_operation(
-                client,
-                session,
-                input["resource"]
-                    .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?,
-                "read",
-            )
-            .await?;
+        for input in inputs.values() {
             let namespace: IndexNamespace =
                 serde_json::from_value(input["pin"]["namespace"].clone())?;
             ensure!(client.query_opt("SELECT 1 FROM moria.native_storage_namespaces WHERE environment=$1 AND resource=$2 AND warehouse_id=$3 AND table_id=$4 AND revision=$5 AND enabled",&[&session.environment(),&input["resource"].as_str().unwrap(),&namespace.warehouse_id,&namespace.table_id,&namespace.revision]).await?.is_some(),"STORAGE_NAMESPACE_REVOKED");
