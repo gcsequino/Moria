@@ -1,0 +1,13 @@
+{
+  "nativeSourceDigest": "c7106ed00d7819df8d69ee31a8d3d65b0f3e5f5149f78be881b273e8fe2f153a",
+  "nativeArtifacts": 9,
+  "nativeUnits": 109,
+  "filesystemSource": {
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "fullEvidence": "/home/gcseq/moria-proofs/acl-administrator-once-20261105",
+  "performanceQualification": "pending"
+}

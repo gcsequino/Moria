@@ -239,7 +239,7 @@ BEGIN RAISE EXCEPTION 'IMMUTABLE_SOURCE_FILE_PROOF'; END $$;
 CREATE TRIGGER fs_source_resource_files_immutable BEFORE UPDATE OR DELETE ON moria.fs_source_resource_files
   FOR EACH ROW EXECUTE FUNCTION moria.native_source_file_proof_immutable();
 CREATE FUNCTION moria.native_filesystem_acl_targets_operations_state(state jsonb, target_ids uuid[], operations text[], include_inactive boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
-DECLARE node record;
+DECLARE node record; administrator boolean;
   labels jsonb; label_names text[]; required_ids uuid[]; missing_proof boolean;
   operation text; failure text; errors jsonb:='{}';
 BEGIN
@@ -258,6 +258,7 @@ BEGIN
       LEFT JOIN moria.fs_roles r ON r.entry_id=b.root_id
       WHERE e.id=ANY(target_ids) AND ((b.active=false AND NOT include_inactive) OR r.retired))
     THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
+  administrator:=(state->'identity'->'grantedOperations' ? 'instance:manage') AND (state->'identity'->'applicationScopes' ? 'instance:manage');
 WITH RECURSIVE origins AS (
     SELECT unnest(target_ids) AS id UNION SELECT edge.source_id FROM origins o CROSS JOIN LATERAL (
       SELECT parent_id AS source_id FROM moria.fs_entries WHERE id=o.id AND parent_id IS NOT NULL
@@ -337,7 +338,7 @@ WITH RECURSIVE origins AS (
     SELECT a.root,a.environment_id,op.operation,
       grant_value->>'effect' AS effect,
       CASE grant_value->'subject'->>'kind'
-        WHEN 'administrators' THEN (state->'identity'->'grantedOperations' ? 'instance:manage') AND (state->'identity'->'applicationScopes' ? 'instance:manage')
+        WHEN 'administrators' THEN administrator
         WHEN 'principal' THEN grant_value->'subject'->>'id'=state->>'instanceId'
         WHEN 'group' THEN grant_value->'subject'->>'environment'=state->>'environment'
           AND jsonb_typeof(state->'attributes'->'groups')='array' AND (state->'attributes'->'groups' ? (grant_value->'subject'->>'id'))
