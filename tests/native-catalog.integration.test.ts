@@ -650,14 +650,17 @@ test(
             try {
               await client.query('BEGIN');
               await client.query("SET LOCAL track_functions='all'");
+              const calls = async () =>
+                Number(
+                  (
+                    await client.query(
+                      "SELECT COALESCE(sum(calls),0)::text AS calls FROM pg_stat_xact_user_functions WHERE funcid='moria.runtime_execution_check(uuid)'::regprocedure::oid",
+                    )
+                  ).rows[0].calls,
+                );
+              const baseline = await calls();
               const result = (await check(client, hash)).rows[0].state;
-              const calls = Number(
-                (
-                  await client.query(
-                    "SELECT COALESCE(sum(calls),0)::text AS calls FROM pg_stat_xact_user_functions WHERE funcid='moria.runtime_execution_check(uuid)'::regprocedure::oid",
-                  )
-                ).rows[0].calls,
-              );
+              const executionChecks = (await calls()) - baseline;
               if (hash === privateHash) {
                 await assert.rejects(
                   db.pool.query(
@@ -674,7 +677,7 @@ test(
                   { code: '55P03' },
                 );
               }
-              return { result, calls };
+              return { result, calls: executionChecks, baseline };
             } finally {
               await client.query('ROLLBACK');
               client.release();
@@ -682,6 +685,14 @@ test(
           };
           const privateRead = await measure(privateHash);
           const ordinaryRead = await measure(sessionHash);
+          t.diagnostic(
+            JSON.stringify({
+              privateBaseline: privateRead.baseline,
+              ordinaryBaseline: ordinaryRead.baseline,
+              privateExecutionChecks: privateRead.calls,
+              ordinaryExecutionChecks: ordinaryRead.calls,
+            }),
+          );
           assert.deepEqual(privateRead.result, ordinaryRead.result);
           assert.equal(privateRead.result.resource, input);
           assert.equal(privateRead.calls, 1);
