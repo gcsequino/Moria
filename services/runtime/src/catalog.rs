@@ -518,14 +518,27 @@ pub async fn prepare_snapshot(
         tx.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) VALUES(moria.runtime_dataset_root_key($1),$2,$3,$4) ON CONFLICT DO NOTHING",&[&reference,&grant.key_schema_hash()?,&root.proof.snapshot_id.to_string(),&i64::try_from(rows)?]).await?;
         ensure!(tx.query_one("SELECT key_rows=$3 AND snapshot_id=$4 FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($1) AND key_schema_hash=$2",&[&reference,&grant.key_schema_hash()?,&i64::try_from(rows)?,&root.proof.snapshot_id.to_string()]).await?.get::<_,bool>(0),"DATASET_PRIMARY_KEY_INVALID");
     }
+    let delta_profile = if grant.is_managed() {
+        Some(crate::dataset_commit_delta::profile(
+            table.metadata().current_schema(),
+            &grant.state["datasetBinding"]["icebergSchema"],
+            grant.state["datasetBinding"]["revision"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("DATASET_BINDING_INVALID"))?,
+            &grant.primary_key()?,
+            grant.key_schema_hash()?,
+        )?)
+    } else {
+        None
+    };
     let id = Uuid::new_v4();
     let expected = grant.state["expectedRevision"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("UNDECLARED_DATASET"))?
         .parse::<i64>()?;
-    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",
+    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof,delta_profile) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",
         &[&id,&grant.session.environment(),&grant.lease.execution,&grant.resource(),&expected,&grant.state,&grant.session.session_hash(),
-        &grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&reference,&root.proof.snapshot_id.to_string(),&serde_json::to_value(&root.proof)?]).await?;
+        &grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&reference,&root.proof.snapshot_id.to_string(),&serde_json::to_value(&root.proof)?,&delta_profile]).await?;
     tx.commit().await?;
     Ok(id)
 }

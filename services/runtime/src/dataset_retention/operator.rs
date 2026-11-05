@@ -666,6 +666,35 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
             ensure!(changed==1,"DATASET_PRIMARY_KEY_PROOF_REQUIRED");
     }
 
+    let binding = grant.db.get().await?.query_one("SELECT primary_key,key_schema_hash,iceberg_schema,revision FROM moria.native_dataset_bindings WHERE environment=$1 AND resource::text=$2 AND enabled", &[&environment,&dataset]).await?;
+    let delta_profile = crate::dataset_commit_delta::profile(
+        table.current_schema(),
+        &binding.get::<_, Value>(2),
+        &binding.get::<_, String>(3),
+        &binding.get::<_, Vec<String>>(0),
+        &binding.get::<_, String>(1),
+    )?;
+    let equivalence = crate::dataset_commit_delta::metadata_prune_receipt(
+        &original,
+        &pruned,
+        &grant
+            .db
+            .get()
+            .await?
+            .query_one(
+                "SELECT moria.runtime_dataset_root_key($1)",
+                &[&old_location],
+            )
+            .await?
+            .get::<_, String>(0),
+        &grant
+            .db
+            .get()
+            .await?
+            .query_one("SELECT moria.runtime_dataset_root_key($1)", &[&location])
+            .await?
+            .get::<_, String>(0),
+    )?;
     let mut client = grant.db.get().await?;
     let tx = client.transaction().await?;
     tx.query_one(
@@ -728,6 +757,14 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
     .await?;
     tx.execute("UPDATE moria.runtime_dataset_maintenance_runs SET status='committed',finished_at=clock_timestamp(),new_metadata=$4,receipt=$5 WHERE id=$1 AND owner=$2 AND fence=$3 AND status='preparing'",&[&grant.id,&grant.owner,&grant.fence,&location,&receipt]).await?;
     tx.execute("INSERT INTO moria.publications(environment,execution,request_hash,receipt) VALUES($1,$2,$3,$4)",&[&environment,&format!("dataset-maintenance/{}",grant.id),&fingerprint(&serde_json::to_value(input)?)?,&receipt]).await?;
+    let semantics: Value = tx
+        .query_one(
+            "SELECT moria.runtime_dataset_commit_record_maintenance($1,$2,$3,$4)",
+            &[&grant.id, &delta_profile, &equivalence, &receipt],
+        )
+        .await?
+        .get(0);
+    crate::dataset_commit_delta::validate_semantics(semantics)?;
     tx.commit().await?;
     Ok(receipt)
 }

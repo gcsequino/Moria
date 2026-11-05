@@ -172,7 +172,7 @@ END $$;
 CREATE FUNCTION moria.runtime_snapshot_publish(session_hash text,execution_id uuid,worker uuid,worker_fence bigint,
   instance_incarnation uuid,candidate_ids uuid[],checkpoint jsonb) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE state jsonb; e moria.runtime_executions; item moria.runtime_snapshot_candidates; current_state jsonb;
-  old moria.publications; receipt jsonb; outputs jsonb:='[]'; lineage jsonb; request_hash text; revision bigint; updated bigint; env_name text;
+  old moria.publications; receipt jsonb; outputs jsonb:='[]'; lineage jsonb; request_hash text; revision bigint; updated bigint; env_name text; delta_candidate uuid;
 BEGIN
   IF cardinality(candidate_ids) NOT BETWEEN 1 AND 64 OR cardinality(candidate_ids)<>(SELECT count(DISTINCT id) FROM unnest(candidate_ids) id)
     THEN RAISE EXCEPTION 'OUTPUT_INVALID'; END IF;
@@ -244,6 +244,9 @@ BEGIN
   END LOOP;
   INSERT INTO moria.publications VALUES(e.environment,execution_id::text,request_hash,receipt);
   PERFORM moria.runtime_execution_complete(execution_id,worker,worker_fence,receipt);
+  FOREACH delta_candidate IN ARRAY candidate_ids LOOP
+    PERFORM moria.runtime_dataset_commit_record_execution(session_hash,execution_id,delta_candidate,receipt);
+  END LOOP;
   RETURN receipt;
 END $$;
 

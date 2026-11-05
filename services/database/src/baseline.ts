@@ -1,3 +1,4 @@
+import { datasetCommitDeltaSchema } from './dataset-commit-delta-schema.js';
 import { datasetGraphSchema } from './dataset-graph-schema.js';
 import { filesystemRoot } from '../../../packages/contracts/filesystem.js';
 import { identityRuntimeSchema } from './identity-runtime-schema.js';
@@ -336,6 +337,7 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${recoveryContentSchema}
   ${retentionRuntimeSchema}
   ${datasetGraphSchema}
+  ${datasetCommitDeltaSchema}
   ${filesystemGcSchema}
   ${executionRootPinsSchema}
   ${directoryRuntimeSchema}

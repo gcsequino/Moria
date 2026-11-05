@@ -182,7 +182,7 @@ struct PartRoot {
     last_page: Option<SealedObject>,
 }
 
-fn schema_hash(schema: &Schema) -> Result<String> {
+pub(crate) fn schema_hash(schema: &Schema) -> Result<String> {
     Ok(format!(
         "sha256:{:x}",
         Sha256::digest(canonical_json(&serde_json::to_value(schema)?)?.as_bytes())

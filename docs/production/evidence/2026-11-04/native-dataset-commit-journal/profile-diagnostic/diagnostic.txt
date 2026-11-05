@@ -1,0 +1,40 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-commit-profile-diagnostic.integration.test.ts
+Running 1 integration test files.
+✖ inspect exact native candidate and accepted binding schema profile (16192.624341ms)
+ℹ [{"delta_profile":{"datasetSchema":{"type":"struct","fields":[{"id":1,"name":"id","type":"uuid","required":true},{"id":2,"name":"name","type":"string","required":true},{"id":3,"name":"tags","type":{"type":"list","element":"string","element-id":4,"element-required":true},"required":true}],"schema-id":0},"keySchemaHash":"sha256:1e5c236035d2ae0230ec359de623639a5c7a622613e55c56186c42733cf48e40","datasetSchemaHash":"sha256:9ecbda12ec4cb681b6c7f05d99f03be3c4c758eda52099ecaf27701f6cfc1b79","orderedPrimaryKey":["id"]},"binding_schema":{"type":"struct","fields":[{"id":1,"name":"id","type":"uuid","required":true},{"id":2,"name":"name","type":"string","required":true},{"id":3,"name":"tags","type":{"type":"list","element":"string","element-id":4,"element-required":true},"required":true}],"schema-id":0,"identifier-field-ids":[]},"schema_hash_valid":true,"schema_json_equal":false,"key_hash_equal":true,"ordered_keys_equal":true}]
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16686.874405
+
+✖ failing tests:
+
+test at tests/native-dataset-commit-profile-diagnostic.integration.test.ts:1:141
+✖ inspect exact native candidate and accepted binding schema profile (16192.624341ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (131) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: DATASET_DELTA_PROFILE_CHANGED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"candidates":["1b948249-098e-443e-abaf-9cec6dc27f4a"],"event":"prepared","lease":{"execution":"88b08f51-f670-4b8a-8bd8-9e882ea0c05d","fence":"1","incarnation":"0f2aa949-77e4-4178-8b8c-6d5e71168199","leaseUntil":"2026-11-05 05:26:18.042923+00","owner":"dc3c69cf-7db7-4762-8e93-b3df264f4fb1","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 7.08s\n\n',
+    stderr: "\nthread 'catalog_publication' (131) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: DATASET_DELTA_PROFILE_CHANGED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+[ELIFECYCLE] Command failed with exit code 1.

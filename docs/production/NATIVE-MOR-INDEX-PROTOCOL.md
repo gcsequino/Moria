@@ -183,7 +183,22 @@ the earlier insufficiently specific member-version expectation. The earlier
 64-row array-key/nullable-payload positive belongs to trial013 and is not counted
 as another same-source trial015 result.
 
-Distributed bootstrap, sparse writes and C04 publication, DatasetCommitDelta
+Distributed bootstrap, sparse writes and C04 publication, changed-row DatasetCommitDelta
 production, the independent standard position-delete reader oracle, legacy
 fallback integration, full independent CI and production workload certification
 remain open.
+
+## Dataset publication journal checkpoint
+
+Actual replacement and certified metadata-pruning publications now append
+immutable, contiguous Dataset edges in their existing publication transactions.
+The record binds exact qualified basis/result roots, accepted normalized schema
+and key identity, immutable binding revision, actual candidate or maintenance-run
+UUID and sealed receipt. Metadata pruning uses an explicit unchanged reason,
+verified logical equivalence and a null write mode; it fabricates no mutation.
+Frozen trial021 passes all nine native artifacts, 102 units, static checks and
+two real publication/rollback cases.
+[Evidence](evidence/2026-11-04/native-dataset-commit-journal/summary.json) records
+the exact scope. Sparse changed-row/delete-key roots, standard position-delete
+readback, actual distributed bootstrap and indexing-window custody/consumption
+remain unactivated.

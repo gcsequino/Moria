@@ -2926,3 +2926,30 @@ Dataset mode or distributed bootstrap is enabled by this checkpoint. Their
 publication/journal integration, independent standard position-delete readback,
 large multi-row-group Dataset and legacy fallback fixtures, whole-platform CI
 and approved capacity ladder remain required.
+
+Dataset commit journal checkpoint (2026-11-04): actual managed replacements and
+certified unchanged metadata pruning append immutable contiguous edges in their
+existing publication transaction. Records bind exact qualified old/new roots,
+normalized Iceberg schema and existing partset hash, ordered keys/current key
+hash, immutable binding revision, actual candidate or maintenance-run UUID and
+sealed completion/publication receipt. Existing private Job versus authenticated
+session authority paths remain distinct. Metadata pruning records mode=null and
+checks exact current-snapshot/non-history-metadata equivalence; native decoding
+validates the actual persisted semantics before commit. A non-advancing result
+creates no fabricated Dataset revision.
+
+Frozen trial021 passes full static checks, all nine exact native artifacts, all
+102 units and the real two-case journal gate (0 skipped/cancelled; 31.26s and
+32.13s roots under unchanged 120s deadlines, 64.92s controller). Native publication
+acknowledgement replay creates no duplicate edge. Ordinary journal insertion and
+updates are denied. An exact injected journal failure rolls back head,
+publication, execution completion and journal, preserving prior typed rows.
+Earlier failures and a safe synthetic schema diagnostic are retained in
+`production/evidence/2026-11-04/native-dataset-commit-journal/`.
+
+Sparse mutation/no-op/row-compaction producers, qualified changed-row/delete-key
+roots, chain-derived actual indexing pins/consumer IO, incremental Source/Search
+activation and distributed bootstrap remain open. A fresh full graph recovery
+rerun after this schema addition, combined whole-platform checks, independent
+current CI and production workload evidence are still required. This fresh
+baseline checkpoint does not migrate a live installation.

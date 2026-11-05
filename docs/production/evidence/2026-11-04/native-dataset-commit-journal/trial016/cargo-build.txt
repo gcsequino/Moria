@@ -1,0 +1,4 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+error: could not compile `moria-runtime` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `moria-runtime` (lib test) due to 1 previous error
