@@ -1144,26 +1144,26 @@ test(
             () =>
               native('invoke', { resource: suite, key: 'run-lost-commit' }, replaySession.token),
             proxy.committed,
+            AbortSignal.timeout(90000),
           );
           const duringCommit = await Promise.race([
             replay,
             worker.done.then(() => assert.fail('Worker stopped before root COMMIT')),
-            delay(90000).then(async () =>
-              assert.fail(
-                JSON.stringify({
-                  message: 'Actual root COMMIT was not reached',
-                  checkpoints: proxy.checkpoints,
-                  worker: worker.error(),
-                  agentWorker: agentWorker?.error(),
-                  agentExit: agentWorker?.child.exitCode,
-                  result: await native('get', { id: accepted.id }).catch((error: unknown) => ({
-                    error: error instanceof Error ? error.message : String(error),
-                  })),
-                  diagnostics: await diagnostics(accepted.id),
-                }),
-              ),
+          ]).catch(async (error: unknown) =>
+            assert.fail(
+              JSON.stringify({
+                message: error instanceof Error ? error.message : String(error),
+                checkpoints: proxy.checkpoints,
+                worker: worker.error(),
+                agentWorker: agentWorker?.error(),
+                agentExit: agentWorker?.child.exitCode,
+                result: await native('get', { id: accepted.id }).catch((error: unknown) => ({
+                  error: error instanceof Error ? error.message : String(error),
+                })),
+                diagnostics: await diagnostics(accepted.id),
+              }),
             ),
-          ]);
+          );
           assert.equal(duringCommit.id, accepted.id);
           assert.equal(duringCommit.status, 'running');
           assert.equal(duringCommit.summary, null);
