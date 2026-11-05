@@ -1,0 +1,39 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3.integration.test.ts
+Running 1 integration test files.
+✖ qualified v3 replacement heads bind standard metadata and typed array-key rows (12435.130534ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12960.182396
+
+✖ failing tests:
+
+test at tests/native-dataset-v3.integration.test.ts:1:180
+✖ qualified v3 replacement heads bind standard metadata and typed array-key rows (12435.130534ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (130) panicked at ../../tests/fixtures/native-catalog/harness.rs:306:10:
+  called `Result::unwrap()` on an `Err` value: WRITER_PREPARE
+  
+  Caused by:
+      SPOOL_UNSEALED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... FAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 2.53s\n\n',
+    stderr: "\nthread 'catalog_publication' (130) panicked at ../../tests/fixtures/native-catalog/harness.rs:306:10:\ncalled `Result::unwrap()` on an `Err` value: WRITER_PREPARE\n\nCaused by:\n    SPOOL_UNSEALED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+[ELIFECYCLE] Command failed with exit code 1.

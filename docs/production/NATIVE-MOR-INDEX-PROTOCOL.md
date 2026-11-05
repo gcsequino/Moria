@@ -260,3 +260,27 @@ selection is unchanged. Trial030 builds nine executables and passes static plus
 113 units; no actual v3 Catalog publication or recovery proof is claimed at this
 checkpoint. Runtime gates, standard-engine position deletes, sparse mutations,
 distributed bootstrap and incremental Source chains remain required.
+
+## Actual v3 whole-replacement publication checkpoint
+
+Trial033 qualifies the staged replacement path through actual C04 publication.
+A 64-row result with array primary keys and nullable payloads publishes as a v3
+head, replays the same receipt and passes common typed readback, complete-key
+lookups and exact point-row digest verification. A second actual empty
+replacement publishes/replays, reads as empty and preserves the first revision's
+typed read. Both immutable replacement journal edges resolve their actual
+qualified result roots; the empty head's ready stage is published and its root
+registry contains one member. This is whole replacement, not sparse mutation.
+
+The same exact nine-artifact image passes static checks, 113 units and the
+existing 64-row v2 standard-read/projected-bootstrap/deferred-digest regression
+under its original 120-second root. Evidence preserves the initial unsealed
+auxiliary-spill failure, the staged-read SQL name collision with head 0/candidate 0/
+journal 0 assertions, and the empty expected-row fixture failure. Corrections
+retain admission checks and proof deadlines. See
+[evidence](evidence/2026-11-05/native-v3-replacement-publication/summary.json).
+
+Production output selection remains unchanged while actual v3 custody,
+pruning and remaining reader integrations are qualified. This checkpoint does
+not certify position deletes, sparse writes, distributed bootstrap, incremental
+Source consumption or production throughput.

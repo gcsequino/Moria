@@ -348,7 +348,7 @@ BEGIN
    SELECT s.* INTO stage FROM moria.runtime_dataset_graph_stages s WHERE s.id=(claims->>'stage')::uuid
     AND s.producer=stage_state->>'producer' AND s.environment=env AND s.dataset=resource_id
     AND s.physical_fingerprint=stage_state->>'physicalFingerprint' AND s.incarnation=instance_inc AND s.status IN ('ready','candidate');
-   IF NOT FOUND OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_queue WHERE origin=stage.id AND processed_at IS NULL) THEN RAISE EXCEPTION 'DATASET_GRAPH_NOT_READY';END IF;
+   IF NOT FOUND OR EXISTS(SELECT 1 FROM moria.runtime_dataset_graph_queue q WHERE q.origin=stage.id AND q.processed_at IS NULL) THEN RAISE EXCEPTION 'DATASET_GRAPH_NOT_READY';END IF;
    IF NOT EXISTS(SELECT 1 FROM moria.dataset_heads h WHERE h.environment=env AND h.dataset=resource_id AND h.revision::text=stage_state->>'expectedRevision') THEN RAISE EXCEPTION 'HEAD_CONFLICT';END IF;
    SELECT r.* INTO retained FROM moria.runtime_dataset_roots r JOIN moria.runtime_dataset_graph_nodes n ON n.content=r.root->'root'
     WHERE n.id=stage.node AND n.kind='root' AND n.profile=stage_state->'graphProfile' AND r.producer=stage.producer AND r.environment=env AND r.dataset=resource_id AND r.sealed

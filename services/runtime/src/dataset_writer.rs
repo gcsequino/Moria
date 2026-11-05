@@ -760,6 +760,9 @@ async fn prepare_replacement_inner(
         cancel.clone(),
     )
     .await?;
+    if graph_format {
+        spool.seal(store.as_ref(), grant.clone()).await?;
+    }
     let schema = Arc::new(schema);
     let (prior, prior_files) = if graph_format {
         let basis = replace_graph::basis(
@@ -927,7 +930,9 @@ async fn prepare_replacement_inner(
                     content: part.content,
                 });
             }
-            spool.append_page(&entries).await?;
+            if !graph_format {
+                spool.append_page(&entries).await?;
+            }
             let manifest = writer.write_manifest_file().await?;
             let content = put(
                 store.as_ref(),
@@ -939,12 +944,14 @@ async fn prepare_replacement_inner(
             if let Some(graph) = graph.as_mut() {
                 graph.metadata_file(&manifest_name, &content).await?;
             }
-            spool
-                .append_page(&[ClosureEntry {
-                    name: manifest_name,
-                    content,
-                }])
-                .await?;
+            if !graph_format {
+                spool
+                    .append_page(&[ClosureEntry {
+                        name: manifest_name,
+                        content,
+                    }])
+                    .await?;
+            }
             manifests += 1;
             ensure!(manifests <= MAX_MANIFESTS, "RESOURCE_LIMIT");
             list.add_manifests(std::iter::once(manifest))?;
@@ -973,12 +980,14 @@ async fn prepare_replacement_inner(
     if let Some(graph) = graph.as_mut() {
         graph.metadata_file(&list_name, &list_content).await?;
     }
-    spool
-        .append_page(&[ClosureEntry {
-            name: list_name.clone(),
-            content: list_content,
-        }])
-        .await?;
+    if !graph_format {
+        spool
+            .append_page(&[ClosureEntry {
+                name: list_name.clone(),
+                content: list_content,
+            }])
+            .await?;
+    }
     let now = chrono::Utc::now().timestamp_millis().max(
         prior
             .as_ref()

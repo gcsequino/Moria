@@ -21,9 +21,39 @@ test(
       tags: ['key-' + i, 'key-' + i],
       note: i % 2 ? null : 'row-' + i,
     }));
-    const first = await fixture.publish(rows, { graph: true });
+    const first = await fixture.publish(rows, { graph: true }).catch(async (error) => {
+      assert.equal(
+        (await fixture.db.catalog.heads(fixture.environment, [fixture.dataset]))[0].revision,
+        '0',
+      );
+      assert.equal(
+        (
+          await fixture.db.pool.query(
+            'SELECT count(*) FROM moria.runtime_snapshot_candidates WHERE resource=$1',
+            [fixture.dataset],
+          )
+        ).rows[0].count,
+        '0',
+      );
+      assert.equal(
+        (
+          await fixture.db.pool.query(
+            'SELECT count(*) FROM moria.runtime_dataset_commit_deltas WHERE dataset=$1',
+            [fixture.dataset],
+          )
+        ).rows[0].count,
+        '0',
+      );
+      t.diagnostic(
+        JSON.stringify({ failedPrepareLeavesHeadRevision: '0', candidates: 0, journalEdges: 0 }),
+      );
+      throw error;
+    });
     assert.match(first.head.metadataLocation!, /^moria-snapshot-v3:/);
     await fixture.read(first.head);
+    t.diagnostic(
+      JSON.stringify({ phase: 'firstPublishedAndTypedRead', revision: first.head.revision }),
+    );
     const reader = await fixture.bind(
       [
         {
@@ -45,7 +75,9 @@ test(
       s3Bindings: [fixture.datasetStorage],
     });
     assert.match(graph, /"event":"graph_bootstrap_read"/);
+    t.diagnostic(JSON.stringify({ phase: 'arrayKeysAndPointDigestVerified', rows: rows.length }));
     const second = await fixture.publish([], { graph: true });
+    t.diagnostic(JSON.stringify({ phase: 'emptyPublished', revision: second.head.revision }));
     assert.match(second.head.metadataLocation!, /^moria-snapshot-v3:/);
     await fixture.read(second.head);
     await fixture.read(first.head);

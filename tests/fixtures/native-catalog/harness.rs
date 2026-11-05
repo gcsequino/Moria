@@ -781,9 +781,13 @@ async fn run() -> Result<()> {
             let schema: iceberg::spec::Schema =
                 serde_json::from_value(definition.get("iceberg_schema"))?;
             let columns: Value = definition.get("columns");
-            let batch = supplied_batch(&schema, expected, &columns)?;
+            let expected_rows = if expected.is_empty() {
+                Vec::new()
+            } else {
+                typed_rows(&supplied_batch(&schema, expected, &columns)?, &columns)?
+            };
             let mut rows = BTreeMap::new();
-            for row in typed_rows(&batch, &columns)? {
+            for row in expected_rows {
                 *rows.entry(row).or_insert(0) += 1;
             }
             Some((columns, rows))
