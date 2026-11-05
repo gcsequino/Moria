@@ -193,6 +193,11 @@ BEGIN
   RETURN results;
 END $$;
 REVOKE ALL ON FUNCTION moria.native_serving_resource_access_batch_state(jsonb,jsonb) FROM PUBLIC;
+CREATE FUNCTION moria.native_serving_resource_access_batch(token_hash text,requests jsonb) RETURNS jsonb
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+BEGIN
+  RETURN moria.native_serving_resource_access_batch_state(moria.native_serving_session(token_hash),requests);
+END $$;
 CREATE FUNCTION moria.native_serving_resource_access(token_hash text,resource text,operation text) RETURNS jsonb
   LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 BEGIN
@@ -353,12 +358,15 @@ BEGIN
     IF NOT inherited<@moria.runtime_data_labels(env,target_id::text) OR NOT to_jsonb(inherited)<@to_jsonb(markings)
       OR NOT labels<@to_jsonb(markings) THEN RAISE EXCEPTION 'MARKING_DOWNGRADE'; END IF;
   END LOOP;
-  FOREACH target_id IN ARRAY outputs LOOP
-    INSERT INTO moria.resource_data_edges(environment,derived,source)
-    SELECT env,target_id::text,source.input_id::text FROM unnest(inputs) source(input_id)
-    WHERE target_id<>source.input_id ON CONFLICT DO NOTHING;
-    PERFORM moria.native_serving_resource_access_state(state,target_id::text,'write');
-  END LOOP;
+  INSERT INTO moria.resource_data_edges(environment,derived,source)
+  SELECT env,output.target_id::text,input.input_id::text
+  FROM unnest(outputs) output(target_id) CROSS JOIN unnest(inputs) input(input_id)
+  WHERE output.target_id<>input.input_id ON CONFLICT DO NOTHING;
+  -- Check each output against the complete proposed graph before admitting the binding.
+  PERFORM moria.native_serving_resource_access_batch_state(state,(
+    SELECT jsonb_agg(jsonb_build_object('resource',output.id::text,'operation','write') ORDER BY output.position)
+    FROM unnest(outputs) WITH ORDINALITY output(id,position)
+  ));
   RETURN (SELECT security_epoch FROM moria.environments WHERE id=env);
 END $$;
 CREATE FUNCTION moria.runtime_binding_data_admit() RETURNS trigger LANGUAGE plpgsql

@@ -804,6 +804,25 @@ test(
               ).rows[0].labels,
             );
           assert.deepEqual(await batch(), expected);
+          const sessionHash = createHash('sha256').update(user.token).digest('hex');
+          const sessionBatch = async () =>
+            (
+              await client.query(
+                'SELECT moria.native_serving_resource_access_batch($1,$2) AS labels',
+                [sessionHash, JSON.stringify(requests)],
+              )
+            ).rows[0].labels;
+          const sessionExpected = [];
+          for (const request of requests)
+            sessionExpected.push(
+              (
+                await client.query(
+                  'SELECT moria.native_serving_resource_access($1,$2,$3) AS labels',
+                  [sessionHash, request.resource, request.operation],
+                )
+              ).rows[0].labels,
+            );
+          assert.deepEqual(await sessionBatch(), sessionExpected);
           for (const mutation of [
             [
               "UPDATE moria.native_dataset_bindings SET enabled=false,revision='sha256:'||repeat('f',64) WHERE environment=$1 AND resource=$2",

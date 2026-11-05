@@ -321,10 +321,7 @@ pub(crate) async fn check_context(client: &Client, context: &SandboxContext) -> 
     let row=client.query_one("SELECT e.resource,p.inputs,p.outputs,p.secret_approvals FROM moria.runtime_executions e JOIN moria.runtime_pipeline_executions p ON p.execution=e.id WHERE e.id=$1",&[&context.lease().execution]).await?;
     let mut labels =
         accepted_secrets_in(client, &session, &row.get::<_, Value>("secret_approvals")).await?;
-    labels.extend(
-        Authority::resource_access(client, &session, &row.get::<_, Uuid>(0).to_string(), "read")
-            .await?,
-    );
+    let mut requests = vec![json!({"resource":row.get::<_, Uuid>(0),"operation":"read"})];
     for (field, operation) in [("inputs", "read"), ("outputs", "write")] {
         let resources: Value = row.get(field);
         for resource in resources
@@ -332,19 +329,24 @@ pub(crate) async fn check_context(client: &Client, context: &SandboxContext) -> 
             .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
             .values()
         {
-            labels.extend(
-                Authority::resource_access(
-                    client,
-                    &session,
-                    resource["resource"]
-                        .as_str()
-                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?,
-                    operation,
-                )
-                .await?,
-            );
+            let resource = resource["resource"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+            requests.push(json!({"resource":resource,"operation":operation}));
         }
     }
+    let result: Value = client
+        .query_one(
+            "SELECT moria.native_serving_resource_access_batch($1,$2)",
+            &[&session.session_hash(), &json!(requests)],
+        )
+        .await?
+        .get(0);
+    labels.extend(
+        serde_json::from_value::<Vec<Vec<String>>>(result)?
+            .into_iter()
+            .flatten(),
+    );
     context.record_consumed_markings(&markings(context.environment(), &labels))?;
     Ok(())
 }
