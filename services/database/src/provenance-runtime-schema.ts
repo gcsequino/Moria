@@ -215,6 +215,17 @@ CREATE FUNCTION moria.native_resource_filesystem_access(token_hash text,resource
 BEGIN
   RETURN moria.native_resource_filesystem_access_state(moria.native_serving_session(token_hash),resource,operation);
 END $$;
+-- Resolve credential authority and its ordered Source check within one statement.
+CREATE FUNCTION moria.native_resource_filesystem_authority(token_hash text,expected_environment text,expected_principal text,expected_application text,resource text,operation text) RETURNS jsonb
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+DECLARE state jsonb;
+BEGIN
+  state:=moria.native_serving_session(token_hash);
+  IF state->>'environment' IS DISTINCT FROM expected_environment
+    OR state->>'principal' IS DISTINCT FROM expected_principal
+    OR state->>'application' IS DISTINCT FROM expected_application THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
+  RETURN jsonb_build_object('state',state,'labels',moria.native_resource_filesystem_access_state(state,resource,operation));
+END $$;
 CREATE FUNCTION moria.native_resource_release_access_state(state jsonb,resource text,operation text,release_digest text) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE canonical text; target record; file_id uuid; labels text[]; marks jsonb;
 BEGIN

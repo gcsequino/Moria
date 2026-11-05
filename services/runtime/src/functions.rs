@@ -537,16 +537,16 @@ impl NativeFunctions {
         marks: &[ConsumedMarking],
     ) -> Result<Vec<ConsumedMarking>> {
         ensure!(tx.query_opt("SELECT 1 FROM moria.fs_entries e JOIN moria.fs_resource_bindings b ON b.entry_id=e.id AND b.active JOIN moria.fs_roles r ON r.entry_id=b.root_id AND NOT r.retired WHERE e.resource_id=$1 AND e.environment_id=$2 AND e.kind='resource' AND NOT e.deleted", &[&resource,&session.environment()]).await?.is_some(),"NOT_FOUND");
-        let snapshot = Authority::current(tx, session).await?;
-        let source =
-            Authority::resource_access_for_operation(tx, session, &resource.to_string(), "invoke")
-                .await?
-                .into_iter()
-                .map(|marking| ConsumedMarking {
-                    environment: session.environment().into(),
-                    marking,
-                })
-                .collect();
+        let (snapshot, source) =
+            Authority::current_resource_for_operation(tx, session, &resource.to_string(), "invoke")
+                .await?;
+        let source = source
+            .into_iter()
+            .map(|marking| ConsumedMarking {
+                environment: session.environment().into(),
+                marking,
+            })
+            .collect();
         let marks = labels(&[marks.to_vec(), source], session.environment())?;
         crate::execution::invocation_permission(
             &snapshot.identity,

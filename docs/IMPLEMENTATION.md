@@ -1,5 +1,24 @@
 # Implementation checkpoint
 
+## November 5 grouped Function Source authority
+
+Function authorization now resolves current session state and its operation Source
+labels within one credential-bound SQL statement. Exact environment/principal/
+application identity is checked before Source lookup. The native permission checks,
+preceding resource existence check and final fresh authority check remain intact;
+there is no cross-call authority cache or limit/lock/isolation change.
+
+A real PostgreSQL composition passes 8/8: actual ordinary and private job credentials
+traverse session resolution three times before grouping and twice after grouping,
+with exact state/labels and the final fresh finish retained. Ordered errors, stale
+actual task fences, private helper permissions, Source proofs, classifications,
+policy denies and irreversible revocation remain checked. The full original
+Functions file passes 18/18; all fixtures are cleaned. The combined `9aba9569` base
+plus this change passes static checks, all nine fingerprints and 117 native units.
+The full Agent file is running; Evaluation, whole-instance and independent complete
+quality gates remain open. See
+[Function authority evidence](production/evidence/2026-11-04/function-source-authority/README.md).
+
 ## November 5 bounded Connector schema discovery
 
 The native Connection runtime now implements explicit `schemaDiscovery` alongside

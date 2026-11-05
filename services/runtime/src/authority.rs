@@ -156,6 +156,31 @@ impl Authority {
             .get(0);
         Ok(serde_json::from_value(labels)?)
     }
+    pub(crate) async fn current_resource_for_operation<C: GenericClient + Sync>(
+        client: &C,
+        session: &VerifiedSession,
+        resource: &str,
+        operation: &str,
+    ) -> Result<(SecuritySnapshot, Vec<String>)> {
+        let value: Value = client
+            .query_one(
+                "SELECT moria.native_resource_filesystem_authority($1,$2,$3,$4,$5,$6)",
+                &[
+                    &session.token_hash,
+                    &session.environment,
+                    &session.principal,
+                    &session.application,
+                    &resource,
+                    &operation,
+                ],
+            )
+            .await?
+            .get(0);
+        Ok((
+            serde_json::from_value(value["state"].clone())?,
+            serde_json::from_value(value["labels"].clone())?,
+        ))
+    }
     pub(crate) async fn resource_release_access<C: GenericClient + Sync>(
         client: &C,
         session: &VerifiedSession,
