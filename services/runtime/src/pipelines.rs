@@ -39,6 +39,11 @@ pub(crate) fn domain_error_code(error: &anyhow::Error) -> Option<&'static str> {
         })
         .unwrap_or_else(|| error.root_cause().to_string());
     [
+        "FORBIDDEN",
+        "UNAUTHENTICATED",
+        "IDENTITY_STALE",
+        "BINDING_CHANGED",
+        "AUTHORIZATION_CHANGED",
         "PIPELINE_PROFILE_INVALID",
         "PIPELINE_SOURCE_INVALID",
         "PIPELINE_CAPABILITY_UNSUPPORTED",

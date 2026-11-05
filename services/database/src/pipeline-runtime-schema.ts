@@ -98,7 +98,7 @@ BEGIN
         AND a.owner_revision=item->'request'->>'ownerRevision' AND a.destination_fingerprint=r.destination_fingerprint
         AND a.material_ref=item->'request'->>'materialRef' AND a.material_revision=item->>'materialRevision' AND a.enabled)
       THEN RAISE EXCEPTION 'SECRET_APPROVAL_REVOKED'; END IF;
-    requests:=requests||jsonb_build_array(jsonb_build_object('resource',item->'request'->>'secret','operation','use'));
+    PERFORM moria.native_resource_filesystem_access_state(state,item->'request'->>'secret','use');
   END LOOP;
   PERFORM moria.native_serving_resource_access_batch_state(state,requests);
 END $$;

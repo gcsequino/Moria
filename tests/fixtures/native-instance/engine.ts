@@ -25,7 +25,6 @@ export function instanceEnginePool(): Pool {
 export async function startInstanceEngine(input: {
   host: string;
   runtimeEnvironment: NodeJS.ProcessEnv;
-  operatorEnvironment: NodeJS.ProcessEnv;
   pool?: Pool;
 }) {
   const controller = process.env.MORIA_TEST_CONTROLLER;
@@ -77,15 +76,24 @@ export async function startInstanceEngine(input: {
       child.once('exit', (code, signal) =>
         code === 0
           ? resolve()
-          : reject(Error('Native engine lifecycle failed: ' + (code ?? signal) + ' ' + error)),
+          : reject(
+              Error(
+                'Native engine ' +
+                  arguments_.join(' ') +
+                  ' failed: ' +
+                  (code ?? signal) +
+                  ' ' +
+                  error,
+              ),
+            ),
       );
     });
     void done.catch(() => {});
-    return { child, done, output: () => output };
+    return { child, done, output: () => output, error: () => error };
   };
   const pool = input.pool ?? instanceEnginePool();
   for (const slot of pool.slots) {
-    await start(['scratch', 'register'], input.operatorEnvironment, {
+    await start(['scratch', 'register'], input.runtimeEnvironment, {
       ...slot.registration,
       hostId: input.host,
       resourceClass: 'engine-spill',
@@ -137,6 +145,11 @@ export async function startInstanceEngine(input: {
     throw error;
   }
   return {
+    check: () =>
+      assert.ok(
+        worker.child.exitCode === null && worker.child.signalCode === null,
+        'Native engine exited: ' + worker.error(),
+      ),
     restoreOwnership: async (directory: string) => {
       assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
       assert.match(basename(directory), /^catalog-storage-[A-Za-z0-9]+$/);

@@ -2839,3 +2839,15 @@ checks, provenance and all 79 native units. The new real Sync/Dataset/checkpoint
 fixture is written and typechecks but has not yet run. Runtime proof, latest full
 quality gates and production-scale evidence remain open; this checkpoint does
 not complete N09.
+
+The first composed Connector trial passes custody and generation fencing but
+fails engine setup: the shared instance fixture supplied an administrative DB
+connection to scratch registration, which requires a non-owning runtime role.
+Both fixture callers now use that required role. The next diagnostic exposes
+Secret use incorrectly entering a data-operation-only batch helper. Secret use
+now calls the existing exact Secret-aware filesystem authority helper, retaining
+its kind, operation, markings and current file checks. Expected claim denials are
+classified so one denied job cannot stop the worker. A queued Secret file denial
+and subsequent successful window are added to the real fixture; fresh combined
+native build and runtime qualification are pending. No runtime restriction or
+individual deadline is relaxed.

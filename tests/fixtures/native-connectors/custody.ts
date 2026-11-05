@@ -9,14 +9,18 @@ import { engineImage } from '../data-engine/image.js';
 import { startInstanceEngine } from '../native-instance/engine.js';
 import { Authority } from '../../../services/security/src/authority.js';
 import { WorkloadSessions } from '../../../services/security/src/sessions.js';
+import { FilesystemAuthority } from '../../../services/security/src/filesystem.js';
 import { filesystemOperations } from '../../../packages/contracts/filesystem.js';
 import type { Resource } from '../../../packages/contracts/types.js';
 
-const program = `import pyarrow as pa,uuid
+const program = `import pyarrow as pa,uuid,os
 def sync(ctx):
+ assert 'CONNECTOR_ENDPOINT' not in os.environ
+ assert not any(key.startswith('CONNECTOR_MATERIAL_') for key in os.environ)
  previous=ctx.metadata['checkpoint']
  response=ctx.http('GET','/rows')
  assert response['status']==200
+ assert set(response)=={'status','body'}
  body=response['body']
  assert body['previous']==previous
  rows=body['rows']
@@ -53,6 +57,7 @@ export async function connectorCustody(t: TestContext) {
   let calls = 0,
     previous: unknown = null,
     hold = false,
+    reflect = false,
     entered = false,
     socketClosed = false;
   let release = () => {};
@@ -76,7 +81,13 @@ export async function connectorCustody(t: TestContext) {
       }
       response.setHeader('content-type', 'application/json');
       response.setHeader('set-cookie', 'must-not-reach-guest');
-      response.end(JSON.stringify({ rows: [row], previous, cursor: { offset: calls } }));
+      response.end(
+        JSON.stringify(
+          reflect
+            ? { reflected: materials[0] }
+            : { rows: [row], previous, cursor: { offset: calls } },
+        ),
+      );
     } catch (error) {
       response.destroy(error instanceof Error ? error : undefined);
     }
@@ -265,6 +276,25 @@ export async function connectorCustody(t: TestContext) {
       operatorEnvironment,
     );
   const approvals: { id: string }[] = [];
+  const succeeded = async (execution: string) => {
+    engine?.check();
+    const row = (
+      await db.pool.query('SELECT status,error FROM moria.runtime_executions WHERE id=$1', [
+        execution,
+      ])
+    ).rows[0];
+    if (['failed', 'cancelled'].includes(row.status)) {
+      const events = (
+        await db.pool.query(
+          'SELECT kind,payload FROM moria.runtime_execution_events WHERE execution=$1 ORDER BY sequence DESC LIMIT 16',
+          [execution],
+        )
+      ).rows;
+      assert.fail(JSON.stringify({ execution, ...row, events }));
+    }
+    return row.status === 'succeeded';
+  };
+
   await t.test(
     'every declared Secret needs exact operator custody and independent caller/service use before code',
     async () => {
@@ -321,6 +351,7 @@ export async function connectorCustody(t: TestContext) {
         /SECRET_APPROVAL_REVOKED/,
       );
       accepted = await invoke('after-approval-pulse');
+      await db.pool.query('SELECT moria.runtime_pipeline_current($1)', [accepted.id]);
       const rows = (
         await db.pool.query(
           'SELECT execution,checkpoint,secret_approvals FROM moria.runtime_pipeline_executions WHERE execution=ANY($1::uuid[])',
@@ -332,29 +363,72 @@ export async function connectorCustody(t: TestContext) {
     },
   );
   await t.test(
-    'the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically',
+    'a Secret file denial fences a queued window without stopping its worker',
     async () => {
+      await fixture.command(
+        ['pipelines', 'cancel'],
+        { token, id: accepted.id },
+        runtimeEnvironment,
+      );
+      const denied = await invoke('secret-file-revoked-before-claim');
+      const entry = (
+        await db.pool.query(
+          "SELECT id FROM moria.fs_entries WHERE parent_id=$1 AND name='Credential0.resource.json' AND NOT deleted",
+          [published.root.id],
+        )
+      ).rows[0].id;
+      const security = new FilesystemAuthority(authority);
+      await security.setPolicy('fixture', entry, '0', {
+        markings: [{ environment, marking: 'connector-denied' }],
+        grants: [],
+      });
       const pool = JSON.parse(process.env.MORIA_ENGINE_SCRATCH_POOL_JSON ?? 'null');
       assert.ok(
         pool?.slots.length === 2,
         'Connector proof requires the actual dedicated ext4 pool',
       );
-      engine = await startInstanceEngine({ host, runtimeEnvironment, operatorEnvironment, pool });
-      await until(
-        async () =>
+      engine = await startInstanceEngine({ host, runtimeEnvironment, pool });
+      await until(async () => {
+        engine!.check();
+        return (
           (
             await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
-              accepted.id,
+              denied.id,
             ])
-          ).rows[0].status === 'succeeded',
+          ).rows[0].status === 'failed'
+        );
+      });
+      assert.equal(
+        (await db.pool.query('SELECT error FROM moria.runtime_executions WHERE id=$1', [denied.id]))
+          .rows[0].error,
+        'FORBIDDEN',
       );
+      assert.equal(
+        (
+          await db.pool.query(
+            'SELECT count(*) FROM moria.runtime_sandbox_attempts WHERE execution=$1',
+            [denied.id],
+          )
+        ).rows[0].count,
+        '0',
+      );
+      assert.equal(calls, 0);
+      await security.setPolicy('fixture', entry, '1', { markings: [], grants: [] });
+      accepted = await invoke('after-file-restored');
+    },
+  );
+  await t.test(
+    'the actual isolated Sync guest publishes typed rows and its durable checkpoint atomically',
+    async () => {
+      assert.ok(engine, 'The native engine must have started');
+      await until(() => succeeded(accepted.id));
       assert.equal(
         (await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [stale.id]))
           .rows[0].status,
         'failed',
       );
       assert.equal(calls, 1);
-      assert.equal((await invoke('after-approval-pulse')).id, accepted.id);
+      assert.equal((await invoke('after-file-restored')).id, accepted.id);
       assert.equal(calls, 1);
       assert.deepEqual(
         (
@@ -385,16 +459,10 @@ export async function connectorCustody(t: TestContext) {
   await t.test(
     'a next window reuses its semantic cursor despite a new execution and head revision',
     async () => {
+      assert.ok(engine, 'The native engine must have started');
       previous = { offset: 1 };
       const next = await invoke('next-window');
-      await until(
-        async () =>
-          (
-            await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
-              next.id,
-            ])
-          ).rows[0].status === 'succeeded',
-      );
+      await until(() => succeeded(next.id));
       assert.equal(calls, 2);
       assert.deepEqual(
         (
@@ -408,9 +476,41 @@ export async function connectorCustody(t: TestContext) {
       assert.equal((await db.catalog.heads(environment, [dataset]))[0].revision, '2');
     },
   );
+  await t.test('reflected material never reaches guest frames or observable events', async () => {
+    assert.ok(engine, 'The native engine must have started');
+    engine!.check();
+    reflect = true;
+    const reflected = await invoke('reflected-material');
+    await until(
+      async () =>
+        (
+          await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
+            reflected.id,
+          ])
+        ).rows[0].status === 'failed',
+    );
+    reflect = false;
+    assert.equal((await db.catalog.heads(environment, [dataset]))[0].revision, '2');
+    const events = await fixture.command(
+      ['pipelines', 'events'],
+      { token, id: reflected.id },
+      runtimeEnvironment,
+    );
+    const stored = (
+      await db.pool.query('SELECT payload FROM moria.runtime_execution_events WHERE execution=$1', [
+        reflected.id,
+      ])
+    ).rows;
+    for (const material of materials) {
+      assert.ok(!JSON.stringify(events).includes(material));
+      assert.ok(!JSON.stringify(stored).includes(material));
+    }
+  });
   await t.test(
     'revocation closes an in-flight Connector socket and preserves the prior head and cursor',
     async () => {
+      assert.ok(engine, 'The native engine must have started');
+      engine!.check();
       previous = { offset: 2 };
       hold = true;
       held = new Promise<void>((resolve) => {
