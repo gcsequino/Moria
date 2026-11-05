@@ -64,3 +64,9 @@ pub fn initialize_reader_limits() -> anyhow::Result<()> {
     );
     Ok(())
 }
+
+pub mod authenticated_file;
+pub mod dataset_graph;
+pub mod dataset_graph_read;
+pub mod native_snapshot_v3;
+pub mod persistent_directory;

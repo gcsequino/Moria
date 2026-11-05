@@ -931,3 +931,12 @@ pub async fn prepare_output(
     );
     prepare_replacement(store, scratch, grant, schema, partsets, limits, cancel).await
 }
+
+pub mod bootstrap_v2;
+pub mod key_run;
+pub mod key_run_io;
+pub mod key_run_merge;
+pub mod key_run_set;
+pub mod row_selection;
+pub mod rows;
+pub mod visibility;

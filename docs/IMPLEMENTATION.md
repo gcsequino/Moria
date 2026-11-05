@@ -2822,3 +2822,16 @@ Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed
 
 
 Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.
+
+
+Native MOR primitives checkpoint (2026-11-04): the library now includes
+receiver-qualified graph traversal, authenticated bounded range reads,
+path-copy directories, packed key/locator runs, streamed merge, exact row
+selection and bounded verified-v2 bootstrap. `cargo check --locked --lib -j2`
+and all 91 library tests pass, with no ignored or filtered tests. An isolated
+PostgreSQL check applies the graph schema and rejects unissued read/reuse claims.
+The graph and Source delta schemas remain excluded from the installed baseline;
+v2 dispatch is unchanged. C04 publication, sidecar retention/clean-host recovery,
+sparse writer activation and Source delta publication remain unverified.
+See `production/NATIVE-MOR-PRIMITIVES.md` and
+`production/evidence/2026-11-04/native-mor-primitives/` for scope and results.

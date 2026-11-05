@@ -1,0 +1,58 @@
+{
+  "base": "4e2b6617c4158ed8a3de6df2d84e1ca281917184",
+  "classification": "bounded native MOR primitives; runtime activation remains blocked",
+  "schemaInstalledInBaseline": false,
+  "validation": {
+    "cargoCheck": {
+      "command": "cargo check --locked --lib -j2",
+      "exitCode": 0,
+      "elapsedSeconds": 23.026894261000052
+    },
+    "cargoLibTests": {
+      "command": "cargo test --locked --lib -j2",
+      "exitCode": 0,
+      "elapsedSeconds": 50.35849917300038,
+      "passed": 91,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "graphSchemaAdmission": {
+      "exitCode": 0,
+      "elapsedSeconds": 6.884425313000975,
+      "unissuedReadDenied": true,
+      "unissuedReuseDenied": true
+    }
+  },
+  "sourceHashes": {
+    "services/database/src/dataset-delta-schema.ts": "d5c0b322786428ab1880a2c72d95bf2aa21637bc980bddda1d7a940f633f461c",
+    "services/database/src/dataset-graph-schema.ts": "0057ffe1534ef26acc150b386d5f5b2b1224c4236f73709668ba8083b294209b",
+    "services/runtime/src/authenticated_file.rs": "442d0cfefc2d9f353336d08e400c478ef49791d185157eb16023d50d63435a08",
+    "services/runtime/src/dataset_graph.rs": "1f768db11a2425d4e3f9bdccc169efa2e1cf2ff6e7734aaf50a455a4bc5870b6",
+    "services/runtime/src/dataset_graph_read.rs": "fdcc111b86da0344c9f7c526d1575b763a0f86e1da07717806ba4fac59c03619",
+    "services/runtime/src/dataset_writer/bootstrap_v2.rs": "194a96fae6554999ec8bbc1b7aa6456e737d9ef893c639a91cd6f5b4a39abc45",
+    "services/runtime/src/dataset_writer/key_run.rs": "b78f3e347ade3ccf7427c4a73ce7a408628759be06393e097b5dd9ce73e0a7ac",
+    "services/runtime/src/dataset_writer/key_run_io.rs": "66fab409fa48d8f45bfbbb045dac04a8153b9c0ac7e132e414767a5d4e47e0d0",
+    "services/runtime/src/dataset_writer/key_run_merge.rs": "79a70bda445928866df6866826e1b56ac5eedca5e7cf7ad346dd10350d4d77b9",
+    "services/runtime/src/dataset_writer/key_run_set.rs": "c050563b33c2898b9703d0552fb4fc6ff8bcae41fe89e09483552c9dba512e07",
+    "services/runtime/src/dataset_writer/row_selection.rs": "ad64d06a4fc7e5425155e2ad896915a9007f6b4eafa0329e24e7f31196fbd2e7",
+    "services/runtime/src/dataset_writer/rows.rs": "0429875c0310ee3fc101175015e291cf69b744da7134bcdab953bfc898b9ebe6",
+    "services/runtime/src/dataset_writer/visibility.rs": "aff7848021490579f3877e32d3d2302467c0970bfb139fb5e2200525c935f1b6",
+    "services/runtime/src/native_snapshot_v3.rs": "777957f6ff1e302a81ec3427469fa648eac32fcf030a53fc12b436c05368a979",
+    "services/runtime/src/persistent_directory/graph.rs": "e1eafd87a6533e1be1361236a8a208d1f1d3af4a2ac631e47fdb9ecc735e8816",
+    "services/runtime/src/persistent_directory/read.rs": "b35e1bd38cce6166ed898cde036c956371a08f732a85ade7cd599dfd8e808834",
+    "services/runtime/src/persistent_directory.rs": "217618efd552dd65972d642e2b73d22370b670b6505d5017acfae7db608be522",
+    "services/runtime/src/lib.rs": "c9249ccd6eff47b83215919b735ed83a289cec7ccd2dfee990690d62098fcb01",
+    "services/runtime/src/dataset_writer.rs": "f01d5a59474e2f7fff0960a233dbad2c4c98b1c311df4c4ee3312511772e7525",
+    "services/runtime/src/dataset_writer/keys.rs": "07af9da1510229808fabfc62df14dd7a6b7c76266791e6d77bed56e66888be87",
+    "services/runtime/src/snapshot.rs": "216ae7101f602383c6112b2f067a777d933ac0748d148c27e41661d6170d5aa5"
+  },
+  "notVerified": [
+    "v3 Catalog publication and crash atomicity",
+    "sidecar closure in retention and clean-host backup/restore",
+    "incarnation and physical-version requalification",
+    "sparse append/upsert/delete writer activation",
+    "complete Source delta publication writer footprint",
+    "full pnpm check and production workload acceptance"
+  ]
+}

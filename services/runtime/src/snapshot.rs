@@ -842,7 +842,7 @@ pub(crate) fn validate_batch(
     Ok(())
 }
 
-fn preflight_avro(bytes: &[u8]) -> Result<()> {
+pub(crate) fn preflight_avro(bytes: &[u8]) -> Result<()> {
     use apache_avro::types::Value as A;
     fn count(value: &A, bytes: &mut usize, depth: usize) -> Result<()> {
         ensure!(depth <= 32, "AVRO_DEPTH_LIMIT");

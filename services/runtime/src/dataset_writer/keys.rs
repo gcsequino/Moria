@@ -60,7 +60,7 @@ impl Drop for Keys {
             .execute_batch(&format!("DROP TABLE IF EXISTS {}", self.table));
     }
 }
-fn encoded_key(
+pub(crate) fn encoded_key(
     batch: &arrow_array::RecordBatch,
     row: usize,
     keys: &[String],
