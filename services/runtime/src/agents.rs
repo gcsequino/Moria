@@ -687,6 +687,26 @@ impl NativeAgents {
             .await?
             .query_one("SELECT moria.runtime_execution_reap($1)", &[&child])
             .await?;
+        for retry in 0..4 {
+            let result = self.evaluation_progress_once(session, case, child).await;
+            if result
+                .as_ref()
+                .is_err_and(crate::execution::transaction_conflict)
+                && retry < 3
+            {
+                tokio::time::sleep(Duration::from_millis(10 << retry)).await;
+            } else {
+                return result;
+            }
+        }
+        unreachable!()
+    }
+    async fn evaluation_progress_once(
+        &self,
+        session: &VerifiedSession,
+        case: Uuid,
+        child: Uuid,
+    ) -> Result<Option<Value>> {
         let mut admission = Admission::begin(&self.db, session.environment(), false, None).await?;
         let tx = admission.read_transaction().await?;
         let state = Authority::current(&*tx, session).await?;

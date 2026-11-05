@@ -1,0 +1,214 @@
+{
+  "case": "14bd8296-2222-4191-8d31-f4c5c526f993",
+  "events": [
+    {
+      "at": "2026-11-05T05:49:34.995000+00:00",
+      "retry": 0,
+      "sqlstate": "40001",
+      "frames": [
+        {
+          "function": "moria.runtime_job_delegation_guard",
+          "line": 32
+        },
+        {
+          "function": "moria.native_serving_job_delegation",
+          "line": 3
+        },
+        {
+          "function": "moria.runtime_binding_authority",
+          "line": 37
+        },
+        {
+          "function": "moria.runtime_execution_check",
+          "line": 37
+        },
+        {
+          "function": "moria.runtime_job_session_origin",
+          "line": 33
+        },
+        {
+          "function": "moria.native_serving_session",
+          "line": 10
+        }
+      ],
+      "closestPriorRows": [
+        {
+          "sampled_at": "2026-11-05 05:49:34.77246+00",
+          "id": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "parent": "e1dac95b-b4b9-4b43-ac86-1689683db8de",
+          "domain": "evaluation",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 06:49:14.948121+00",
+          "task": "bfd3eb41-85c3-4e46-8ea6-3a45dd863b51",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:49:59.368941+00",
+          "case_id": "pass",
+          "repeat": 0
+        },
+        {
+          "sampled_at": "2026-11-05 05:49:34.772469+00",
+          "id": "d7d8c161-cfcd-4aea-875d-754249fe3599",
+          "parent": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "domain": "agent",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 05:50:29.761001+00",
+          "task": "4fbe685b-59fd-40ad-8210-6fbe3cce50ca",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:00.957401+00",
+          "case_id": "pass",
+          "repeat": 0
+        }
+      ]
+    },
+    {
+      "at": "2026-11-05T05:49:47.609000+00:00",
+      "retry": 1,
+      "sqlstate": "40001",
+      "frames": [
+        {
+          "function": "runtime_execution_reap",
+          "line": 6
+        }
+      ],
+      "closestPriorRows": [
+        {
+          "sampled_at": "2026-11-05 05:49:47.133735+00",
+          "id": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "parent": "e1dac95b-b4b9-4b43-ac86-1689683db8de",
+          "domain": "evaluation",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 06:49:14.948121+00",
+          "task": "bfd3eb41-85c3-4e46-8ea6-3a45dd863b51",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:11.265483+00",
+          "case_id": "pass",
+          "repeat": 0
+        },
+        {
+          "sampled_at": "2026-11-05 05:49:47.133748+00",
+          "id": "d7d8c161-cfcd-4aea-875d-754249fe3599",
+          "parent": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "domain": "agent",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 05:50:29.761001+00",
+          "task": "4fbe685b-59fd-40ad-8210-6fbe3cce50ca",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:12.520395+00",
+          "case_id": "pass",
+          "repeat": 0
+        }
+      ]
+    },
+    {
+      "at": "2026-11-05T05:49:49.569000+00:00",
+      "retry": 2,
+      "sqlstate": "40001",
+      "frames": [
+        {
+          "function": "moria.runtime_job_session_origin",
+          "line": 20
+        },
+        {
+          "function": "moria.native_serving_session",
+          "line": 10
+        }
+      ],
+      "closestPriorRows": [
+        {
+          "sampled_at": "2026-11-05 05:49:49.139997+00",
+          "id": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "parent": "e1dac95b-b4b9-4b43-ac86-1689683db8de",
+          "domain": "evaluation",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 06:49:14.948121+00",
+          "task": "bfd3eb41-85c3-4e46-8ea6-3a45dd863b51",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:11.265483+00",
+          "case_id": "pass",
+          "repeat": 0
+        },
+        {
+          "sampled_at": "2026-11-05 05:49:49.140005+00",
+          "id": "d7d8c161-cfcd-4aea-875d-754249fe3599",
+          "parent": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "domain": "agent",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 05:50:29.761001+00",
+          "task": "4fbe685b-59fd-40ad-8210-6fbe3cce50ca",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:12.520395+00",
+          "case_id": "pass",
+          "repeat": 0
+        }
+      ]
+    },
+    {
+      "at": "2026-11-05T05:50:00.433000+00:00",
+      "retry": 3,
+      "sqlstate": "40001",
+      "frames": [
+        {
+          "function": "runtime_job_delegation_guard",
+          "line": 32
+        },
+        {
+          "function": "native_serving_job_delegation",
+          "line": 3
+        },
+        {
+          "function": "runtime_binding_authority",
+          "line": 37
+        },
+        {
+          "function": "runtime_execution_check",
+          "line": 37
+        },
+        {
+          "function": "runtime_job_session_origin",
+          "line": 33
+        },
+        {
+          "function": "native_serving_session",
+          "line": 10
+        }
+      ],
+      "closestPriorRows": [
+        {
+          "sampled_at": "2026-11-05 05:50:00.166038+00",
+          "id": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "parent": "e1dac95b-b4b9-4b43-ac86-1689683db8de",
+          "domain": "evaluation",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 06:49:14.948121+00",
+          "task": "bfd3eb41-85c3-4e46-8ea6-3a45dd863b51",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:28.117497+00",
+          "case_id": "pass",
+          "repeat": 0
+        },
+        {
+          "sampled_at": "2026-11-05 05:50:00.166047+00",
+          "id": "d7d8c161-cfcd-4aea-875d-754249fe3599",
+          "parent": "14bd8296-2222-4191-8d31-f4c5c526f993",
+          "domain": "agent",
+          "status": "running",
+          "error": null,
+          "deadline": "2026-11-05 05:50:29.761001+00",
+          "task": "4fbe685b-59fd-40ad-8210-6fbe3cce50ca",
+          "task_status": "running",
+          "task_lease": "2026-11-05 05:50:29.761001+00",
+          "case_id": "pass",
+          "repeat": 0
+        }
+      ]
+    }
+  ],
+  "scope": "Failure-only phase traces, natural ancestor/task row FOR SHARE conflicts plus separately identified intentional reap40001; original case/Agent deadlines and task leases retained"
+}

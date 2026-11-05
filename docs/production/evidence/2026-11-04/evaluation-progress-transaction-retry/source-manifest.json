@@ -1,0 +1,7 @@
+{
+  "archiveSha256": "59be1dfb7f6f12a47d9883669c7140a2d6f75032c1231fbc7e72bb1c56b226ec",
+  "manifestSha256": "b49057ea0022fc03807c9e807e833dcf3c8f6896bedf168e5c1570e627bef16b",
+  "nativeInputDigest": "d3ddd55053a99df33a2a5394460cce4829026aa0ba28a6c8881990bf7b3ad954",
+  "archive": "/home/gcseq/moria-proofs/evaluation-progress-retry-native-20261105/source.tar.gz",
+  "manifest": "/home/gcseq/moria-proofs/evaluation-progress-retry-native-20261105/source.tar.manifest.json"
+}
