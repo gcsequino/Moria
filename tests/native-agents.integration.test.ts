@@ -7,6 +7,7 @@ import { readlink, realpath } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
+import { Pool } from 'pg';
 import { agentImage } from './fixtures/agents/image.js';
 import { database } from './fixtures/catalog-storage/database.js';
 import { createLocalFilesystem } from '../services/filesystem/src/local.js';
@@ -1572,7 +1573,42 @@ for (const group of [
                 .rows[0].state;
               assert.deepEqual(reused, prior);
               assert.equal(await guardCalls(), 1);
+              await assert.rejects(
+                db.pool.query(
+                  'SELECT 1 FROM moria.runtime_executions WHERE id=$1 FOR UPDATE NOWAIT',
+                  [job.id],
+                ),
+                { code: '55P03' },
+              );
+              await assert.rejects(
+                db.pool.query(
+                  'SELECT 1 FROM moria.runtime_execution_tasks WHERE id=$1 FOR UPDATE NOWAIT',
+                  [credential.task],
+                ),
+                { code: '55P03' },
+              );
               await checks.query('ROLLBACK');
+              const role = `agent_task_limited_${randomUUID().replaceAll('-', '')}`;
+              const password = randomUUID();
+              await db.pool.query(
+                `CREATE ROLE ${role} LOGIN PASSWORD '${password}'; GRANT USAGE ON SCHEMA moria TO ${role}`,
+              );
+              const trusted = new Pool({ connectionString: connection });
+              const restricted = new Pool({ ...db.pool.options, user: role, password });
+              try {
+                assert.deepEqual(
+                  (await trusted.query(authoritySql, [...lease, credential.token_hash])).rows[0]
+                    .state,
+                  prior,
+                );
+                await assert.rejects(
+                  restricted.query(authoritySql, [...lease, credential.token_hash]),
+                  { code: '42501' },
+                );
+              } finally {
+                await Promise.all([trusted.end(), restricted.end()]);
+                await db.pool.query(`DROP OWNED BY ${role}; DROP ROLE ${role}`);
+              }
               const ordinary = createHash('sha256').update(user.token).digest('hex');
               assert.deepEqual(
                 (await checks.query(authoritySql, [...lease, ordinary])).rows[0].state,
@@ -1593,6 +1629,8 @@ for (const group of [
                   priorChecks: 2,
                   reusedChecks: 1,
                   ordinaryParity: true,
+                  locksRetained: true,
+                  roleBoundary: true,
                 }),
               );
             } finally {
