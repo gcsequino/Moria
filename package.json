@@ -11,7 +11,7 @@
   "scripts": {
     "moria": "tsx apps/cli/src/main.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test --test-concurrency=2 --test-reporter=./scripts/test-reporter.ts tests/*.test.ts",
+    "test": "node scripts/test-files.mjs all",
     "check": "pnpm check:static && pnpm check:indexing && pnpm test",
     "check:indexing": "tsx scripts/check-indexing.ts",
     "check:python": "node scripts/check-python.mjs",
