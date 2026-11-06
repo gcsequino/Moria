@@ -86,8 +86,13 @@ after targeting the function the runtime calls. Both Evaluation scheduler
 fixtures passed after observing worker startup before shutdown.
 [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
 
-All seven native recovery tests passed again on the exact `77a50db`
-source with matching unoptimized artifacts. The quality runner now
+All seven native recovery tests and both composed browser tests passed
+again on exact `77a50db` source with matching unoptimized artifacts.
+The browser test verified three stored objects, one top-level Function
+receipt with value 42, and current Source revocation. The controller,
+five scratch pools, and temporary directory were removed.
+
+The quality runner now
 gives the Catalog, Evaluation, and Pipeline integration files dedicated
 runner time. Selection tests verified that all files remain included.
 An intentional failure in the first group preserved the overall failure
