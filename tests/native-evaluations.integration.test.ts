@@ -737,44 +737,31 @@ test(
       ).rows,
     });
     const terminal = async (id: string) => {
-      let result: any;
-      await until(async () => {
-        if (evaluationWorker?.child.exitCode !== null && evaluationWorker)
-          assert.fail(
-            JSON.stringify({ worker: evaluationWorker.error(), ...(await diagnostics(id)) }),
+      try {
+        await until(async () => {
+          if (evaluationWorker?.child.exitCode !== null && evaluationWorker)
+            assert.fail(evaluationWorker.error());
+          if (agentWorker?.child.exitCode !== null && agentWorker) assert.fail(agentWorker.error());
+          if (functionWorker?.child.exitCode !== null && functionWorker)
+            assert.fail(functionWorker.error());
+          // Observe durable completion without repeatedly authorizing every retained case.
+          const { rows } = await db.pool.query(
+            'SELECT status FROM moria.runtime_executions WHERE id=$1',
+            [id],
           );
-        if (agentWorker?.child.exitCode !== null && agentWorker)
-          assert.fail(JSON.stringify({ worker: agentWorker.error(), ...(await diagnostics(id)) }));
-        if (functionWorker?.child.exitCode !== null && functionWorker)
-          assert.fail(
-            JSON.stringify({ worker: functionWorker.error(), ...(await diagnostics(id)) }),
-          );
-        result = await native('get', { id }).catch(async (error: unknown) => {
-          const active = (
-            await db.pool.query(
-              "SELECT status IN('queued','running','preparing') AS active FROM moria.runtime_executions WHERE id=$1",
-              [id],
-            )
-          ).rows[0]?.active;
-          if (active && /FUNCTION_OBSERVATION_INCOMPLETE/.test(String(error))) return null;
-          assert.fail(
-            JSON.stringify({
-              error: error instanceof Error ? error.message : String(error),
-              ...(await diagnostics(id)),
-            }),
-          );
+          return ['succeeded', 'failed', 'cancelled'].includes(rows[0]?.status);
         });
-        if (!result) return false;
-        return !['queued', 'running', 'preparing'].includes(result.status);
-      }).catch(async (error: unknown) => {
+        const result = await native('get', { id });
+        assert.ok(['completed', 'failed', 'cancelled'].includes(result.status));
+        return result;
+      } catch (error) {
         assert.fail(
           JSON.stringify({
             error: error instanceof Error ? error.message : String(error),
             ...(await diagnostics(id)),
           }),
         );
-      });
-      return result;
+      }
     };
     let first = '';
     await t.test(
@@ -1533,11 +1520,18 @@ test(
           await evaluationPurposeFixture(db.pool, firing.child);
           const cases = (
             await db.pool.query(
-              'SELECT execution,agent_execution,evaluator_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1',
+              `SELECT c.execution,c.agent_execution,c.evaluator_execution,e.binding,t.id AS task
+               FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions e ON e.id=c.execution
+               JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+               JOIN moria.runtime_job_delegations d ON d.execution=e.id AND d.parent_execution=c.evaluation
+               WHERE c.evaluation=$1`,
               [firing.child],
             )
           ).rows;
           assert.equal(cases.length, 10);
+          assert.equal(new Set(cases.map((row) => row.binding)).size, 1);
+          assert.equal(new Set(cases.map((row) => row.execution)).size, 10);
+          assert.equal(new Set(cases.map((row) => row.task)).size, 10);
           const tools = (
             await db.pool.query(
               "SELECT f.execution,f.parent_id,d.origin_kind,d.parent_execution,e.status,b.resource,s.authority FROM moria.runtime_function_invocations f JOIN moria.runtime_executions e ON e.id=f.execution JOIN moria.runtime_job_delegations d ON d.execution=f.execution JOIN moria.runtime_execution_bindings b ON b.id=e.binding JOIN moria.runtime_execution_services s ON s.binding=e.binding JOIN moria.runtime_evaluation_cases c ON c.agent_execution=f.parent_id WHERE c.evaluation=$1 AND c.case_id='pass' ORDER BY c.repeat",
