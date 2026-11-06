@@ -86,6 +86,14 @@ after targeting the function the runtime calls. Both Evaluation scheduler
 fixtures passed after observing worker startup before shutdown.
 [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
 
+All seven native recovery tests passed again on the exact `77a50db`
+source with matching unoptimized artifacts. The quality runner now
+gives the Catalog, Evaluation, and Pipeline integration files dedicated
+runner time. Selection tests verified that all files remain included.
+An intentional failure in the first group preserved the overall failure
+while allowing the dedicated group to run. The original per-test
+deadlines remain in place.
+
 ## November 5 Agent publication identity reuse
 
 The native platform returns the already verified credential identity after its
