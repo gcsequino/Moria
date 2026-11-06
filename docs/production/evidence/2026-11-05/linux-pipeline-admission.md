@@ -74,3 +74,33 @@ tests passed. [Independent Linux run](https://github.com/gcsequino/Moria/actions
 ```text
 sha256:59dfe40aa5f5ef26d47af549e1b5c6c03b5683e11cc4e0a3e70674155a41fa6b
 ```
+
+## Bounded Arrow reads and single graph admission
+
+Revision `b509783` leaves graph admission to the existing binding check
+for ordinary requests when no input can inherit from a declared output.
+The binding still checks current grants and markings in the same
+transaction. The overlap and private-purpose paths keep the earlier
+provenance check. All 64 stored pins matched the accepted binding epochs.
+
+The sandbox packs successive validated Arrow frames into reads capped at
+1 MiB. It keeps the per-frame and per-read row limits and checks current
+authority before releasing bytes. The grouped fixture read 37,400,280
+bytes and 18,000 rows from three real heads before committing both
+outputs with one receipt. The test checks the read count against the
+actual stream size.
+
+The matched local Linux build passed static checks, 126 native unit tests,
+seven provenance tests, and all ten Pipeline tests. The 64-output and
+64-input/64-output subtests finished in 11.171 and 20.335 seconds,
+including assertions. Grouped publication finished in 60.268 seconds.
+The full suite took 441.051 seconds, including independent Parquet
+readback and hard spill recovery. The test controller, five scratch
+pools, and temporary directory were removed.
+
+The local image used nine matching unoptimized native artifacts. The
+new revision still needs independent hosted release-profile qualification.
+
+```text
+sha256:2febad46b30e8ce2dae8b0a04cc47ca56e9454ee8d85b0cde2d7b47a3b071df6
+```

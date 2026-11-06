@@ -78,6 +78,14 @@ three persisted records, one top-level Function receipt, and the final
 Source authority checks.
 [Current Linux run](https://github.com/gcsequino/Moria/actions/runs/42130357789)
 
+The next Pipeline revision passed all ten local tests. The 64-input and
+64-output subtest took 20.335 seconds, including assertions. Grouped
+publication read 18,000 rows and committed both outputs with one receipt
+in 60.268 seconds. The Catalog authority counter passed all 21 checks
+after targeting the function the runtime calls. Both Evaluation scheduler
+fixtures passed after observing worker startup before shutdown.
+[Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
+
 ## November 5 Agent publication identity reuse
 
 The native platform returns the already verified credential identity after its
