@@ -611,6 +611,44 @@ pub struct SandboxResult {
     pub correlation_id: Uuid,
 }
 
+#[derive(Debug)]
+struct AccountingSampleError(&'static str, Option<u16>);
+
+impl std::fmt::Display for AccountingSampleError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(self.0)
+    }
+}
+
+#[derive(Debug)]
+struct AccountingEvidence(Value);
+
+impl std::fmt::Display for AccountingEvidence {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("sandbox accounting evidence")
+    }
+}
+
+fn accounting_category(error: &anyhow::Error) -> (&'static str, Option<u16>) {
+    if let Some(sample) = error.downcast_ref::<AccountingSampleError>() {
+        return (sample.0, sample.1);
+    }
+    if let Some(transport) = error.downcast_ref::<reqwest::Error>() {
+        return (
+            if transport.is_timeout() {
+                "statsTimeout"
+            } else {
+                "statsTransport"
+            },
+            None,
+        );
+    }
+    if error.is::<serde_json::Error>() {
+        return ("statsJson", None);
+    }
+    ("statsProtocol", None)
+}
+
 #[derive(Clone)]
 pub(crate) struct Docker {
     pub(crate) client: reqwest::Client,
@@ -813,23 +851,35 @@ impl Docker {
         Ok(())
     }
     async fn resources(&self, name: &str) -> Result<(u64, u64)> {
-        let data = Self::json_response(
-            self.client
-                .get(self.url(&["containers", name, "stats"]).await?)
-                .query(&[("stream", "false"), ("one-shot", "true")])
-                .timeout(Duration::from_secs(1))
-                .send()
-                .await?,
-        )
-        .await?;
+        let response = self
+            .client
+            .get(self.url(&["containers", name, "stats"]).await?)
+            .query(&[("stream", "false"), ("one-shot", "true")])
+            .timeout(Duration::from_secs(1))
+            .send()
+            .await?;
+        let status = response.status();
+        let data = Self::json_response(response).await.map_err(|error| {
+            if status.is_success() {
+                error
+            } else {
+                error.context(AccountingSampleError("statsHttp", Some(status.as_u16())))
+            }
+        })?;
         let cpu = data
             .pointer("/cpu_stats/cpu_usage/total_usage")
             .and_then(Value::as_u64)
-            .ok_or_else(|| anyhow::anyhow!("FUNCTION_WORKER_ACCOUNTING"))?;
+            .ok_or_else(|| {
+                anyhow::anyhow!("FUNCTION_WORKER_ACCOUNTING")
+                    .context(AccountingSampleError("statsCpuUnavailable", None))
+            })?;
         let memory = data
             .pointer("/memory_stats/usage")
             .and_then(Value::as_u64)
-            .ok_or_else(|| anyhow::anyhow!("FUNCTION_WORKER_ACCOUNTING"))?;
+            .ok_or_else(|| {
+                anyhow::anyhow!("FUNCTION_WORKER_ACCOUNTING")
+                    .context(AccountingSampleError("statsMemoryUnavailable", None))
+            })?;
         Ok((cpu, memory))
     }
     async fn wait(&self, name: &str) -> Result<i64> {
@@ -1579,6 +1629,29 @@ impl SandboxSupervisor {
         write(&mut writer, start).await?;
         let completed = Arc::new(AtomicBool::new(false));
         let completed_monitor = completed.clone();
+        let protocol_phase = AtomicU8::new(0);
+        let accounting = |phase: &'static str, sample: Option<&anyhow::Error>, metadata: Option<&Value>| {
+            let (category, http_status) = sample
+                .map(accounting_category)
+                .unwrap_or(("containerNotRunning", None));
+            AccountingEvidence(json!({
+                "phase": phase,
+                "category": category,
+                "httpStatus": http_status,
+                "running": metadata.and_then(|value| value.pointer("/State/Running")).and_then(Value::as_bool),
+                "exitCode": metadata.and_then(|value| value.pointer("/State/ExitCode")).and_then(Value::as_i64),
+                "oomKilled": metadata.and_then(|value| value.pointer("/State/OOMKilled")).and_then(Value::as_bool),
+                "protocol": match protocol_phase.load(Ordering::SeqCst) {
+                    0 => "waitingForResult",
+                    1 => "checkingResult",
+                    2 => "writingCompletion",
+                    3 => "waitingForAck",
+                    4 => "acknowledged",
+                    _ => "attachClosed",
+                },
+                "completionWritten": completed.load(Ordering::SeqCst),
+            }))
+        };
         let monitor = async {
             loop {
                 tokio::time::sleep(Duration::from_millis(200)).await;
@@ -1587,14 +1660,15 @@ impl SandboxSupervisor {
                         observed.record(cpu, memory);
                         ensure!(cpu <= binding.cpu as u64 * 1000000, "FUNCTION_CPU_LIMIT");
                     }
-                    Err(_) => {
-                        let stopped = self.docker.inspect(&name).await?.is_some_and(|m| {
+                    Err(error) => {
+                        let metadata = self.docker.inspect(&name).await?;
+                        let stopped = metadata.as_ref().is_some_and(|m| {
                             m.pointer("/State/Running") == Some(&Value::Bool(false))
                         });
-                        ensure!(
-                            stopped && completed_monitor.load(Ordering::SeqCst),
-                            "FUNCTION_WORKER_ACCOUNTING"
-                        );
+                        if !(stopped && completed_monitor.load(Ordering::SeqCst)) {
+                            return Err(anyhow::anyhow!("FUNCTION_WORKER_ACCOUNTING")
+                                .context(accounting("monitorSample", Some(&error), metadata.as_ref())));
+                        }
                     }
                 }
             }
@@ -1635,9 +1709,11 @@ impl SandboxSupervisor {
                                 "FUNCTION_PROTOCOL"
                             );
                             acknowledged = true;
+                            protocol_phase.store(4, Ordering::SeqCst);
                         }
                         GuestMessage::Result { version, value } => {
                             ensure!(version == 1, "FUNCTION_PROTOCOL");
+                            protocol_phase.store(1, Ordering::SeqCst);
                             let descriptor = values::descriptor(
                                 &json!({"type":"object","properties":binding.outputs}),
                                 &json!({}),
@@ -1649,17 +1725,22 @@ impl SandboxSupervisor {
                                 canonical::canonical_json(&value)?.len() <= 32768,
                                 "FUNCTION_OUTPUT_INVALID"
                             );
-                            let (cpu, memory) = self.docker.resources(&name).await?;
+                            let (cpu, memory) = self.docker.resources(&name).await.map_err(|error| {
+                                let detail = accounting("resultSample", Some(&error), None);
+                                error.context(detail)
+                            })?;
                             observed.record(cpu, memory);
                             ensure!(cpu <= binding.cpu as u64 * 1000000, "FUNCTION_CPU_LIMIT");
-                            ensure!(
-                                self.docker.inspect(&name).await?.is_some_and(|m| m
-                                    .pointer("/State/Running")
-                                    == Some(&Value::Bool(true))),
-                                "FUNCTION_WORKER_ACCOUNTING"
-                            );
+                            let metadata = self.docker.inspect(&name).await?;
+                            if !metadata.as_ref().is_some_and(|m| {
+                                m.pointer("/State/Running") == Some(&Value::Bool(true))
+                            }) {
+                                return Err(anyhow::anyhow!("FUNCTION_WORKER_ACCOUNTING")
+                                    .context(accounting("resultInspect", None, metadata.as_ref())));
+                            }
                             context.check().await?;
                             let nonce = Uuid::new_v4();
+                            protocol_phase.store(2, Ordering::SeqCst);
                             write_limited(
                                 &mut writer,
                                 json!({"version":1,"type":"complete","nonce":nonce}),
@@ -1667,6 +1748,7 @@ impl SandboxSupervisor {
                             )
                             .await?;
                             completed.store(true, Ordering::SeqCst);
+                            protocol_phase.store(3, Ordering::SeqCst);
                             completion_nonce = Some(nonce);
                             result = Some(value);
                         }
@@ -1779,6 +1861,7 @@ impl SandboxSupervisor {
                 ensure!(buffer.len() <= frame_bytes, "FUNCTION_PROTOCOL");
             }
             ensure!(buffer.is_empty(), "FUNCTION_PROTOCOL");
+            protocol_phase.store(5, Ordering::SeqCst);
             ensure!(self.docker.wait(&name).await? == 0, "FUNCTION_FAILED");
             let result = result.ok_or_else(|| anyhow::anyhow!("FUNCTION_OUTPUT_MISSING"))?;
             ensure!(acknowledged, "FUNCTION_PROTOCOL");
@@ -1916,7 +1999,11 @@ impl SandboxSupervisor {
                     }
                     tx.execute("UPDATE moria.runtime_execution_tasks SET status='cancelled',lease_until=NULL WHERE id=$1 AND owner=$2 AND fence=$3", &[&context.lease.task,&context.lease.owner,&context.lease.fence.parse::<i64>()?]).await?;
                     tx.execute("UPDATE moria.runtime_execution_attempts SET status='failed',finished_at=clock_timestamp() WHERE task=$1 AND fence=$2 AND status='running'", &[&context.lease.task,&context.lease.fence.parse::<i64>()?]).await?;
-                    tx.query_one("SELECT moria.runtime_execution_event($1,CASE WHEN $2::text='CANCELLED' THEN 'cancelled' ELSE 'failed' END,jsonb_build_object('error',$2::text))", &[&context.lease.execution,&code]).await?;
+                    let payload = match error.downcast_ref::<AccountingEvidence>() {
+                        Some(evidence) => json!({"error":code,"accounting":evidence.0}),
+                        None => json!({"error":code}),
+                    };
+                    tx.query_one("SELECT moria.runtime_execution_event($1,CASE WHEN $2::text='CANCELLED' THEN 'cancelled' ELSE 'failed' END,$3)", &[&context.lease.execution,&code,&payload]).await?;
                 }
                 tx.commit().await?;
                 bail!(code)
