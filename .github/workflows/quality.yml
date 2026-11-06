@@ -1,9 +1,7 @@
 name: Quality
+run-name: Hosted Evaluation accounting diagnostic
 
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -40,13 +38,16 @@ jobs:
         run: docker build -f deploy/test/Dockerfile -t moria-test:ci .
       - name: Verify repeatable bootstrap
         run: docker run --rm moria-test:ci bash -c 'bash .openhands/setup.sh && bash .openhands/setup.sh'
-      - name: Report Docker client and daemon versions
-        run: docker version
+      - name: Report Docker client, daemon and accounting environment
+        run: |
+          docker version
+          docker info --format '{{.CgroupDriver}} {{.CgroupVersion}} {{.KernelVersion}}'
       - name: Preload pinned sandbox test images
         run: |
           docker pull node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
           docker pull registry@sha256:d4032d4cc323c1731c707931ecada07a53076eac38e3b61ae57533f170f2c6c3
           docker pull python:3.11-slim-bookworm@sha256:061c190f3d5815b341a18dfe8a45771f8ba68c15a607ea56997fde3009ac4eec
-      - name: Verify quality gate and completion hook offline as non-root
+      - name: Reproduce Evaluation accounting under hosted Docker
         run: |
-          sudo python3 deploy/test/run-quality.py moria-test:ci
+          sudo python3 deploy/test/run-quality.py moria-test:ci pnpm test:integration \
+            tests/native-evaluations.integration.test.ts tests/native-catalog.integration.test.ts

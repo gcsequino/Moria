@@ -542,7 +542,7 @@ test(
                 Number(
                   (
                     await client.query(
-                      "SELECT COALESCE(sum(calls),0)::text AS calls FROM pg_stat_xact_user_functions WHERE funcid='moria.runtime_execution_check(uuid)'::regprocedure::oid",
+                      "SELECT COALESCE(sum(calls),0)::text AS calls FROM pg_stat_xact_user_functions WHERE funcid='moria.runtime_execution_check_state(uuid)'::regprocedure::oid",
                     )
                   ).rows[0].calls,
                 );
