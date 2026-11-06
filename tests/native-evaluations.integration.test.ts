@@ -595,6 +595,7 @@ test(
       return !!api;
     });
     let publicToken = user.token;
+    const acceptedEvaluations = new Set<string>();
     const native = async (command: string, input: Record<string, unknown>, token = publicToken) => {
       let path = `/api/v1/evaluation-runs/${input.id}`,
         method = 'GET',
@@ -622,6 +623,7 @@ test(
       });
       const value = (await response.json()) as any;
       if (!response.ok) throw new Error(JSON.stringify({ status: response.status, ...value }));
+      if (command === 'invoke') acceptedEvaluations.add(value.id);
       return value;
     };
     const sourceEpoch = (await authority.current(environment, principal, application)).epoch;
@@ -716,7 +718,7 @@ test(
       ).rows,
       failures: (
         await db.pool.query(
-          "SELECT e.id,e.spec->>'domain' AS domain,v.kind,v.payload FROM moria.runtime_execution_events v JOIN moria.runtime_executions e ON e.id=v.execution WHERE e.environment=$1 AND v.kind IN ('failed','brokerFailure','agentModelBrokerFailure')",
+          "SELECT e.id,e.spec->>'domain' AS domain,v.kind,v.payload FROM moria.runtime_execution_events v JOIN moria.runtime_executions e ON e.id=v.execution WHERE e.environment=$1 AND v.kind IN ('failed','brokerFailed','brokerDenied')",
           [environment],
         )
       ).rows,
@@ -737,47 +739,58 @@ test(
       ).rows,
     });
     const terminal = async (id: string) => {
-      let result: any;
-      await until(async () => {
-        if (evaluationWorker?.child.exitCode !== null && evaluationWorker)
-          assert.fail(
-            JSON.stringify({ worker: evaluationWorker.error(), ...(await diagnostics(id)) }),
+      try {
+        await until(async () => {
+          if (evaluationWorker?.child.exitCode !== null && evaluationWorker)
+            assert.fail(evaluationWorker.error());
+          if (agentWorker?.child.exitCode !== null && agentWorker) assert.fail(agentWorker.error());
+          if (functionWorker?.child.exitCode !== null && functionWorker)
+            assert.fail(functionWorker.error());
+          // Observe durable completion without repeatedly authorizing every retained case.
+          const { rows } = await db.pool.query(
+            'SELECT status FROM moria.runtime_executions WHERE id=$1',
+            [id],
           );
-        if (agentWorker?.child.exitCode !== null && agentWorker)
-          assert.fail(JSON.stringify({ worker: agentWorker.error(), ...(await diagnostics(id)) }));
-        if (functionWorker?.child.exitCode !== null && functionWorker)
-          assert.fail(
-            JSON.stringify({ worker: functionWorker.error(), ...(await diagnostics(id)) }),
-          );
-        result = await native('get', { id }).catch(async (error: unknown) => {
-          const active = (
-            await db.pool.query(
-              "SELECT status IN('queued','running','preparing') AS active FROM moria.runtime_executions WHERE id=$1",
-              [id],
-            )
-          ).rows[0]?.active;
-          if (active && /FUNCTION_OBSERVATION_INCOMPLETE/.test(String(error))) return null;
-          assert.fail(
-            JSON.stringify({
-              error: error instanceof Error ? error.message : String(error),
-              ...(await diagnostics(id)),
-            }),
-          );
+          return ['succeeded', 'failed', 'cancelled'].includes(rows[0]?.status);
         });
-        if (!result) return false;
-        return !['queued', 'running', 'preparing'].includes(result.status);
-      }).catch(async (error: unknown) => {
+        const result = await native('get', { id });
+        assert.ok(['completed', 'failed', 'cancelled'].includes(result.status));
+        return result;
+      } catch (error) {
         assert.fail(
           JSON.stringify({
             error: error instanceof Error ? error.message : String(error),
             ...(await diagnostics(id)),
           }),
         );
-      });
-      return result;
+      }
     };
+    const evaluationCase = (name: string, run: () => Promise<void>) =>
+      t.test(name, async (caseTest) => {
+        const prior = new Set(acceptedEvaluations);
+        try {
+          await run();
+        } catch (error) {
+          const accepted = [...acceptedEvaluations].filter((id) => !prior.has(id));
+          if (accepted.length) {
+            try {
+              const active = (
+                await db.pool.query(
+                  "SELECT id FROM moria.runtime_executions WHERE id=ANY($1::uuid[]) AND status IN ('queued','running','preparing') ORDER BY created_at,id",
+                  [accepted],
+                )
+              ).rows;
+              for (const { id } of active) await native('cancel', { id });
+              if (active.length) caseTest.diagnostic(JSON.stringify({ cancelledEvaluations: active }));
+            } catch (cleanupError) {
+              caseTest.diagnostic(String(cleanupError));
+            }
+          }
+          throw error;
+        }
+      });
     let first = '';
-    await t.test(
+    await evaluationCase(
       'admission requires a dedicated environment and pins the suite, Agent and real native Dataset',
       async () => {
         await assert.rejects(
@@ -951,7 +964,7 @@ test(
         }
       },
     );
-    await t.test(
+    await evaluationCase(
       'repeats stay separate and comparison rejects a different evaluator version',
       async () => {
         const scoped = [
@@ -1047,7 +1060,7 @@ test(
         assert.equal(JSON.parse(cliReplay.stdout).id, first);
       },
     );
-    await t.test(
+    await evaluationCase(
       'cancelling a run fences every accepted descendant and stops live model and OCI work',
       async () => {
         holdModels = true;
@@ -1121,7 +1134,7 @@ test(
         }
       },
     );
-    await t.test(
+    await evaluationCase(
       'a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL',
       async () => {
         assert.ok(evaluationWorker);
@@ -1410,7 +1423,7 @@ test(
         }
       }
     });
-    await t.test(
+    await evaluationCase(
       'a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes',
       async () => {
         const automation = resources.get('evaluations/Automation/Nightly')!;
@@ -1509,6 +1522,7 @@ test(
             )
           ).rows[0];
           assert.ok(firing);
+          acceptedEvaluations.add(firing.child);
           assert.equal(
             (
               await db.pool.query('SELECT status FROM moria.runtime_executions WHERE id=$1', [
@@ -1616,6 +1630,7 @@ test(
           ).rows[0]?.child;
           assert.ok(refreshed);
           assert.notEqual(refreshed, firing.child);
+          acceptedEvaluations.add(refreshed);
           assert.equal((await terminal(refreshed)).status, 'completed');
           await db.pool.query(
             "UPDATE moria.runtime_service_targets SET enabled=false WHERE authority=$1 AND resource=$2 AND domain='evaluator'",
