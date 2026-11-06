@@ -1109,20 +1109,8 @@ async fn run() -> Result<()> {
             &"b".repeat(64),
         )
         .await?;
-    let claim = match (fixture.registered_host, fixture.registered_owner) {
-        (Some(host), Some(owner)) => {
-            execution
-                .claim_registered(owner, host, &[Domain::Sync], true, Some(id))
-                .await?
-        }
-        _ => {
-            execution
-                .claim(Uuid::new_v4(), &[Domain::Sync], true)
-                .await?
-        }
-    }
-    .unwrap();
-    ensure!(claim.lease.execution == id);
+    let claim = claim(true).await?;
+    ensure!(claim.lease.task.is_none(), "FIXTURE_COORDINATOR_REQUIRED");
     let session = match fixture.registered_host {
         Some(host) => moria_runtime::execution::job_session(&db, &claim.lease, host).await?,
         None => session,
