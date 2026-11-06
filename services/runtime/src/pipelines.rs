@@ -880,7 +880,25 @@ impl NativePipelines {
                 .get(0);
             ensure!(admitted, "MARKING_DOWNGRADE");
         }
-        if !input_ids.is_empty() {
+        // When inputs cannot inherit from outputs, binding can admit the graph once
+        // without changing the already verified input pins.
+        let defer_provenance = !input_ids.is_empty()
+            && !output_ids.is_empty()
+            && state.private_purpose.is_none()
+            && tx.query_one(
+                "SELECT NOT EXISTS (SELECT 1 FROM moria.runtime_job_sessions WHERE token_hash=$4)
+                   AND NOT EXISTS (
+                     SELECT 1 FROM unnest($2::uuid[]) input(id)
+                     CROSS JOIN LATERAL unnest(moria.runtime_data_origins($1,input.id::text)) ancestor(resource)
+                     WHERE ancestor.resource=ANY($3::text[]))",
+                &[
+                    &session.environment(),
+                    &input_ids.values().copied().collect::<Vec<_>>(),
+                    &output_ids.values().map(Uuid::to_string).collect::<Vec<_>>(),
+                    &session.session_hash(),
+                ],
+            ).await?.get::<_,bool>(0);
+        if !input_ids.is_empty() && !defer_provenance {
             tx.query_one(
                 "SELECT moria.runtime_service_dataset_edges($1,$2,$3,$4,$5,$6,$7,$8,$9)",
                 &[
@@ -998,6 +1016,12 @@ impl NativePipelines {
                 )
                 .await?
         };
+        if defer_provenance {
+            for input in inputs.values_mut() {
+                input["pin"]["securityEpoch"] = json!(&binding.security_epoch);
+                input["pin"]["instanceEpoch"] = json!(&binding.instance_epoch);
+            }
+        }
         let effect = if capability == Capability::SchemaDiscovery {
             "readOnly"
         } else {

@@ -734,6 +734,19 @@ test(
           )
         ).rows[0];
         assert.deepEqual(row, { operations: 194, outputs: 64, inputs: 64 });
+        const currentPins = (
+          await db.pool.query(
+            `SELECT count(*)::int AS pins
+             FROM moria.runtime_pipeline_executions p
+             JOIN moria.runtime_executions e ON e.id=p.execution
+             JOIN moria.runtime_execution_bindings b ON b.id=e.binding
+             CROSS JOIN LATERAL jsonb_each(p.inputs) input(name,value)
+             WHERE p.execution=$1 AND input.value->'pin'->>'securityEpoch'=b.security_epoch::text
+               AND input.value->'pin'->>'instanceEpoch'=b.instance_epoch::text`,
+            [accepted.id],
+          )
+        ).rows[0];
+        assert.equal(currentPins.pins, 64);
         assert.equal(
           (
             await db.pool.query(
@@ -1197,6 +1210,9 @@ test(
           )
         ).rows[0].payload;
         assert.ok(BigInt(io.calls) > 32n, JSON.stringify(io));
+        const chunkBytes = 1024n * 1024n;
+        const packedReads = (BigInt(io.metrics.inputBytes) + chunkBytes - 1n) / chunkBytes;
+        assert.ok(BigInt(io.methods.inputBatch) <= packedReads + 6n, JSON.stringify(io));
         assert.equal(io.outputs, 2);
         assert.equal(io.metrics.inputRowsEncoded, '18000');
         assert.equal(io.metrics.outputRowsAppended, '6010');
