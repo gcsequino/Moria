@@ -201,12 +201,13 @@ export async function managedRetentionDataset(
       child.stdin.end(JSON.stringify(input));
       return await done;
     };
-    const start = async (profiles: unknown[] = []) => {
+    const start = async (profiles: unknown[] = [], environment: NodeJS.ProcessEnv = {}) => {
       const child = spawn(runtime, ['serve'], {
         env: {
           ...nativeEnv,
           MORIA_NATIVE_SOURCE_PROFILES: JSON.stringify(profiles),
           MORIA_NATIVE_LISTEN: '127.0.0.1:0',
+          ...environment,
         },
         stdio: ['ignore', 'pipe', 'pipe'],
       });

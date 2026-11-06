@@ -600,6 +600,95 @@ async fn connector_requests_in(
         .collect())
 }
 
+pub(crate) struct WritebackConnector {
+    pub release: String,
+    pub implementation: Uuid,
+    pub implementation_release: String,
+    pub endpoint: reqwest::Url,
+    pub fingerprint: String,
+    pub allowed_markings: Vec<String>,
+    pub markings: Vec<String>,
+    pub requests: Vec<crate::secrets::SecretRequest>,
+}
+
+pub(crate) async fn writeback_connector_in(
+    client: &Client,
+    environment: &str,
+    connection: Uuid,
+    destination: Uuid,
+) -> Result<WritebackConnector> {
+    let (_, release, definition) = source_in(client, environment, connection).await?;
+    ensure!(
+        definition["kind"] == "Connection",
+        "PIPELINE_SOURCE_INVALID"
+    );
+    let spec = &definition["spec"];
+    let implementation = reference_in(
+        client,
+        &release,
+        spec["implementation"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("PIPELINE_SOURCE_INVALID"))?,
+    )
+    .await?;
+    let (_, implementation_release, descriptor) =
+        source_in(client, environment, implementation).await?;
+    ensure!(
+        descriptor["kind"] == "ConnectorImplementation"
+            && descriptor["spec"]["abiVersion"] == "connector/v1"
+            && descriptor["spec"]["capabilities"]
+                .as_array()
+                .is_some_and(|values| values.iter().any(|value| value == "writeback")),
+        "PIPELINE_CAPABILITY_UNSUPPORTED"
+    );
+    crate::filesystem::validate_configuration(
+        &descriptor["spec"]["configurationSchema"],
+        &spec["configuration"],
+    )
+    .map_err(|_| anyhow::anyhow!("PIPELINE_CONFIGURATION_INVALID"))?;
+    let destination = destination_in(client, environment, connection, destination).await?;
+    let endpoint = destination.endpoint()?;
+    ensure!(
+        destination.methods.iter().any(|method| method == "POST")
+            && destination.paths.iter().any(|path| path == endpoint.path()),
+        "PIPELINE_DESTINATION_INVALID"
+    );
+    Ok(WritebackConnector {
+        requests: connector_requests_in(
+            client,
+            connection,
+            &release,
+            &definition,
+            Some(&destination),
+        )
+        .await?,
+        fingerprint: destination.fingerprint()?,
+        allowed_markings: destination.allowed_markings,
+        markings: destination.markings,
+        release,
+        implementation,
+        implementation_release,
+        endpoint,
+    })
+}
+
+pub(crate) async fn writeback_headers_in(
+    client: &Client,
+    environment: &str,
+    connection: Uuid,
+    destination: Uuid,
+    endpoint: &reqwest::Url,
+    fingerprint: &str,
+    secrets: &BTreeSet<Uuid>,
+) -> Result<(reqwest::header::HeaderMap, Vec<String>)> {
+    let definition = destination_in(client, environment, connection, destination).await?;
+    ensure!(
+        definition.endpoint()? == *endpoint && definition.fingerprint()? == fingerprint,
+        "PIPELINE_DESTINATION_REVOKED"
+    );
+    credential_headers(definition.credentials_for(secrets)?)
+}
+
 pub(crate) async fn inspect_connector_in(
     client: &Client,
     environment: &str,
@@ -1642,7 +1731,7 @@ fn validate_credentials(credentials: &[Credential]) -> Result<()> {
     Ok(())
 }
 
-fn response_contains_material(value: &Value, material: &str) -> bool {
+pub(crate) fn response_contains_material(value: &Value, material: &str) -> bool {
     match value {
         Value::String(value) => value.contains(material),
         Value::Array(values) => values
@@ -1664,12 +1753,37 @@ struct Destination {
     bytes: u64,
     limit: u64,
 }
+fn credential_headers(slots: Vec<Credential>) -> Result<(reqwest::header::HeaderMap, Vec<String>)> {
+    let mut headers = reqwest::header::HeaderMap::new();
+    let mut materials = Vec::new();
+    for credential in slots {
+        let material = std::env::var(&credential.material_ref)
+            .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
+        ensure!(
+            !material.is_empty() && material.len() <= 8192 && !material.contains(['\r', '\n']),
+            "PIPELINE_WORKER_CONFIG_INVALID"
+        );
+        let value = match credential.scheme {
+            CredentialScheme::Raw => material.clone(),
+            CredentialScheme::Bearer => format!("Bearer {material}"),
+        };
+        let mut value = reqwest::header::HeaderValue::from_str(&value)
+            .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
+        value.set_sensitive(true);
+        headers.insert(
+            reqwest::header::HeaderName::from_bytes(credential.header.as_bytes())
+                .map_err(|_| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?,
+            value,
+        );
+        materials.push(material);
+    }
+    Ok((headers, materials))
+}
+
 impl Destination {
     fn new(definition: DestinationDefinition, limit: u64) -> Result<Self> {
         let url = definition.endpoint()?;
         validate_credentials(&definition.credentials)?;
-        let mut headers = reqwest::header::HeaderMap::new();
-        let mut materials = Vec::new();
         let slots = if definition.credentials.is_empty() {
             vec![Credential {
                 secret: Uuid::nil(),
@@ -1680,27 +1794,7 @@ impl Destination {
         } else {
             definition.credentials.clone()
         };
-        for credential in slots {
-            let material = std::env::var(&credential.material_ref)
-                .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
-            ensure!(
-                !material.is_empty() && material.len() <= 8192 && !material.contains(['\r', '\n']),
-                "PIPELINE_WORKER_CONFIG_INVALID"
-            );
-            let value = match credential.scheme {
-                CredentialScheme::Raw => material.clone(),
-                CredentialScheme::Bearer => format!("Bearer {material}"),
-            };
-            let mut value = reqwest::header::HeaderValue::from_str(&value)
-                .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
-            value.set_sensitive(true);
-            headers.insert(
-                reqwest::header::HeaderName::from_bytes(credential.header.as_bytes())
-                    .map_err(|_| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?,
-                value,
-            );
-            materials.push(material);
-        }
+        let (headers, materials) = credential_headers(slots)?;
         let client = reqwest::Client::builder()
             .no_proxy()
             .redirect(reqwest::redirect::Policy::none())

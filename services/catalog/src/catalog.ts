@@ -407,7 +407,7 @@ export class Catalog {
       if (result === undefined || result === null)
         throw new MoriaError('ACTION_RESULT', 'Action result must be a non-null JSON value');
       await c.query(
-        `INSERT INTO moria.action_keys VALUES($1,$2,$3,$4,$5,$6,$7,$8,clock_timestamp()+interval '30 days')`,
+        `INSERT INTO moria.action_keys(environment,application,principal,action,key,input_hash,action_revision,result,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,clock_timestamp()+interval '30 days')`,
         [...scope, hash, request.actionRevision, JSON.stringify(result)],
       );
       return result;

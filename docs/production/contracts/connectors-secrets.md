@@ -1,6 +1,6 @@
 # Connector capability and secret contracts
 
-This is the N09 implementation contract. The native pipeline profile implements `batchRead` with full coverage and replacement output and bounded read-only `schemaDiscovery`. Other capabilities and write modes remain rejected; those rejections are not completion of the accepted Source contract. [Pipelines](pipelines.md) defines supervision and grouped publication. [Engine I/O](engine-io.md) defines the bounded Arrow transport.
+This is the N09 implementation contract. The native pipeline profile implements `batchRead` with full coverage and replacement output and bounded read-only `schemaDiscovery`. Action-origin `writeback` uses the separate native delivery profile below. Other capabilities and write modes remain rejected; those rejections are not completion of the accepted Source contract. [Pipelines](pipelines.md) defines supervision and grouped publication. [Engine I/O](engine-io.md) defines the bounded Arrow transport.
 
 ## Capability admission
 
@@ -11,8 +11,7 @@ passes fifteen focused custody/checkpoint/HTTP checks, including independent typ
 readback, in-flight revocation and bounded provider failures; see
 [custody](../evidence/2026-11-04/connector-secret-custody/README.md) and
 [HTTP qualification](../evidence/2026-11-04/connector-http-faults/README.md).
-Other write modes, coverage, `continuousRead` and `writeback` remain unavailable. This checkpoint
-must not be presented as complete N09 qualification.
+Other write modes, coverage, `continuousRead` and general Connector writeback remain unavailable. This checkpoint does not complete N09 qualification.
 
 The operator destination's `credentials` array contains `secret` (resolved UUID),
 `materialRef` (host environment reference), `header` and `scheme` (`raw` or
@@ -41,9 +40,55 @@ The released `Connection` selects one immutable `connector/v1` implementation, a
 | `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full typed publication, cursor reuse, custody revocation and HTTP failure checks pass; acknowledgement/supervisor fault coverage remains required. |
 | `schemaDiscovery` | Read-only bounded discovery through the same fixed transport and current SecretReference grants. Proposed schemas are typed metadata and cannot silently mutate an accepted output schema or publish data.                                       | Actual worker/HTTP/SQL discovery file passes 15/15, including lost COMMIT acknowledgement and current retained-result denial.                              |
 | `continuousRead`  | Bounded execution windows with durable source cursor/watermark, explicit restart boundary and backpressure. Each window publishes its output and cursor atomically. A worker replacement cannot transparently rerun arbitrary started user code. | Rejected before code; implementation and proof required.                                                                                                   |
-| `writeback`       | Explicit external side-effect intents, destination policy, idempotency capability and uncertain-outcome reconciliation. A successful Dataset publication does not prove an external effect occurred exactly once.                                | Rejected before code; implementation and proof required.                                                                                                   |
+| `writeback`       | Explicit external side-effect intents, destination policy, idempotency capability and uncertain-outcome reconciliation. A successful Dataset publication does not prove an external effect occurred exactly once.                                | `http-outbox-v1` for an operator-mapped released Action; other origins and adapters remain unsupported. |
 
 Capability sets are normalized sets, not an ordering-sensitive magic array. Each requested operation must be declared by the implementation and supported by the configured adapter profile. Merely accepting a declaration or advertising a capability does not authorize dispatch.
+
+## Action-origin writeback
+
+`http-outbox-v1` maps one exact released Action revision to a released
+Connection and a `connector/v1` implementation declaring `writeback`. It is a
+native fixed HTTP POST profile. A public Action caller supplies only the usual
+typed Action input and idempotency key. The operator chooses the destination,
+the effect key and the dedicated non-owning database login used by the existing
+native `serve` process. Ordinary workers use a different login.
+
+The operator inspects the exact SecretReference requests with
+`moria-indexing secret inspect-connector` and
+`{environment,connection,destination}`, where `destination` is the registered
+Connector transport UUID. After approving those requests, the operator runs
+`moria-indexing delivery register-writeback` with
+`{environment,action,connection,connectorDestination,deliveryBinding,writerRole,effectKey}`.
+The delivery binding names the permitted actor/application and destination
+resource. The transport must allow POST to the exact endpoint path. Registration
+uses the operator schema lease and returns the durable destination ID. It pins
+the exact releases and transport fingerprint; a different registration for
+the same Action revision is rejected. Run the serving process with the
+registered writer login and endpoint configuration. Give the dispatcher the
+same endpoint configuration and the approved host credential references.
+
+On a new Action commit, current authority must include explicit
+`<connection>:writeback` and `<destination-resource>:write`, plus the Action's
+normal permissions, Source-file access and every approved SecretReference
+`use`. The database derives the canonical effect from the actual receipt and
+appends it in the same transaction as the Action mutation. Action replay creates
+no new intent. The intent pins the exact approved material revisions, current
+epochs, complete inherited markings and its immutable payload. An ordinary
+worker cannot insert a mapped receipt or intent, enqueue it through the legacy
+helper, or register a destination that aliases the worker's host secrets.
+
+The existing fenced delivery worker checks the stored authority and exact
+transport again before recording its sent marker and sending one fixed POST.
+It does not start a guest, publish a Dataset, or advance a Connector cursor.
+Every uncertain post-marker outcome requires exact operator reconciliation;
+there is no automatic resend. A terminal `notDelivered` decision permits the
+same bytes and stable key to be sent only under the still-current accepted
+authority. An approval pulse invalidates old intents even if approval returns;
+a newly committed Action can use the new current approval. Provider response
+bytes and decoded receipt values cannot release known credential material.
+
+This profile does not run arbitrary Connector writeback code, attach effects to
+Dataset publications, or support a public standalone writeback invocation.
 
 ## Bounded schema discovery
 

@@ -661,7 +661,17 @@ impl NativeServing {
         links::commit_edges(client, session, &edge_edits, &labels, &next).await?;
         let result = json!({"revision":next,"created":created,"changed":changed});
         let input_hash = fingerprint(&json!(parameters))?;
-        client.execute("INSERT INTO moria.action_keys VALUES($1,$2,$3,$4,$5,$6,$7,$8,clock_timestamp()+interval '30 days')", &[&session.environment(),&session.application(),&session.principal(),&action.resource,&key,&input_hash,&action.revision,&result]).await?;
+        crate::delivery_writeback::record_receipt_in(
+            client,
+            session,
+            &action.resource,
+            &key,
+            &input_hash,
+            &action.revision,
+            &result,
+            &labels,
+        )
+        .await?;
         let resources = targets
             .keys()
             .map(|(resource, _)| resource.clone())

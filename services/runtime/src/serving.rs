@@ -2732,7 +2732,17 @@ impl NativeServing {
             return Ok(Value::Null);
         }
         let result = json!({"revision":next});
-        client.execute("INSERT INTO moria.action_keys VALUES($1,$2,$3,$4,$5,$6,$7,$8,clock_timestamp()+interval '30 days')",&[&session.environment(),&session.application(),&session.principal(),&action.resource,&key,&input_hash,&action.revision,&result]).await?;
+        crate::delivery_writeback::record_receipt_in(
+            client,
+            session,
+            &action.resource,
+            &key,
+            &input_hash,
+            &action.revision,
+            &result,
+            &labels,
+        )
+        .await?;
         client.execute("INSERT INTO moria.native_serving_receipt_inputs(environment,application,principal,action,key,input_types,object_resource) VALUES($1,$2,$3,$4,$5,$6,$7)",&[&session.environment(),&session.application(),&session.principal(),&action.resource,&key,&json!(action.inputs),&binding.resource]).await?;
         client.execute("INSERT INTO moria.native_serving_audit(environment,revision,application,principal,action,key,targets) VALUES($1,$2::text::bigint,$3,$4,$5,$6,$7)",&[&session.environment(),&next,&session.application(),&session.principal(),&action.resource,&key,&targets]).await?;
         if let Some(prepared) = context.prepared {
@@ -4800,7 +4810,9 @@ fn json_response(
                 | "EVALUATION_SERVICE_REVOKED"
                 | "SECRET_CONSUMER_DENIED"
                 | "SECRET_APPROVAL_REQUIRED"
-                | "SECRET_APPROVAL_REVOKED" => StatusCode::FORBIDDEN,
+                | "SECRET_APPROVAL_REVOKED"
+                | "DELIVERY_FORBIDDEN"
+                | "DELIVERY_WRITEBACK_ORIGIN_INVALID" => StatusCode::FORBIDDEN,
                 "PIPELINE_OPERATION_DENIED"
                 | "PIPELINE_PROFILE_REVOKED"
                 | "PIPELINE_DESTINATION_REVOKED" => StatusCode::FORBIDDEN,

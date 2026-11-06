@@ -147,9 +147,8 @@ provider-reconciliation claim. Worker peers must not receive this privilege.
 the sent marker is recovered according to the destination capability above.
 
 Run `reconcile` separately with `MORIA_INDEXING_DATABASE_SECRET_REF` resolving
-to an operator database login with `CREATE` on the `moria` schema. Only this
-delivery command uses the operator schema lease; the dispatcher and ordinary
-commands still require a non-owning runtime login. PostgreSQL checks the
+to an operator database login with `CREATE` on the `moria` schema. The dispatcher
+and ordinary delivery commands still require a non-owning runtime login. PostgreSQL checks the
 operator login, exact uncertain fence and evidence, and records the transition
 and its history in one transaction. A worker cannot reopen an uncertain delivery
 by updating its row or writing reconciliation history directly.
@@ -161,6 +160,7 @@ by updating its row or writing reconciliation history directly.
 | `status`, `cancel` | `{id:"UUID"}`                                                         |
 | `retry`            | `{id,expectedFence:"1"}`; current dead letters only                   |
 | `reconcile`        | `{id,expectedFence,resolution,evidence}`; privileged operator only    |
+| `register-writeback` | Operator-only Action writeback registration; see [Connector writeback](connectors-secrets.md#action-origin-writeback). |
 | `worker`           | `{}`                                                                  |
 
 Status remains independent of the originating action result. It exposes receipt,

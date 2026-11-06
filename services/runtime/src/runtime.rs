@@ -54,7 +54,11 @@ async fn run() -> Result<()> {
         "filesystem-retention",
     ]
     .contains(&command.as_str())
-        || (command == "delivery" && env::args().nth(2).as_deref() == Some("reconcile"));
+        || (command == "delivery"
+            && matches!(
+                env::args().nth(2).as_deref(),
+                Some("reconcile" | "register-writeback")
+            ));
     let db = if operator_command {
         Database::configured_recovery()?
     } else {

@@ -701,7 +701,19 @@ pub(crate) async fn cli(db: crate::database::Database, args: Vec<String>) -> Res
         Some("inspect-connector") => {
             let environment = field(&input, "environment")?;
             let connection: Uuid = field(&input, "connection")?.parse()?;
-            crate::pipelines::inspect_connector_in(tx.client(), environment, connection).await?
+            if let Some(destination) = input.get("destination") {
+                let destination: Uuid = serde_json::from_value(destination.clone())?;
+                let profile = crate::pipelines::writeback_connector_in(
+                    tx.client(),
+                    environment,
+                    connection,
+                    destination,
+                )
+                .await?;
+                json!({"bindings":profile.requests})
+            } else {
+                crate::pipelines::inspect_connector_in(tx.client(), environment, connection).await?
+            }
         }
         Some("inspect-model") => {
             let environment = field(&input, "environment")?;

@@ -38,12 +38,14 @@ CREATE TABLE moria.runtime_delivery_reconciliations (
 
 CREATE FUNCTION moria.runtime_delivery_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'IMMUTABLE_DELIVERY'; END IF;
   IF TG_TABLE_NAME='runtime_delivery_destinations' THEN
     IF (to_jsonb(NEW)-'enabled')<>(to_jsonb(OLD)-'enabled') THEN RAISE EXCEPTION 'IMMUTABLE_DESTINATION'; END IF;
   ELSE
     IF ROW(NEW.destination,NEW.destination_resource,NEW.environment,NEW.resource_class,NEW.logical_key,NEW.origin_hash,NEW.payload,NEW.body,NEW.payload_hash,NEW.source_markings,NEW.origin)
       IS DISTINCT FROM ROW(OLD.destination,OLD.destination_resource,OLD.environment,OLD.resource_class,OLD.logical_key,OLD.origin_hash,OLD.payload,OLD.body,OLD.payload_hash,OLD.source_markings,OLD.origin)
       THEN RAISE EXCEPTION 'IMMUTABLE_DELIVERY'; END IF;
+    IF NEW.writeback IS DISTINCT FROM OLD.writeback THEN RAISE EXCEPTION 'IMMUTABLE_DELIVERY'; END IF;
   END IF;
   RETURN NEW;
 END $$;
@@ -90,7 +92,13 @@ DECLARE d moria.runtime_deliveries;
 BEGIN
   SELECT * INTO d FROM moria.runtime_deliveries WHERE id=delivery_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'DELIVERY_UNKNOWN'; END IF;
-  PERFORM moria.runtime_destination_check(d.destination,d.source_markings,dispatch);
+  IF d.writeback IS NULL THEN
+    IF EXISTS(SELECT 1 FROM moria.runtime_delivery_writebacks w WHERE w.destination=d.destination)
+      THEN RAISE EXCEPTION 'DELIVERY_WRITEBACK_ORIGIN_INVALID'; END IF;
+    PERFORM moria.runtime_destination_check(d.destination,d.source_markings,dispatch);
+  ELSE
+    PERFORM moria.runtime_delivery_writeback_current(delivery_id,dispatch);
+  END IF;
 END $$;
 
 CREATE FUNCTION moria.runtime_delivery_reconciliation_history() RETURNS trigger LANGUAGE plpgsql
@@ -155,6 +163,8 @@ BEGIN
   SELECT * INTO b FROM moria.runtime_execution_bindings WHERE id=d.binding;
   SELECT ARRAY(SELECT DISTINCT value FROM unnest(b.markings||source_markings) value ORDER BY value) INTO labels;
   PERFORM moria.runtime_destination_check(destination_id,labels);
+  IF EXISTS(SELECT 1 FROM moria.runtime_delivery_writebacks w WHERE w.destination=destination_id)
+    THEN RAISE EXCEPTION 'DELIVERY_WRITEBACK_ORIGIN_INVALID'; END IF;
   wire:=payload::text;
   IF logical_key IS NULL OR octet_length(logical_key) NOT BETWEEN 1 AND 512 OR octet_length(wire)>65536 OR jsonb_typeof(origin)<>'object'
     OR octet_length(origin::text)>4096 OR origin->>'environment' IS DISTINCT FROM b.environment

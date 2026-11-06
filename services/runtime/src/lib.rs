@@ -13,6 +13,7 @@ pub(crate) mod dataset_commit_delta;
 pub mod dataset_retention;
 pub mod dataset_writer;
 pub mod delivery;
+mod delivery_writeback;
 pub mod directory;
 pub(crate) mod engine_io;
 mod engine_ipc;

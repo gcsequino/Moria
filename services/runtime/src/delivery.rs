@@ -4,7 +4,7 @@ use futures::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
-use std::{env, time::Duration};
+use std::{collections::BTreeSet, env, time::Duration};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_postgres::Transaction;
 use uuid::Uuid;
@@ -49,6 +49,12 @@ struct Receipt {
     receipt_id: String,
 }
 
+#[derive(Default)]
+struct WritebackCredentials {
+    headers: reqwest::header::HeaderMap,
+    materials: Vec<String>,
+}
+
 pub struct DeliveryAuthority {
     pub db: Database,
 }
@@ -84,8 +90,15 @@ impl DeliveryAuthority {
                     "BINDING_CHANGED",
                     "AUTHORIZATION_CHANGED",
                     "UNAUTHENTICATED",
+                    "IDENTITY_STALE",
                     "DESTINATION_DISABLED",
                     "DELIVERY_FORBIDDEN",
+                    "DELIVERY_WRITEBACK_ORIGIN_INVALID",
+                    "FORBIDDEN",
+                    "NOT_FOUND",
+                    "PIPELINE_DESTINATION_REVOKED",
+                    "SECRET_APPROVAL_REVOKED",
+                    "SOURCE_FILE_PROOF_REQUIRED",
                 ]
                 .contains(&code)
                 {
@@ -152,7 +165,11 @@ impl DeliveryAuthority {
         Ok(())
     }
 
-    async fn mark_sent(&self, lease: &DeliveryLease) -> Result<u64> {
+    async fn mark_sent(
+        &self,
+        lease: &DeliveryLease,
+        endpoint: &reqwest::Url,
+    ) -> Result<(u64, WritebackCredentials)> {
         let mut client = self.db.get().await?;
         let tx = client.transaction().await?;
         let environment: String = tx
@@ -178,11 +195,41 @@ impl DeliveryAuthority {
             &[&lease.delivery],
         )
         .await?;
+        let mapped = tx.query_opt("SELECT w.connection,w.connector_destination,w.destination_fingerprint,d.writeback FROM moria.runtime_deliveries d JOIN moria.runtime_delivery_writebacks w ON w.destination=d.destination WHERE d.id=$1", &[&lease.delivery]).await?;
+        let credentials = if let Some(row) = mapped {
+            let envelope: Value = row
+                .get::<_, Option<Value>>("writeback")
+                .ok_or_else(|| anyhow::anyhow!("DELIVERY_WRITEBACK_ORIGIN_INVALID"))?;
+            let mut secrets = BTreeSet::new();
+            for pin in envelope["approvals"]
+                .as_array()
+                .ok_or_else(|| anyhow::anyhow!("DELIVERY_WRITEBACK_ORIGIN_INVALID"))?
+            {
+                ensure!(
+                    secrets.insert(serde_json::from_value(pin["secret"].clone())?),
+                    "DELIVERY_WRITEBACK_ORIGIN_INVALID"
+                );
+            }
+            let fingerprint: String = row.get("destination_fingerprint");
+            let (headers, materials) = crate::pipelines::writeback_headers_in(
+                tx.client(),
+                &environment,
+                row.get("connection"),
+                row.get("connector_destination"),
+                endpoint,
+                &fingerprint,
+                &secrets,
+            )
+            .await?;
+            WritebackCredentials { headers, materials }
+        } else {
+            WritebackCredentials::default()
+        };
         let remaining:i64=tx.query_one("UPDATE moria.runtime_deliveries SET sent_at=clock_timestamp() WHERE id=$1 RETURNING floor(extract(epoch FROM(LEAST(deadline,lease_until)-clock_timestamp()))*1000)::bigint", &[&lease.delivery]).await?.get(0);
         ensure!(remaining > 0, "Delivery deadline exceeded");
         tx.execute("UPDATE moria.runtime_delivery_attempts SET status='sent',sent_at=clock_timestamp() WHERE delivery=$1 AND fence=$2", &[&lease.delivery,&lease.fence()?]).await?;
         tx.commit().await?;
-        Ok((remaining as u64).min(10000))
+        Ok(((remaining as u64).min(10000), credentials))
     }
 
     async fn delivered(&self, lease: &DeliveryLease, receipt: &Receipt) -> Result<()> {
@@ -224,7 +271,7 @@ impl DeliveryAuthority {
         Ok(())
     }
 
-    fn endpoint(value: &str) -> Result<reqwest::Url> {
+    pub(crate) fn endpoint(value: &str) -> Result<reqwest::Url> {
         let url = reqwest::Url::parse(value)?;
         ensure!(
             url.username().is_empty()
@@ -291,11 +338,13 @@ impl DeliveryAuthority {
         client: reqwest::Client,
         url: reqwest::Url,
         authorization: Option<String>,
+        credentials: WritebackCredentials,
         timeout: u64,
     ) -> Result<Receipt> {
         let mut request = client
             .post(url)
             .timeout(Duration::from_millis(timeout))
+            .headers(credentials.headers)
             .header("content-type", "application/json")
             .header("idempotency-key", claim.lease.delivery.to_string())
             .header("moria-delivery-id", claim.lease.delivery.to_string())
@@ -337,6 +386,18 @@ impl DeliveryAuthority {
             bytes.extend_from_slice(&chunk);
         }
         let receipt: Receipt = serde_json::from_slice(&bytes)?;
+        if !credentials.materials.is_empty() {
+            let raw = std::str::from_utf8(&bytes)?;
+            let decoded = serde_json::to_value(&receipt)?;
+            ensure!(
+                !credentials
+                    .materials
+                    .iter()
+                    .any(|material| raw.contains(material)
+                        || crate::pipelines::response_contains_material(&decoded, material)),
+                "Invalid delivery receipt"
+            );
+        }
         ensure!(
             receipt.version == 1
                 && receipt.delivery_id == claim.lease.delivery
@@ -364,11 +425,11 @@ impl DeliveryAuthority {
                 return Ok(true);
             }
         };
-        let timeout = match self.mark_sent(&claim.lease).await {
-            Ok(timeout) => timeout,
+        let (timeout, credentials) = match self.mark_sent(&claim.lease, &url).await {
+            Ok(value) => value,
             Err(_) => return Ok(true),
         };
-        match Self::send(&claim, client, url, authorization, timeout).await {
+        match Self::send(&claim, client, url, authorization, credentials, timeout).await {
             Ok(receipt) => {
                 // Lost acknowledgments recover from the sent marker and the destination's capability.
                 if self.delivered(&claim.lease, &receipt).await.is_err() {
@@ -587,6 +648,10 @@ pub async fn cli(db: Database, args: Vec<String>) -> Result<()> {
             let r: Retry = serde_json::from_value(value)?;
             authority.retry(r.id, &r.expected_fence).await?;
             json!({"retried":true})
+        }
+        "register-writeback" => {
+            crate::delivery_writeback::register(&authority.db, serde_json::from_value(value)?)
+                .await?
         }
         "reconcile" => {
             let r: Reconcile = serde_json::from_value(value)?;

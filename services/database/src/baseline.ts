@@ -8,6 +8,7 @@ import { servingRuntimeSchema, servingFunctionReferenceSchema } from './serving-
 import { browserOriginSchema } from './browser-origin-schema.js';
 import { browserSessionRevocationSchema } from './browser-session-revocation-schema.js';
 import { deliveryRuntimeSchema } from './delivery-runtime-schema.js';
+import { deliveryWritebackSchema } from './delivery-writeback-schema.js';
 import { snapshotRuntimeSchema } from './snapshot-runtime-schema.js';
 import { functionRuntimeSchema } from './function-runtime-schema.js';
 
@@ -343,6 +344,7 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${executionRootPinsSchema}
   ${directoryRuntimeSchema}
   ${pipelineRuntimeSchema}
+  ${deliveryWritebackSchema}
   ${automationRuntimeSchema}
   ${mcpRuntimeSchema}
   ${historyRuntimeSchema}
