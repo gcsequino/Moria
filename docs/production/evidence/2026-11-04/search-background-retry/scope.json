@@ -1,0 +1,20 @@
+{
+  "nativeSourceDigest": "43a8a6de70cabefd42dd2291863003d66f7e48a34e5df0d02faf89446d1b3916",
+  "units": 100,
+  "nativeArtifacts": 9,
+  "integration": {
+    "tests": 8,
+    "passed": 8,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "fixtureSha256": "be90e605119ab042e2d39f369118e742a83a8cbd84db883eb1dc6e567c04282c",
+  "fullEvidence": "/home/gcseq/moria-proofs/search-background-retry-20261105",
+  "retainedTrials": {
+    "original": "red",
+    "incorrectRetryCountOracle": "fixed",
+    "unsupportedOperatorCancellationFixture": "fixture-cancelled",
+    "passed": "fixture-revoked"
+  }
+}

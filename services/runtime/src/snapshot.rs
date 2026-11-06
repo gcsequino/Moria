@@ -36,7 +36,10 @@ use std::{collections::BTreeMap, fmt::Debug, ops::Range, sync::Arc};
 use uuid::Uuid;
 
 #[path = "snapshot_parquet_bounds.rs"]
-mod parquet_bounds;
+pub(crate) mod parquet_bounds;
+
+#[path = "snapshot_parquet_read.rs"]
+pub(crate) mod parquet_read;
 
 const METADATA_MAX: usize = 8 * 1024 * 1024;
 const DECODED_MAX: usize = 64 * 1024 * 1024;
@@ -842,7 +845,7 @@ pub(crate) fn validate_batch(
     Ok(())
 }
 
-fn preflight_avro(bytes: &[u8]) -> Result<()> {
+pub(crate) fn preflight_avro(bytes: &[u8]) -> Result<()> {
     use apache_avro::types::Value as A;
     fn count(value: &A, bytes: &mut usize, depth: usize) -> Result<()> {
         ensure!(depth <= 32, "AVRO_DEPTH_LIMIT");

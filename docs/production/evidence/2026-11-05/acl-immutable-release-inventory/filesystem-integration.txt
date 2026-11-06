@@ -1,0 +1,139 @@
+{"controller": "moria-quality-7112e9d1-0d17-4a8e-bd8b-b041c0b16ffc", "image": "sha256:76d4e1189d5edae4635450eaf57467ca6d7927dbd1388f2df42e16920384d418", "scratchPools": ["/tmp/moria-engine-scratch-023a3e89-804a-4ace-a661-601f41aabac9", "/tmp/moria-engine-scratch-1de98f61-859c-4e22-973f-2616e6226b83", "/tmp/moria-engine-scratch-012cb5bc-da03-470b-9a76-e8d9a616c5e9"], "temporary": "/tmp/moria-quality-ceqwd7bw"}
+TAP version 13
+# Subtest: managed source roots checkout, publish, plan and activate coherent definitions
+    # Subtest: administrator grants require both current capability sets with a large identity
+    ok 1 - administrator grants require both current capability sets with a large identity
+      ---
+      duration_ms: 220.803898
+      type: 'test'
+      ...
+    # Subtest: ACL graph duplicates and cycles retain live markings and denies
+    ok 2 - ACL graph duplicates and cycles retain live markings and denies
+      ---
+      duration_ms: 146.121369
+      type: 'test'
+      ...
+    # Subtest: registered roots preserve metadata dotfiles and allocate stable exported resource identities
+    ok 3 - registered roots preserve metadata dotfiles and allocate stable exported resource identities
+      ---
+      duration_ms: 1197.476766
+      type: 'test'
+      ...
+    # Subtest: sibling roots are independent and duplicate/nested source registration is rejected
+    ok 4 - sibling roots are independent and duplicate/nested source registration is rejected
+      ---
+      duration_ms: 607.725819
+      type: 'test'
+      ...
+    # Subtest: plans bind release, principal, current policy and expected active revision
+    ok 5 - plans bind release, principal, current policy and expected active revision
+      ---
+      duration_ms: 345.562186
+      type: 'test'
+      ...
+    # Subtest: missing declarations are retained until explicit dependency-checked deletion
+    ok 6 - missing declarations are retained until explicit dependency-checked deletion
+      ---
+      duration_ms: 778.956156
+      type: 'test'
+      ...
+    # Subtest: mixed-operation data access shares geometry without sharing authority across calls
+    ok 7 - mixed-operation data access shares geometry without sharing authority across calls
+      ---
+      duration_ms: 7037.005382
+      type: 'test'
+      ...
+    # Subtest: repeated Source history keeps current classification checks authoritative
+    ok 8 - repeated Source history keeps current classification checks authoritative
+      ---
+      duration_ms: 3570.805313
+      type: 'test'
+      ...
+    # Subtest: replacement retains future restrictions on its original source
+    ok 9 - replacement retains future restrictions on its original source
+      ---
+      duration_ms: 1382.766585
+      type: 'test'
+      ...
+# {"event":"source_declaration_same_call_counters","requests":2,"scalar":[{"funcname":"native_filesystem_acl_targets_state","calls":2,"self_time":0.101},{"funcname":"native_serving_session","calls":2,"self_time":0.086}],"batch":[{"funcname":"native_filesystem_acl_targets_state","calls":1,"self_time":0.01},{"funcname":"native_serving_session","calls":1,"self_time":0.006}],"scope":"actual metadata checks only; no model inference timing attribution"}
+    # Subtest: fresh replacement uses live declaration files while pinned historical files remain protected
+    ok 10 - fresh replacement uses live declaration files while pinned historical files remain protected
+      ---
+      duration_ms: 2171.190226
+      type: 'test'
+      ...
+    # Subtest: omitted definitions retain future restrictions on their declaration directory
+    ok 11 - omitted definitions retain future restrictions on their declaration directory
+      ---
+      duration_ms: 1453.249906
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level publish deny
+    ok 12 - activation respects a resource-level publish deny
+      ---
+      duration_ms: 979.49348
+      type: 'test'
+      ...
+    # Subtest: activation respects a resource-level delete deny
+    ok 13 - activation respects a resource-level delete deny
+      ---
+      duration_ms: 953.505929
+      type: 'test'
+      ...
+    # Subtest: identical namespaces in independent projects activate without identity collisions
+    ok 14 - identical namespaces in independent projects activate without identity collisions
+      ---
+      duration_ms: 1339.154991
+      type: 'test'
+      ...
+    # Subtest: pinned cross-project inputs retain their owning project classifications
+    ok 15 - pinned cross-project inputs retain their owning project classifications
+      ---
+      duration_ms: 1170.588743
+      type: 'test'
+      ...
+    # Subtest: identical imported names from different projects require explicit disambiguation
+    ok 16 - identical imported names from different projects require explicit disambiguation
+      ---
+      duration_ms: 351.206646
+      type: 'test'
+      ...
+    # Subtest: active transitive dependencies prevent retirement, and retired consumers release that protection
+    ok 17 - active transitive dependencies prevent retirement, and retired consumers release that protection
+      ---
+      duration_ms: 1345.685642
+      type: 'test'
+      ...
+    # Subtest: same-project pinned source dependencies remain usable
+    ok 18 - same-project pinned source dependencies remain usable
+      ---
+      duration_ms: 356.997385
+      type: 'test'
+      ...
+    # Subtest: cross-project transform outputs require active writable placements and inherit producer restrictions
+    ok 19 - cross-project transform outputs require active writable placements and inherit producer restrictions
+      ---
+      duration_ms: 1761.242437
+      type: 'test'
+      ...
+    # Subtest: code repositories publish CI export manifests without loading source modules
+    ok 20 - code repositories publish CI export manifests without loading source modules
+      ---
+      duration_ms: 605.339833
+      type: 'test'
+      ...
+    1..20
+ok 1 - managed source roots checkout, publish, plan and activate coherent definitions
+  ---
+  duration_ms: 31782.868977
+  type: 'test'
+  ...
+1..1
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32220.037005

@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "600s",
+  "python3",
+  "/home/gcseq/moria-proofs/renewal-lock-retry-native-20261105/source/deploy/test/run-quality.py",
+  "sha256:175d3bf1ef5a8b63e66246f09ceca1d7fd4de5c054a6b8957fe0cdc5f64df9fa",
+  "pnpm",
+  "test:integration",
+  "tests/native-evaluation-publication-locks.integration.test.ts"
+]

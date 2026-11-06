@@ -123,6 +123,107 @@ test(
       );
       return receipt.entries.find((entry) => entry.name === name)!;
     }
+    await t.test(
+      'administrator grants require both current capability sets with a large identity',
+      async () => {
+        const policy = (
+          await db.pool.query(
+            'SELECT revision::text,markings,grants FROM moria.fs_policies WHERE entry_id=$1',
+            [filesystemRoot],
+          )
+        ).rows[0];
+        const padded = [
+          ...operations,
+          ...Array.from({ length: 512 }, (_, i) => `acl/Resource/padding-${i}:read`),
+        ];
+        const hash = createHash('sha256').update(token.token).digest('hex');
+        const access = () =>
+          db.pool.query(
+            "SELECT moria.native_filesystem_acl_targets_state(moria.native_serving_session($1),ARRAY[$2]::uuid[],'read',false) AS labels",
+            [hash, filesystemRoot],
+          );
+        try {
+          await security.setPolicy('operator', filesystemRoot, policy.revision, {
+            markings: policy.markings,
+            grants: [
+              {
+                subject: { kind: 'administrators' },
+                operations: ['read'],
+                inherit: false,
+                effect: 'allow',
+              },
+            ],
+          });
+          for (const [grant, scope] of [
+            [false, false],
+            [true, false],
+            [false, true],
+            [true, true],
+            [false, true],
+          ] as const) {
+            await authority.setApplication(
+              environment,
+              'operator',
+              application,
+              scope ? [...padded, 'instance:manage'] : padded,
+            );
+            await authority.setGrants(
+              environment,
+              'operator',
+              principal,
+              application,
+              grant ? [...padded, 'instance:manage'] : padded,
+            );
+            if (grant && scope) assert.deepEqual((await access()).rows[0].labels, []);
+            else await assert.rejects(access(), /FORBIDDEN/);
+          }
+        } finally {
+          await authority.setApplication(environment, 'operator', application, operations);
+          await authority.setGrants(environment, 'operator', principal, application, operations);
+          const revision = (
+            await db.pool.query('SELECT revision::text FROM moria.fs_policies WHERE entry_id=$1', [
+              filesystemRoot,
+            ])
+          ).rows[0].revision;
+          await security.setPolicy('operator', filesystemRoot, revision, {
+            markings: policy.markings,
+            grants: policy.grants,
+          });
+        }
+      },
+    );
+    await t.test('ACL graph duplicates and cycles retain live markings and denies', async () => {
+      const origin = await directory(project.id, 'acl-origin'),
+        target = await directory(origin.id, 'acl-target');
+      await db.pool.query(
+        'INSERT INTO moria.fs_provenance(entry_id,source_id) VALUES($1,$2),($2,$1)',
+        [target.id, origin.id],
+      );
+      const hash = createHash('sha256').update(token.token).digest('hex');
+      const labels = () =>
+        db.pool.query(
+          "SELECT moria.native_filesystem_acl_targets_state(moria.native_serving_session($1),$2,'read',false) labels",
+          [hash, [target.id, origin.id, target.id]],
+        );
+      assert.deepEqual((await labels()).rows[0].labels, []);
+      await security.setPolicy('operator', origin.id, '0', {
+        markings: [{ environment, marking: 'protected' }],
+        grants: [],
+      });
+      assert.deepEqual((await labels()).rows[0].labels, ['protected']);
+      await security.setPolicy('operator', origin.id, '1', {
+        markings: [{ environment, marking: 'protected' }],
+        grants: [
+          {
+            subject: { kind: 'principal', id: instanceId },
+            operations: ['read'],
+            inherit: true,
+            effect: 'deny',
+          },
+        ],
+      });
+      await assert.rejects(labels(), { message: 'FORBIDDEN' });
+    });
     const properties = { id: { type: 'uid', nullable: false } };
     const dataset: Resource = {
       apiVersion: 'moria/v1alpha2',
@@ -168,6 +269,13 @@ test(
           (resource) => resource.reference === 'stations/ObjectType/Station',
         )!.id;
         assert.deepEqual(await source.publish(context, ontology.id, checkout.digest), release);
+        await assert.rejects(
+          db.pool.query(
+            'UPDATE moria.fs_source_releases SET snapshot_file_entries=ARRAY[]::uuid[] WHERE digest=$1',
+            [release.digest],
+          ),
+          { code: '428C9' },
+        );
         assert.equal(
           (await source.getRelease(context, release.digest)).snapshot.role.deploymentUnitId,
           role.deploymentUnitId,
@@ -401,6 +509,373 @@ test(
       return { root, declarations, declaration, definition, publish, first, resource, initialPlan };
     }
     await t.test(
+      'mixed-operation data access shares geometry without sharing authority across calls',
+      async () => {
+        const unit = await isolatedOntology('multi_operation'),
+          denied = await isolatedOntology('multi_operation_denied'),
+          gone = await isolatedOntology('multi_operation_gone');
+        const hash = createHash('sha256').update(token.token).digest('hex');
+        const entries = (
+          await db.pool.query(
+            'SELECT id,resource_id::text resource FROM moria.fs_entries WHERE resource_id=ANY($1::uuid[])',
+            [[unit.resource.resourceId, denied.resource.resourceId]],
+          )
+        ).rows as { id: string; resource: string }[];
+        const entry = entries.find((value) => value.resource === unit.resource.resourceId)!.id,
+          deniedEntry = entries.find((value) => value.resource === denied.resource.resourceId)!.id;
+        const datasetId = unit.first.resources.find(
+          (value) => value.reference === 'multi_operation/Dataset/source',
+        )!.id;
+        const datasetEntry = (
+          await db.pool.query('SELECT id FROM moria.fs_entries WHERE resource_id=$1', [datasetId])
+        ).rows[0].id as string;
+        await db.pool.query(
+          'INSERT INTO moria.fs_provenance(entry_id,source_id) VALUES($1,$2),($2,$1)',
+          [entry, datasetEntry],
+        );
+        await security.setPolicy('operator', unit.declaration.id, '0', {
+          markings: [{ environment, marking: 'protected' }],
+          grants: [],
+        });
+        const requests = [
+          { resource: unit.resource.resourceId, operation: 'read' },
+          { resource: unit.resource.resourceId, operation: 'write' },
+          { resource: unit.resource.resourceId, operation: 'publish' },
+        ];
+        const batch = async (
+          values: unknown[] = requests,
+          client: Pick<pg.Pool, 'query'> = db.pool,
+        ) =>
+          (
+            await client.query(
+              'SELECT moria.native_serving_resource_access_batch_state(moria.native_serving_session($1),$2) labels',
+              [hash, JSON.stringify(values)],
+            )
+          ).rows[0].labels as string[][];
+        const scalar = async (operation: string) =>
+          (
+            await db.pool.query('SELECT moria.native_serving_resource_access($1,$2,$3) labels', [
+              hash,
+              unit.resource.resourceId,
+              operation,
+            ])
+          ).rows[0].labels as string[];
+        assert.deepEqual(await batch(), [['protected'], ['protected'], ['protected']]);
+        for (const operation of ['read', 'write', 'publish'])
+          assert.deepEqual(await scalar(operation), ['protected']);
+
+        const measured = await db.pool.connect();
+        try {
+          await measured.query("SET track_functions='pl'");
+          await measured.query(
+            "SELECT pg_stat_reset_single_function_counters(oid) FROM pg_proc WHERE pronamespace='moria'::regnamespace AND proname IN ('native_filesystem_acl_targets_state','native_filesystem_acl_targets_operations_state')",
+          );
+          assert.deepEqual(await batch(requests, measured), [
+            ['protected'],
+            ['protected'],
+            ['protected'],
+          ]);
+          await measured.query('SELECT pg_stat_force_next_flush()');
+          let calls = 0;
+          for (let attempt = 0; attempt < 30; attempt++) {
+            await measured.query('SELECT pg_stat_clear_snapshot()');
+            calls = Number(
+              (
+                await measured.query(
+                  "SELECT COALESCE(sum(calls),0) count FROM pg_stat_user_functions WHERE schemaname='moria' AND funcname IN ('native_filesystem_acl_targets_state','native_filesystem_acl_targets_operations_state')",
+                )
+              ).rows[0].count,
+            );
+            if (calls) break;
+            await delay(10);
+          }
+          const origins = Number(
+            (
+              await measured.query('SELECT cardinality(moria.runtime_data_origins($1,$2)) count', [
+                environment,
+                unit.resource.resourceId,
+              ])
+            ).rows[0].count,
+          );
+          assert.equal(
+            calls,
+            origins,
+            'Each current origin graph is traversed once for all requested operations',
+          );
+        } finally {
+          await measured.query("SET track_functions='none'");
+          measured.release();
+        }
+
+        const operationDefinition = (
+          await db.pool.query(
+            "SELECT pg_get_functiondef('moria.native_serving_filesystem_resource_access_operations_state(jsonb,text,text[])'::regprocedure) definition",
+          )
+        ).rows[0].definition as string;
+        await db.pool.query(
+          operationDefinition.replace(
+            'moria.native_serving_filesystem_resource_access_operations_state(',
+            'moria.acl_operations_probe(',
+          ),
+        );
+        await db.pool.query(
+          'REVOKE ALL ON FUNCTION moria.acl_operations_probe(jsonb,text,text[]) FROM PUBLIC',
+        );
+        const observed = await db.pool.connect();
+        try {
+          await db.pool.query(
+            "CREATE OR REPLACE FUNCTION moria.native_serving_filesystem_resource_access_operations_state(state jsonb,resource text,operations text[]) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$ BEGIN PERFORM set_config('moria.test_acl_operations',to_jsonb(operations)::text,false); RETURN moria.acl_operations_probe(state,resource,operations); END $$",
+          );
+          for (const requested of [
+            ['read'],
+            ['write'],
+            ['read', 'write'],
+            ['read', 'write', 'publish'],
+          ]) {
+            await batch(
+              requested.map((operation) => ({ resource: unit.resource.resourceId, operation })),
+              observed,
+            );
+            const operations = JSON.parse(
+              (
+                await observed.query(
+                  "SELECT current_setting('moria.test_acl_operations') operations",
+                )
+              ).rows[0].operations,
+            ) as string[];
+            assert.deepEqual(operations.sort(), [...new Set(['read', ...requested])].sort());
+          }
+        } finally {
+          await db.pool.query(operationDefinition);
+          await db.pool.query('DROP FUNCTION moria.acl_operations_probe(jsonb,text,text[])');
+          observed.release();
+        }
+
+        for (const deniedOperation of ['read', 'write'] as const) {
+          await security.setPolicy('operator', entry, deniedOperation === 'read' ? '0' : '1', {
+            markings: [],
+            grants: [
+              {
+                subject: { kind: 'principal', id: instanceId },
+                operations: [deniedOperation],
+                effect: 'deny',
+                inherit: false,
+              },
+            ],
+          });
+          const allowedOperation = deniedOperation === 'read' ? 'write' : 'read';
+          assert.deepEqual(
+            await batch([{ resource: unit.resource.resourceId, operation: allowedOperation }]),
+            [['protected']],
+          );
+          await assert.rejects(
+            batch([{ resource: unit.resource.resourceId, operation: deniedOperation }]),
+            { message: 'FORBIDDEN' },
+          );
+          await assert.rejects(scalar(deniedOperation), { message: 'FORBIDDEN' });
+        }
+        await security.setPolicy('operator', entry, '2', { markings: [], grants: [] });
+        const definition = (
+          await db.pool.query(
+            "SELECT pg_get_functiondef('moria.native_serving_filesystem_resource_access_operations_state(jsonb,text,text[])'::regprocedure) definition",
+          )
+        ).rows[0].definition as string;
+        const gateKey = BigInt.asIntN(
+          64,
+          BigInt('0x' + randomUUID().replaceAll('-', '').slice(0, 16)),
+        ).toString();
+        const barrier = await db.pool.connect(),
+          concurrent = await db.pool.connect();
+        let inFlight: Promise<{ value?: string[][]; error?: unknown }> | undefined;
+        try {
+          await db.pool.query(
+            definition.replace(
+              'moria.native_serving_filesystem_resource_access_operations_state(',
+              'moria.acl_snapshot_probe(',
+            ),
+          );
+          await db.pool.query(
+            'REVOKE ALL ON FUNCTION moria.acl_snapshot_probe(jsonb,text,text[]) FROM PUBLIC',
+          );
+          await db.pool.query(
+            'CREATE OR REPLACE FUNCTION moria.native_serving_filesystem_resource_access_operations_state(state jsonb,resource text,operations text[]) RETURNS jsonb LANGUAGE plpgsql STABLE AS $$ DECLARE result jsonb; BEGIN result:=moria.acl_snapshot_probe(state,resource,operations); PERFORM pg_advisory_xact_lock(' +
+              gateKey +
+              '::bigint); RETURN result; END $$',
+          );
+          await barrier.query('SELECT pg_advisory_lock($1::bigint)', [gateKey]);
+          const pid = Number((await concurrent.query('SELECT pg_backend_pid() pid')).rows[0].pid);
+          inFlight = batch(requests, concurrent).then(
+            (value) => ({ value }),
+            (error) => ({ error }),
+          );
+          let blocked = false;
+          for (let attempt = 0; attempt < 500; attempt++) {
+            blocked = Boolean(
+              (await db.pool.query('SELECT cardinality(pg_blocking_pids($1))>0 blocked', [pid]))
+                .rows[0].blocked,
+            );
+            if (blocked) break;
+            await delay(10);
+          }
+          assert(blocked, 'The actual batch must reach the held post-geometry barrier');
+          await security.setPolicy('operator', entry, '3', {
+            markings: [],
+            grants: [
+              {
+                subject: { kind: 'principal', id: instanceId },
+                operations: ['write'],
+                effect: 'deny',
+                inherit: false,
+              },
+            ],
+          });
+          await barrier.query('SELECT pg_advisory_unlock($1::bigint)', [gateKey]);
+          const captured = await inFlight;
+          assert.equal(captured.error, undefined);
+          assert.deepEqual(captured.value, [['protected'], ['protected'], ['protected']]);
+          await assert.rejects(batch(), { message: 'FORBIDDEN' });
+          await assert.rejects(scalar('write'), { message: 'FORBIDDEN' });
+          assert.deepEqual(
+            (
+              await db.pool.query(
+                "SELECT proname,provolatile FROM pg_proc WHERE pronamespace='moria'::regnamespace AND proname=ANY($1) ORDER BY proname",
+                [
+                  [
+                    'native_filesystem_acl_targets_operations_state',
+                    'native_serving_filesystem_resource_access_operations_state',
+                    'native_serving_resource_access_batch_state',
+                  ],
+                ],
+              )
+            ).rows.map((row: { provolatile: string }) => row.provolatile),
+            ['s', 's', 's'],
+          );
+        } finally {
+          await barrier.query('SELECT pg_advisory_unlock($1::bigint)', [gateKey]);
+          if (inFlight) await inFlight;
+          await db.pool.query(definition);
+          await db.pool.query(
+            'DROP FUNCTION IF EXISTS moria.acl_snapshot_probe(jsonb,text,text[])',
+          );
+          barrier.release();
+          concurrent.release();
+        }
+        await security.setPolicy('operator', entry, '4', { markings: [], grants: [] });
+        await security.setPolicy('operator', unit.declaration.id, '1', {
+          markings: [{ environment, marking: 'protected' }],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['read'],
+              effect: 'deny',
+              inherit: false,
+            },
+          ],
+        });
+        await assert.rejects(batch(), { message: 'FORBIDDEN' });
+        await security.setPolicy('operator', unit.declaration.id, '2', {
+          markings: [{ environment, marking: 'protected' }],
+          grants: [],
+        });
+        assert.deepEqual(await batch(), [['protected'], ['protected'], ['protected']]);
+
+        await security.setPolicy('operator', deniedEntry, '0', {
+          markings: [],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['write'],
+              effect: 'deny',
+              inherit: false,
+            },
+          ],
+        });
+        await filesystem.apply(context, randomUUID(), [
+          {
+            op: 'delete',
+            id: gone.declaration.id,
+            expectedRevision: (await store.get(gone.declaration.id)).revision,
+            expectedParentRevision: (await store.get(gone.declarations.id)).revision,
+          },
+        ]);
+        const unproved = await directory(project.id, 'missing-proof-origin');
+        const client = await db.pool.connect();
+        try {
+          await client.query('BEGIN');
+          // Deliberately incomplete lineage is confined to a rolled-back negative fixture.
+          await client.query(
+            "INSERT INTO moria.fs_resource_bindings(environment,reference,project_id,entry_id,root_id,digest) SELECT environment,'missing-proof',project_id,$1,root_id,digest FROM moria.fs_resource_bindings WHERE entry_id=$2",
+            [unproved.id, entry],
+          );
+          await client.query('INSERT INTO moria.fs_provenance(entry_id,source_id) VALUES($1,$2)', [
+            entry,
+            unproved.id,
+          ]);
+          const missing = { resource: unit.resource.resourceId, operation: 'read' },
+            forbidden = { resource: denied.resource.resourceId, operation: 'write' },
+            absent = { resource: gone.resource.resourceId, operation: 'read' };
+          for (const [values, message] of [
+            [[missing, forbidden], 'SOURCE_FILE_PROOF_REQUIRED'],
+            [[forbidden, missing], 'FORBIDDEN'],
+            [[missing, absent], 'SOURCE_FILE_PROOF_REQUIRED'],
+            [[absent, missing], 'NOT_FOUND'],
+            [[forbidden, absent], 'FORBIDDEN'],
+            [[absent, forbidden], 'NOT_FOUND'],
+            [
+              [missing, { resource: unit.resource.resourceId, operation: 'unsupported' }],
+              'SOURCE_FILE_PROOF_REQUIRED',
+            ],
+            [
+              [{ resource: unit.resource.resourceId, operation: 'unsupported' }, missing],
+              'FORBIDDEN',
+            ],
+            [[absent, null], 'NOT_FOUND'],
+            [[null, absent], 'FORBIDDEN'],
+            [
+              [missing, { resource: unit.resource.resourceId, operation: 'read', extra: true }],
+              'SOURCE_FILE_PROOF_REQUIRED',
+            ],
+            [
+              [{ resource: unit.resource.resourceId, operation: 'read', extra: true }, missing],
+              'FORBIDDEN',
+            ],
+          ] as [unknown[], string][]) {
+            await client.query('SAVEPOINT denied_batch');
+            await assert.rejects(batch(values, client), (error: unknown) => {
+              assert(error instanceof pg.DatabaseError);
+              assert.equal(error.message, message);
+              assert.equal(error.code, 'P0001');
+              assert.equal(error.detail, undefined);
+              assert.equal('rows' in error, false);
+              return true;
+            });
+            await client.query('ROLLBACK TO SAVEPOINT denied_batch');
+          }
+        } finally {
+          await client.query('ROLLBACK');
+          client.release();
+        }
+        const role = 'multi_operation_' + randomUUID().replaceAll('-', '');
+        await db.pool.query('CREATE ROLE ' + role);
+        await db.pool.query('GRANT USAGE ON SCHEMA moria TO ' + role);
+        const restricted = await db.pool.connect();
+        try {
+          for (const sql of [
+            "SELECT moria.native_filesystem_acl_targets_operations_state('{}'::jsonb,ARRAY[$1]::uuid[],ARRAY['read','write'],false)",
+            "SELECT moria.native_serving_filesystem_resource_access_operations_state('{}'::jsonb,$1,ARRAY['read','write'])",
+          ]) {
+            await restricted.query('BEGIN');
+            await restricted.query('SET LOCAL ROLE ' + role);
+            await assert.rejects(restricted.query(sql, [entry]), { code: '42501' });
+            await restricted.query('ROLLBACK');
+          }
+        } finally {
+          await restricted.query('ROLLBACK');
+          restricted.release();
+        }
+      },
+    );
+    await t.test(
       'repeated Source history keeps current classification checks authoritative',
       async () => {
         const unit = await isolatedOntology('history_authority');
@@ -545,6 +1020,27 @@ test(
           ]);
         assert.deepEqual((await current()).rows[0].labels, ['protected']);
         assert.deepEqual((await pinned(old.digest)).rows[0].labels, ['protected']);
+        const releaseMeasurement = await db.pool.connect();
+        try {
+          await releaseMeasurement.query('BEGIN');
+          await releaseMeasurement.query("SET LOCAL track_functions='pl'");
+          const labels = await releaseMeasurement.query(
+            'SELECT moria.native_resource_release_access($1,$2,$3,$4) labels',
+            [hash, unit.resource.resourceId, 'read', old.digest],
+          );
+          assert.deepEqual(labels.rows[0].labels, ['protected']);
+          const leaf = await releaseMeasurement.query(
+            "SELECT calls::int FROM pg_stat_xact_user_functions WHERE schemaname='moria' AND funcname='native_filesystem_acl_targets_operations_state'",
+          );
+          assert.equal(
+            leaf.rows[0]?.calls,
+            1,
+            'Live target and pinned files share one ACL closure',
+          );
+        } finally {
+          await releaseMeasurement.query('ROLLBACK');
+          releaseMeasurement.release();
+        }
         const declarationBatch = (requests: unknown[]) =>
           db.pool.query('SELECT moria.native_source_declaration_labels_batch($1,$2) labels', [
             hash,
@@ -710,6 +1206,28 @@ test(
         );
         assert.deepEqual((await pinned(replacement.digest)).rows[0].labels, ['protected']);
         await assert.rejects(pinned(old.digest), { message: 'NOT_FOUND' });
+        const missingRelease = 'sha256:' + '0'.repeat(64);
+        await assert.rejects(pinned(missingRelease), { message: 'SOURCE_FILE_PROOF_REQUIRED' });
+        await security.setPolicy('operator', unit.resource.entryId, '0', {
+          markings: [],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['read'],
+              effect: 'deny',
+              inherit: false,
+            },
+          ],
+        });
+        try {
+          await assert.rejects(pinned(replacement.digest), { message: 'FORBIDDEN' });
+          await assert.rejects(pinned(missingRelease), { message: 'FORBIDDEN' });
+        } finally {
+          await security.setPolicy('operator', unit.resource.entryId, '1', {
+            markings: [],
+            grants: [],
+          });
+        }
         assert.deepEqual(
           (
             await declarationBatch([
@@ -744,6 +1262,54 @@ test(
           ]),
           { message: 'NOT_FOUND' },
         );
+
+        const upstream = await isolatedOntology('historical_data_origin');
+        const upstreamDataset = upstream.first.resources.find(
+          (resource) => resource.reference === 'historical_data_origin/Dataset/source',
+        )!.id;
+        const admissionOperations = [
+          readOperation,
+          `${unit.resource.resourceId}:write`,
+          `${upstreamDataset}:read`,
+        ];
+        await authority.setApplication(
+          environment,
+          'operator',
+          readerApplication,
+          admissionOperations,
+        );
+        await authority.setGrants(
+          environment,
+          'operator',
+          principal,
+          readerApplication,
+          admissionOperations,
+        );
+        await db.catalog.transaction(
+          (client) =>
+            db.catalog.admitDataProvenance(
+              client,
+              hash,
+              [unit.resource.resourceId],
+              [upstreamDataset],
+              'write',
+            ),
+          environment,
+        );
+        assert.deepEqual((await pinned(replacement.digest)).rows[0].labels, ['protected']);
+        const upstreamEntry = (await source.resource(context, upstreamDataset)).entryId;
+        await security.setPolicy('operator', upstreamEntry, '0', {
+          markings: [],
+          grants: [
+            {
+              subject: { kind: 'principal', id: instanceId },
+              operations: ['read'],
+              effect: 'deny',
+              inherit: false,
+            },
+          ],
+        });
+        await assert.rejects(pinned(replacement.digest), { message: 'FORBIDDEN' });
       },
     );
     await t.test(

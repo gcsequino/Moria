@@ -1,0 +1,10 @@
+[
+  "python3",
+  "/home/gcseq/moria-proofs/job-session-reuse-red-20261104/run-quality.py",
+  "sha256:1c874a4cea1dcad9fb84740c9a4e56e8c24c0458f191286d1767653f417c326c",
+  "/app/node_modules/.bin/tsx",
+  "--test",
+  "--test-concurrency=1",
+  "--test-reporter=tap",
+  "tests/native-job-authority.integration.test.ts"
+]

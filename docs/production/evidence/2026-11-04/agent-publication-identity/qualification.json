@@ -1,0 +1,104 @@
+{
+  "sourceBase": "0c36f771d0488e3a683831626b88cf1c4c88253d",
+  "nativeImage": "sha256:f6f644c0f029b1e70bb148f05fcf7f9a87cc8376403f1c2162c28888a712d5ee",
+  "nativeInputsDigest": "5700a15b17540caa0ef43de8cbdbeb042fc01d5afcb911b6b5d22b3fe1f2369e",
+  "sourceArchiveSha256": "9965f1f77b01ab37c31b943b049aeb3f2f0b31d237e2e13c857729aeb116d640",
+  "sourceManifestSha256": "082efa04ccf0d142d7e8b7ef8ad81f47e91dcf09039d240f90974c11bd5d9f0f",
+  "nativeBuild": {
+    "exitCode": 0,
+    "wallSeconds": 46.20105158101069
+  },
+  "staticAndProvenance": {
+    "exitCode": 0,
+    "wallSeconds": 28.975039124998148,
+    "nativeUnitsPassed": 117,
+    "nativeUnitsIgnored": 0,
+    "artifactsVerified": 9
+  },
+  "nativeInputEquality": {
+    "nativeInputCount": 144,
+    "checkoutMatchesQualifiedSource": true,
+    "exactBaselineNativeInputChanges": [
+      "services/runtime/src/agents.rs",
+      "services/runtime/src/functions.rs",
+      "services/runtime/src/platform.rs"
+    ]
+  },
+  "artifacts": {
+    "moria-indexing-tests": "7415a36ef155860993718dc4332e17d469f3ab1f4110b7be52f9277a0b47916c",
+    "moria-native-transport-test": "44e1cff6daf8e7d54058c0cdeecb03d66775d1447d2fdb9a5616ef59d67bc355",
+    "moria-native-storage-test": "a87cfcac7bafd42a3b8e7c3817aba596f4ee99696551a5ce45832cbda7e3f37d",
+    "moria-native-sandbox-test": "36d446cdcc39a566d1e16fbc7b5f7d68cea74bdb14d459516b0489cd552e7e1f",
+    "moria-native-retention-test": "f7964647a350767a9e03ffa6ecd785d4c4cb2924bac2e1c78516bc810cf04f81",
+    "moria-native-policy-test": "38d1cbda67daf85a0a42a27c4b4afe69947c4cc912752002373dde057710bf7c",
+    "moria-native-catalog-test": "a84ccded3fa28fba2de096087b2378de00da375e71d60817351395bb023415c8",
+    "moria-indexing": "f1c72300295a4a1b8f4f61298ffbb19fe2520dd14d301c9f55282e53e0c2a78c",
+    "moria-runtime": "cba5c50ce6189a0b6285146f81ee793dc1ef0c154ec9e28a1ce0606ed9b05130"
+  },
+  "pairedExactTransactionCount": {
+    "before": 6,
+    "after": 4,
+    "oneRealReceiptBothRevisions": true,
+    "usesCommittedReceiptXmin": true,
+    "scope": "Unique one-shot nonowning inherited database role; writable transactions only; exact original guard restored.",
+    "baseline": {
+      "exitCode": 1,
+      "wallSeconds": 83.87325057199632,
+      "controllerAbsent": true,
+      "labelledChildrenAbsent": true,
+      "scratchPoolsAndTemporaryAbsent": true,
+      "nativeImage": "sha256:50eb26b292c3be5566388ecd7e0f92dd12cc178fca9cfdcd4ff15c3ada80353d",
+      "fixtureOnlyOverlay": "sha256:9812a1341ea6a7497da03d6e6ee4a24e13a8b93c816effeac5cc281b61d80494",
+      "rootWallSeconds": 81.930179421,
+      "rootDeadlineSeconds": 300,
+      "originalSiblingCasesPassed": 5,
+      "failure": "Only the new exact-count assertion fails after successful result and one receipt: 6 != 4."
+    }
+  },
+  "fullAgents": {
+    "exitCode": 0,
+    "wallSeconds": 373.22758838700247,
+    "controllerAbsent": true,
+    "labelledChildrenAbsent": true,
+    "scratchPoolsAndTemporaryAbsent": true,
+    "tests": 24,
+    "passed": 24,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "rootWallSeconds": [
+      81.811265981,
+      126.52515577,
+      162.665096143
+    ],
+    "rootDeadlineSeconds": 300
+  },
+  "priorUnattributedCounter": {
+    "run": "red-guard-count001",
+    "observedCalls": 7,
+    "reason": "Cumulative function statistics could not attribute the extra observed call to the committed receipt transaction. This run is retained but not used for the paired count."
+  },
+  "rawProofDirectory": "/home/gcseq/moria-proofs/agent-publication-20261105",
+  "remaining": [
+    "The original service Evaluation, whole-instance and complete independent quality gates remain open.",
+    "A reduced guard count does not certify latency, throughput or production capacity."
+  ],
+  "fullFunctions": {
+    "exitCode": 0,
+    "wallSeconds": 75.7141836219962,
+    "tests": 18,
+    "passed": 18,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "rootWallSeconds": 73.447794063,
+    "controllerAbsent": true,
+    "labelledChildrenAbsent": true,
+    "scratchPoolsAndTemporaryAbsent": true
+  },
+  "firstFunctionLaunch": {
+    "exitCode": 1,
+    "driverStarted": false,
+    "error": "WSL service 0x8007274c before Python launch; no controller or scratch allocation created"
+  }
+}

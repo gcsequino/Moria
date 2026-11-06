@@ -1,0 +1,17 @@
+{
+  "tree": "d3d15699c0735b2e5d70925cd9ab56e8891015c4",
+  "firstParent": "bf7812914e54a21b2a2eb42f27f97c9eb6e27bbe",
+  "secondParent": "3bdc3084ca7b9f0b6170498264f3802da417667b",
+  "rawFailureEvidenceWhitespacePreserved": true,
+  "nativeSourceDigest": "26b02596380afc801a0d40a264748d06dce13be88d18fb43dd572fd14dc3964d",
+  "image": "sha256:9bed2e716b4b722e8595f018d28a1e340ec320b72776fa969073ae9635367328",
+  "nativeArtifacts": 9,
+  "nativeUnitTests": {
+    "passed": 109,
+    "failed": 0,
+    "ignored": 0
+  },
+  "static": "passed",
+  "proof": "/home/gcseq/moria-proofs/combined-dataset-journal-20261105",
+  "incrementalActivationAndCapacity": "pending"
+}

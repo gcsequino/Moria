@@ -2,6 +2,7 @@ import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
 import { request } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { MoriaError } from '../../../packages/contracts/types.js';
 import { functionLimits, type FunctionLimits, type FunctionWorker } from './worker.js';
 
@@ -129,9 +130,11 @@ export class DockerFunctionWorker implements FunctionWorker {
     let failure: unknown,
       result: unknown,
       received = false,
+      acknowledged = false,
       total = 0,
       buffer = Buffer.alloc(0),
       chain = Promise.resolve();
+    let completionNonce: string | undefined;
     const calls = new Set<string>();
     const child = spawn(
       'docker',
@@ -149,8 +152,10 @@ export class DockerFunctionWorker implements FunctionWorker {
       });
     });
     let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
+    let cleanup: Promise<void> | undefined;
+    const remove = () => (cleanup ??= this.remove(id));
     const stop = () => {
-      void this.remove(id).catch(() => {});
+      void remove().catch(() => {});
       cleanupTimer ??= setTimeout(() => child.kill('SIGKILL'), 12000);
     };
     const abort = () => {
@@ -206,9 +211,21 @@ export class DockerFunctionWorker implements FunctionWorker {
           .then(async () => {
             if (failure) return;
             const message = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(line));
-            if (!message || message.version !== 1 || received)
+            if (
+              !message ||
+              message.version !== 1 ||
+              acknowledged ||
+              (received && message.type !== 'completed')
+            )
               throw new MoriaError('FUNCTION_PROTOCOL', 'Invalid worker protocol');
             if (
+              message.type === 'completed' &&
+              received &&
+              message.nonce === completionNonce &&
+              Object.keys(message).sort().join(',') === 'nonce,type,version'
+            )
+              acknowledged = true;
+            else if (
               message.type === 'result' &&
               Object.keys(message).sort().join(',') === 'type,value,version'
             ) {
@@ -225,7 +242,8 @@ export class DockerFunctionWorker implements FunctionWorker {
                 );
               if (usage > cpu)
                 throw new MoriaError('FUNCTION_CPU_LIMIT', 'Function CPU budget exceeded');
-              await write({ version: 1, type: 'complete' });
+              completionNonce = randomUUID();
+              await write({ version: 1, type: 'complete', nonce: completionNonce });
             } else if (
               message.type === 'error' &&
               Object.keys(message).sort().join(',') === 'type,version'
@@ -278,7 +296,7 @@ export class DockerFunctionWorker implements FunctionWorker {
       const code = await exited;
       await chain;
       if (failure) throw failure;
-      if (code !== 0 || !received || buffer.length)
+      if (code !== 0 || !received || !acknowledged || buffer.length)
         throw new MoriaError('FUNCTION_FAILED', 'Function worker exited without a valid result');
       return result;
     } finally {
@@ -287,7 +305,7 @@ export class DockerFunctionWorker implements FunctionWorker {
       if (cleanupTimer) clearTimeout(cleanupTimer);
       signal.removeEventListener('abort', abort);
       child.stdin.destroy();
-      await this.remove(id);
+      await remove();
     }
   }
 }

@@ -1,0 +1,18 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph.integration.test.ts
+Running 1 integration test files.
+✖ qualified graph bootstrap preserves standard Iceberg rows and exact array keys (120827.343066ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 121393.127404
+
+✖ failing tests:
+
+test at tests/native-dataset-graph.integration.test.ts:1:245
+✖ qualified graph bootstrap preserves standard Iceberg rows and exact array keys (120827.343066ms)
+  'test timed out after 120000ms'
+[ELIFECYCLE] Command failed with exit code 1.

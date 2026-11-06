@@ -1,0 +1,60 @@
+{"controller": "moria-quality-550d6bb9-0efc-4ebd-b531-1722f0bf687e", "image": "sha256:a8aaa4c1978168b51068f15f0a3452424fcee7b8169e8e2c6770fd9faa40a0d7", "scratchPools": ["/tmp/moria-engine-scratch-96726605-2ee0-41d4-8402-3f0b76993fb6", "/tmp/moria-engine-scratch-8d31cd94-2cf4-4eff-aafa-f323d279b86b", "/tmp/moria-engine-scratch-87ea4295-968e-4670-a063-723cd9bb0e31"], "temporary": "/tmp/moria-quality-n486e6so"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 561ms using pnpm v11.25.0
+✖ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (36939.022966ms)
+✖ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (70761.02058ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 108210.575387
+
+✖ failing tests:
+
+test at tests/native-source-delta.integration.test.ts:14:3
+✖ real v2 Source windows retain superseded intermediate roots and qualify resumable journal pages (36939.022966ms)
+  Error [ApiError]: INTERNAL
+      at decode (/qualified/packages/platform/src/transport.ts:85:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async prepareManagedSource (/qualified/tests/fixtures/native-source-store/managed.ts:136:3)
+      at async TestContext.<anonymous> (/qualified/tests/native-source-delta.integration.test.ts:44:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    status: 500,
+    code: 'INTERNAL',
+    correlationId: '78cbe7d9-e369-4834-8df4-1d151af0599d',
+    retryable: false,
+    details: null
+  }
+
+test at tests/native-source-delta.integration.test.ts:14:3
+✖ real v3 Source windows retain superseded intermediate roots and qualify resumable journal pages (70761.02058ms)
+  Error [ApiError]: INTERNAL
+      at decode (/qualified/packages/platform/src/transport.ts:85:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async prepareManagedSource (/qualified/tests/fixtures/native-source-store/managed.ts:136:3)
+      at async TestContext.<anonymous> (/qualified/tests/native-source-delta.integration.test.ts:44:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    status: 500,
+    code: 'INTERNAL',
+    correlationId: '1594dd52-ff99-4cce-8781-5ea0b199348a',
+    retryable: false,
+    details: null
+  }

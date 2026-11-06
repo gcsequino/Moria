@@ -1,0 +1,8 @@
+{
+  "archiveSha256": "3c1f46e6f4f72297ebc66ca767bfd80a7083547aef4038f2213dc0fd098e7f1d",
+  "manifestSha256": "3c5a6a65e0005ada73b8521079ad4ce8655a82e39f2177eed48c324106a8ccf5",
+  "nativeInputDigest": "6566d4bc2bbcf65473e595fd562deeaf67a51ccf3632bf4d6927907cee10f004",
+  "archive": "/home/gcseq/moria-proofs/sandbox-wallclock-renewal-native-20261105/source.tar.gz",
+  "manifest": "/home/gcseq/moria-proofs/sandbox-wallclock-renewal-native-20261105/source.tar.manifest.json",
+  "manifestEntries": 3137
+}

@@ -1,0 +1,137 @@
+{
+  "base": "b3199a35c16d1f089deb4d364ef31b1cf314b702",
+  "classification": "Closed unpublished v3 candidate expiry and bounded graph cleanup; published history keeps its existing maintenance retirement. Production output selection remains unchanged.",
+  "image": "sha256:286b1773647272e49ccdfb80b9833355361a5dc1b395d1b1348b61008fef035b",
+  "nativeSourceDigest": "e2f6c47660b53578f315df7526066e37179f0fc3971f318f2ab3e89498447746",
+  "sourceHashes": {
+    "services/database/src/dataset-graph-schema.ts": "a7e95b43a68c075be110ddc7f2f104b0a77fdb178160d3f3190d9ae8afe5d34d",
+    "services/runtime/schema.json": "8d1f608a2ba366bf3f3d824516cec04c0aec3211d675212966eed68041dca218",
+    "services/runtime/src/dataset_retention/collect.rs": "fae0bf79ddbffa2ae25d0341f46f1a55e648aad589355a0af819fd16cd297f9f",
+    "tests/fixtures/native-catalog/harness.rs": "329a8ac296bdefbfe12f6b1614d6e35adca6df8f0176c6c73d2344aa01259ffb",
+    "tests/native-dataset-v3-abandoned.integration.test.ts": "ce00a614bb7cb618c3646867e554227a730a2e550ecd702f6391bba8571f2b18"
+  },
+  "artifacts": {
+    "moria-native-transport-test": {
+      "sha256": "de6a2a17a4199ed5b8a385f321a742c5dec482161c1daa1981670026d7e66037",
+      "bytes": 26624216
+    },
+    "moria-native-storage-test": {
+      "sha256": "28c507811f38701f990ebe2339c29b2b4de5364233ffbcf3daaecc574c3ce431",
+      "bytes": 101942664
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "284cdb6adcf75d6a99608e08a1c3189a9db60f17fcbfba0f334c1dee147e90d5",
+      "bytes": 57630080
+    },
+    "moria-native-retention-test": {
+      "sha256": "5be45678562b7527848253c6488f28b5160efea469f83ff69806888d67e43f09",
+      "bytes": 27093816
+    },
+    "moria-native-policy-test": {
+      "sha256": "288d076a1c40d815f6859c9791e509797e7d3fb93167fb74428c2affb0ae3bdc",
+      "bytes": 22286968
+    },
+    "moria-native-catalog-test": {
+      "sha256": "96931246abcdf8c724e4bd78f4b91288711a040e803b8e45f2f23af5874acdb9",
+      "bytes": 117320872
+    },
+    "moria-indexing-tests": {
+      "sha256": "77a8d54f3dd3d79e8a97cd20981d945a9be0c22963647a694886fb3d7f57ade1",
+      "bytes": 83339816
+    },
+    "moria-indexing": {
+      "sha256": "46d2bfde290a2eb15d41a8aa4655f41fc4ca6d0291ba51cbdad212a2b17b7102",
+      "bytes": 161311136
+    },
+    "moria-runtime": {
+      "sha256": "fa535e98193e4c2b5f5a3d4374cd35587e51f8374d71ad834c8bebfd08912f49",
+      "bytes": 161311128
+    }
+  },
+  "nativeBuild": {
+    "exitCode": 0,
+    "seconds": 21.084721943996556,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "jobs": 1,
+    "executables": 9
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 18.645485647997702
+  },
+  "exactStaticAndIndexing": {
+    "exitCode": 0,
+    "seconds": 26.905690544001118,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "failedPredecessors": {
+    "040": {
+      "gate": "prebuild static",
+      "exitCode": 1,
+      "reason": "TypeScript cyclic inference in the new bounded GC receipt/cursor loop; fixed explicit receipt type; no native compile or integration from this source"
+    },
+    "041": {
+      "gate": "real private expiry integration",
+      "exitCode": 1,
+      "controllerSeconds": 34.66022589500062,
+      "publicError": "INDEXING_DATABASE_ERROR",
+      "observedRollback": [
+        "Stage remains candidate",
+        "No expired root marker",
+        "Published head unchanged",
+        "Immutable journal unchanged"
+      ],
+      "diagnosis": "The private GC-plan operation is not a maintenance-run ID, but the graph expiry trigger inserts it into the maintenance-run foreign key. Public error mapping does not expose SQLSTATE.",
+      "controllerAbsent": true
+    }
+  },
+  "remaining": [
+    "V3 graph metadata pruning and production output dispatch",
+    "Actual EngineIO/Evaluation/Indexing integration against v3 heads",
+    "Sparse standard position-delete producer and independent reader oracle",
+    "Distributed bootstrap and mutation journal/incremental Source chain pins",
+    "Production workload qualification and full independent CI"
+  ],
+  "actualUnpublishedCandidate": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 300,
+    "rootSeconds": 38.617216811999995,
+    "controllerSeconds": 39.86928836900188,
+    "assertions": [
+      "Genuine second graph candidate prepared and attached without publication",
+      "Actual execution cancelled through normal native command",
+      "Stage abandoned, root reference absent and propagation queue drained",
+      "Private root expired with actual GC-plan origin and garbage candidate",
+      "No maintenance-run or history-retirement row invented",
+      "Published baseline head, immutable journal and typed read preserved"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "publishedV3CustodyRegression": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 300,
+    "rootSeconds": 84.33879535099999,
+    "controllerSeconds": 85.7774983929994,
+    "assertions": [
+      "Original published v3 history expiry uses actual maintenance run",
+      "Pinned-version backup despite newer current copy",
+      "Successor policy drains original retirement; propagation protects bytes",
+      "Source root exact-version collection after orphan grace",
+      "Fresh-prefix restore, current/retained typed reads and remapped journal",
+      "Fresh receiver qualifications and original failure-disabled dispatch checks"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  }
+}

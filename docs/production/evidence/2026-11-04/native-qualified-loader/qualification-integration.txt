@@ -1,0 +1,22 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-qualification.integration.test.ts
+Running 1 integration test files.
+✔ qualified bootstrap rejects head mismatch without publishing a sidecar (23742.943148ms)
+ℹ {"fault":"head","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects profile mismatch without publishing a sidecar (21120.373866ms)
+ℹ {"fault":"profile","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects physical mismatch without publishing a sidecar (19046.927374ms)
+ℹ {"fault":"physical","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects incarnation mismatch without publishing a sidecar (17323.187275ms)
+ℹ {"fault":"incarnation","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects memberVersion mismatch without publishing a sidecar (19476.818557ms)
+ℹ {"fault":"memberVersion","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects missingMember mismatch without publishing a sidecar (13378.35744ms)
+ℹ {"fault":"missingMember","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 114551.085557

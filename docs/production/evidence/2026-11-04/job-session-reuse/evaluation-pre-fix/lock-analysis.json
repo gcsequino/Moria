@@ -1,0 +1,1048 @@
+{
+  "scope": "first Evaluation subcase only; seven explicit diagnostic skips; no product/runtime/assertion/deadline changes",
+  "rawLogSha256": "a3fe7edc836708a1e84790acc6acfdc21448cb5ff4b6197d31fbe43b927ba924",
+  "rawLogBytes": 14554188,
+  "samples": 235,
+  "sampleRange": [
+    0,
+    234
+  ],
+  "parseErrors": [],
+  "blockedSamples": 166,
+  "workerProcessSocketMapping": {
+    "46837": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "59620": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "59672": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "60458": {
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ]
+    },
+    "60510": {
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ]
+    },
+    "60538": {
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ]
+    },
+    "60550": {
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ]
+    },
+    "60466": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60476": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60564": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60568": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60470": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "60478": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "60494": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "60506": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "60586": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60600": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60610": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60640": {
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    "60660": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "60666": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "60674": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52244": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52274": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52280": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52358": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52368": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52424": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52458": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52480": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52508": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52562": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52548": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52582": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52600": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52588": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52670": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52650": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52678": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "52686": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52710": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52726": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52732": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52748": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52760": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "52768": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55090": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55098": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55114": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55154": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55204": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55300": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55242": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55284": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55360": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55362": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55420": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55430": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55438": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55510": {
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    "55486": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55500": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    "55512": {
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    }
+  },
+  "longestBlockingObservations": [
+    {
+      "sample": 233,
+      "at": "2026-11-04T20:13:55.649Z",
+      "queryMillis": 12769,
+      "waiter": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "12769",
+        "query_millis": "12769",
+        "blockers": [
+          475
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 475,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "client_port": 55486,
+        "backend_xid": "12937",
+        "backend_xmin": "12937",
+        "transaction_millis": "551",
+        "query_millis": "2",
+        "blockers": [],
+        "query": "SELECT moria.runtime_execution_check($1)"
+      },
+      "blockerPid": 475,
+      "blockerProcess": {
+        "pid": 339,
+        "arguments": [
+          "functions",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 232,
+      "at": "2026-11-04T20:13:55.545Z",
+      "queryMillis": 12666,
+      "waiter": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "12666",
+        "query_millis": "12666",
+        "blockers": [
+          370
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 370,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "idle in transaction",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "client_port": 60640,
+        "backend_xid": "12866",
+        "backend_xmin": "12866",
+        "transaction_millis": "816",
+        "query_millis": "42",
+        "blockers": [],
+        "query": "SELECT moria.native_serving_resource_access($1,$2,$3)"
+      },
+      "blockerPid": 370,
+      "blockerProcess": {
+        "pid": 338,
+        "arguments": [
+          "agents",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 231,
+      "at": "2026-11-04T20:13:55.442Z",
+      "queryMillis": 12563,
+      "waiter": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "12563",
+        "query_millis": "12563",
+        "blockers": [
+          370
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 370,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "client_port": 60640,
+        "backend_xid": "12866",
+        "backend_xmin": "12866",
+        "transaction_millis": "713",
+        "query_millis": "12",
+        "blockers": [],
+        "query": "SELECT moria.native_resource_filesystem_access($1,$2,$3)"
+      },
+      "blockerPid": 370,
+      "blockerProcess": {
+        "pid": 338,
+        "arguments": [
+          "agents",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 184,
+      "at": "2026-11-04T20:13:50.376Z",
+      "queryMillis": 4977,
+      "waiter": {
+        "pid": 353,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "tuple",
+        "client_port": 60510,
+        "backend_xid": null,
+        "backend_xmin": "10960",
+        "transaction_millis": "4978",
+        "query_millis": "4977",
+        "blockers": [
+          356
+        ],
+        "query": "SELECT 1 FROM moria.runtime_executions WHERE id=$1 AND owner=$2 AND fence=$3 AND status='preparing' AND lease_until>clock_timestamp() FOR UPDATE"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "7497",
+        "query_millis": "7496",
+        "blockers": [
+          370
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "blockerPid": 356,
+      "blockerProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 183,
+      "at": "2026-11-04T20:13:50.273Z",
+      "queryMillis": 4873,
+      "waiter": {
+        "pid": 353,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "tuple",
+        "client_port": 60510,
+        "backend_xid": null,
+        "backend_xmin": "10960",
+        "transaction_millis": "4874",
+        "query_millis": "4873",
+        "blockers": [
+          356
+        ],
+        "query": "SELECT 1 FROM moria.runtime_executions WHERE id=$1 AND owner=$2 AND fence=$3 AND status='preparing' AND lease_until>clock_timestamp() FOR UPDATE"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "7393",
+        "query_millis": "7393",
+        "blockers": [
+          370
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "blockerPid": 356,
+      "blockerProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 182,
+      "at": "2026-11-04T20:13:50.169Z",
+      "queryMillis": 4769,
+      "waiter": {
+        "pid": 353,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "tuple",
+        "client_port": 60510,
+        "backend_xid": null,
+        "backend_xmin": "10960",
+        "transaction_millis": "4770",
+        "query_millis": "4769",
+        "blockers": [
+          356
+        ],
+        "query": "SELECT 1 FROM moria.runtime_executions WHERE id=$1 AND owner=$2 AND fence=$3 AND status='preparing' AND lease_until>clock_timestamp() FOR UPDATE"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "7290",
+        "query_millis": "7289",
+        "blockers": [
+          404
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "blockerPid": 356,
+      "blockerProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 230,
+      "at": "2026-11-04T20:13:55.340Z",
+      "queryMillis": 4895,
+      "waiter": {
+        "pid": 353,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "tuple",
+        "client_port": 60510,
+        "backend_xid": null,
+        "backend_xmin": "11917",
+        "transaction_millis": "4895",
+        "query_millis": "4895",
+        "blockers": [
+          356
+        ],
+        "query": "UPDATE moria.runtime_executions SET status='failed',error='EVALUATION_FAILED',finished_at=clock_timestamp(),lease_until=NULL WHERE id=$1 AND status='preparing' AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() AND EXISTS(SELECT 1 FROM moria.indexing_instance WHERE incarnation=$4)"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "12437",
+        "query_millis": "12437",
+        "blockers": [
+          363
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "blockerPid": 356,
+      "blockerProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 229,
+      "at": "2026-11-04T20:13:55.213Z",
+      "queryMillis": 4791,
+      "waiter": {
+        "pid": 353,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "tuple",
+        "client_port": 60510,
+        "backend_xid": null,
+        "backend_xmin": "11917",
+        "transaction_millis": "4792",
+        "query_millis": "4791",
+        "blockers": [
+          356
+        ],
+        "query": "UPDATE moria.runtime_executions SET status='failed',error='EVALUATION_FAILED',finished_at=clock_timestamp(),lease_until=NULL WHERE id=$1 AND status='preparing' AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() AND EXISTS(SELECT 1 FROM moria.indexing_instance WHERE incarnation=$4)"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "12334",
+        "query_millis": "12333",
+        "blockers": [
+          363
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "blockerPid": 356,
+      "blockerProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      }
+    },
+    {
+      "sample": 228,
+      "at": "2026-11-04T20:13:55.110Z",
+      "queryMillis": 4689,
+      "waiter": {
+        "pid": 353,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "tuple",
+        "client_port": 60510,
+        "backend_xid": null,
+        "backend_xmin": "11917",
+        "transaction_millis": "4689",
+        "query_millis": "4689",
+        "blockers": [
+          356
+        ],
+        "query": "UPDATE moria.runtime_executions SET status='failed',error='EVALUATION_FAILED',finished_at=clock_timestamp(),lease_until=NULL WHERE id=$1 AND status='preparing' AND owner=$2 AND fence=$3 AND lease_until>clock_timestamp() AND EXISTS(SELECT 1 FROM moria.indexing_instance WHERE incarnation=$4)"
+      },
+      "waiterProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      },
+      "blocker": {
+        "pid": 356,
+        "application_name": "moria-indexing",
+        "usename": "eval_8c3bf08097054a8ea5abdd471e94f653",
+        "state": "active",
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "client_port": 60538,
+        "backend_xid": null,
+        "backend_xmin": "10074",
+        "transaction_millis": "12231",
+        "query_millis": "12230",
+        "blockers": [
+          363
+        ],
+        "query": "SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7)"
+      },
+      "blockerPid": 356,
+      "blockerProcess": {
+        "pid": 337,
+        "arguments": [
+          "evaluations",
+          "worker"
+        ]
+      }
+    }
+  ],
+  "workerEvents": [
+    {
+      "diagnostic": "native-process-start",
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ]
+    },
+    {
+      "diagnostic": "native-process-start",
+      "pid": 324,
+      "arguments": [
+        "models",
+        "probe"
+      ]
+    },
+    {
+      "diagnostic": "native-process-exit",
+      "pid": 324,
+      "arguments": [
+        "models",
+        "probe"
+      ],
+      "code": 0,
+      "signal": null
+    },
+    {
+      "diagnostic": "native-process-start",
+      "pid": 332,
+      "arguments": [
+        "execution",
+        "claim"
+      ]
+    },
+    {
+      "diagnostic": "native-process-stderr",
+      "pid": 332,
+      "arguments": [
+        "execution",
+        "claim"
+      ],
+      "text": "{\"error\":\"FUNCTION_SANDBOX_REQUIRED\"}\n"
+    },
+    {
+      "diagnostic": "native-process-exit",
+      "pid": 332,
+      "arguments": [
+        "execution",
+        "claim"
+      ],
+      "code": 1,
+      "signal": null
+    },
+    {
+      "diagnostic": "native-process-start",
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ]
+    },
+    {
+      "diagnostic": "native-process-start",
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ]
+    },
+    {
+      "diagnostic": "native-process-start",
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ]
+    },
+    {
+      "diagnostic": "native-process-stderr",
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ],
+      "text": "{\"error\":\"RESOURCE_BUSY\"}\n"
+    },
+    {
+      "diagnostic": "native-process-exit",
+      "pid": 337,
+      "arguments": [
+        "evaluations",
+        "worker"
+      ],
+      "code": 1,
+      "signal": null
+    },
+    {
+      "diagnostic": "worker-terminal-stderr",
+      "evaluation": "{\"error\":\"RESOURCE_BUSY\"}\n",
+      "agent": "",
+      "function": ""
+    },
+    {
+      "diagnostic": "native-process-exit",
+      "pid": 339,
+      "arguments": [
+        "functions",
+        "worker"
+      ],
+      "code": 0,
+      "signal": null
+    },
+    {
+      "diagnostic": "native-process-exit",
+      "pid": 338,
+      "arguments": [
+        "agents",
+        "worker"
+      ],
+      "code": 0,
+      "signal": null
+    },
+    {
+      "diagnostic": "native-process-exit",
+      "pid": 312,
+      "arguments": [
+        "serve"
+      ],
+      "code": null,
+      "signal": "SIGKILL"
+    }
+  ],
+  "notes": [
+    "queryMillis is elapsed duration of the SQL statement, not a single uninterrupted wait on one blocker; blockers rotate",
+    "TAP splits long console lines into comment chunks; decoder rejoins consecutive chunks before JSON parse and handles one doubled-backslash layer",
+    "Trial003 unintentionally selected later subcases after firstcase because root-name match includes descendants; latercases/intervention are not qualification",
+    "Trial004 explicitly skips seven othercases and terminates exact workerhandles only in firstcase finally after assertions/failure"
+  ]
+}

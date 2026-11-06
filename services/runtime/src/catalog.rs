@@ -2,11 +2,11 @@ use crate::{
     authority::{Authority, VerifiedSession},
     database::Database,
     execution::Lease,
-    snapshot::{SnapshotPin, SnapshotProof, verify_snapshot},
+    snapshot::{SnapshotPin, SnapshotProof, verify_retained_subset, verify_snapshot},
     storage::{
         Cancellation, ClosureEntry, ClosureLimits, ClosureSpool, IndexNamespace, LogicalObject,
         ObjectReader, ObjectStore, ObjectVersion, ObjectWriter, PosixStore, ReadAuthority,
-        RecordingReader, SealedObject, WriteAuthority,
+        RecordingReader, SealedObject, VerifiedVersionAuthority, WriteAuthority,
     },
 };
 use anyhow::{Result, ensure};
@@ -18,7 +18,11 @@ use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use uuid::Uuid;
 
+mod snapshot;
+pub use snapshot::PinnedDatasetSnapshot;
+
 const REF_PREFIX: &str = "moria-snapshot-v2:";
+const GRAPH_REF_PREFIX: &str = "moria-snapshot-v3:";
 const PAGE_MAX: usize = 256 * 1024 + 4096;
 
 /// A current Dataset capability constructed from a verified session and a real producer lease.
@@ -272,17 +276,26 @@ impl NativeSnapshotRef {
     pub fn encode(&self) -> Result<String> {
         self.validate()?;
         Ok(format!(
-            "{REF_PREFIX}{}",
+            "{}{}",
+            if self.version == 2 {
+                REF_PREFIX
+            } else {
+                GRAPH_REF_PREFIX
+            },
             crate::canonical::canonical_json(&serde_json::to_value(self)?)?
         ))
     }
     pub fn decode(value: &str) -> Result<Self> {
         ensure!(value.len() <= 4096, "INVALID_NATIVE_SNAPSHOT_REF");
-        let result: Self = serde_json::from_str(
-            value
-                .strip_prefix(REF_PREFIX)
-                .ok_or_else(|| anyhow::anyhow!("INVALID_NATIVE_SNAPSHOT_REF"))?,
-        )?;
+        let (encoded, version) = if let Some(encoded) = value.strip_prefix(REF_PREFIX) {
+            (encoded, 2)
+        } else if let Some(encoded) = value.strip_prefix(GRAPH_REF_PREFIX) {
+            (encoded, 3)
+        } else {
+            anyhow::bail!("INVALID_NATIVE_SNAPSHOT_REF")
+        };
+        let result: Self = serde_json::from_str(encoded)?;
+        ensure!(result.version == version, "INVALID_NATIVE_SNAPSHOT_REF");
         result.validate()?;
         ensure!(
             result.encode()? == value,
@@ -292,7 +305,14 @@ impl NativeSnapshotRef {
     }
     fn validate(&self) -> Result<()> {
         ensure!(
-            self.version == 2 && self.root.size > 0 && self.root.size <= 16384,
+            matches!(self.version, 2 | 3)
+                && self.root.size > 0
+                && self.root.size
+                    <= if self.version == 2 {
+                        16384
+                    } else {
+                        16 * 1024 * 1024
+                    },
             "INVALID_NATIVE_SNAPSHOT_REF"
         );
         validate_object(&self.root)?;
@@ -518,14 +538,90 @@ pub async fn prepare_snapshot(
         tx.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) VALUES(moria.runtime_dataset_root_key($1),$2,$3,$4) ON CONFLICT DO NOTHING",&[&reference,&grant.key_schema_hash()?,&root.proof.snapshot_id.to_string(),&i64::try_from(rows)?]).await?;
         ensure!(tx.query_one("SELECT key_rows=$3 AND snapshot_id=$4 FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($1) AND key_schema_hash=$2",&[&reference,&grant.key_schema_hash()?,&i64::try_from(rows)?,&root.proof.snapshot_id.to_string()]).await?.get::<_,bool>(0),"DATASET_PRIMARY_KEY_INVALID");
     }
+    let delta_profile = if grant.is_managed() {
+        Some(crate::dataset_commit_delta::profile(
+            table.metadata().current_schema(),
+            &grant.state["datasetBinding"]["icebergSchema"],
+            grant.state["datasetBinding"]["revision"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("DATASET_BINDING_INVALID"))?,
+            &grant.primary_key()?,
+            grant.key_schema_hash()?,
+        )?)
+    } else {
+        None
+    };
     let id = Uuid::new_v4();
     let expected = grant.state["expectedRevision"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("UNDECLARED_DATASET"))?
         .parse::<i64>()?;
-    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",
+    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof,delta_profile) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",
         &[&id,&grant.session.environment(),&grant.lease.execution,&grant.resource(),&expected,&grant.state,&grant.session.session_hash(),
-        &grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&reference,&root.proof.snapshot_id.to_string(),&serde_json::to_value(&root.proof)?]).await?;
+        &grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&reference,&root.proof.snapshot_id.to_string(),&serde_json::to_value(&root.proof)?,&delta_profile]).await?;
+    tx.commit().await?;
+    Ok(id)
+}
+
+/// Qualify a real ready graph stage and bind it to the actual atomic C04 candidate.
+pub(crate) async fn prepare_graph_candidate(
+    store: Arc<dyn ObjectStore>,
+    grant: Arc<DatasetIoGrant>,
+    graph: &crate::dataset_graph::NativeGraph,
+    stage: Uuid,
+    reference: NativeSnapshotRef,
+    spool: &ClosureSpool,
+    cancel: Cancellation,
+) -> Result<Uuid> {
+    grant.require_write_mode("replace")?;
+    grant.check_current().await?;
+    grant.validate_store(store.as_ref())?;
+    let (context, node) =
+        crate::dataset_graph_read::GraphReadContext::staged(store, grant.clone(), stage, cancel)
+            .await?;
+    let snapshot = crate::native_snapshot_v3::NativeSnapshot::open(context, node).await?;
+    grant.validate_schema(snapshot.metadata().current_schema().as_ref())?;
+    snapshot.validate_replacement(spool).await?;
+    let proof = snapshot.preparation_proof(stage, &reference)?;
+    let delta_profile = crate::dataset_commit_delta::profile(
+        snapshot.metadata().current_schema(),
+        &grant.state["datasetBinding"]["icebergSchema"],
+        grant.state["datasetBinding"]["revision"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("DATASET_BINDING_INVALID"))?,
+        &grant.primary_key()?,
+        grant.key_schema_hash()?,
+    )?;
+    let location = reference.encode()?;
+    let snapshot_id = snapshot.snapshot_id()?.to_string();
+    let mut client = grant.db.get().await?;
+    let tx = client.transaction().await?;
+    let current: Value = tx
+        .query_one(
+            "SELECT moria.runtime_dataset_io_check($1,$2,NULL,$3,$4,$5,$6,$7,$8,true)",
+            &[
+                &grant.session.session_hash(),
+                &grant.lease.execution,
+                &grant.lease.owner,
+                &grant.lease.fence.parse::<i64>()?,
+                &grant.lease.incarnation,
+                &grant.namespace.warehouse_id,
+                &grant.namespace.table_id,
+                &grant.namespace.revision,
+            ],
+        )
+        .await?
+        .get(0);
+    ensure!(current == grant.state, "STORAGE_NAMESPACE_REVOKED");
+    if !grant.primary_key()?.is_empty() {
+        let rows = i64::try_from(snapshot.row_count())?;
+        tx.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) VALUES(moria.runtime_dataset_root_key($1),$2,$3,$4) ON CONFLICT DO NOTHING",&[&location,&grant.key_schema_hash()?,&snapshot_id,&rows]).await?;
+        ensure!(tx.query_one("SELECT key_rows=$3 AND snapshot_id=$4 FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($1) AND key_schema_hash=$2",&[&location,&grant.key_schema_hash()?,&rows,&snapshot_id]).await?.get::<_,bool>(0),"DATASET_PRIMARY_KEY_INVALID");
+    }
+    let id = Uuid::new_v4();
+    let expected = grant.expected_revision()?;
+    tx.execute("INSERT INTO moria.runtime_snapshot_candidates(id,environment,execution,resource,expected_revision,namespace_state,session_hash,owner,fence,incarnation,metadata_location,snapshot_id,proof,delta_profile) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",&[&id,&grant.session.environment(),&grant.lease.execution,&grant.resource(),&expected,&grant.state,&grant.session.session_hash(),&grant.lease.owner,&grant.lease.fence.parse::<i64>()?,&grant.lease.incarnation,&location,&snapshot_id,&proof,&delta_profile]).await?;
+    graph.attach_candidate(&tx, stage, id).await?;
     tx.commit().await?;
     Ok(id)
 }
@@ -567,9 +663,16 @@ pub async fn read_descriptor<T: serde::de::DeserializeOwned + Serialize>(
 ) -> Result<T> {
     validate_object(object)?;
     ensure!(object.size <= maximum as u64, "LIMIT_EXCEEDED");
-    let mut stream = reader
+    let stream = reader
         .read_object(object.object.clone(), authority, cancel)
         .await?;
+    decode_descriptor(stream, object).await
+}
+
+async fn decode_descriptor<T: serde::de::DeserializeOwned + Serialize>(
+    mut stream: futures::stream::BoxStream<'static, Result<bytes::Bytes>>,
+    object: &SealedObject,
+) -> Result<T> {
     let mut bytes = Vec::with_capacity(object.size as usize);
     let mut hash = Sha256::new();
     while let Some(frame) = stream.next().await {
@@ -597,6 +700,37 @@ pub async fn read_descriptor<T: serde::de::DeserializeOwned + Serialize>(
     Ok(result)
 }
 
+fn unsupported_immutable_version(error: &anyhow::Error) -> bool {
+    matches!(
+        error.root_cause().to_string().as_str(),
+        "INVALID_STORAGE_VERSION" | "CONDITIONAL_DELETE_UNSUPPORTED"
+    )
+}
+
+/// Wrapper metadata is read at its actual qualified version, never a substituted current copy.
+async fn read_qualified_descriptor<T: serde::de::DeserializeOwned + Serialize>(
+    reader: Arc<dyn ObjectReader>,
+    authority: Arc<dyn ReadAuthority>,
+    object: &SealedObject,
+    maximum: usize,
+    known: &dyn VerifiedVersionAuthority,
+    cancel: Cancellation,
+) -> Result<Option<T>> {
+    validate_object(object)?;
+    ensure!(object.size <= maximum as u64, "LIMIT_EXCEEDED");
+    let version = known.verified_version(object).await?;
+    match crate::storage::qualified_s3_version(&version) {
+        Ok(()) => {}
+        Err(error) if unsupported_immutable_version(&error) => return Ok(None),
+        Err(error) => return Err(error),
+    }
+    ensure!(version.size == object.size, "CONTENT_MISMATCH");
+    let stream =
+        crate::storage::versioned_stream(reader, object.object.clone(), version, authority, cancel)
+            .await?;
+    Ok(Some(decode_descriptor(stream, object).await?))
+}
+
 /// Iterate a sealed closure with constant working memory. Consumers must also enforce configured total entry/byte budgets.
 pub async fn snapshot_root(
     reader: &dyn ObjectReader,
@@ -607,6 +741,10 @@ pub async fn snapshot_root(
     reference.validate()?;
     let root: SnapshotRoot =
         read_descriptor(reader, authority, &reference.root, 16384, cancel).await?;
+    validate_snapshot_root(reference, &root)?;
+    Ok(root)
+}
+fn validate_snapshot_root(reference: &NativeSnapshotRef, root: &SnapshotRoot) -> Result<()> {
     for count in [
         root.pages,
         root.proof.closure.entries,
@@ -636,7 +774,7 @@ pub async fn snapshot_root(
             && root.proof.metadata.object.table_id == reference.root.object.table_id,
         "INVALID_NATIVE_SNAPSHOT_ROOT"
     );
-    Ok(root)
+    Ok(())
 }
 pub async fn snapshot_page(
     reader: &dyn ObjectReader,
@@ -646,6 +784,10 @@ pub async fn snapshot_page(
     cancel: Cancellation,
 ) -> Result<ClosurePage> {
     let page: ClosurePage = read_descriptor(reader, authority, object, PAGE_MAX, cancel).await?;
+    validate_snapshot_page(object, ordinal, &page)?;
+    Ok(page)
+}
+fn validate_snapshot_page(object: &SealedObject, ordinal: u64, page: &ClosurePage) -> Result<()> {
     ensure!(
         page.version == 2
             && page.ordinal == ordinal
@@ -670,7 +812,7 @@ pub async fn snapshot_page(
             "BINDING_MISMATCH"
         );
     }
-    Ok(page)
+    Ok(())
 }
 
 pub struct LoadedSnapshot {
@@ -978,7 +1120,7 @@ pub(crate) async fn dataset_pin_registered_row(
 
 pub struct PinnedDatasetRead {
     pub pin: DatasetPin,
-    pub snapshot: LoadedSnapshot,
+    pub snapshot: PinnedDatasetSnapshot,
     pub consumed_markings: Vec<String>,
 }
 /// Read only the exact Dataset declared by a live native task/coordinator, through trusted provider configuration.
@@ -1003,6 +1145,29 @@ pub async fn read_pinned_dataset(
     let consumed_markings = grant.consumed_markings()?;
     let reader = crate::storage::configured_reader(&pin.namespace)?;
     grant.validate_store(reader.as_ref())?;
+    let reference = NativeSnapshotRef::decode(&pin.metadata_location)?;
+    if reference.version == 3 {
+        let (context, root) = crate::dataset_graph_read::GraphReadContext::execution(
+            reader,
+            grant.clone(),
+            crate::dataset_graph_read::ReadBasis::Input,
+            cancel,
+        )
+        .await?;
+        let snapshot =
+            Arc::new(crate::native_snapshot_v3::NativeSnapshot::open(context, root).await?);
+        ensure!(
+            snapshot.snapshot_id()?.to_string() == pin.snapshot
+                && snapshot.metadata().uuid() == pin.table_uuid,
+            "SNAPSHOT_PIN_MISMATCH"
+        );
+        grant.validate_schema(snapshot.metadata().current_schema())?;
+        return Ok(PinnedDatasetRead {
+            pin,
+            snapshot: PinnedDatasetSnapshot::GraphV3(snapshot),
+            consumed_markings,
+        });
+    }
     let scratch_root = std::env::var("MORIA_NATIVE_SNAPSHOT_SCRATCH_ROOT")
         .map_err(|_| anyhow::anyhow!("SNAPSHOT_SCRATCH_UNAVAILABLE"))?;
     let scratch = PosixStore::provision(
@@ -1018,7 +1183,6 @@ pub async fn read_pinned_dataset(
         &std::env::var("MORIA_NATIVE_CLOSURE_LIMITS")
             .map_err(|_| anyhow::anyhow!("SNAPSHOT_BUDGET_UNAVAILABLE"))?,
     )?;
-    let reference = NativeSnapshotRef::decode(&pin.metadata_location)?;
     let snapshot = load_snapshot(
         &scratch,
         reader,
@@ -1034,7 +1198,7 @@ pub async fn read_pinned_dataset(
     grant.validate_schema(table.metadata().current_schema().as_ref())?;
     Ok(PinnedDatasetRead {
         pin,
-        snapshot,
+        snapshot: PinnedDatasetSnapshot::FlatV2(snapshot),
         consumed_markings,
     })
 }
@@ -1073,13 +1237,94 @@ pub async fn load_snapshot(
     limits: ClosureLimits,
     cancel: Cancellation,
 ) -> Result<LoadedSnapshot> {
-    let root = snapshot_root(
-        reader.as_ref(),
-        authority.clone(),
+    load_snapshot_inner(
+        scratch,
+        reader,
+        authority,
         reference,
-        cancel.clone(),
+        expected_table_uuid,
+        expected_snapshot_id,
+        limits,
+        cancel,
+        None,
     )
-    .await?;
+    .await
+}
+
+/// Metadata-only reuse is available only through an exact retained-root version authority.
+pub(crate) async fn load_qualified_snapshot(
+    scratch: &PosixStore,
+    reader: Arc<dyn ObjectReader>,
+    authority: Arc<dyn ReadAuthority>,
+    reference: &NativeSnapshotRef,
+    expected_table_uuid: Uuid,
+    expected_snapshot_id: i64,
+    limits: ClosureLimits,
+    cancel: Cancellation,
+    known: &dyn VerifiedVersionAuthority,
+) -> Result<LoadedSnapshot> {
+    load_snapshot_inner(
+        scratch,
+        reader,
+        authority,
+        reference,
+        expected_table_uuid,
+        expected_snapshot_id,
+        limits,
+        cancel,
+        Some(known),
+    )
+    .await
+}
+
+async fn load_snapshot_inner(
+    scratch: &PosixStore,
+    reader: Arc<dyn ObjectReader>,
+    authority: Arc<dyn ReadAuthority>,
+    reference: &NativeSnapshotRef,
+    expected_table_uuid: Uuid,
+    expected_snapshot_id: i64,
+    limits: ClosureLimits,
+    cancel: Cancellation,
+    known: Option<&dyn VerifiedVersionAuthority>,
+) -> Result<LoadedSnapshot> {
+    reference.validate()?;
+    let mut known = known;
+    let root = if let Some(known_ref) = known {
+        match read_qualified_descriptor::<SnapshotRoot>(
+            reader.clone(),
+            authority.clone(),
+            &reference.root,
+            16384,
+            known_ref,
+            cancel.clone(),
+        )
+        .await?
+        {
+            Some(root) => {
+                validate_snapshot_root(reference, &root)?;
+                root
+            }
+            None => {
+                known = None;
+                snapshot_root(
+                    reader.as_ref(),
+                    authority.clone(),
+                    reference,
+                    cancel.clone(),
+                )
+                .await?
+            }
+        }
+    } else {
+        snapshot_root(
+            reader.as_ref(),
+            authority.clone(),
+            reference,
+            cancel.clone(),
+        )
+        .await?
+    };
     ensure!(
         root.proof.table_uuid == expected_table_uuid
             && root.proof.snapshot_id == expected_snapshot_id
@@ -1098,14 +1343,47 @@ pub async fn load_snapshot(
     let mut current = root.last_page;
     let mut first_of_later_page: Option<String> = None;
     for ordinal in (0..root.pages).rev() {
-        let page = snapshot_page(
-            reader.as_ref(),
-            authority.clone(),
-            &current.ok_or_else(|| anyhow::anyhow!("MISSING_SNAPSHOT_PAGE"))?,
-            ordinal,
-            cancel.clone(),
-        )
-        .await?;
+        let object = current
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("MISSING_SNAPSHOT_PAGE"))?
+            .clone();
+        let page = if let Some(known_ref) = known {
+            match read_qualified_descriptor::<ClosurePage>(
+                reader.clone(),
+                authority.clone(),
+                &object,
+                PAGE_MAX,
+                known_ref,
+                cancel.clone(),
+            )
+            .await?
+            {
+                Some(page) => {
+                    validate_snapshot_page(&object, ordinal, &page)?;
+                    page
+                }
+                None => {
+                    known = None;
+                    snapshot_page(
+                        reader.as_ref(),
+                        authority.clone(),
+                        &object,
+                        ordinal,
+                        cancel.clone(),
+                    )
+                    .await?
+                }
+            }
+        } else {
+            snapshot_page(
+                reader.as_ref(),
+                authority.clone(),
+                &object,
+                ordinal,
+                cancel.clone(),
+            )
+            .await?
+        };
         ensure!(
             page.entries
                 .windows(2)
@@ -1124,24 +1402,40 @@ pub async fn load_snapshot(
         spool.append_page(&page.entries).await?;
     }
     ensure!(current.is_none(), "EXTRA_SNAPSHOT_PAGE");
-    let closure = spool.seal(reader.as_ref(), authority.clone()).await?;
+    let mut qualified = false;
+    let closure = if let Some(known) = known {
+        match spool
+            .seal_verified(reader.as_ref(), authority.clone(), known)
+            .await
+        {
+            Ok(closure) => {
+                qualified = true;
+                closure
+            }
+            Err(error) if unsupported_immutable_version(&error) => {
+                spool.seal(reader.as_ref(), authority.clone()).await?
+            }
+            Err(error) => return Err(error),
+        }
+    } else {
+        spool.seal(reader.as_ref(), authority.clone()).await?
+    };
     ensure!(
         closure.entries == root.proof.closure.entries
             && closure.referenced_bytes == root.proof.closure.referenced_bytes
             && closure.sha256 == root.proof.closure.sha256,
         "CLOSURE_MISMATCH"
     );
-    let proof = verify_snapshot(
-        &spool,
-        reader.clone(),
-        authority.clone(),
-        SnapshotPin {
-            metadata: root.proof.metadata,
-            table_uuid: expected_table_uuid,
-            snapshot_id: expected_snapshot_id,
-        },
-    )
-    .await?;
+    let pin = SnapshotPin {
+        metadata: root.proof.metadata,
+        table_uuid: expected_table_uuid,
+        snapshot_id: expected_snapshot_id,
+    };
+    let proof = if qualified {
+        verify_retained_subset(&spool, reader.clone(), authority.clone(), pin).await?
+    } else {
+        verify_snapshot(&spool, reader.clone(), authority.clone(), pin).await?
+    };
     ensure!(
         proof.data_files == root.proof.data_files
             && proof.physical_rows == root.proof.physical_rows
@@ -1154,4 +1448,78 @@ pub async fn load_snapshot(
         reader,
         authority,
     })
+}
+
+#[cfg(test)]
+mod reference_tests {
+    use super::*;
+    fn root(size: u64) -> SealedObject {
+        SealedObject {
+            object: LogicalObject::new("warehouse", "table", "root").unwrap(),
+            size,
+            sha256: format!("sha256:{}", "a".repeat(64)),
+        }
+    }
+    #[test]
+    fn catalog_versions_have_strict_distinct_canonical_prefixes() {
+        for version in [2, 3] {
+            let reference = NativeSnapshotRef {
+                version,
+                root: root(10),
+            };
+            let encoded = reference.encode().unwrap();
+            assert!(encoded.starts_with(if version == 2 {
+                REF_PREFIX
+            } else {
+                GRAPH_REF_PREFIX
+            }));
+            assert_eq!(NativeSnapshotRef::decode(&encoded).unwrap(), reference);
+            let wrong = encoded.replacen(
+                if version == 2 {
+                    REF_PREFIX
+                } else {
+                    GRAPH_REF_PREFIX
+                },
+                if version == 2 {
+                    GRAPH_REF_PREFIX
+                } else {
+                    REF_PREFIX
+                },
+                1,
+            );
+            assert!(NativeSnapshotRef::decode(&wrong).is_err());
+        }
+        assert!(
+            NativeSnapshotRef {
+                version: 2,
+                root: root(16385)
+            }
+            .encode()
+            .is_err()
+        );
+        assert!(
+            NativeSnapshotRef {
+                version: 3,
+                root: root(16 * 1024 * 1024)
+            }
+            .encode()
+            .is_ok()
+        );
+        assert!(
+            NativeSnapshotRef {
+                version: 3,
+                root: root(16 * 1024 * 1024 + 1)
+            }
+            .encode()
+            .is_err()
+        );
+        assert!(
+            NativeSnapshotRef {
+                version: 4,
+                root: root(10)
+            }
+            .encode()
+            .is_err()
+        );
+    }
 }

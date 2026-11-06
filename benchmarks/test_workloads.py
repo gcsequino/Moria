@@ -68,13 +68,19 @@ class CalibrationTests(unittest.TestCase):
         self.data["mixPercent"].update(detail=30, page=35)
         self.assertEqual(validate_calibration(self.data), self.data)
 
-    def test_version_units_and_provisional_flags(self):
+    def test_version_units_and_certification_flags(self):
         self.reject(["contractVersion"], "0.1", "contractVersion")
         for name in self.data["units"]:
             self.reject(["units", name], "requests/minute", name)
-        for name in self.data["approval"]:
-            for value in (True, 0):
-                self.reject(["approval", name], value, name)
+        for value in (True, 0):
+            self.reject(["approval", "productionClaimsAllowed"], value, "productionClaimsAllowed")
+        for value in (0, 1, "true"):
+            self.reject(["approval", "numericTargetsApproved"], value, "numericTargetsApproved")
+        for value in ("production-certified", "", 0):
+            self.reject(["approval", "approvalScope"], value, "approvalScope")
+        for value in ("2026-02-30", "2026-11-04T00:00:00Z", "20261104", "", 0):
+            self.reject(["approval", "approvedOn"], value, "approvedOn")
+        self.reject(["status"], "production-certified", "status")
         for name in self.data["acceptance"]:
             if isinstance(self.data["acceptance"][name], bool):
                 self.reject(["acceptance", name], not self.data["acceptance"][name], name)
@@ -157,8 +163,29 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(result["missingOperations"], [])
         self.assertEqual(result["effectiveMixPercent"], self.data["mixPercent"])
         self.assertTrue(result["fullProfileOperationCoverage"])
-        for flag in ("fullProfileCertified", "numericTargetsApproved", "productionClaimsAllowed"):
+        self.assertTrue(result["numericTargetsApproved"])
+        for flag in ("fullProfileCertified", "productionClaimsAllowed"):
             self.assertFalse(result[flag])
+
+    def test_proposed_and_approved_status_cannot_be_mixed(self):
+        self.reject(["status"], "proposed-calibration-not-certified", "numericTargetsApproved")
+        proposed = copy.deepcopy(self.data)
+        proposed["status"] = "proposed-calibration-not-certified"
+        proposed["approval"] = {
+            "numericTargetsApproved": False,
+            "productionClaimsAllowed": False,
+        }
+        self.assertEqual(validate_calibration(proposed), proposed)
+        result = check_capabilities(proposed, list(OPERATIONS), scope="full-profile")
+        for flag in ("numericTargetsApproved", "fullProfileCertified", "productionClaimsAllowed"):
+            self.assertFalse(result[flag])
+        proposed["approval"]["approvedOn"] = "2026-11-04"
+        with self.assertRaises(CalibrationError):
+            validate_calibration(proposed)
+        del proposed["approval"]["approvedOn"]
+        proposed["status"] = "implementation-targets-not-certified"
+        with self.assertRaisesRegex(CalibrationError, "numericTargetsApproved"):
+            validate_calibration(proposed)
 
     def test_full_profile_rejects_each_missing_class_even_zero_weight(self):
         for operation in OPERATIONS:

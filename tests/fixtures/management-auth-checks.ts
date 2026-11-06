@@ -418,6 +418,7 @@ export async function checkManagementAuth(catalog: Catalog) {
       {
         ...binding,
         application: 'read-only-app',
+        origin: binding.origin.replace('127.0.0.1', 'localhost'),
         initialOperations: ['snow-stations:read'],
         initialPrincipal: undefined,
       },

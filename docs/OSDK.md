@@ -1,16 +1,14 @@
-> Snow examples below are retained SDK fixtures, not a working default application. Management is the only default bundle; generated Snow inputs remain until separately scoped cleanup.
-
 # Generated TypeScript OSDK
 
-Management and Snow now use generated, app-specific clients. The SDK is a browser-safe Fetch client for the hosted API. It uses same-origin cookie authentication; it does not contain keys, provider secrets, profile selectors or permissions. Generating methods never grants access: Moria still checks the current user and application on every request.
+The hosted app OSDK is generated from an app-specific contract. The SDK is a browser-safe Fetch client for the hosted API. It uses same-origin cookie authentication; it does not contain keys, provider secrets, profile selectors or permissions. Generating methods never grants access: Moria still checks the current user and application on every request.
 
 ## Generate and check
 
 ```sh
 pnpm sdk:generate
 pnpm sdk:check
-pnpm moria sdk generate apps/snotel/src/generated/contract.json --out ./work/my-snow-sdk
-pnpm moria sdk generate apps/snotel/src/generated/contract.json --out ./work/my-snow-sdk --check
+pnpm moria sdk generate examples/station-explorer/src/generated/contract.json --out ./work/my-station-sdk
+pnpm moria sdk generate examples/station-explorer/src/generated/contract.json --out ./work/my-station-sdk --check
 ```
 
 The bundled contracts live in packages/osdk/src/bundled.ts. Their object properties and action inputs are imported from packages/contracts/bundled-objects.ts, also used by the server bindings. Generated files are checked in under each app's src/generated. pnpm check rejects stale generated artifacts. Run generation after editing the contract and before building/recovering a bundle.
@@ -19,25 +17,12 @@ Each generated directory is standalone: index.ts, runtime.ts, transport.ts, cont
 
 ## Use the scoped client
 
-```ts
-import { createClient, ApiError } from './generated/index.js';
+Use the [Station Explorer starter](../examples/station-explorer/README.md) for
+a runnable client and its generated contract. A custom app declares only the
+surface offered by its trusted server binding. Generating a client registers
+no route and grants no authority.
 
-const moria = createClient({
-  onUnauthenticated: () => { /* show the sign-in screen */ },
-});
-const session = await moria.auth.session();
-const stations = await moria.objects['snow-stations'].all({
-  projection: ['uid', 'name', 'triplet'],
-  pageSize: 1000,
-});
-const observations = await moria.objects['snow-observations'].all({
-  filter: { op: 'eq', args: [{ field: 'triplet' }, { literal: stations[0].triplet }] },
-}, { maxRows: 20000, signal: abortController.signal });
-```
-
-The Snow contract exposes only its two object types and status endpoint, with no actions or management endpoints. Management additionally exposes typed asset actions, workspace/app inventory and dataset import. A custom app can define a smaller contract matching its server-approved binding. The generator does not register a server route, create an application, or change grants.
-
-The JSON contract uses version: 1, app, types, objects, actions and endpoints. Object entries name their exported TypeScript type and property ValueTypes; actions specify input ValueTypes. Named types and endpoint inputs/outputs support object properties, optional fields, lists, nullable values and refs to named types. Endpoints declare a fixed /api/ path and GET or POST. See either generated contract.json for a complete executable example. This narrow served-app contract is not the full deployment manifest or an OpenAPI document; generation from arbitrary resource manifests and OpenAPI publication remain future work.
+The JSON contract uses version: 1, app, types, objects, actions and endpoints. Object entries name their exported TypeScript type and property ValueTypes; actions specify input ValueTypes. Named types and endpoint inputs/outputs support object properties, optional fields, lists, nullable values and refs to named types. Endpoints declare a fixed /api/ path and GET or POST. See the starter's generated contract for a complete example. This narrow served-app contract is not the full deployment manifest or an OpenAPI document; generation from arbitrary resource manifests and OpenAPI publication remain future work.
 
 ## Query and mutation semantics
 
@@ -62,10 +47,7 @@ binding. Function APIs remain in the separate platform client.
 ```ts
 // Management SDK only:
 const key = crypto.randomUUID();
-await moria.actions['edit-status'](
-  { uid: asset.uid, status: 'Reviewed' },
-  { idempotencyKey: key },
-);
+await moria.actions['edit-status']({ uid: asset.uid, status: 'Reviewed' }, { idempotencyKey: key });
 ```
 
 ApiError preserves HTTP status, code, message, correlationId, retryable and details where the server supplies them. Legacy management/auth envelopes may omit the optional diagnostics. Non-JSON responses become INVALID_RESPONSE. Network and abort exceptions propagate. Use the ApiError export from the same generated SDK that made the call; independent standalone SDK copies have independent error classes.
@@ -74,7 +56,7 @@ ApiError preserves HTTP status, code, message, correlationId, retryable and deta
 
 The generated auth helpers handle session, login, logout and local recovery exchange; React's shared useAppSession hook handles navigation and presentation. No provider SDK ships to the browser. Public hosts continue rejecting recovery exchanges. Browser calls are restricted to the current origin; baseUrl is available for same-origin configuration and non-browser test adapters. The injectable Fetch implementation supports tests; there is no built-in agent credential/delegation flow yet.
 
-The runtime supports the currently implemented object queries, point reads and single-object actions. It does not imply support for sorting, aggregation, relationship traversal, arbitrary backend hosting, a durable scheduler or generated React hooks.
+The generated app contract determines the client methods and schemas. See the [native serving contract](production/contracts/serving.md) for supported query operations and their authority requirements.
 
 ## Verification
 

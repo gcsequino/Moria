@@ -1,0 +1,6 @@
+{
+  "scope": "two required subcases on previous schema/native image; all othercases explicit diagnosticskips; expectheldreadreusefailure",
+  "baseImage": "sha256:00d8ec359d30d4c7e5830c305cf62fb9bfbc63e24b86f481a0aba0648bb6a127",
+  "image": "sha256:1c874a4cea1dcad9fb84740c9a4e56e8c24c0458f191286d1767653f417c326c",
+  "testOverlaySha256": "d8dc4a5fed64b404933e6334f73d7d9419a14506e49d018eff4e1dec78f4eb63"
+}

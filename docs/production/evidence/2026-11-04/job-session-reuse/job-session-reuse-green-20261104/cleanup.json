@@ -1,0 +1,9 @@
+{
+  "controllerAbsent": "moria-quality-ca2ec605-f63c-4148-91f2-0f259d863023",
+  "scratchPoolsAbsent": [
+    "/tmp/moria-engine-scratch-97a5ac83-7881-48e1-902b-de0346398065",
+    "/tmp/moria-engine-scratch-9a4c8585-8e18-4c04-81a4-7fa559efaa8c"
+  ],
+  "temporaryAbsent": "/tmp/moria-quality-l0z6tp1a",
+  "logSha256": "4783a1e0fe9cdb9712b46352c9d784a09a20f6676172a8511a189c9772bb9e80"
+}

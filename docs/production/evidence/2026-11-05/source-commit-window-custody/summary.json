@@ -1,0 +1,51 @@
+{
+  "status": "qualified custody only",
+  "base": "23b56eb34892e751b88cc935a78cefc67f0ab5ba",
+  "image": "sha256:0e1b0c8e29684be5fbb90ba54a074f927b69758e998ed8bcb23a0e3e1cb7079a",
+  "nativeSourceDigest": "861e614c978b1e16bcd8e90c690be5fc0a111fdc139c8ef02c5e7325989b6e74",
+  "nativeUnitsPassed": 113,
+  "allNineArtifacts": "exact",
+  "sourceManifestSha256": "06e82c58de697ccd3bd78e628ab5e4d7b5b3b2347ffb640d2aedbfd884831ea2",
+  "fullStatic": "passed",
+  "integration": {
+    "custody": {
+      "file": "tests/native-source-delta.integration.test.ts",
+      "exitCode": 0,
+      "elapsedSeconds": 115.31500012299512,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    },
+    "permanent-v3": {
+      "file": "tests/native-dataset-v3-service.integration.test.ts",
+      "exitCode": 0,
+      "elapsedSeconds": 58.19542146999447,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "cleanup": {
+        "controllerAbsent": true,
+        "scratchRemoved": true,
+        "temporaryRemoved": true
+      }
+    }
+  },
+  "notQualified": [
+    "unchanged Source alias or watermark publication",
+    "mutation footprint consumption or changed-row publication",
+    "production capacity"
+  ]
+}

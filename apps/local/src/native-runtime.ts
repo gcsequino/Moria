@@ -242,9 +242,12 @@ export async function runNativeProcess(role: Exclude<ProcessRole, 'function-work
     check();
     const child = spawn(path, args, { env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
     const exit = new Promise<void>((done) =>
-      child.once('exit', () => {
+      child.once('exit', (code, signal) => {
         done();
         if (!stopping) {
+          console.error(
+            JSON.stringify({ event: 'native-child-exit', role: args.join(' '), code, signal }),
+          );
           process.exitCode = 1;
           void close();
         }

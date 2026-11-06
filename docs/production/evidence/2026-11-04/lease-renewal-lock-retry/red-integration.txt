@@ -1,0 +1,173 @@
+{"controller": "moria-quality-bf2bc848-7f50-432c-8a8e-8d39fb7de6e7", "image": "sha256:3247b876b367e68ae1766508b38e7a118bf7ce49626abc00d5b0c15c68342c1c", "scratchPools": ["/tmp/moria-engine-scratch-98ccc1ce-a430-45c8-a557-e0b98e202566", "/tmp/moria-engine-scratch-bff533cd-fb0e-457f-ad48-5081f728bf33", "/tmp/moria-engine-scratch-2f79a6c4-d8ab-44d7-9491-a4ded089ab2e"], "temporary": "/tmp/moria-quality-mze2qfx0"}
+$ node scripts/test-files.mjs integration tests/native-job-authority.integration.test.ts
+Running 1 integration test files.
+▶ registered service jobs require immutable purpose and a current registered lease
+  ✔ registered service admission has no ordinary session and cannot mint before an actual lease (161.48717ms)
+  ✔ current private credentials traverse accepted delegation once (24.980965ms)
+  ✔ unregistered legacy bindings and mismatched purposes cannot acquire a service capability (202.901699ms)
+  ✔ private service descendants remain inside the exact registered target and parent capability (1671.364654ms)
+  ✔ a generic operator claim cannot mint a registered private worker credential (299.020477ms)
+  ✔ missed registry disable pulses cannot be repaired by acknowledging current authorization epochs (459.976605ms)
+  ✔ current target, application, grants, clearance, worker scope and actor disable revoke private authority (1568.985156ms)
+  ✔ missed principal, application and instance disable pulses require explicit fresh service reapproval (1876.024286ms)
+  ✔ an unobserved worker disable and restore cannot revive a live lease or private credential (385.352931ms)
+  ✔ a genuinely expired worker registration remains fenced after its expiry is extended (2525.084935ms)
+  ✔ lease takeover invalidates the old private credential and replacement capabilities remain bounded (446.072962ms)
+  ✖ task renewal recovers from a six-second shared-row lock (6470.674582ms)
+  ✖ publication renewal recovers from a six-second shared-row lock (6711.98716ms)
+  ✖ persistent renewal lock contention stops after four server-aborted transactions (5486.788753ms)
+  ✖ renewal retry rechecks revoked authority after the lock timeout (6478.672386ms)
+  ✖ renewal retry rechecks expired authority after the lock timeout (6461.194215ms)
+  ✖ renewal retry rechecks fence authority after the lock timeout (6464.091416ms)
+✖ registered service jobs require immutable purpose and a current registered lease (49036.604427ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 11
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49404.870969
+
+✖ failing tests:
+
+test at tests/fixtures/native-evaluations/renewal-lock.ts:1:1524
+✖ task renewal recovers from a six-second shared-row lock (6470.674582ms)
+  AssertionError [ERR_ASSERTION]: ifError got unwanted exception: {"error":"RESOURCE_BUSY"}
+
+      at TestContext.<anonymous> (/app/tests/fixtures/native-evaluations/renewal-lock.ts:84:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async renewalLockFixture (/app/tests/fixtures/native-evaluations/renewal-lock.ts:68:5)
+      at async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:739:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at ChildProcess.<anonymous> (/app/tests/native-job-authority.integration.test.ts:112:61)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: {"error":"RESOURCE_BUSY"}
+
+        at ChildProcess.<anonymous> (/app/tests/native-job-authority.integration.test.ts:112:61)
+        at ChildProcess.wrapper (node:events:639:12)
+        at ChildProcess.emit (node:events:514:28)
+        at ChildProcess._handle.onexit (node:internal/child_process:324:12),
+    expected: null,
+    operator: 'ifError',
+    diff: 'simple'
+  }
+
+test at tests/fixtures/native-evaluations/renewal-lock.ts:1:1524
+✖ publication renewal recovers from a six-second shared-row lock (6711.98716ms)
+  AssertionError [ERR_ASSERTION]: ifError got unwanted exception: {"error":"RESOURCE_BUSY"}
+
+      at TestContext.<anonymous> (/app/tests/fixtures/native-evaluations/renewal-lock.ts:84:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async renewalLockFixture (/app/tests/fixtures/native-evaluations/renewal-lock.ts:68:5)
+      at async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:739:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at ChildProcess.<anonymous> (/app/tests/native-job-authority.integration.test.ts:112:61)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:324:12) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: {"error":"RESOURCE_BUSY"}
+
+        at ChildProcess.<anonymous> (/app/tests/native-job-authority.integration.test.ts:112:61)
+        at ChildProcess.wrapper (node:events:639:12)
+        at ChildProcess.emit (node:events:514:28)
+        at ChildProcess._handle.onexit (node:internal/child_process:324:12),
+    expected: null,
+    operator: 'ifError',
+    diff: 'simple'
+  }
+
+test at tests/fixtures/native-evaluations/renewal-lock.ts:1:2505
+✖ persistent renewal lock contention stops after four server-aborted transactions (5486.788753ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 4
+
+      at TestContext.<anonymous> (/app/tests/fixtures/native-evaluations/renewal-lock.ts:117:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async renewalLockFixture (/app/tests/fixtures/native-evaluations/renewal-lock.ts:105:3)
+      at async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:739:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/fixtures/native-evaluations/renewal-lock.ts:1:3486
+✖ renewal retry rechecks revoked authority after the lock timeout (6478.672386ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /BINDING_CHANGED/. Input:
+
+  'Error: {"error":"RESOURCE_BUSY"}\n'
+
+      at TestContext.<anonymous> (/app/tests/fixtures/native-evaluations/renewal-lock.ts:178:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async renewalLockFixture (/app/tests/fixtures/native-evaluations/renewal-lock.ts:139:5)
+      at async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:739:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Error: {"error":"RESOURCE_BUSY"}\n',
+    expected: /BINDING_CHANGED/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/fixtures/native-evaluations/renewal-lock.ts:1:3486
+✖ renewal retry rechecks expired authority after the lock timeout (6461.194215ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /LEASE_LOST/. Input:
+
+  'Error: {"error":"RESOURCE_BUSY"}\n'
+
+      at TestContext.<anonymous> (/app/tests/fixtures/native-evaluations/renewal-lock.ts:178:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async renewalLockFixture (/app/tests/fixtures/native-evaluations/renewal-lock.ts:139:5)
+      at async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:739:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Error: {"error":"RESOURCE_BUSY"}\n',
+    expected: /LEASE_LOST/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/fixtures/native-evaluations/renewal-lock.ts:1:3486
+✖ renewal retry rechecks fence authority after the lock timeout (6464.091416ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /LEASE_LOST/. Input:
+
+  'Error: {"error":"RESOURCE_BUSY"}\n'
+
+      at TestContext.<anonymous> (/app/tests/fixtures/native-evaluations/renewal-lock.ts:178:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async renewalLockFixture (/app/tests/fixtures/native-evaluations/renewal-lock.ts:139:5)
+      at async TestContext.<anonymous> (/app/tests/native-job-authority.integration.test.ts:739:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Error: {"error":"RESOURCE_BUSY"}\n',
+    expected: /LEASE_LOST/,
+    operator: 'match',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

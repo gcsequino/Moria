@@ -5,7 +5,7 @@ import { database } from './fixtures/catalog-storage/database.js';
 test('the pinned PostgreSQL engine provides real pgvector exact cosine', async (t) => {
   const db = await database();
   t.after(db.close);
-  await db.pool.query('CREATE EXTENSION vector');
+  await db.pool.query('CREATE EXTENSION IF NOT EXISTS vector');
   const version = (
     await db.pool.query("SELECT extversion FROM pg_extension WHERE extname='vector'")
   ).rows[0].extversion;

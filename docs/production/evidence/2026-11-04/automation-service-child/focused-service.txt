@@ -1,0 +1,19 @@
+{"controller": "moria-quality-6149577f-142d-4fd1-aabc-51e4c5553654", "image": "sha256:b9d1727df6293ab4acf24fb6649dd227327bf4b947ea075eb39ba7bfa1932b2b", "scratchPools": ["/tmp/moria-engine-scratch-88c244a7-16bd-41d4-bd67-e1f5d299ea79", "/tmp/moria-engine-scratch-d867d853-0e61-43b7-a5d6-d6ac8a127821"], "temporary": "/tmp/moria-quality-q8hb7w3p"}
+$ node scripts/test-files.mjs integration tests/native-agent-service-focused.integration.test.ts
+Running 1 integration test files.
+▶ native Agent service and current authority
+  ✔ Source automation factories atomically dispatch private current Agent releases and recover a lost acknowledgement (82781.795247ms)
+  ✔ accepted private job authority survives ordinary session expiry while public and stale lease credentials fail (14346.353577ms)
+  ✔ newly granted tool permissions cannot widen an already accepted job capability (7895.755058ms)
+  ✔ postclaim filesystem rejection records no code start after an expired original session (5533.014232ms)
+  ✔ deleting an actual pinned Source descriptor withholds retained code data while the resource binding stays active (13829.598468ms)
+  ✔ accepted agent code remains pinned across redeployment and current authority gates retained results (12346.696379ms)
+✔ native Agent service and current authority (162490.833537ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 163092.502291

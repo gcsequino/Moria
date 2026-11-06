@@ -342,7 +342,13 @@ test('resource data provenance retains classification, bounds cycles and pre-adm
         '0',
       );
       const admitted = (await insert()).rows[0];
-      assert.ok(BigInt(admitted.security_epoch) > BigInt(before));
+      assert.equal(BigInt(admitted.security_epoch) - BigInt(before), 6n);
+      const replay = () =>
+        db.pool.query(
+          "SELECT moria.runtime_service_dataset_edges($1,$2,$3,'transform','v1','standard',$4,$5,ARRAY['private'])::text AS epoch",
+          [service, environment, producer, inputs, outputs],
+        );
+      assert.equal((await replay()).rows[0].epoch, admitted.security_epoch);
       assert.equal(
         admitted.security_epoch,
         (await authority.current(environment, context.principal, context.application)).epoch,
@@ -351,6 +357,11 @@ test('resource data provenance retains classification, bounds cycles and pre-adm
         "INSERT INTO moria.runtime_execution_services(binding,authority,target_revision) VALUES($1,$2,'v1')",
         [admitted.id, service],
       );
+      await db.pool.query(
+        'UPDATE moria.runtime_service_authorities SET enabled=false WHERE id=$1',
+        [service],
+      );
+      await assert.rejects(replay(), /SERVICE_PURPOSE_REVOKED/);
       assert.equal(
         (
           await db.pool.query(

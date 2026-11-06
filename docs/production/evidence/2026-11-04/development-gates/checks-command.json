@@ -1,0 +1,13 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network=none",
+  "--env",
+  "CI=true",
+  "--entrypoint",
+  "bash",
+  "sha256:4a135dd57738d6f322b129ef08a20713357ee9b9129cf989837a0ba18e6ac09a",
+  "-lc",
+  "pnpm check:static && pnpm check:indexing && pnpm test:local tests/test-files.test.ts"
+]

@@ -21,14 +21,16 @@ test(
       environment = randomUUID(),
       authority = new Authority(db.catalog);
     await db.catalog.ensureEnvironment(environment);
-    await authority.syncPrincipal(environment, 'fixture', 'http-user', {
-      enabled: true,
-      kind: 'workload',
-      attributes: {},
-      markings: [],
-    });
     await authority.setApplication(environment, 'fixture', 'http-client', []);
-    await authority.setGrants(environment, 'fixture', 'http-user', 'http-client', []);
+    for (const principal of ['http-user', 'cli-user']) {
+      await authority.syncPrincipal(environment, 'fixture', principal, {
+        enabled: true,
+        kind: 'workload',
+        attributes: {},
+        markings: [],
+      });
+      await authority.setGrants(environment, 'fixture', principal, 'http-client', []);
+    }
     const { token } = await new WorkloadSessions(authority).mint(
       { environment, principal: 'http-user', application: 'http-client' },
       'fixture',
@@ -51,7 +53,8 @@ test(
       MORIA_NATIVE_BROWSER_BINDING: JSON.stringify({ environment, application: 'http-client' }),
       MORIA_NATIVE_CLI_KEY: cliKey,
       MORIA_NATIVE_CLI_PROFILES: JSON.stringify({
-        operator: { environment, principal: 'http-user', application: 'http-client' },
+        operator: { environment, principal: 'cli-user', application: 'http-client' },
+        approval: { environment, principal: 'http-user', application: 'http-client' },
       }),
       MORIA_NATIVE_DRAIN_SECONDS: '2',
     };
@@ -123,29 +126,38 @@ test(
         (await authRequest({ ...headers, authorization: `Bearer ${token}` })).status,
         403,
       );
-      await authority.syncPrincipal(environment, 'fixture', 'http-user', {
+      await authority.syncPrincipal(environment, 'fixture', 'cli-user', {
         enabled: false,
         kind: 'workload',
         attributes: {},
         markings: [],
       });
+      try {
+        const revoked = await authRequest(headers);
+        assert.equal(revoked.status, 401, 'disabled principal permanently revokes its credential');
+        assert.equal(revoked.value.error.code, 'UNAUTHENTICATED');
+        assert.equal(await count(), before + 1, 'revocation cannot silently mint a replacement');
+      } finally {
+        await authority.syncPrincipal(environment, 'fixture', 'cli-user', {
+          enabled: true,
+          kind: 'workload',
+          attributes: {},
+          markings: [],
+        });
+      }
       assert.equal(
         (await authRequest(headers)).status,
-        403,
-        'same cached credential must observe current disabled principal',
+        401,
+        'reenabling cannot revive the credential',
       );
-      assert.equal(await count(), before + 1, 'revocation cannot silently mint a replacement');
-      await authority.syncPrincipal(environment, 'fixture', 'http-user', {
-        enabled: true,
-        kind: 'workload',
-        attributes: {},
-        markings: [],
-      });
+      assert.equal(await count(), before + 1, 'reenabling cannot silently issue a replacement');
+      assert.equal((await authRequest({ authorization: `Bearer ${token}` })).status, 404);
     });
     await t.test(
       'a missed CLI approval disable pulse permanently fences its issued session',
       async () => {
-        const headers = { 'x-moria-key': cliKey, 'x-moria-profile': 'operator' };
+        const headers = { 'x-moria-key': cliKey, 'x-moria-profile': 'approval' };
+        assert.equal((await authRequest(headers)).status, 404);
         const before = (
           await db.pool.query('SELECT count(*) FROM moria.workload_sessions WHERE environment=$1', [
             environment,

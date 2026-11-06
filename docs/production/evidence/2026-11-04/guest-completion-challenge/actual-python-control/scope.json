@@ -1,0 +1,9 @@
+{
+  "image": "sha256:c391776c90e69d561048bbfd1a680621447c89d0b5c42dcea9f3983b0c3266fa",
+  "runtime": "actual frozen canonical Python runner and protocol with matching locked DuckDB/PyArrow packages",
+  "broker": "metadata-only pipe fixture; no Dataset IO, native execution admission or publication",
+  "cases": 5,
+  "passed": 5,
+  "oldDaemonVersion": "28.0.4",
+  "sourceValueVersion": 1
+}

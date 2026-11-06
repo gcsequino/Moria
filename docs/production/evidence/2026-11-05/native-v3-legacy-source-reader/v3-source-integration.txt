@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-source.integration.test.ts
+Running 1 integration test files.
+✔ legacy full-build indexing reads v3 array-key heads and preserves empty/current history (33312.530839ms)
+ℹ {"actualV3Head":true,"arrayKeysAndNullableRows":true,"nativeGraphScanTasks":1,"legacySourceGeneration":true,"registeredIdentityUids":16,"explicitEmptyGraphTask":true,"emptyCurrentAndRetainedSourceHistory":true,"datasetHeadUnchangedByIndexing":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33857.997404

@@ -3,6 +3,7 @@ use crate::{
     authority::{Authority, VerifiedSession},
     authorization::authorize,
     canonical,
+    connector_discovery::Capability,
     database::Database,
     execution::{ExecutionAuthority, ExecutionSpec, Lease},
     functions::Admission,
@@ -19,7 +20,7 @@ use crate::{
 use anyhow::{Context, Result, ensure};
 use async_trait::async_trait;
 use base64::{Engine, engine::general_purpose::STANDARD};
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
@@ -27,6 +28,8 @@ use std::{sync::Arc, time::Duration};
 use tokio::sync::{Mutex, watch};
 use tokio_postgres::Client;
 use uuid::Uuid;
+
+pub(crate) mod discovery;
 
 pub(crate) fn domain_error_code(error: &anyhow::Error) -> Option<&'static str> {
     let message = error
@@ -39,12 +42,18 @@ pub(crate) fn domain_error_code(error: &anyhow::Error) -> Option<&'static str> {
         })
         .unwrap_or_else(|| error.root_cause().to_string());
     [
+        "FORBIDDEN",
+        "UNAUTHENTICATED",
+        "IDENTITY_STALE",
+        "BINDING_CHANGED",
+        "AUTHORIZATION_CHANGED",
         "PIPELINE_PROFILE_INVALID",
         "PIPELINE_SOURCE_INVALID",
         "PIPELINE_CAPABILITY_UNSUPPORTED",
         "PIPELINE_PROFILE_CONFLICT",
         "PIPELINE_WORKER_UNAVAILABLE",
         "PIPELINE_SCHEMA_UNSUPPORTED",
+        "PIPELINE_DISCOVERY_INVALID",
         "PIPELINE_REFERENCE_INVALID",
         "PIPELINE_INPUT_KIND",
         "PIPELINE_MARKINGS_INVALID",
@@ -67,6 +76,8 @@ pub(crate) fn domain_error_code(error: &anyhow::Error) -> Option<&'static str> {
         "PIPELINE_PROFILE_REVOKED",
         "PIPELINE_DESTINATION_REVOKED",
         "PIPELINE_DESTINATION_INVALID",
+        "PIPELINE_HTTP_FAILED",
+        "PIPELINE_RESPONSE_INVALID",
         "PIPELINE_FAILED",
         "PIPELINE_PUBLICATION_FAILED",
     ]
@@ -163,7 +174,7 @@ pub(crate) async fn install_in(
         domain == "sync" || profile.connector.is_none(),
         "PIPELINE_PROFILE_INVALID"
     );
-    program(client, environment, &release, &declaration, &profile).await?;
+    program(client, environment, &release, &declaration, &profile, None).await?;
     let service = RegisteredService::load_current_in(
         client,
         environment,
@@ -178,7 +189,8 @@ pub(crate) async fn install_in(
         "PIPELINE_PROFILE_INVALID"
     );
     if let Some(id) = profile.connector {
-        destination_in(client, environment, resource, id).await?;
+        let destination = destination_in(client, environment, resource, id).await?;
+        connector_requests_in(client, resource, &release, &declaration, Some(&destination)).await?;
     }
     for (reference, output) in &profile.outputs {
         let id = reference_in(client, &release, reference).await?;
@@ -235,7 +247,7 @@ pub(crate) async fn source_readiness_in(
         "PIPELINE_PROFILE_INVALID"
     );
     let (_, release, definition) = source_in(client, environment, resource).await?;
-    let program = program(client, environment, &release, &definition, &profile).await?;
+    let program = program(client, environment, &release, &definition, &profile, None).await?;
     service
         .resource_labels_in(
             client,
@@ -247,8 +259,14 @@ pub(crate) async fn source_readiness_in(
             },
         )
         .await?;
-    if let Some(destination) = profile.connector {
-        destination_in(client, environment, resource, destination).await?;
+    if let Some(id) = profile.connector {
+        let destination = destination_in(client, environment, resource, id).await?;
+        for request in
+            connector_requests_in(client, resource, &release, &definition, Some(&destination))
+                .await?
+        {
+            crate::secrets::grant_registered_in(client, &service, &request).await?;
+        }
     }
     for (name, output) in &profile.outputs {
         let id = reference_in(client, &release, name).await?;
@@ -290,13 +308,20 @@ pub(crate) async fn check_context(client: &Client, context: &SandboxContext) -> 
             &[&context.lease().execution],
         )
         .await?;
-    let session = Authority::sandbox_session_in(client, context).await?;
-    let row=client.query_one("SELECT e.resource,p.inputs,p.outputs FROM moria.runtime_executions e JOIN moria.runtime_pipeline_executions p ON p.execution=e.id WHERE e.id=$1",&[&context.lease().execution]).await?;
-    let mut labels = BTreeSet::new();
-    labels.extend(
-        Authority::resource_access(client, &session, &row.get::<_, Uuid>(0).to_string(), "read")
-            .await?,
-    );
+    let session = Authority::stored_session_in(
+        client,
+        context
+            .session_hash()
+            .ok_or_else(|| anyhow::anyhow!("UNAUTHENTICATED"))?,
+        context.environment(),
+        context.principal(),
+        context.application(),
+    )
+    .await?;
+    let row=client.query_one("SELECT e.resource,p.inputs,p.outputs,p.secret_approvals FROM moria.runtime_executions e JOIN moria.runtime_pipeline_executions p ON p.execution=e.id WHERE e.id=$1",&[&context.lease().execution]).await?;
+    let mut labels =
+        accepted_secrets_in(client, &session, &row.get::<_, Value>("secret_approvals")).await?;
+    let mut requests = vec![json!({"resource":row.get::<_, Uuid>(0),"operation":"read"})];
     for (field, operation) in [("inputs", "read"), ("outputs", "write")] {
         let resources: Value = row.get(field);
         for resource in resources
@@ -304,19 +329,24 @@ pub(crate) async fn check_context(client: &Client, context: &SandboxContext) -> 
             .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
             .values()
         {
-            labels.extend(
-                Authority::resource_access(
-                    client,
-                    &session,
-                    resource["resource"]
-                        .as_str()
-                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?,
-                    operation,
-                )
-                .await?,
-            );
+            let resource = resource["resource"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+            requests.push(json!({"resource":resource,"operation":operation}));
         }
     }
+    let result: Value = client
+        .query_one(
+            "SELECT moria.native_serving_resource_access_batch($1,$2)",
+            &[&session.session_hash(), &json!(requests)],
+        )
+        .await?
+        .get(0);
+    labels.extend(
+        serde_json::from_value::<Vec<Vec<String>>>(result)?
+            .into_iter()
+            .flatten(),
+    );
     context.record_consumed_markings(&markings(context.environment(), &labels))?;
     Ok(())
 }
@@ -404,12 +434,15 @@ async fn program(
     release: &str,
     definition: &Value,
     profile: &Profile,
+    capability: Option<Capability>,
 ) -> Result<Program> {
     let spec = &definition["spec"];
     let transform = definition["kind"] == "Transform";
     let (artifact, inputs, outputs, configuration, limits, stream, dependency) = if transform {
         ensure!(
-            spec["runtime"] == "python-duckdb-v1" && profile.connector.is_none(),
+            spec["runtime"] == "python-duckdb-v1"
+                && profile.connector.is_none()
+                && capability != Some(Capability::SchemaDiscovery),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
         (
@@ -424,9 +457,11 @@ async fn program(
     } else {
         ensure!(
             definition["kind"] == "Connection"
-                && spec["mode"] == "replace"
-                && spec["coverage"] == "full"
-                && spec["secrets"].as_array().is_some_and(Vec::is_empty)
+                && (capability != Some(Capability::BatchRead)
+                    || (spec["mode"] == "replace" && spec["coverage"] == "full"))
+                && spec["secrets"]
+                    .as_array()
+                    .is_some_and(|values| values.len() <= 8)
                 && profile.connector.is_some(),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
@@ -442,7 +477,12 @@ async fn program(
         ensure!(
             implementation["kind"] == "ConnectorImplementation"
                 && implementation["spec"]["abiVersion"] == "connector/v1"
-                && implementation["spec"]["capabilities"] == json!(["batchRead"]),
+                && crate::connector_discovery::capability_supported(
+                    &implementation["spec"]["capabilities"],
+                    &spec["mode"],
+                    &spec["coverage"],
+                    capability,
+                ),
             "PIPELINE_CAPABILITY_UNSUPPORTED"
         );
         crate::filesystem::validate_configuration(
@@ -496,7 +536,11 @@ async fn program(
     Ok(Program {
         artifact,
         inputs,
-        outputs,
+        outputs: if capability == Some(Capability::SchemaDiscovery) {
+            Vec::new()
+        } else {
+            outputs
+        },
         configuration,
         timeout: timeout as i32,
         memory: memory as i32,
@@ -504,6 +548,105 @@ async fn program(
         stream,
         dependency,
     })
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct AcceptedSecret {
+    request: crate::secrets::SecretRequest,
+    approval: crate::secrets::SecretApprovalRef,
+    material_revision: String,
+}
+
+async fn connector_requests_in(
+    client: &Client,
+    resource: Uuid,
+    release: &str,
+    definition: &Value,
+    destination: Option<&DestinationDefinition>,
+) -> Result<Vec<crate::secrets::SecretRequest>> {
+    if definition["kind"] != "Connection" {
+        return Ok(Vec::new());
+    }
+    let values = definition["spec"]["secrets"]
+        .as_array()
+        .ok_or_else(|| anyhow::anyhow!("PIPELINE_SOURCE_INVALID"))?;
+    ensure!(values.len() <= 8, "PIPELINE_CAPABILITY_UNSUPPORTED");
+    let mut secrets = BTreeSet::new();
+    for value in values {
+        let secret = reference_in(
+            client,
+            release,
+            value
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("PIPELINE_SOURCE_INVALID"))?,
+        )
+        .await?;
+        ensure!(secrets.insert(secret), "SECRET_BINDING_INVALID");
+    }
+    let destination = destination.ok_or_else(|| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?;
+    let credentials = destination.credentials_for(&secrets)?;
+    let fingerprint = destination.fingerprint()?;
+    Ok(credentials
+        .into_iter()
+        .map(|credential| crate::secrets::SecretRequest {
+            release: release.into(),
+            consumer: resource,
+            secret: credential.secret,
+            owner_kind: crate::secrets::OwnerKind::Connector,
+            owner_profile: destination.id,
+            owner_revision: destination.revision.clone(),
+            destination_fingerprint: fingerprint.clone(),
+            material_ref: credential.material_ref,
+        })
+        .collect())
+}
+
+pub(crate) async fn inspect_connector_in(
+    client: &Client,
+    environment: &str,
+    resource: Uuid,
+) -> Result<Value> {
+    let (_, release, definition) = source_in(client, environment, resource).await?;
+    ensure!(
+        definition["kind"] == "Connection",
+        "PIPELINE_SOURCE_INVALID"
+    );
+    let profile: Value = client.query_opt("SELECT profile FROM moria.runtime_pipeline_profiles WHERE environment=$1 AND resource=$2 AND domain='sync' AND enabled", &[&environment,&resource]).await?
+        .ok_or_else(|| anyhow::anyhow!("PIPELINE_PROFILE_REQUIRED"))?.get(0);
+    let profile = self::profile(&profile)?;
+    let destination = destination_in(
+        client,
+        environment,
+        resource,
+        profile
+            .connector
+            .ok_or_else(|| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?,
+    )
+    .await?;
+    Ok(
+        json!({"bindings":connector_requests_in(client, resource, &release, &definition, Some(&destination)).await?}),
+    )
+}
+
+async fn accepted_secrets_in(
+    client: &Client,
+    session: &VerifiedSession,
+    values: &Value,
+) -> Result<BTreeSet<String>> {
+    let accepted: Vec<AcceptedSecret> = serde_json::from_value(values.clone())?;
+    ensure!(accepted.len() <= 8, "SECRET_BINDING_INVALID");
+    let mut labels = BTreeSet::new();
+    for accepted in accepted {
+        let grant = crate::secrets::grant_in(client, session, &accepted.request).await?;
+        ensure!(
+            grant.snapshot() == accepted.approval
+                && grant.material_revision() == accepted.material_revision,
+            "SECRET_APPROVAL_REVOKED"
+        );
+        labels.extend(grant.markings().iter().cloned());
+    }
+    Ok(labels)
 }
 
 #[derive(Clone)]
@@ -520,6 +663,25 @@ impl NativePipelines {
         resource: Uuid,
         key: &str,
     ) -> Result<Value> {
+        self.invoke_inner(session, resource, key, Capability::BatchRead)
+            .await
+    }
+    pub async fn discover(
+        &self,
+        session: &VerifiedSession,
+        resource: Uuid,
+        key: &str,
+    ) -> Result<Value> {
+        self.invoke_inner(session, resource, key, Capability::SchemaDiscovery)
+            .await
+    }
+    async fn invoke_inner(
+        &self,
+        session: &VerifiedSession,
+        resource: Uuid,
+        key: &str,
+        capability: Capability,
+    ) -> Result<Value> {
         ensure!(
             !key.is_empty()
                 && key.len() <= 128
@@ -535,6 +697,11 @@ impl NativePipelines {
             resource,
             key
         ]))?;
+        let request_key = if capability == Capability::SchemaDiscovery {
+            canonical::fingerprint(&json!([request_key, capability.as_str()]))?
+        } else {
+            request_key
+        };
         let lock = format!("moria/pipeline/request/{request_key}");
         // The provenance prepass mutates authority. Take exclusive admission before BEGIN.
         let mut admission =
@@ -548,6 +715,10 @@ impl NativePipelines {
             Some("Connection") => "sync",
             _ => anyhow::bail!("PIPELINE_SOURCE_INVALID"),
         };
+        ensure!(
+            capability != Capability::SchemaDiscovery || domain == "sync",
+            "PIPELINE_CAPABILITY_UNSUPPORTED"
+        );
         let operation = if domain == "transform" {
             "build"
         } else {
@@ -591,6 +762,7 @@ impl NativePipelines {
             &release,
             &definition,
             &profile,
+            Some(capability),
         )
         .await?;
         let destination = if let Some(id) = profile.connector {
@@ -604,7 +776,47 @@ impl NativePipelines {
             .transpose()?;
         let mut input_ids = BTreeMap::new();
         let mut output_ids = BTreeMap::new();
+        let mut output_definitions = BTreeMap::new();
         let mut labels = BTreeSet::new();
+        let mut accepted_secrets = Vec::new();
+        let mut material_semantics = Vec::new();
+        for request in connector_requests_in(
+            tx.client(),
+            resource,
+            &release,
+            &definition,
+            destination.as_ref(),
+        )
+        .await?
+        {
+            let caller = crate::secrets::grant_in(tx.client(), session, &request).await?;
+            let service_grant =
+                crate::secrets::grant_registered_in(tx.client(), &service, &request).await?;
+            ensure!(
+                caller.snapshot() == service_grant.snapshot(),
+                "SECRET_APPROVAL_REVOKED"
+            );
+            labels.extend(caller.markings().iter().cloned());
+            labels.extend(service_grant.markings().iter().cloned());
+            let destination = destination.as_ref().unwrap();
+            let credential = destination
+                .credentials
+                .iter()
+                .find(|slot| slot.secret == request.secret)
+                .cloned()
+                .unwrap_or_else(|| Credential {
+                    secret: request.secret,
+                    material_ref: destination.secret_ref.clone(),
+                    header: "authorization".into(),
+                    scheme: CredentialScheme::Bearer,
+                });
+            material_semantics.push(json!({"secret":request.secret,"materialRevision":service_grant.material_revision(),"header":credential.header,"scheme":credential.scheme}));
+            accepted_secrets.push(AcceptedSecret {
+                request,
+                approval: service_grant.snapshot(),
+                material_revision: service_grant.material_revision().into(),
+            });
+        }
         if let Some(dependency) = program.dependency {
             labels.extend(
                 service
@@ -617,28 +829,34 @@ impl NativePipelines {
         }
         labels.extend(
             service
-                .resource_labels_in(tx.client(), &resource.to_string(), "read")
+                .resource_labels_for_operations_in(
+                    tx.client(),
+                    &resource.to_string(),
+                    "read",
+                    Some(operation),
+                )
                 .await?,
         );
-        labels.extend(
-            service
-                .resource_labels_in(tx.client(), &resource.to_string(), operation)
-                .await?,
-        );
-        for (reference, ids, operations) in [
-            (&program.inputs, &mut input_ids, vec!["read"]),
-            (&program.outputs, &mut output_ids, vec!["read", "write"]),
+        for (reference, ids, additional_operation) in [
+            (&program.inputs, &mut input_ids, None),
+            (&program.outputs, &mut output_ids, Some("write")),
         ] {
             for name in reference {
                 let id = reference_in(tx.client(), &release, name).await?;
                 let (_, _, dataset) = source_in(tx.client(), session.environment(), id).await?;
                 ensure!(dataset["kind"] == "Dataset", "PIPELINE_INPUT_KIND");
-                for operation in &operations {
-                    labels.extend(
-                        service
-                            .resource_labels_in(tx.client(), &id.to_string(), operation)
-                            .await?,
-                    );
+                labels.extend(
+                    service
+                        .resource_labels_for_operations_in(
+                            tx.client(),
+                            &id.to_string(),
+                            "read",
+                            additional_operation,
+                        )
+                        .await?,
+                );
+                if additional_operation.is_some() {
+                    output_definitions.insert(id, dataset);
                 }
                 ids.insert(name.clone(), id);
             }
@@ -662,7 +880,25 @@ impl NativePipelines {
                 .get(0);
             ensure!(admitted, "MARKING_DOWNGRADE");
         }
-        if !input_ids.is_empty() {
+        // When inputs cannot inherit from outputs, binding can admit the graph once
+        // without changing the already verified input pins.
+        let defer_provenance = !input_ids.is_empty()
+            && !output_ids.is_empty()
+            && state.private_purpose.is_none()
+            && tx.query_one(
+                "SELECT NOT EXISTS (SELECT 1 FROM moria.runtime_job_sessions WHERE token_hash=$4)
+                   AND NOT EXISTS (
+                     SELECT 1 FROM unnest($2::uuid[]) input(id)
+                     CROSS JOIN LATERAL unnest(moria.runtime_data_origins($1,input.id::text)) ancestor(resource)
+                     WHERE ancestor.resource=ANY($3::text[]))",
+                &[
+                    &session.environment(),
+                    &input_ids.values().copied().collect::<Vec<_>>(),
+                    &output_ids.values().map(Uuid::to_string).collect::<Vec<_>>(),
+                    &session.session_hash(),
+                ],
+            ).await?.get::<_,bool>(0);
+        if !input_ids.is_empty() && !defer_provenance {
             tx.query_one(
                 "SELECT moria.runtime_service_dataset_edges($1,$2,$3,$4,$5,$6,$7,$8,$9)",
                 &[
@@ -697,7 +933,7 @@ impl NativePipelines {
         }
         for (name, id) in output_ids {
             let output = &profile.outputs[&name];
-            let (_, _, dataset) = source_in(tx.client(), session.environment(), id).await?;
+            let dataset = &output_definitions[&id];
             ensure!(
                 dataset["spec"]["writeModes"]
                     .as_array()
@@ -712,14 +948,11 @@ impl NativePipelines {
                 id.to_string(),
                 json!({"binding":physical,"writerSchema":output.schema}),
             );
-            tx.execute("INSERT INTO moria.dataset_heads(environment,dataset,revision) VALUES($1,$2,0) ON CONFLICT DO NOTHING",&[&session.environment(),&id.to_string()]).await?;
             heads.insert(id.to_string(),tx.query_one("SELECT revision::text FROM moria.dataset_heads WHERE environment=$1 AND dataset=$2 FOR SHARE",&[&session.environment(),&id.to_string()]).await?.get::<_,String>(0));
             outputs.insert(
                 name,
                 json!({"resource":id,"namespace":output.namespace,"schema":output.schema}),
             );
-            Authority::resource_access_for_operation(tx.client(), session, &id.to_string(), "read")
-                .await?;
         }
         ensure!(labels.len() <= 256, "PIPELINE_MARKINGS_INVALID");
         authorize(
@@ -754,6 +987,11 @@ impl NativePipelines {
                 format!("{}:write", value["resource"].as_str().unwrap()),
             ]
         }))
+        .chain(
+            accepted_secrets
+                .iter()
+                .map(|secret| format!("{}:use", secret.request.secret)),
+        )
         .collect::<Vec<_>>();
         let binding = if let Some((binding, consumed)) = crate::automations::dispatch_binding_in(
             tx.client(),
@@ -778,15 +1016,30 @@ impl NativePipelines {
                 )
                 .await?
         };
-        tx.execute("INSERT INTO moria.runtime_sandbox_bindings(binding,domain,artifact_uri,artifact_digest,outputs,effect,memory_mib,cpu_millis,timeout_seconds) VALUES($1,$2,$3,$4,$5,'readWrite',$6,$7,$8)",&[&binding.id,&domain,&program.artifact["uri"].as_str().unwrap(),&program.artifact["digest"].as_str().unwrap(),&json!({"complete":{"type":"boolean","nullable":false}}),&program.memory,&program.cpu,&program.timeout]).await?;
-        let checkpoint = if let Some(stream) = &program.stream {
+        if defer_provenance {
+            for input in inputs.values_mut() {
+                input["pin"]["securityEpoch"] = json!(&binding.security_epoch);
+                input["pin"]["instanceEpoch"] = json!(&binding.instance_epoch);
+            }
+        }
+        let effect = if capability == Capability::SchemaDiscovery {
+            "readOnly"
+        } else {
+            "readWrite"
+        };
+        tx.execute("INSERT INTO moria.runtime_sandbox_bindings(binding,domain,artifact_uri,artifact_digest,outputs,effect,memory_mib,cpu_millis,timeout_seconds) VALUES($1,$2,$3,$4,$5,$9,$6,$7,$8)",&[&binding.id,&domain,&program.artifact["uri"].as_str().unwrap(),&program.artifact["digest"].as_str().unwrap(),&json!({"complete":{"type":"boolean","nullable":false}}),&program.memory,&program.cpu,&program.timeout,&effect]).await?;
+        let checkpoint = if let Some(stream) = program
+            .stream
+            .as_ref()
+            .filter(|_| capability == Capability::BatchRead)
+        {
             let config_revision = checkpoint_revision(
                 &program,
                 &definition,
                 &profile.adapter,
                 &Value::Object(checkpoint_outputs),
                 destination.as_ref(),
-                &[],
+                &material_semantics,
             )?;
             let previous=tx.query_opt("SELECT version::text,value FROM moria.checkpoints WHERE environment=$1 AND connection=$2 AND stream=$3 AND config_revision=$4",&[&session.environment(),&resource.to_string(),&stream,&config_revision]).await?;
             tx.execute("INSERT INTO moria.runtime_snapshot_checkpoint_bindings(binding,connection,stream,config_revision) VALUES($1,$2,$3,$4)",&[&binding.id,&resource.to_string(),&stream,&config_revision]).await?;
@@ -808,7 +1061,7 @@ impl NativePipelines {
             )
             .await?
             .get(0);
-        tx.execute("INSERT INTO moria.runtime_pipeline_executions(execution,profile,entry_id,release,definition,inputs,outputs,configuration,checkpoint,destination_fingerprint,requester,markings,code_resource) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",&[&execution,&registered.get::<_,Uuid>("id"),&entry,&release,&definition,&Value::Object(inputs),&Value::Object(outputs),&program.configuration,&checkpoint,&destination_fingerprint,&json!({"kind":"user","principal":session.principal(),"application":session.application(),"key":key}),&json!(markings(session.environment(),&labels)),&program.dependency]).await?;
+        tx.execute("INSERT INTO moria.runtime_pipeline_executions(execution,profile,entry_id,release,definition,inputs,outputs,configuration,checkpoint,destination_fingerprint,requester,markings,code_resource,secret_approvals,capability) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",&[&execution,&registered.get::<_,Uuid>("id"),&entry,&release,&definition,&Value::Object(inputs),&Value::Object(outputs),&program.configuration,&checkpoint,&destination_fingerprint,&json!({"kind":"user","principal":session.principal(),"application":session.application(),"key":key}),&json!(markings(session.environment(),&labels)),&program.dependency,&serde_json::to_value(&accepted_secrets)?,&capability.as_str()]).await?;
         let result = self.public_in(tx.client(), session, execution).await?;
         tx.commit().await?;
         admission.release().await?;
@@ -820,7 +1073,7 @@ impl NativePipelines {
         session: &VerifiedSession,
         id: Uuid,
     ) -> Result<Value> {
-        let row=client.query_opt("SELECT e.*,p.release,p.requester,p.inputs,p.outputs,p.code_resource,p.markings,(e.finished_at IS NOT NULL AND e.finished_at<=clock_timestamp()-interval '30 days') AS expired FROM moria.runtime_executions e JOIN moria.runtime_pipeline_executions p ON p.execution=e.id WHERE e.id=$1 AND e.environment=$2 AND p.requester->>'principal'=$3 AND p.requester->>'application'=$4",&[&id,&session.environment(),&session.principal(),&session.application()]).await?.ok_or_else(||anyhow::anyhow!("NOT_FOUND"))?;
+        let row=client.query_opt("SELECT e.*,p.release,p.requester,p.inputs,p.outputs,p.code_resource,p.markings,p.secret_approvals,(e.finished_at IS NOT NULL AND e.finished_at<=clock_timestamp()-interval '30 days') AS expired FROM moria.runtime_executions e JOIN moria.runtime_pipeline_executions p ON p.execution=e.id WHERE e.id=$1 AND e.environment=$2 AND p.requester->>'principal'=$3 AND p.requester->>'application'=$4",&[&id,&session.environment(),&session.principal(),&session.application()]).await?.ok_or_else(||anyhow::anyhow!("NOT_FOUND"))?;
         ensure!(!row.get::<_, bool>("expired"), "RESULT_EXPIRED");
         let state = Authority::current(client, session).await?;
         let labels: Value = row.get("markings");
@@ -835,6 +1088,9 @@ impl NativePipelines {
                     .ok_or_else(|| anyhow::anyhow!("PIPELINE_MARKINGS_INVALID"))
             })
             .collect::<Result<_>>()?;
+        labels.extend(
+            accepted_secrets_in(client, session, &row.get::<_, Value>("secret_approvals")).await?,
+        );
         labels.extend(
             crate::sandbox::retained_observations_in(client, id)
                 .await?
@@ -869,37 +1125,32 @@ impl NativePipelines {
             },
             &labels,
         )?;
-        for output in row
-            .get::<_, Value>("outputs")
+        let inputs: Value = row.get("inputs");
+        let inputs = inputs
+            .as_object()
+            .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+        let outputs: Value = row.get("outputs");
+        let reads = outputs
             .as_object()
             .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
             .values()
-        {
-            Authority::resource_access_for_operation(
-                client,
-                session,
-                output["resource"]
+            .chain(inputs.values())
+            .map(|dataset| {
+                let resource = dataset["resource"]
                     .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?,
-                "read",
-            )
-            .await?;
+                    .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+                Ok(json!({"resource":resource,"operation":"read"}))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        if !reads.is_empty() {
+            client
+                .query_one(
+                    "SELECT moria.native_serving_resource_access_batch($1,$2,true)",
+                    &[&session.session_hash(), &json!(reads)],
+                )
+                .await?;
         }
-        for input in row
-            .get::<_, Value>("inputs")
-            .as_object()
-            .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
-            .values()
-        {
-            Authority::resource_access_for_operation(
-                client,
-                session,
-                input["resource"]
-                    .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?,
-                "read",
-            )
-            .await?;
+        for input in inputs.values() {
             let namespace: IndexNamespace =
                 serde_json::from_value(input["pin"]["namespace"].clone())?;
             ensure!(client.query_opt("SELECT 1 FROM moria.native_storage_namespaces WHERE environment=$1 AND resource=$2 AND warehouse_id=$3 AND table_id=$4 AND revision=$5 AND enabled",&[&session.environment(),&input["resource"].as_str().unwrap(),&namespace.warehouse_id,&namespace.table_id,&namespace.revision]).await?.is_some(),"STORAGE_NAMESPACE_REVOKED");
@@ -995,7 +1246,11 @@ impl NativePipelines {
         .sandbox_session(context)
         .await?;
         let client = self.db.get().await?;
-        let row=client.query_one("SELECT r.outputs,r.checkpoint,p.profile FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile WHERE r.execution=$1",&[&context.lease().execution]).await?;
+        let row=client.query_one("SELECT r.outputs,r.checkpoint,r.capability,p.profile FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile WHERE r.execution=$1",&[&context.lease().execution]).await?;
+        if row.get::<_, String>("capability") == "schemaDiscovery" {
+            drop(client);
+            return discovery::complete(&self.db, context).await;
+        }
         let profile = profile(&row.get::<_, Value>("profile"))?;
         let sealed=client.query("SELECT id,owner,fence,result FROM moria.runtime_execution_tasks WHERE execution=$1 AND status='sealed' LIMIT 2",&[&context.lease().execution]).await?;
         ensure!(sealed.len() == 1, "PIPELINE_OUTPUT_INVALID");
@@ -1006,10 +1261,13 @@ impl NativePipelines {
             let value:Value=client.query_opt("SELECT value FROM moria.runtime_pipeline_checkpoints WHERE execution=$1 AND task=$2 AND owner=$3 AND fence=$4",&[&context.lease().execution,&task.get::<_,Uuid>("id"),&task.get::<_,Option<Uuid>>("owner"),&task.get::<_,i64>("fence")]).await?.ok_or_else(||anyhow::anyhow!("PIPELINE_CHECKPOINT_REQUIRED"))?.get(0);
             checkpoint["value"] = value;
         }
-        let outputs: Value = row.get("outputs");
+        let Value::Object(outputs) = row.get("outputs") else {
+            anyhow::bail!("PIPELINE_BINDING_INVALID")
+        };
         drop(client);
         let root = std::env::var("MORIA_NATIVE_SNAPSHOT_SCRATCH_ROOT")
             .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
+        let spool_budget = 1024 * 1024 * 1024;
         let limits: crate::storage::ClosureLimits = std::env::var("MORIA_NATIVE_CLOSURE_LIMITS")
             .ok()
             .map(|value| serde_json::from_str(&value))
@@ -1017,53 +1275,59 @@ impl NativePipelines {
             .unwrap_or(crate::storage::ClosureLimits {
                 max_entries: 1_000_000,
                 max_referenced_bytes: profile.limits.output_bytes.saturating_mul(4),
-                max_spool_bytes: 1024 * 1024 * 1024,
+                max_spool_bytes: spool_budget,
             });
-        let mut candidates = Vec::new();
-        for output in outputs
-            .as_object()
-            .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
-            .values()
-        {
-            context.check().await?;
-            let namespace: IndexNamespace = serde_json::from_value(output["namespace"].clone())?;
-            let resource = output["resource"]
-                .as_str()
-                .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
-            let partset: SealedObject =
-                serde_json::from_value(result["datasetOutputs"][resource].clone())?;
-            let grant = Arc::new(
-                crate::catalog::DatasetIoGrant::acquire(
-                    self.db.clone(),
-                    session.clone(),
-                    context.lease().clone(),
-                    namespace.clone(),
-                )
-                .await?,
-            );
-            let (store, _) = crate::storage::configured_store_with_fingerprint(&namespace)?;
-            let scratch = crate::storage::PosixStore::provision(
-                std::path::Path::new(&root),
-                &namespace.warehouse_id,
-                &namespace.table_id,
-                crate::storage::StorageLimits {
-                    max_object_bytes: 128 * 1024 * 1024,
-                    chunk_bytes: 1024 * 1024,
-                },
-            )?;
-            candidates.push(
-                crate::dataset_writer::prepare_output(
-                    store,
-                    &scratch,
-                    grant,
-                    serde_json::from_value(output["schema"].clone())?,
-                    &[partset],
-                    limits,
-                    Cancellation::default(),
-                )
-                .await?,
-            );
-        }
+        let parallel = if limits.max_spool_bytes <= spool_budget / 2 {
+            2
+        } else {
+            1
+        };
+        let candidates: Vec<Uuid> = futures::stream::iter(outputs.into_iter())
+            .map(|(_, output)| {
+                let (root, result, session) = (&root, &result, &session);
+                async move {
+                    context.check().await?;
+                    let namespace: IndexNamespace =
+                        serde_json::from_value(output["namespace"].clone())?;
+                    let resource = output["resource"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?;
+                    let partset: SealedObject =
+                        serde_json::from_value(result["datasetOutputs"][resource].clone())?;
+                    let grant = Arc::new(
+                        crate::catalog::DatasetIoGrant::acquire(
+                            self.db.clone(),
+                            session.clone(),
+                            context.lease().clone(),
+                            namespace.clone(),
+                        )
+                        .await?,
+                    );
+                    let (store, _) = crate::storage::configured_store_with_fingerprint(&namespace)?;
+                    let scratch = crate::storage::PosixStore::provision(
+                        std::path::Path::new(&root),
+                        &namespace.warehouse_id,
+                        &namespace.table_id,
+                        crate::storage::StorageLimits {
+                            max_object_bytes: 128 * 1024 * 1024,
+                            chunk_bytes: 1024 * 1024,
+                        },
+                    )?;
+                    crate::dataset_writer::prepare_output(
+                        store,
+                        &scratch,
+                        grant,
+                        serde_json::from_value(output["schema"].clone())?,
+                        &[partset],
+                        limits,
+                        Cancellation::default(),
+                    )
+                    .await
+                }
+            })
+            .buffered(parallel)
+            .try_collect()
+            .await?;
         let mut admission = Admission::begin(&self.db, context.environment(), true, None).await?;
         let tx = admission.client.as_mut().unwrap().transaction().await?;
         context.check_in(tx.client()).await?;
@@ -1095,6 +1359,7 @@ impl NativePipelines {
         let broker = Arc::new(NativePipelineBroker {
             db: self.db.clone(),
             state: Mutex::new(None),
+            discovery: Mutex::new(None),
             cancel: Cancellation::default(),
         });
         let supervisor = SandboxSupervisor::new(self.db.clone(), host, broker)?;
@@ -1226,6 +1491,20 @@ pub async fn cli(db: Database, args: Vec<String>) -> Result<()> {
                 )
                 .await?
         }
+        "discover" => {
+            service
+                .discover(
+                    &session,
+                    value["resource"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?
+                        .parse()?,
+                    value["key"]
+                        .as_str()
+                        .ok_or_else(|| anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?,
+                )
+                .await?
+        }
         "get" => service.get(&session, id()?).await?,
         "cancel" => service.cancel(&session, id()?).await?,
         "events" => {
@@ -1249,6 +1528,20 @@ struct IoState {
     method_millis: BTreeMap<&'static str, u64>,
 }
 
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Credential {
+    secret: Uuid,
+    material_ref: String,
+    header: String,
+    scheme: CredentialScheme,
+}
+#[derive(Clone, Copy, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+enum CredentialScheme {
+    Raw,
+    Bearer,
+}
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct DestinationDefinition {
@@ -1256,12 +1549,39 @@ struct DestinationDefinition {
     revision: String,
     endpoint_ref: String,
     secret_ref: String,
+    #[serde(default)]
+    credentials: Vec<Credential>,
     methods: Vec<String>,
     paths: Vec<String>,
     markings: Vec<String>,
     allowed_markings: Vec<String>,
 }
 impl DestinationDefinition {
+    fn credentials_for(&self, secrets: &BTreeSet<Uuid>) -> Result<Vec<Credential>> {
+        if self.credentials.is_empty() {
+            ensure!(secrets.len() <= 1, "SECRET_BINDING_INVALID");
+            return Ok(secrets
+                .iter()
+                .map(|secret| Credential {
+                    secret: *secret,
+                    material_ref: self.secret_ref.clone(),
+                    header: "authorization".into(),
+                    scheme: CredentialScheme::Bearer,
+                })
+                .collect());
+        }
+        validate_credentials(&self.credentials)?;
+        ensure!(
+            self.credentials
+                .iter()
+                .map(|slot| slot.secret)
+                .collect::<BTreeSet<_>>()
+                == *secrets,
+            "SECRET_BINDING_INVALID"
+        );
+        Ok(self.credentials.clone())
+    }
+
     fn endpoint(&self) -> Result<reqwest::Url> {
         let url = reqwest::Url::parse(
             &std::env::var(&self.endpoint_ref)
@@ -1289,8 +1609,9 @@ async fn destination_in(
     resource: Uuid,
     id: Uuid,
 ) -> Result<DestinationDefinition> {
-    let value:Value=client.query_opt("SELECT jsonb_build_object('id',id,'revision',revision,'endpointRef',endpoint_ref,'secretRef',secret_ref,'methods',methods,'paths',paths,'markings',markings,'allowedMarkings',allowed_markings) FROM moria.runtime_pipeline_destinations WHERE id=$1 AND environment=$2 AND resource=$3 AND enabled FOR SHARE",&[&id,&environment,&resource]).await?.ok_or_else(||anyhow::anyhow!("PIPELINE_DESTINATION_REVOKED"))?.get(0);
+    let value:Value=client.query_opt("SELECT jsonb_build_object('id',id,'revision',revision,'endpointRef',endpoint_ref,'secretRef',secret_ref,'credentials',credentials,'methods',methods,'paths',paths,'markings',markings,'allowedMarkings',allowed_markings) FROM moria.runtime_pipeline_destinations WHERE id=$1 AND environment=$2 AND resource=$3 AND enabled FOR SHARE",&[&id,&environment,&resource]).await?.ok_or_else(||anyhow::anyhow!("PIPELINE_DESTINATION_REVOKED"))?.get(0);
     let result: DestinationDefinition = serde_json::from_value(value)?;
+    validate_credentials(&result.credentials)?;
     ensure!(
         !result.methods.is_empty()
             && result
@@ -1307,10 +1628,63 @@ async fn destination_in(
     );
     Ok(result)
 }
+fn validate_credentials(credentials: &[Credential]) -> Result<()> {
+    let mut secrets = BTreeSet::new();
+    let mut headers = BTreeSet::new();
+    ensure!(credentials.len() <= 8, "PIPELINE_DESTINATION_INVALID");
+    for credential in credentials {
+        let header = reqwest::header::HeaderName::from_bytes(credential.header.as_bytes())
+            .map_err(|_| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?;
+        ensure!(
+            credential.header == header.as_str()
+                && ![
+                    "host",
+                    "content-length",
+                    "transfer-encoding",
+                    "connection",
+                    "accept",
+                    "content-type",
+                    "cookie",
+                    "set-cookie",
+                    "proxy-authorization"
+                ]
+                .contains(&header.as_str())
+                && (header == reqwest::header::AUTHORIZATION || header.as_str().starts_with("x-"))
+                && secrets.insert(credential.secret)
+                && headers.insert(credential.header.clone())
+                && !credential.material_ref.is_empty()
+                && credential.material_ref.len() <= 128
+                && credential
+                    .material_ref
+                    .bytes()
+                    .enumerate()
+                    .all(|(i, b)| b.is_ascii_alphabetic()
+                        || b == b'_'
+                        || (i > 0 && b.is_ascii_digit())),
+            "PIPELINE_DESTINATION_INVALID"
+        );
+    }
+    Ok(())
+}
+
+fn response_contains_material(value: &Value, material: &str) -> bool {
+    match value {
+        Value::String(value) => value.contains(material),
+        Value::Array(values) => values
+            .iter()
+            .any(|value| response_contains_material(value, material)),
+        Value::Object(values) => values.iter().any(|(key, value)| {
+            key.contains(material) || response_contains_material(value, material)
+        }),
+        _ => value.to_string().contains(material),
+    }
+}
+
 struct Destination {
     definition: DestinationDefinition,
     url: reqwest::Url,
-    secret: String,
+    headers: reqwest::header::HeaderMap,
+    materials: Vec<String>,
     client: reqwest::Client,
     bytes: u64,
     limit: u64,
@@ -1318,12 +1692,40 @@ struct Destination {
 impl Destination {
     fn new(definition: DestinationDefinition, limit: u64) -> Result<Self> {
         let url = definition.endpoint()?;
-        let secret = std::env::var(&definition.secret_ref)
-            .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
-        ensure!(
-            !secret.is_empty() && secret.len() <= 8192 && !secret.contains(['\r', '\n']),
-            "PIPELINE_WORKER_CONFIG_INVALID"
-        );
+        validate_credentials(&definition.credentials)?;
+        let mut headers = reqwest::header::HeaderMap::new();
+        let mut materials = Vec::new();
+        let slots = if definition.credentials.is_empty() {
+            vec![Credential {
+                secret: Uuid::nil(),
+                material_ref: definition.secret_ref.clone(),
+                header: "authorization".into(),
+                scheme: CredentialScheme::Bearer,
+            }]
+        } else {
+            definition.credentials.clone()
+        };
+        for credential in slots {
+            let material = std::env::var(&credential.material_ref)
+                .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
+            ensure!(
+                !material.is_empty() && material.len() <= 8192 && !material.contains(['\r', '\n']),
+                "PIPELINE_WORKER_CONFIG_INVALID"
+            );
+            let value = match credential.scheme {
+                CredentialScheme::Raw => material.clone(),
+                CredentialScheme::Bearer => format!("Bearer {material}"),
+            };
+            let mut value = reqwest::header::HeaderValue::from_str(&value)
+                .map_err(|_| anyhow::anyhow!("PIPELINE_WORKER_CONFIG_INVALID"))?;
+            value.set_sensitive(true);
+            headers.insert(
+                reqwest::header::HeaderName::from_bytes(credential.header.as_bytes())
+                    .map_err(|_| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?,
+                value,
+            );
+            materials.push(material);
+        }
         let client = reqwest::Client::builder()
             .no_proxy()
             .redirect(reqwest::redirect::Policy::none())
@@ -1333,7 +1735,8 @@ impl Destination {
         Ok(Self {
             definition,
             url,
-            secret,
+            headers,
+            materials,
             client,
             bytes: 0,
             limit,
@@ -1392,13 +1795,16 @@ impl Destination {
         let mut call = self
             .client
             .request(reqwest::Method::from_bytes(request.method.as_bytes())?, url)
-            .bearer_auth(&self.secret)
+            .headers(self.headers.clone())
             .header("accept", "application/json");
         if let Some(body) = request.body {
             ensure!(request.method == "POST", "PIPELINE_REQUEST_INVALID");
             call = call.json(&body);
         }
-        let received = call.send().await?;
+        let received = call
+            .send()
+            .await
+            .map_err(|_| anyhow::anyhow!("PIPELINE_HTTP_FAILED"))?;
         let status = received.status().as_u16();
         ensure!(
             !received.status().is_redirection(),
@@ -1408,7 +1814,7 @@ impl Destination {
         let mut body = Vec::new();
         while let Some(chunk) = stream.next().await {
             context.check().await?;
-            let chunk = chunk?;
+            let chunk = chunk.map_err(|_| anyhow::anyhow!("PIPELINE_HTTP_FAILED"))?;
             ensure!(
                 body.len() + chunk.len() <= 768 * 1024,
                 "PIPELINE_FRAME_LIMIT"
@@ -1421,14 +1827,33 @@ impl Destination {
             body.extend(chunk);
         }
         context.check().await?;
-        Ok(
-            json!({"status":status,"body":if body.is_empty(){Value::Null}else{serde_json::from_slice::<Value>(&body).map_err(|_|anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?}}),
-        )
+        ensure!(
+            !self.materials.iter().any(|material| body
+                .windows(material.len())
+                .any(|window| window == material.as_bytes())),
+            "PIPELINE_RESPONSE_INVALID"
+        );
+        let body = if body.is_empty() {
+            Value::Null
+        } else {
+            serde_json::from_slice::<Value>(&body)
+                .map_err(|_| anyhow::anyhow!("PIPELINE_REQUEST_INVALID"))?
+        };
+        // JSON escapes must not hide reflected material from the guest boundary.
+        ensure!(
+            !self
+                .materials
+                .iter()
+                .any(|material| response_contains_material(&body, material)),
+            "PIPELINE_RESPONSE_INVALID"
+        );
+        Ok(json!({"status":status,"body":body}))
     }
 }
 struct NativePipelineBroker {
     db: Database,
     state: Mutex<Option<IoState>>,
+    discovery: Mutex<Option<discovery::State>>,
     cancel: Cancellation,
 }
 impl NativePipelineBroker {
@@ -1482,7 +1907,7 @@ impl PlatformBroker for NativePipelineBroker {
         context.check_in(&client).await?;
         check_context(&client, context).await?;
         let session = Authority::sandbox_session_in(&client, context).await?;
-        let row=client.query_one("SELECT r.inputs,r.outputs,r.configuration,r.checkpoint,r.destination_fingerprint,p.profile,e.resource FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile JOIN moria.runtime_executions e ON e.id=r.execution WHERE r.execution=$1",&[&context.lease().execution]).await?;
+        let row=client.query_one("SELECT r.inputs,r.outputs,r.configuration,r.checkpoint,r.destination_fingerprint,r.capability,r.definition,p.profile,e.resource FROM moria.runtime_pipeline_executions r JOIN moria.runtime_pipeline_profiles p ON p.id=r.profile JOIN moria.runtime_executions e ON e.id=r.execution WHERE r.execution=$1",&[&context.lease().execution]).await?;
         let profile = profile(&row.get::<_, Value>("profile"))?;
         let destination = if let Some(id) = profile.connector {
             let definition =
@@ -1506,6 +1931,31 @@ impl PlatformBroker for NativePipelineBroker {
         } else {
             None
         };
+        if row.get::<_, String>("capability") == "schemaDiscovery" {
+            ensure!(context.domain() == "sync", "PIPELINE_CONTEXT_INVALID");
+            let definition: Value = row.get("definition");
+            let stream = definition["spec"]["stream"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("PIPELINE_BINDING_INVALID"))?
+                .to_owned();
+            let destination =
+                destination.ok_or_else(|| anyhow::anyhow!("PIPELINE_DESTINATION_INVALID"))?;
+            let mut state = self.discovery.lock().await;
+            ensure!(state.is_none(), "PIPELINE_ALREADY_STARTED");
+            *state = Some(discovery::State::new(
+                context.lease().execution,
+                stream,
+                destination,
+                row.get("configuration"),
+            ));
+            drop(state);
+            drop(client);
+            let mut client = self.db.get().await?;
+            let tx = client.transaction().await?;
+            context.complete_current_observation_in(tx.client()).await?;
+            tx.commit().await?;
+            return Ok(());
+        }
         let input_json: Value = row.get("inputs");
         let output_json: Value = row.get("outputs");
         let inputs = input_json
@@ -1603,6 +2053,22 @@ impl PlatformBroker for NativePipelineBroker {
             parts.len() >= 5 && parts[..4] == ["", "api", "v1", "engine"],
             "PIPELINE_OPERATION_DENIED"
         );
+        {
+            let mut discovery = self.discovery.lock().await;
+            if let Some(state) = discovery.as_mut() {
+                let result = state
+                    .http(&self.db, context, &call, &parts[4..], &body)
+                    .await;
+                drop(discovery);
+                let mut client = self.db.get().await?;
+                let tx = client.transaction().await?;
+                context
+                    .complete_observation_in(tx.client(), &call.id)
+                    .await?;
+                tx.commit().await?;
+                return result;
+            }
+        }
         let mut owned = self.state.lock().await;
         let state = owned
             .as_mut()
@@ -1764,6 +2230,12 @@ impl PlatformBroker for NativePipelineBroker {
             *result == json!({"complete":true}),
             "PIPELINE_OUTPUT_INVALID"
         );
+        {
+            let discovery = self.discovery.lock().await;
+            if let Some(state) = discovery.as_ref() {
+                return state.finish(&self.db, context).await;
+            }
+        }
         let owned = self.state.lock().await;
         let state = owned
             .as_ref()
@@ -1806,6 +2278,126 @@ impl PlatformBroker for NativePipelineBroker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reflected_material_is_rejected_after_json_decoding_in_values_and_keys() {
+        for body in [
+            r#"{"value":"credential\u002dvalue"}"#,
+            r#"{"credential\u002dvalue":false}"#,
+            r#"[{"nested":["credential-value"]}]"#,
+        ] {
+            let value: Value = serde_json::from_str(body).unwrap();
+            assert!(response_contains_material(&value, "credential-value"));
+        }
+        assert!(response_contains_material(
+            &json!({"value":"quoted\"credential"}),
+            "quoted\"credential"
+        ));
+        assert!(response_contains_material(
+            &serde_json::from_str::<Value>("1e3").unwrap(),
+            "1000"
+        ));
+        assert!(!response_contains_material(
+            &json!({"value":"credential", "other":[1,null,true]}),
+            "credential-value"
+        ));
+    }
+
+    fn credential(secret: Uuid, header: &str) -> Credential {
+        Credential {
+            secret,
+            material_ref: "CONNECTOR_MATERIAL".into(),
+            header: header.into(),
+            scheme: CredentialScheme::Raw,
+        }
+    }
+
+    #[test]
+    fn credential_slots_require_exact_unique_bounded_secret_and_header_mappings() {
+        let secrets = (0..8).map(|_| Uuid::new_v4()).collect::<Vec<_>>();
+        let mut credentials = secrets
+            .iter()
+            .enumerate()
+            .map(|(index, secret)| credential(*secret, &format!("x-key-{index}")))
+            .collect::<Vec<_>>();
+        assert!(validate_credentials(&credentials).is_ok());
+        credentials.push(credential(Uuid::new_v4(), "x-ninth"));
+        assert!(validate_credentials(&credentials).is_err());
+        credentials.pop();
+        credentials[1].secret = credentials[0].secret;
+        assert!(validate_credentials(&credentials).is_err());
+        credentials[1].secret = secrets[1];
+        credentials[1].header = credentials[0].header.clone();
+        assert!(validate_credentials(&credentials).is_err());
+        for header in [
+            "host",
+            "connection",
+            "content-length",
+            "cookie",
+            "set-cookie",
+            "proxy-authorization",
+            "authorization\r\nx-inject",
+            "X-Key",
+            "accept",
+        ] {
+            assert!(
+                validate_credentials(&[credential(secrets[0], header)]).is_err(),
+                "{header}"
+            );
+        }
+        assert!(validate_credentials(&[credential(secrets[0], "authorization")]).is_ok());
+        let mut invalid = credential(secrets[0], "x-key");
+        invalid.material_ref = "PUBLIC_SOURCE_SUPPLIED_PATH/secret".into();
+        assert!(validate_credentials(&[invalid]).is_err());
+    }
+
+    #[test]
+    fn credential_slots_cannot_select_a_subset_or_undeclared_secret() {
+        let first = Uuid::new_v4();
+        let second = Uuid::new_v4();
+        let mut destination = DestinationDefinition {
+            id: Uuid::new_v4(),
+            revision: "v1".into(),
+            endpoint_ref: "CONNECTOR_ENDPOINT".into(),
+            secret_ref: "CONNECTOR_MATERIAL".into(),
+            credentials: vec![
+                credential(first, "authorization"),
+                credential(second, "x-key"),
+            ],
+            methods: vec!["GET".into()],
+            paths: vec!["/rows".into()],
+            markings: vec![],
+            allowed_markings: vec![],
+        };
+        assert!(
+            destination
+                .credentials_for(&BTreeSet::from([first, second]))
+                .is_ok()
+        );
+        assert!(
+            destination
+                .credentials_for(&BTreeSet::from([first]))
+                .is_err()
+        );
+        assert!(destination.credentials_for(&BTreeSet::new()).is_err());
+        assert!(
+            destination
+                .credentials_for(&BTreeSet::from([first, Uuid::new_v4()]))
+                .is_err()
+        );
+        destination.credentials.clear();
+        let legacy = destination
+            .credentials_for(&BTreeSet::from([first]))
+            .unwrap();
+        assert_eq!(legacy.len(), 1);
+        assert_eq!(legacy[0].material_ref, "CONNECTOR_MATERIAL");
+        assert_eq!(legacy[0].header, "authorization");
+        assert!(
+            destination
+                .credentials_for(&BTreeSet::from([first, second]))
+                .is_err()
+        );
+    }
 
     #[test]
     fn checkpoint_identity_tracks_interpretation_without_window_or_authority_generations() {

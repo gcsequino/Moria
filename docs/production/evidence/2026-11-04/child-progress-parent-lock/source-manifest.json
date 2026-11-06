@@ -1,0 +1,7 @@
+{
+  "archiveSha256": "f261bedb0445fba074c9a0a3b8ce84cc7b454df40ee60d11bd5f711e50667ad0",
+  "manifestSha256": "ee2a9cf454437d17780199725b5a12d4bd41528e2ab4d76151699ef493ff5dd1",
+  "nativeInputDigest": "27800c39aba00e0c6bbfc6ec517cd59e3aa38da06d75b349645c14fcc5aa6006",
+  "archive": "/home/gcseq/moria-proofs/child-progress-read-native-20261105/source.tar.gz",
+  "manifest": "/home/gcseq/moria-proofs/child-progress-read-native-20261105/source.tar.manifest.json"
+}

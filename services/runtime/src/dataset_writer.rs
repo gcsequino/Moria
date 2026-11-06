@@ -180,9 +180,13 @@ struct PartRoot {
     parts: u64,
     rows: u64,
     last_page: Option<SealedObject>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    graph_files: Option<crate::persistent_directory::NodeReference>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    graph_pages: Option<crate::persistent_directory::NodeReference>,
 }
 
-fn schema_hash(schema: &Schema) -> Result<String> {
+pub(crate) fn schema_hash(schema: &Schema) -> Result<String> {
     Ok(format!(
         "sha256:{:x}",
         Sha256::digest(canonical_json(&serde_json::to_value(schema)?)?.as_bytes())
@@ -373,6 +377,7 @@ pub struct StreamingDatasetWriter {
     parts: u64,
     rows: u64,
     failed: bool,
+    graph: Option<graph_output::GraphOutput>,
 }
 impl StreamingDatasetWriter {
     pub async fn open(
@@ -381,22 +386,32 @@ impl StreamingDatasetWriter {
         schema: Schema,
         cancel: Cancellation,
     ) -> Result<Self> {
+        Self::open_qualified(store, grant, schema, cancel, None).await
+    }
+    async fn open_qualified(
+        store: Arc<dyn ObjectStore>,
+        grant: Arc<DatasetIoGrant>,
+        schema: Schema,
+        cancel: Cancellation,
+        graph: Option<graph_output::GraphOutput>,
+    ) -> Result<Self> {
         ensure!(grant.lease().task.is_some(), "TASK_REQUIRED");
         grant.check_current().await?;
         grant.validate_store(store.as_ref())?;
         let contract = grant.write_contract(&schema).await?;
         ensure!(
-            contract.mode == "replace",
+            contract.mode == "replace" || graph.is_some(),
             "DATASET_WRITE_CAPABILITY_REQUIRED"
         );
         grant.validate_schema(&schema)?;
-        let raw = serde_json::to_value(&schema)?;
+        let input_schema = contract.input_schema(&schema)?;
+        let raw = serde_json::to_value(&input_schema)?;
         let descriptors = columns(&raw)?;
         ensure!(!descriptors.is_empty(), "UNSUPPORTED_SCHEMA");
         for descriptor in descriptors.values() {
             ensure!(supported(descriptor), "UNSUPPORTED_OUTPUT_SCHEMA");
         }
-        let arrow = arrow_schema(&schema)?;
+        let arrow = arrow_schema(&input_schema)?;
         Ok(Self {
             store,
             grant,
@@ -414,7 +429,19 @@ impl StreamingDatasetWriter {
             parts: 0,
             rows: 0,
             failed: false,
+            graph,
         })
+    }
+    /// Native service entry for staged v3 output. Publication requires its separate graph candidate validator.
+    pub async fn open_graph(
+        store: Arc<dyn ObjectStore>,
+        grant: Arc<DatasetIoGrant>,
+        schema: Schema,
+        cancel: Cancellation,
+    ) -> Result<Self> {
+        let graph =
+            graph_output::GraphOutput::open(store.clone(), grant.clone(), cancel.clone()).await?;
+        Self::open_qualified(store, grant, schema, cancel, Some(graph)).await
     }
     fn begin_part(&mut self) -> Result<()> {
         if self.writer.is_none() {
@@ -497,8 +524,27 @@ impl StreamingDatasetWriter {
             self.cancel.clone(),
         )
         .await?;
+        let name = logical(
+            &self.grant,
+            if self.contract.input_kind == "keys" {
+                "keys"
+            } else {
+                "data"
+            },
+        );
+        if let Some(graph) = self.graph.as_mut() {
+            graph
+                .file(
+                    &name,
+                    &content,
+                    self.store.clone(),
+                    self.grant.clone(),
+                    self.cancel.clone(),
+                )
+                .await?;
+        }
         self.page.push(Part {
-            name: logical(&self.grant, "data"),
+            name,
             content,
             rows: self.part_rows,
         });
@@ -531,7 +577,9 @@ impl StreamingDatasetWriter {
             previous: self.last_page.take(),
             parts: std::mem::take(&mut self.page),
         };
-        self.last_page = Some(
+        self.last_page = Some(if let Some(graph) = self.graph.as_mut() {
+            graph.page(&page).await?
+        } else {
             put_json(
                 self.store.as_ref(),
                 self.grant.clone(),
@@ -539,8 +587,8 @@ impl StreamingDatasetWriter {
                 PAGE_BYTES,
                 self.cancel.clone(),
             )
-            .await?,
-        );
+            .await?
+        });
         self.pages += 1;
         Ok(())
     }
@@ -550,7 +598,7 @@ impl StreamingDatasetWriter {
         self.flush_page().await?;
         let lease = self.grant.lease();
         let root = PartRoot {
-            version: 2,
+            version: if self.graph.is_some() { 3 } else { 2 },
             execution: lease.execution,
             task: lease.task.unwrap(),
             owner: lease.owner,
@@ -563,8 +611,20 @@ impl StreamingDatasetWriter {
             parts: self.parts,
             rows: self.rows,
             last_page: self.last_page,
+            graph_files: self
+                .graph
+                .as_ref()
+                .and_then(graph_output::GraphOutput::files_root),
+            graph_pages: self
+                .graph
+                .as_ref()
+                .and_then(graph_output::GraphOutput::pages_root),
         };
-        put_json(self.store.as_ref(), self.grant, &root, 16384, self.cancel).await
+        if let Some(graph) = self.graph {
+            graph.finish(&root).await
+        } else {
+            put_json(self.store.as_ref(), self.grant, &root, 16384, self.cancel).await
+        }
     }
 }
 
@@ -668,6 +728,96 @@ pub async fn prepare_replacement(
     limits: ClosureLimits,
     cancel: Cancellation,
 ) -> Result<Uuid> {
+    prepare_replacement_inner(
+        store, scratch, grant, schema, partsets, limits, cancel, false,
+    )
+    .await
+}
+/// Staged native replacement; only actual version-three sealed task graph receipts are accepted.
+pub async fn prepare_graph_replacement(
+    store: Arc<dyn ObjectStore>,
+    scratch: &PosixStore,
+    grant: Arc<DatasetIoGrant>,
+    schema: Schema,
+    partsets: &[SealedObject],
+    limits: ClosureLimits,
+    cancel: Cancellation,
+) -> Result<Uuid> {
+    prepare_replacement_inner(
+        store, scratch, grant, schema, partsets, limits, cancel, true,
+    )
+    .await
+}
+struct NewSnapshot<'a> {
+    sequence: i64,
+    snapshot_id: i64,
+    parent_snapshot: Option<i64>,
+    list_name: &'a str,
+    summary: Value,
+}
+fn snapshot_metadata(
+    grant: &DatasetIoGrant,
+    schema: &Schema,
+    prior: Option<Value>,
+    snapshot: NewSnapshot<'_>,
+) -> Result<Value> {
+    let NewSnapshot {
+        sequence,
+        snapshot_id,
+        parent_snapshot,
+        list_name,
+        summary,
+    } = snapshot;
+    let now = chrono::Utc::now().timestamp_millis().max(
+        prior
+            .as_ref()
+            .and_then(|v| v["last-updated-ms"].as_i64())
+            .unwrap_or(0),
+    );
+    let mut metadata = json!({"format-version":2,"table-uuid":grant.table_uuid()?.to_string(),
+        "location":format!("moria://{}/{}",grant.namespace().warehouse_id,grant.namespace().table_id),
+        "last-sequence-number":sequence,"last-updated-ms":now,"last-column-id":schema.highest_field_id(),
+        "schemas":[serde_json::to_value(schema)?],"current-schema-id":schema.schema_id(),
+        "partition-specs":[{"spec-id":0,"fields":[]}],"default-spec-id":0,"last-partition-id":999,
+        "properties":{},"current-snapshot-id":snapshot_id,
+        "snapshots":[{"snapshot-id":snapshot_id,"sequence-number":sequence,"timestamp-ms":now,"manifest-list":list_name,
+            "summary":summary,"schema-id":schema.schema_id()}],
+        "snapshot-log":[{"timestamp-ms":now,"snapshot-id":snapshot_id}],"metadata-log":[],
+        "sort-orders":[{"order-id":0,"fields":[]}],"default-sort-order-id":0,
+        "refs":{"main":{"snapshot-id":snapshot_id,"type":"branch"}}});
+    if let Some(mut previous) = prior {
+        metadata["snapshots"][0]["parent-snapshot-id"] =
+            json!(parent_snapshot.ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?);
+        for field in ["snapshots", "snapshot-log"] {
+            let added = metadata[field].as_array().unwrap().clone();
+            previous[field]
+                .as_array_mut()
+                .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?
+                .extend(added);
+        }
+        for field in [
+            "last-updated-ms",
+            "last-sequence-number",
+            "current-snapshot-id",
+        ] {
+            previous[field] = metadata[field].clone();
+        }
+        previous["refs"]["main"] = metadata["refs"]["main"].clone();
+        metadata = previous;
+    }
+    Ok(metadata)
+}
+
+async fn prepare_replacement_inner(
+    store: Arc<dyn ObjectStore>,
+    scratch: &PosixStore,
+    grant: Arc<DatasetIoGrant>,
+    schema: Schema,
+    partsets: &[SealedObject],
+    limits: ClosureLimits,
+    cancel: Cancellation,
+    graph_format: bool,
+) -> Result<Uuid> {
     ensure!(
         grant.lease().task.is_none() && !partsets.is_empty() && partsets.len() <= 4096,
         "OUTPUT_INVALID"
@@ -685,16 +835,33 @@ pub async fn prepare_replacement(
         cancel.clone(),
     )
     .await?;
+    if graph_format {
+        spool.seal(store.as_ref(), grant.clone()).await?;
+    }
     let schema = Arc::new(schema);
-    let prior = prior_sequence(
-        store.as_ref(),
-        grant.clone(),
-        schema.as_ref(),
-        &mut spool,
-        limits,
-        cancel.clone(),
-    )
-    .await?;
+    let (prior, prior_files) = if graph_format {
+        let basis = replace_graph::basis(
+            store.clone(),
+            grant.clone(),
+            schema.as_ref(),
+            cancel.clone(),
+        )
+        .await?;
+        (basis.raw, basis.files)
+    } else {
+        (
+            prior_sequence(
+                store.as_ref(),
+                grant.clone(),
+                schema.as_ref(),
+                &mut spool,
+                limits,
+                cancel.clone(),
+            )
+            .await?,
+            None,
+        )
+    };
     let sequence = prior
         .as_ref()
         .map(|raw| {
@@ -712,6 +879,22 @@ pub async fn prepare_replacement(
         .build()?;
     let hash = schema_hash(&schema)?;
     let snapshot_id = (Uuid::new_v4().as_u128() as u64 & ((1_u64 << 52) - 1)).max(1) as i64;
+    let mut graph = if graph_format {
+        Some(
+            replace_graph::ReplacementGraph::open(
+                store.clone(),
+                grant.clone(),
+                schema.clone(),
+                spool.clone(),
+                u64::try_from(sequence)?,
+                prior_files,
+                cancel.clone(),
+            )
+            .await?,
+        )
+    } else {
+        None
+    };
     let list_name = logical(&grant, "metadata");
     let list_capture = Capture::new();
     let parent_snapshot = prior
@@ -728,20 +911,28 @@ pub async fn prepare_replacement(
     let mut total_parts = 0u64;
     let mut seen = std::collections::BTreeSet::new();
     for reference in partsets {
-        let root: PartRoot = read_descriptor(
-            store.as_ref(),
-            grant.clone(),
-            reference,
-            16384,
-            cancel.clone(),
-        )
-        .await?;
+        let root: PartRoot = if let Some(graph) = graph.as_ref() {
+            graph.task_root(reference).await?
+        } else {
+            read_descriptor(
+                store.as_ref(),
+                grant.clone(),
+                reference,
+                16384,
+                cancel.clone(),
+            )
+            .await?
+        };
         ensure!(
-            ((root.version == 2 && root.contract.as_ref() == Some(&contract))
-                || (root.version == 1
-                    && root.contract.is_none()
-                    && contract.mode == "replace"
-                    && contract.coverage == "full"))
+            ((graph_format && root.version == 3 && root.contract.as_ref() == Some(&contract))
+                || (!graph_format
+                    && root.graph_files.is_none()
+                    && root.graph_pages.is_none()
+                    && ((root.version == 2 && root.contract.as_ref() == Some(&contract))
+                        || (root.version == 1
+                            && root.contract.is_none()
+                            && contract.mode == "replace"
+                            && contract.coverage == "full"))))
                 && root.execution == grant.lease().execution
                 && root.resource == grant.resource()
                 && root.schema_hash == hash
@@ -757,20 +948,25 @@ pub async fn prepare_replacement(
             &[&root.task,&root.execution,&root.owner,&root.fence.parse::<i64>()?,&root.resource,&receipt]).await?;
         ensure!(accepted.is_some(), "OUTPUT_ATTEMPT_CHANGED");
         drop(client);
-        let mut page_ref = root.last_page;
+        let mut page_ref = root.last_page.clone();
         let mut parts = 0;
         let mut rows = 0;
         for ordinal in (0..root.pages).rev() {
-            let page: PartPage = read_descriptor(
-                store.as_ref(),
-                grant.clone(),
-                &page_ref
-                    .take()
-                    .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?,
-                PAGE_BYTES,
-                cancel.clone(),
-            )
-            .await?;
+            let reference = page_ref
+                .take()
+                .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?;
+            let page: PartPage = if let Some(graph) = graph.as_ref() {
+                graph.task_page(&root, ordinal, &reference).await?
+            } else {
+                read_descriptor(
+                    store.as_ref(),
+                    grant.clone(),
+                    &reference,
+                    PAGE_BYTES,
+                    cancel.clone(),
+                )
+                .await?
+            };
             ensure!(
                 page.version == 1
                     && page.ordinal == ordinal
@@ -791,6 +987,9 @@ pub async fn prepare_replacement(
                         && part.rows <= 9_007_199_254_740_991,
                     "OUTPUT_INVALID"
                 );
+                if let Some(graph) = graph.as_mut() {
+                    graph.task_file(&root, &part).await?;
+                }
                 let file = DataFileBuilder::default()
                     .content(DataContentType::Data)
                     .file_path(part.name.clone())
@@ -806,7 +1005,9 @@ pub async fn prepare_replacement(
                     content: part.content,
                 });
             }
-            spool.append_page(&entries).await?;
+            if !graph_format {
+                spool.append_page(&entries).await?;
+            }
             let manifest = writer.write_manifest_file().await?;
             let content = put(
                 store.as_ref(),
@@ -815,12 +1016,17 @@ pub async fn prepare_replacement(
                 cancel.clone(),
             )
             .await?;
-            spool
-                .append_page(&[ClosureEntry {
-                    name: manifest_name,
-                    content,
-                }])
-                .await?;
+            if let Some(graph) = graph.as_mut() {
+                graph.metadata_file(&manifest_name, &content).await?;
+            }
+            if !graph_format {
+                spool
+                    .append_page(&[ClosureEntry {
+                        name: manifest_name,
+                        content,
+                    }])
+                    .await?;
+            }
             manifests += 1;
             ensure!(manifests <= MAX_MANIFESTS, "RESOURCE_LIMIT");
             list.add_manifests(std::iter::once(manifest))?;
@@ -846,53 +1052,57 @@ pub async fn prepare_replacement(
         cancel.clone(),
     )
     .await?;
-    spool
-        .append_page(&[ClosureEntry {
-            name: list_name.clone(),
-            content: list_content,
-        }])
-        .await?;
-    let now = chrono::Utc::now().timestamp_millis().max(
-        prior
-            .as_ref()
-            .and_then(|v| v["last-updated-ms"].as_i64())
-            .unwrap_or(0),
-    );
-    let mut metadata = json!({"format-version":2,"table-uuid":grant.table_uuid()?.to_string(),
-        "location":format!("moria://{}/{}",grant.namespace().warehouse_id,grant.namespace().table_id),
-        "last-sequence-number":sequence,"last-updated-ms":now,"last-column-id":schema.highest_field_id(),
-        "schemas":[serde_json::to_value(schema.as_ref())?],"current-schema-id":schema.schema_id(),
-        "partition-specs":[{"spec-id":0,"fields":[]}],"default-spec-id":0,"last-partition-id":999,
-        "properties":{},"current-snapshot-id":snapshot_id,
-        "snapshots":[{"snapshot-id":snapshot_id,"sequence-number":sequence,"timestamp-ms":now,"manifest-list":list_name,
-            "summary":{"operation":"overwrite","total-records":total_rows.to_string(),"total-data-files":total_parts.to_string()},"schema-id":schema.schema_id()}],
-        "snapshot-log":[{"timestamp-ms":now,"snapshot-id":snapshot_id}],"metadata-log":[],
-        "sort-orders":[{"order-id":0,"fields":[]}],"default-sort-order-id":0,
-        "refs":{"main":{"snapshot-id":snapshot_id,"type":"branch"}}});
-    if let Some(mut previous) = prior {
-        metadata["snapshots"][0]["parent-snapshot-id"] =
-            json!(parent_snapshot.ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?);
-        for field in ["snapshots", "snapshot-log"] {
-            let added = metadata[field].as_array().unwrap().clone();
-            previous[field]
-                .as_array_mut()
-                .ok_or_else(|| anyhow::anyhow!("OUTPUT_INVALID"))?
-                .extend(added);
-        }
-        for field in [
-            "last-updated-ms",
-            "last-sequence-number",
-            "current-snapshot-id",
-        ] {
-            previous[field] = metadata[field].clone();
-        }
-        previous["refs"]["main"] = metadata["refs"]["main"].clone();
-        metadata = previous;
+    if let Some(graph) = graph.as_mut() {
+        graph.metadata_file(&list_name, &list_content).await?;
     }
+    if !graph_format {
+        spool
+            .append_page(&[ClosureEntry {
+                name: list_name.clone(),
+                content: list_content,
+            }])
+            .await?;
+    }
+    let mut metadata = snapshot_metadata(
+        &grant,
+        schema.as_ref(),
+        prior,
+        NewSnapshot {
+            sequence,
+            snapshot_id,
+            parent_snapshot,
+            list_name: &list_name,
+            summary: json!({
+                "operation":"overwrite","total-records":total_rows.to_string(),
+                "total-data-files":total_parts.to_string(),
+            }),
+        },
+    )?;
+    let graph_index = if let Some(graph) = graph.as_mut() {
+        Some(
+            graph
+                .summary(&mut metadata, snapshot_id, total_rows, total_parts)
+                .await?,
+        )
+    } else {
+        None
+    };
     // Iceberg metadata uses exact signed64 JSON numbers, independently of the native C03 wire.
     let bytes = serde_json::to_vec(&metadata)?;
     ensure!(bytes.len() <= METADATA_BYTES, "RESOURCE_LIMIT");
     let metadata = put(store.as_ref(), grant.clone(), &bytes, cancel.clone()).await?;
+    if let Some(mut graph) = graph {
+        let name = logical(&grant, "metadata");
+        graph.metadata_file(&name, &metadata).await?;
+        return graph
+            .finish(
+                metadata,
+                name,
+                snapshot_id,
+                graph_index.ok_or_else(|| anyhow::anyhow!("NATIVE_INDEX_SUMMARY_REQUIRED"))?,
+            )
+            .await;
+    }
     spool.seal(store.as_ref(), grant.clone()).await?;
     prepare_snapshot(
         store,
@@ -909,7 +1119,7 @@ pub async fn prepare_replacement(
 }
 
 mod keys;
-pub(crate) use keys::validate_primary_keys;
+pub(crate) use keys::{encoded_json_key, encoded_key, validate_primary_keys};
 
 mod contract;
 pub use contract::{ExpectedHead, WriteContract};
@@ -931,3 +1141,19 @@ pub async fn prepare_output(
     );
     prepare_replacement(store, scratch, grant, schema, partsets, limits, cancel).await
 }
+
+pub mod bootstrap_v2;
+mod graph_builder;
+mod graph_output;
+pub mod key_run;
+pub mod key_run_io;
+pub mod key_run_merge;
+pub mod key_run_set;
+mod mutation_inputs;
+mod mutation_standard;
+mod position_delete;
+mod replace_graph;
+pub mod row_selection;
+pub mod rows;
+mod task_graph;
+pub mod visibility;

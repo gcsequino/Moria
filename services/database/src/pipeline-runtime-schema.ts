@@ -4,6 +4,7 @@ CREATE TABLE moria.runtime_pipeline_destinations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),environment text NOT NULL REFERENCES moria.environments(id),resource uuid NOT NULL,
   revision text NOT NULL,endpoint_ref text NOT NULL CHECK(endpoint_ref~'^[A-Za-z_][A-Za-z0-9_]{0,127}$'),
   secret_ref text NOT NULL CHECK(secret_ref~'^[A-Za-z_][A-Za-z0-9_]{0,127}$'),
+  credentials jsonb NOT NULL DEFAULT '[]' CHECK(jsonb_typeof(credentials)='array' AND jsonb_array_length(credentials)<=8),
   methods text[] NOT NULL CHECK(cardinality(methods) BETWEEN 1 AND 2 AND methods<@ARRAY['GET','POST']),
   paths text[] NOT NULL CHECK(cardinality(paths) BETWEEN 1 AND 32),
   markings text[] NOT NULL CHECK(cardinality(markings)<=256),allowed_markings text[] NOT NULL CHECK(cardinality(allowed_markings)<=256),enabled boolean NOT NULL DEFAULT true,
@@ -24,7 +25,9 @@ CREATE TABLE moria.runtime_pipeline_executions (
   execution uuid PRIMARY KEY REFERENCES moria.runtime_executions(id),profile uuid NOT NULL REFERENCES moria.runtime_pipeline_profiles(id),
   entry_id uuid NOT NULL REFERENCES moria.fs_entries(id),release text NOT NULL REFERENCES moria.fs_source_releases(digest),
   definition jsonb NOT NULL,code_resource uuid,inputs jsonb NOT NULL,outputs jsonb NOT NULL,configuration jsonb NOT NULL,
+  capability text NOT NULL DEFAULT 'batchRead' CHECK(capability IN ('batchRead','schemaDiscovery')),
   checkpoint jsonb,destination_fingerprint text,requester jsonb NOT NULL,markings jsonb NOT NULL,
+  secret_approvals jsonb NOT NULL DEFAULT '[]' CHECK(jsonb_typeof(secret_approvals)='array' AND jsonb_array_length(secret_approvals)<=8),
   attempt_id uuid NOT NULL DEFAULT gen_random_uuid(),correlation_id uuid NOT NULL DEFAULT gen_random_uuid()
 );
 CREATE TABLE moria.runtime_pipeline_outputs (
@@ -37,6 +40,11 @@ CREATE TABLE moria.runtime_pipeline_checkpoints (
   execution uuid PRIMARY KEY REFERENCES moria.runtime_pipeline_executions(execution),
   task uuid NOT NULL REFERENCES moria.runtime_execution_tasks(id),owner uuid NOT NULL,fence bigint NOT NULL,
   value jsonb NOT NULL CHECK(octet_length(value::text)<=65536)
+);
+CREATE TABLE moria.runtime_pipeline_discoveries (
+  execution uuid PRIMARY KEY REFERENCES moria.runtime_pipeline_executions(execution),
+  task uuid NOT NULL REFERENCES moria.runtime_execution_tasks(id),owner uuid NOT NULL,fence bigint NOT NULL,
+  proposal jsonb NOT NULL CHECK(jsonb_typeof(proposal)='object' AND octet_length(proposal::text)<=65536)
 );
 CREATE FUNCTION moria.runtime_pipeline_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -56,6 +64,8 @@ CREATE TRIGGER runtime_pipeline_execution_identity BEFORE UPDATE OR DELETE ON mo
   FOR EACH ROW EXECUTE FUNCTION moria.runtime_pipeline_immutable();
 CREATE TRIGGER runtime_pipeline_output_identity BEFORE UPDATE OR DELETE ON moria.runtime_pipeline_outputs
   FOR EACH ROW EXECUTE FUNCTION moria.runtime_pipeline_immutable();
+CREATE TRIGGER runtime_pipeline_discovery_identity BEFORE UPDATE OR DELETE ON moria.runtime_pipeline_discoveries
+  FOR EACH ROW EXECUTE FUNCTION moria.runtime_pipeline_immutable();
 CREATE FUNCTION moria.runtime_pipeline_current(execution_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE e moria.runtime_executions;p moria.runtime_pipeline_profiles;r moria.runtime_pipeline_executions;state jsonb;item jsonb;requests jsonb;
 BEGIN
@@ -65,6 +75,9 @@ BEGIN
       AND p0.domain=e.spec->>'domain' AND p0.resource_class=e.resource_class FOR SHARE OF p0;
   IF NOT FOUND THEN RAISE EXCEPTION 'PIPELINE_PROFILE_REVOKED'; END IF;
   SELECT * INTO r FROM moria.runtime_pipeline_executions WHERE execution=execution_id;
+  IF r.capability='schemaDiscovery' AND (e.spec->>'domain'<>'sync' OR r.inputs<>'{}'::jsonb OR r.outputs<>'{}'::jsonb OR r.checkpoint IS NOT NULL
+    OR NOT EXISTS(SELECT 1 FROM moria.runtime_sandbox_bindings b WHERE b.binding=e.binding AND b.domain='sync' AND b.effect='readOnly'))
+    THEN RAISE EXCEPTION 'PIPELINE_BINDING_INVALID'; END IF;
   IF NOT EXISTS(SELECT 1 FROM moria.runtime_execution_services s WHERE s.binding=e.binding AND s.authority=p.service_authority AND s.target_revision=p.service_revision)
     THEN RAISE EXCEPTION 'PIPELINE_PROFILE_REVOKED'; END IF;
   IF p.profile->>'connector' IS NOT NULL AND NOT EXISTS(SELECT 1 FROM moria.runtime_pipeline_destinations d
@@ -86,6 +99,17 @@ BEGIN
     IF NOT EXISTS(SELECT 1 FROM moria.native_storage_namespaces n WHERE n.environment=e.environment AND n.resource=item->>'resource'
       AND n.warehouse_id=item->'namespace'->>'warehouseId' AND n.table_id=item->'namespace'->>'tableId'
       AND n.revision=item->'namespace'->>'revision' AND n.enabled) THEN RAISE EXCEPTION 'STORAGE_NAMESPACE_REVOKED'; END IF;
+  END LOOP;
+  FOR item IN SELECT value FROM jsonb_array_elements(r.secret_approvals) LOOP
+    IF NOT EXISTS(SELECT 1 FROM moria.native_secret_approvals a
+      WHERE a.id::text=item->'approval'->>'id' AND a.generation::text=item->'approval'->>'generation'
+        AND a.incarnation::text=item->'approval'->>'incarnation' AND a.incarnation=(SELECT incarnation FROM moria.indexing_instance)
+        AND a.environment=e.environment AND a.consumer=e.resource AND a.secret::text=item->'request'->>'secret'
+        AND a.owner_kind='connector' AND a.owner_profile::text=item->'request'->>'ownerProfile'
+        AND a.owner_revision=item->'request'->>'ownerRevision' AND a.destination_fingerprint=r.destination_fingerprint
+        AND a.material_ref=item->'request'->>'materialRef' AND a.material_revision=item->>'materialRevision' AND a.enabled)
+      THEN RAISE EXCEPTION 'SECRET_APPROVAL_REVOKED'; END IF;
+    PERFORM moria.native_resource_filesystem_access_state(state,item->'request'->>'secret','use');
   END LOOP;
   PERFORM moria.native_serving_resource_access_batch_state(state,requests);
 END $$;

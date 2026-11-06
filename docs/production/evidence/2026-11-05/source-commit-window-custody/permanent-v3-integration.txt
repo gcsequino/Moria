@@ -1,0 +1,26 @@
+{"controller": "moria-quality-5ad51be0-31d7-47ba-af26-79a866013cd8", "image": "sha256:0e1b0c8e29684be5fbb90ba54a074f927b69758e998ed8bcb23a0e3e1cb7079a", "scratchPools": ["/tmp/moria-engine-scratch-31d01c57-5afc-4ab7-8503-6f1b026b6bf9", "/tmp/moria-engine-scratch-27da2103-ac21-4392-b7a3-d1e99ae055b1", "/tmp/moria-engine-scratch-89f28466-0905-461c-bebc-6b8c09d237c0"], "temporary": "/tmp/moria-quality-q4etfsn7"}
+[ERR_PNPM_META_FETCH_FAIL] GET https://registry.npmjs.org/pnpm: fetch failed
+
+   ╭──────────────────────────────────────────────────────────────────────╮
+   │                                                                      │
+   │                 Update available! 11.25.0 → 12.16.1.                 │
+   │                 Changelog: https://pnpm.io/v/12.16.1                 │
+   │   To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -   │
+   │                                                                      │
+   ╰──────────────────────────────────────────────────────────────────────╯
+
+✓ Lockfile passes supply-chain policies (verified 5d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 519ms using pnpm v11.25.0
+✔ accepted permanent Source indexes v3 heads independently of its registrar and retains exact array keys (55581.928698ms)
+ℹ {"realDependentSourceCompilation":true,"actualOperatorApproval":true,"actualServiceAdmissionAndDelegation":true,"noRegistrarTokenInWorker":true,"exactArrayKeyMap":true,"typedObjectGet":true,"registrarRevocationThenFreshServiceReadmission":true,"emptyCurrentAndRetainedHistory":true,"datasetHeadUnchangedByIndexing":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56051.503773

@@ -1,0 +1,2127 @@
+{
+  "diagnostic": "pipeline-first16-current-guards",
+  "elapsedMs": 117594,
+  "heads": 16,
+  "allConfiguredInputs": 67,
+  "deadlineSeconds": 120,
+  "exitCode": 0,
+  "registeredCandidates": 16,
+  "nativeOutput": "\nrunning 1 test\ntest catalog_publication ... {\"elapsedMillis\":\"1817\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"7712\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1704\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"7637\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1753\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"7614\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1823\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6907\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1759\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6983\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1715\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6579\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1669\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6683\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1728\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6900\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1646\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6450\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1568\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6251\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1563\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6300\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1569\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6321\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1579\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6323\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1580\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6309\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1566\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6322\",\"event\":\"candidate_registered\"}\n{\"elapsedMillis\":\"1596\",\"event\":\"closure_hashed\"}\n{\"elapsedMillis\":\"6342\",\"event\":\"candidate_registered\"}\n{\"candidates\":[\"0e8c5a04-702f-4c97-a8cf-99cd4baedad7\",\"80576e43-76eb-4367-b39e-f0c6b279f754\",\"518d7201-c6bd-4657-9291-f77d040882b3\",\"7cab2de7-3174-462e-850e-c9ca4e0e8dec\",\"7e5ede2e-05dd-4c26-8f9b-8b50ead612d2\",\"1603e75a-f85f-48fb-af22-447ca8a509eb\",\"014e7dcb-c265-4310-8a47-c5cfa981d75b\",\"ec46351e-eba3-455c-928e-229b3dd4d586\",\"0628a9de-0685-4dd0-b0bc-089d78ea96b9\",\"2165903a-e24c-435b-8e0d-25260311b331\",\"ba0e3c31-b217-423c-a704-32780349248f\",\"a4d9fe7a-ca13-45b8-8fb2-7cc35521c5ac\",\"3c5b400d-8218-4801-a854-74696b66406a\",\"201bc5ae-25f9-4a54-b773-be1ee804f091\",\"9ab994e2-79be-4fb4-bd3e-e8f07cfa703d\",\"7cca5a87-7dee-4deb-a730-3c9956697d93\"],\"event\":\"prepared\",\"lease\":{\"execution\":\"774d26f7-50d3-41b6-9d4b-fa993b281eba\",\"fence\":\"1\",\"incarnation\":\"6d371070-10fc-4e49-b62b-1bdfd47c2821\",\"leaseUntil\":\"2026-11-05 02:18:10.424502+00\",\"owner\":\"355804be-5ab6-45c9-af4d-f25699752647\",\"task\":null}}\n{\"event\":\"receipt\",\"receipt\":{\"outputs\":[{\"dataset\":\"19fb48f3-b11d-48a4-8235-66d2f7c00240\",\"revision\":\"1\",\"snapshotId\":\"7941770093096499810\"},{\"dataset\":\"1acc8f74-984c-43a5-88e3-5dcb1519ab79\",\"revision\":\"1\",\"snapshotId\":\"4733459689106394030\"},{\"dataset\":\"2729248c-3a5f-4e77-a7e7-786efe3e7b38\",\"revision\":\"1\",\"snapshotId\":\"2514957105661509150\"},{\"dataset\":\"48983703-985b-4fd4-b192-97aefe62e51a\",\"revision\":\"1\",\"snapshotId\":\"6541606486005063376\"},{\"dataset\":\"526bcca7-254d-426b-b040-877a53f0a357\",\"revision\":\"1\",\"snapshotId\":\"7098746548516840345\"},{\"dataset\":\"87630a58-ee68-41b3-84a5-74c79b316526\",\"revision\":\"1\",\"snapshotId\":\"4056852896399889436\"},{\"dataset\":\"967e9310-473b-43d9-b21b-3835a15f070b\",\"revision\":\"1\",\"snapshotId\":\"1014272539321188485\"},{\"dataset\":\"ad3ef274-9706-43cd-a152-db46dc2bdc54\",\"revision\":\"1\",\"snapshotId\":\"4844056724829286599\"},{\"dataset\":\"b3f8a8f8-47f4-45cb-9e47-d6a92e351826\",\"revision\":\"1\",\"snapshotId\":\"6458792989865566593\"},{\"dataset\":\"bc0555b8-7c70-45d3-a1d1-699472905d74\",\"revision\":\"1\",\"snapshotId\":\"2369500831147668101\"},{\"dataset\":\"d74b679b-d144-48c7-b14b-ea062dfbe074\",\"revision\":\"1\",\"snapshotId\":\"3504515798244691718\"},{\"dataset\":\"d767f4d9-f0f4-4706-9154-f7d3f6ed6650\",\"revision\":\"1\",\"snapshotId\":\"724798466695074715\"},{\"dataset\":\"e4d8b945-a9c6-40de-b38e-35dbf988af3f\",\"revision\":\"1\",\"snapshotId\":\"7284486524823932132\"},{\"dataset\":\"f26fe03a-4f34-410c-82b0-89fe171cbc71\",\"revision\":\"1\",\"snapshotId\":\"6445675202103075848\"},{\"dataset\":\"f28925d8-47da-4c51-8ea7-82ea2f3eb50f\",\"revision\":\"1\",\"snapshotId\":\"912839667356553615\"},{\"dataset\":\"fb2a6e12-981b-4cd9-9dbb-3886ebdcca68\",\"revision\":\"1\",\"snapshotId\":\"7791292737433376241\"}],\"revision\":\"1\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 110.80s\n\n",
+  "functionTimings": [
+    {
+      "schemaname": "moria",
+      "funcname": "native_filesystem_acl_targets_state",
+      "calls": "10408",
+      "total_time": 35298.38,
+      "self_time": 35298.38
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_accepted_delegation",
+      "calls": "15672",
+      "total_time": 14236.326,
+      "self_time": 11031.715
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_session_origin",
+      "calls": "15674",
+      "total_time": 3207.868,
+      "self_time": 2767.996
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_filesystem_resource_access_state",
+      "calls": "10408",
+      "total_time": 37851.041,
+      "self_time": 2534.06
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_binding_authority",
+      "calls": "10442",
+      "total_time": 13566.188,
+      "self_time": 2461.603
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_delegation_guard",
+      "calls": "10459",
+      "total_time": 1718.46,
+      "self_time": 1718.46
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_operational",
+      "calls": "10408",
+      "total_time": 995.16,
+      "self_time": 995.16
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_session_origin",
+      "calls": "5215",
+      "total_time": 8357.922,
+      "self_time": 912.464
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_io_check",
+      "calls": "5196",
+      "total_time": 62217.886,
+      "self_time": 821.124
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_kind",
+      "calls": "5212",
+      "total_time": 806.507,
+      "self_time": 806.507
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_resource_access_batch_state",
+      "calls": "5196",
+      "total_time": 39790.149,
+      "self_time": 690.42
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_check",
+      "calls": "10441",
+      "total_time": 14472.72,
+      "self_time": 639.256
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_recovery_check",
+      "calls": "26115",
+      "total_time": 355.546,
+      "self_time": 355.546
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_connection_admit",
+      "calls": "9192",
+      "total_time": 424.131,
+      "self_time": 333.815
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_session",
+      "calls": "5217",
+      "total_time": 13520.394,
+      "self_time": 264.67
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_environment_cell_check",
+      "calls": "26115",
+      "total_time": 614.552,
+      "self_time": 258.884
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_origins",
+      "calls": "10408",
+      "total_time": 239.533,
+      "self_time": 200.283
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_binding",
+      "calls": "5196",
+      "total_time": 168.107,
+      "self_time": 168.107
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_cli_session_check",
+      "calls": "20891",
+      "total_time": 137.592,
+      "self_time": 137.592
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_resource",
+      "calls": "20816",
+      "total_time": 110.548,
+      "self_time": 110.548
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_object_read",
+      "calls": "3854",
+      "total_time": 110.349,
+      "self_time": 110.349
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_worker_check",
+      "calls": "5237",
+      "total_time": 106.538,
+      "self_time": 106.538
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_schema_admit",
+      "calls": "9192",
+      "total_time": 90.211,
+      "self_time": 90.211
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_labels_policy_state",
+      "calls": "5196",
+      "total_time": 83.778,
+      "self_time": 83.778
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_gc_io_check",
+      "calls": "5196",
+      "total_time": 74.699,
+      "self_time": 74.699
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_issue",
+      "calls": "112",
+      "total_time": 1362.288,
+      "self_time": 21.77
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_job_delegation",
+      "calls": "10441",
+      "total_time": 11104.478,
+      "self_time": 19.283
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_filesystem_acl_state",
+      "calls": "10408",
+      "total_time": 35316.864,
+      "self_time": 18.379
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_root_publication_check",
+      "calls": "32",
+      "total_time": 6.513,
+      "self_time": 5.908
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_snapshot_publish",
+      "calls": "2",
+      "total_time": 291.032,
+      "self_time": 5.747
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_request",
+      "calls": "1",
+      "total_time": 17.25,
+      "self_time": 2.844
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_acceptance_validate",
+      "calls": "1",
+      "total_time": 3.792,
+      "self_time": 2.729
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_delegation_accept",
+      "calls": "1",
+      "total_time": 10.268,
+      "self_time": 2.681
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_resource_access_state",
+      "calls": "16",
+      "total_time": 59.292,
+      "self_time": 1.566
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_event",
+      "calls": "5",
+      "total_time": 1.754,
+      "self_time": 1.456
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_acceptance_state",
+      "calls": "2",
+      "total_time": 4.858,
+      "self_time": 1.429
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_multipart_mutation",
+      "calls": "224",
+      "total_time": 1.369,
+      "self_time": 1.369
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_restore_issue_guard",
+      "calls": "224",
+      "total_time": 1.318,
+      "self_time": 1.318
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_dataset_receipt_access",
+      "calls": "16",
+      "total_time": 82.116,
+      "self_time": 1.247
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "indexing_enqueue",
+      "calls": "16",
+      "total_time": 1.227,
+      "self_time": 1.227
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_admit_write",
+      "calls": "112",
+      "total_time": 1363.523,
+      "self_time": 1.207
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_history_execution_expiry",
+      "calls": "29",
+      "total_time": 1.125,
+      "self_time": 1.125
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_session_issue",
+      "calls": "2",
+      "total_time": 9.408,
+      "self_time": 1.023
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_head_contract",
+      "calls": "16",
+      "total_time": 0.984,
+      "self_time": 0.984
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_receipt_authority",
+      "calls": "16",
+      "total_time": 18.93,
+      "self_time": 0.93
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_immutable",
+      "calls": "31",
+      "total_time": 0.785,
+      "self_time": 0.785
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_root_immutable",
+      "calls": "16",
+      "total_time": 0.772,
+      "self_time": 0.772
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_complete",
+      "calls": "1",
+      "total_time": 3.929,
+      "self_time": 0.77
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_reap",
+      "calls": "2",
+      "total_time": 0.759,
+      "self_time": 0.759
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_root_assert",
+      "calls": "32",
+      "total_time": 0.604,
+      "self_time": 0.604
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_dataset_pin_admit",
+      "calls": "1",
+      "total_time": 0.378,
+      "self_time": 0.378
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_task_check",
+      "calls": "2",
+      "total_time": 5.436,
+      "self_time": 0.329
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_binding_check",
+      "calls": "1",
+      "total_time": 2.726,
+      "self_time": 0.211
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_snapshot_data_assert",
+      "calls": "16",
+      "total_time": 0.156,
+      "self_time": 0.156
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_function_worker_check",
+      "calls": "2",
+      "total_time": 0.402,
+      "self_time": 0.06
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_automation_link_child",
+      "calls": "1",
+      "total_time": 0.053,
+      "self_time": 0.053
+    }
+  ],
+  "walBefore": [
+    {
+      "value": {
+        "wal_fpi": 1630,
+        "wal_bytes": 21761644,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "wal_records": 122963,
+        "wal_buffers_full": 617
+      }
+    }
+  ],
+  "walAfter": [
+    {
+      "value": {
+        "wal_fpi": 1687,
+        "wal_bytes": 25581421,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "wal_records": 180698,
+        "wal_buffers_full": 617
+      }
+    }
+  ],
+  "ioBefore": [
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkread",
+        "extends": null,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkwrite",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "init",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": 0,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 1191860,
+        "reads": 547,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 1132,
+        "evictions": 0,
+        "read_time": 2.0100000000000002,
+        "fsync_time": 0,
+        "read_bytes": 4972544,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0.045,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 9617408,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "vacuum",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "temp relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": null,
+        "fsyncs": 1,
+        "object": "wal",
+        "reuses": null,
+        "writes": 1,
+        "context": "init",
+        "extends": null,
+        "evictions": null,
+        "read_time": null,
+        "fsync_time": 0,
+        "read_bytes": null,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 16777216,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": 0,
+        "fsyncs": 1029,
+        "object": "wal",
+        "reuses": null,
+        "writes": 1646,
+        "context": "normal",
+        "extends": null,
+        "evictions": null,
+        "read_time": 0,
+        "fsync_time": 12.498000000000001,
+        "read_bytes": 0,
+        "write_time": 0.067,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 19611648,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    }
+  ],
+  "ioAfter": [
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkread",
+        "extends": null,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkwrite",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "init",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": 0,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 36235988,
+        "reads": 621,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 1235,
+        "evictions": 0,
+        "read_time": 14.72,
+        "fsync_time": 0,
+        "read_bytes": 5578752,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 1.309,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 10575872,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "vacuum",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "temp relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": null,
+        "fsyncs": 1,
+        "object": "wal",
+        "reuses": null,
+        "writes": 1,
+        "context": "init",
+        "extends": null,
+        "evictions": null,
+        "read_time": null,
+        "fsync_time": 0,
+        "read_bytes": null,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 16777216,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": 0,
+        "fsyncs": 15527,
+        "object": "wal",
+        "reuses": null,
+        "writes": 16145,
+        "context": "normal",
+        "extends": null,
+        "evictions": null,
+        "read_time": 0,
+        "fsync_time": 23383.241,
+        "read_bytes": 0,
+        "write_time": 102.897,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T02:16:40.821609+00:00",
+        "write_bytes": 141656064,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    }
+  ],
+  "samples": [
+    {
+      "at": 1793845061169,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 11.301
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845062168,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.315
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845063168,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.896
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845064169,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 5.215
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845065170,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.073
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845066170,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 0.535
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845067170,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.997
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845068171,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.115
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845069171,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.564
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845070171,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 3.739
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845071172,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 11.13
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845072173,
+      "rows": []
+    },
+    {
+      "at": 1793845073173,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.824
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845074173,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.805
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845077426,
+      "rows": []
+    },
+    {
+      "at": 1793845078425,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 6.36
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845079426,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.837
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845080426,
+      "rows": []
+    },
+    {
+      "at": 1793845081427,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.229
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845082428,
+      "rows": []
+    },
+    {
+      "at": 1793845083429,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.685
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845084430,
+      "rows": []
+    },
+    {
+      "at": 1793845085431,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.166
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845086430,
+      "rows": []
+    },
+    {
+      "at": 1793845087431,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.382
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845088432,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.271
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845089433,
+      "rows": []
+    },
+    {
+      "at": 1793845090434,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 2.322
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845091435,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.533
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845092436,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.39
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845093436,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.484
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845094437,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.84
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845095438,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.595
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845096438,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 1.014
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845097439,
+      "rows": []
+    },
+    {
+      "at": 1793845098440,
+      "rows": []
+    },
+    {
+      "at": 1793845099442,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.401
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845100442,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.105
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845101443,
+      "rows": []
+    },
+    {
+      "at": 1793845102443,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.207
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845103444,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 3.039
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845104444,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 1.238
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845105445,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.586
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845106446,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.534
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845107446,
+      "rows": []
+    },
+    {
+      "at": 1793845108447,
+      "rows": []
+    },
+    {
+      "at": 1793845109447,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 1.349
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845112724,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.428
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845113724,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 5.499
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845114725,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.638
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845115725,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.507
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845116726,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 8.361
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845117726,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 13.187
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845118727,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.643
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845119726,
+      "rows": []
+    },
+    {
+      "at": 1793845120728,
+      "rows": []
+    },
+    {
+      "at": 1793845121728,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.612
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845122730,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.021
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845123731,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.645
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845124732,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 1.45
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845125732,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 0.116
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845126732,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.418
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845127734,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.077
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845128735,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.966
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845129736,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.947
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845130737,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.856
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845131737,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.623
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845132738,
+      "rows": []
+    },
+    {
+      "at": 1793845133738,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 6.253
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845134739,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.875
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845135740,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 8.81
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845136740,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.525
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845137741,
+      "rows": []
+    },
+    {
+      "at": 1793845138741,
+      "rows": []
+    },
+    {
+      "at": 1793845139743,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.96
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845140744,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.473
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845141745,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.682
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845142745,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 1.48
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845143746,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 0.822
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845146977,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 5.195
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845147978,
+      "rows": []
+    },
+    {
+      "at": 1793845148978,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 1.359
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845149979,
+      "rows": []
+    },
+    {
+      "at": 1793845150980,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.807
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845151980,
+      "rows": []
+    },
+    {
+      "at": 1793845152980,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.482
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845153982,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 8.602
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845154982,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.952
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845155983,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 0.565
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845156984,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 13.197
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845157985,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 10.061
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845158985,
+      "rows": []
+    },
+    {
+      "at": 1793845159985,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.792
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845160986,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 4.786
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845161987,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 8.473
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845162987,
+      "rows": []
+    },
+    {
+      "at": 1793845163988,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 9.598
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845164989,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_admit_write($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",
+          "age": {
+            "milliseconds": 0.45
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845165991,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 5.409
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845166991,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 1.484
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845167992,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 1.131
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845168994,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 13.243
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845169994,
+      "rows": []
+    },
+    {
+      "at": 1793845170995,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.233
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845171996,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 12.229
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845172997,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 3.32
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845173998,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 7.815
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845174999,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.97
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845176000,
+      "rows": [
+        {
+          "wait_event_type": null,
+          "wait_event": null,
+          "blockers": [],
+          "query": "SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          "age": {
+            "milliseconds": 0.252
+          }
+        }
+      ]
+    },
+    {
+      "at": 1793845177001,
+      "rows": [
+        {
+          "wait_event_type": "IO",
+          "wait_event": "WalSync",
+          "blockers": [],
+          "query": "SELECT moria.runtime_connection_admit($1,$2)",
+          "age": {
+            "milliseconds": 0.373
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "First16-head real producer only; all67input fixtures retained; no Pipeline acceptance subcases."
+}

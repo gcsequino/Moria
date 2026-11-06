@@ -1,0 +1,5 @@
+{
+  "scope": "First16 actual producer, all67 configured inputs and original120s; function-local custom-plan prototype in fresh disposable DB; no Pipeline acceptance or production qualification",
+  "fixtureOnlyChanges": ["ALTER FUNCTION plan_cache_mode=force_custom_plan", "scope diagnostic"],
+  "nativeDigest": "c7106ed00d7819df8d69ee31a8d3d65b0f3e5f5149f78be881b273e8fe2f153a"
+}

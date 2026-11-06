@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-05",
+  "frozenCommit": "955b0382517d212946463d04bd38c76726f328d4",
+  "scope": "Typed sealed sparse input and standard manifest preparation, with independent qualified v3 replacement readback",
+  "image": {
+    "image": "sha256:b6852792af00889002c8e441c2039104856166080c3467632d6eafa610bb28db",
+    "tag": "moria-test:mor-bootstrap-064-20261104"
+  },
+  "nativeSourceDigest": "f4bdb959f6ee02a424051057b5a6a1bd99fa2adab522f4e309ea523cfcb24da9",
+  "nativeArtifacts": 9,
+  "nativeUnits": 126,
+  "nativeBuild": {
+    "exitCode": 0,
+    "elapsedSeconds": 85.29481795500033,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "network": "none"
+  },
+  "commands": [
+    "pnpm check:static",
+    "pnpm check:indexing",
+    "pnpm test:integration tests/native-dataset-v3.integration.test.ts"
+  ],
+  "results": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 19.75499910399958
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 13.842088358986075
+    },
+    "v3-core-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 119.99365430600301,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    }
+  },
+  "independentReader": {
+    "pyiceberg": "0.12.0",
+    "pyarrow": "26.0.0",
+    "rows": 64
+  },
+  "assertions": {
+    "exportUsesActualQualifiedImmutableFiles": true,
+    "hashVerifiedUnchangedMetadataManifestsAndParquet": true,
+    "standardReaderUsesReadOnlyExportFileIo": true,
+    "exactTypedArrayKeysAndNullablePayload": true,
+    "allOriginalNativeV3OraclesPreserved": true,
+    "keyOnlyProjectionPreservesDeclaredOrderAndFieldIds": true,
+    "originalRootDeadlinePreserved": true
+  },
+  "logSha256": {
+    "prebuild-static.txt": "ef795acb07b870fd6a63461c3388a2b5e828b71b42f52029c2dd0ee3ccc1cc61",
+    "static-indexing-check.txt": "561ebcb91dc65d2333e50ae2030fcdb73dfe6a252081fa01d7b80aa5c16e0e01",
+    "v3-core-integration.txt": "8e97e1e34d995cee81905a75bc166e2870b6eec8067c65205bf2a74ec9731f1a"
+  },
+  "limitations": [
+    "This independent standard-reader run is a replacement baseline; no position-delete file was produced or consumed.",
+    "Sparse coordinator, candidate/receipt/journal hooks, production routing, and sparse recovery are outside this frozen result.",
+    "No AWS resources or live deployment were used."
+  ]
+}

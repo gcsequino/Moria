@@ -1,0 +1,19 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "420s",
+  "python3",
+  "/home/gcseq/moria-current-publish-20261104/deploy/test/run-quality.py",
+  "sha256:999748ccbef4c132e2037d6ae74de27eb6ebe6fed1bb10f6e7ae0808820eebe0",
+  "pnpm",
+  "exec",
+  "tsx",
+  "--test",
+  "--test-concurrency=1",
+  "--test-reporter=./scripts/test-reporter.ts",
+  "--test-reporter=tap",
+  "--test-reporter-destination=stdout",
+  "--test-reporter-destination=stderr",
+  "tests/connector-custody-proof.ts"
+]

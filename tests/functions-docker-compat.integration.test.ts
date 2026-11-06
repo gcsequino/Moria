@@ -59,9 +59,14 @@ test(
       ...p.declaration,
       spec: { ...p.declaration.spec, limits: { ...p.declaration.spec.limits, cpuMillis: 1 } },
     });
+    const successProbes = probes;
+    assert.ok(successProbes > 0, 'the successful invocation must use real daemon CPU measurements');
     const exhausted = await invoke();
     assert.equal(exhausted.status, 'failed');
     assert.equal(exhausted.error?.code, 'FUNCTION_CPU_LIMIT');
-    assert.ok(probes >= 2, 'both invocations must use real daemon CPU measurements');
+    assert.ok(
+      probes > successProbes,
+      'the exhausted invocation must use real daemon CPU measurements',
+    );
   },
 );

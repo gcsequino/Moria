@@ -1,3 +1,5 @@
+import { datasetCommitDeltaSchema } from './dataset-commit-delta-schema.js';
+import { datasetGraphSchema } from './dataset-graph-schema.js';
 import { filesystemRoot } from '../../../packages/contracts/filesystem.js';
 import { identityRuntimeSchema } from './identity-runtime-schema.js';
 import { executionRuntimeSchema } from './execution-runtime-schema.js';
@@ -323,6 +325,7 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${changeRuntimeSchema}
   ${modelRuntimeSchema}
   ${projectionRuntimeSchema}
+  ${sourceStoreSchema}
   ${linkConstraintSchema}
   ${searchRuntimeSchema}
   ${searchProjectorSchema}
@@ -334,6 +337,9 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${secretRuntimeSchema}
   ${recoveryContentSchema}
   ${retentionRuntimeSchema}
+  ${datasetGraphSchema}
+  ${datasetCommitDeltaSchema}
+  ${datasetDeltaSchema}
   ${filesystemGcSchema}
   ${executionRootPinsSchema}
   ${directoryRuntimeSchema}
@@ -341,6 +347,7 @@ ALTER TABLE moria.snow_syncs ADD COLUMN IF NOT EXISTS plan jsonb;
   ${automationRuntimeSchema}
   ${mcpRuntimeSchema}
   ${historyRuntimeSchema}
+  ${indexingStagingSchema}
   `;
 import { indexingSchema } from './indexing-schema.js';
 import { changeRuntimeSchema } from './change-runtime-schema.js';
@@ -363,6 +370,7 @@ import { actionAdmissionSchema } from './action-admission-schema.js';
 import { indexingJobRuntimeSchema } from './indexing-job-runtime-schema.js';
 
 import { sourceRuntimeSchema } from './source-runtime-schema.js';
+import { sourceStoreSchema } from './source-store-schema.js';
 
 import { searchProjectorSchema } from './search-projector-schema.js';
 
@@ -392,3 +400,7 @@ import { filesystemGcSchema } from './filesystem-gc-schema.js';
 import { secretRuntimeSchema } from './secret-runtime-schema.js';
 
 import { sourceDeclarationSchema } from './source-declaration-schema.js';
+
+import { indexingStagingSchema } from './indexing-staging-schema.js';
+
+import { datasetDeltaSchema } from './dataset-delta-schema.js';

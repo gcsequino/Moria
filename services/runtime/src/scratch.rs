@@ -296,7 +296,7 @@ impl VerifiedScratch {
             "SCRATCH_UNAVAILABLE"
         );
         mounts.push(json!({"Type":"bind","Source":self.slot.mount_root,"Target":"/spill","ReadOnly":false,"BindOptions":{"Propagation":"rprivate","NonRecursive":true}}));
-        let mut url = Docker::url(&["containers", "create"])?;
+        let mut url = docker.url(&["containers", "create"]).await?;
         url.query_pairs_mut().append_pair("name", &name);
         let result =
             Docker::json_response(docker.client.post(url).json(&config).send().await?).await?;
@@ -358,7 +358,7 @@ pub(crate) async fn cleanup_reservation(
         Docker::json_response(
             docker
                 .client
-                .delete(Docker::url(&["containers", &name])?)
+                .delete(docker.url(&["containers", &name]).await?)
                 .send()
                 .await?,
         )

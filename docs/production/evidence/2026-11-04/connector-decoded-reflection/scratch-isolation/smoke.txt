@@ -1,0 +1,2 @@
+{"controller": "moria-quality-4632b927-531c-4447-a496-520fe2f8049b", "image": "sha256:fbe2ec10d63c69763e00a16293a64473c3cd260d2836bd29558388c17846ee07", "scratchPools": ["/tmp/moria-engine-scratch-2ba7ee81-f9d9-4990-8618-0b5a769ff7e2", "/tmp/moria-engine-scratch-4b963716-a7cd-4641-8039-073218fccc54", "/tmp/moria-engine-scratch-635c00d0-f645-4d56-9a63-69b48cb9eac0"], "temporary": "/tmp/moria-quality-xbpd3svf"}
+three fresh independently fenced two-slot pools

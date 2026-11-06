@@ -35,6 +35,7 @@ test(
     let calls = 0,
       mode = 'text',
       embeddingWidth = 3;
+    let probeSocketClosed = false;
     let signal = () => {},
       release = () => {};
     let barrier = new Promise<void>((resolve) => (signal = resolve)),
@@ -91,6 +92,18 @@ test(
           res.setHeader('content-type', 'text/event-stream');
           const chunk = (delta: unknown, finish_reason: unknown = null) =>
             `data: ${JSON.stringify({ id: 'provider-stream', choices: [{ index: 0, delta, finish_reason }] })}\n\n`;
+          if (mode === 'probeHold') {
+            probeSocketClosed = false;
+            res.once('close', () => {
+              if (!res.writableEnded) probeSocketClosed = true;
+            });
+            res.write(chunk({ role: 'assistant', content: 'held probe' }));
+            signal();
+            await held;
+            res.write(chunk({}, 'stop'));
+            res.end('data: [DONE]\n\n');
+            return;
+          }
           if (body.tools && mode !== 'streamNoTools') {
             res.write(
               chunk({
@@ -778,6 +791,7 @@ test(
         assert.ok(Buffer.byteLength(JSON.stringify(result)) < 1024 * 1024);
         assert.equal(result.metadata.provider.data[0].embedding, undefined);
         embeddingWidth = 3;
+        let probeSocketClosed = false;
         definition.dimensions = 3;
         await binding();
         assert.deepEqual((await start('probe', {}).done)[0].unsupported, {});
@@ -907,6 +921,24 @@ test(
       const before = calls;
       await assert.rejects(start('chat', input).done);
       assert.equal(calls, before);
+    });
+    await t.test('a buffered capability probe remains fenced while upstream is held', async () => {
+      reset('probeHold');
+      const call = start('probe', {});
+      await barrier;
+      const before = calls;
+      await authority.setGrants(environment, 'fixture', principal, application, []);
+      try {
+        await assert.rejects(call.done);
+        const deadline = Date.now() + 10000;
+        while (!probeSocketClosed && Date.now() < deadline) await delay(25);
+        assert.equal(probeSocketClosed, true, 'Revocation must close the held provider stream');
+        assert.equal(calls, before, 'No further probe may dispatch after revocation');
+      } finally {
+        release();
+        await authority.setGrants(environment, 'fixture', principal, application, operations);
+        mode = 'text';
+      }
     });
   },
 );

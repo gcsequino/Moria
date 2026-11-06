@@ -1,0 +1,8 @@
+{
+  "image": "sha256:76d4e1189d5edae4635450eaf57467ca6d7927dbd1388f2df42e16920384d418",
+  "nativeDigest": "14b40cbacc2a50bbab477db6b7e888efd1ad5040b5a3b0ceb2cf94f6bea61575",
+  "nativeUnits": 109,
+  "artifacts": 9,
+  "filesystemCases": 21,
+  "scope": "Actual generated inventory and override denial; full combined Pipeline/evaluation/recovery remain required"
+}

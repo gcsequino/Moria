@@ -1,0 +1,35 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 189B done
+#1 DONE 0.1s
+
+#2 [internal] load metadata for docker.io/library/moria-test:workflow-20261104
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context:
+#3 transferring context: 2B done
+#3 DONE 0.1s
+
+#4 [1/2] FROM docker.io/library/moria-test:workflow-20261104@sha256:00d8ec359d30d4c7e5830c305cf62fb9bfbc63e24b86f481a0aba0648bb6a127
+#4 resolve docker.io/library/moria-test:workflow-20261104@sha256:00d8ec359d30d4c7e5830c305cf62fb9bfbc63e24b86f481a0aba0648bb6a127 0.1s done
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 29.98kB done
+#5 DONE 0.1s
+
+#6 [2/2] COPY --chown=node:node native-job-authority.integration.test.ts /app/tests/native-job-authority.integration.test.ts
+#6 DONE 0.1s
+
+#7 exporting to image
+#7 exporting layers 0.1s done
+#7 exporting manifest sha256:7366f1008794ee1fd1375c03e2cc2abebbc89454f262b6a5924c0838da95894c 0.0s done
+#7 exporting config sha256:eccb03ba4af790325e3cb110eb4a66ed542c3a0a913d09f79688352ad52077c5 0.0s done
+#7 exporting attestation manifest sha256:02104b18be704414ab4da2aa08dbc04de0787aeb6683f8793c4714f9ab51b243 0.1s done
+#7 exporting manifest list sha256:1c874a4cea1dcad9fb84740c9a4e56e8c24c0458f191286d1767653f417c326c
+#7 exporting manifest list sha256:1c874a4cea1dcad9fb84740c9a4e56e8c24c0458f191286d1767653f417c326c 0.0s done
+#7 naming to docker.io/library/moria-test:job-session-reuse-red-20261104 done
+#7 unpacking to docker.io/library/moria-test:job-session-reuse-red-20261104 2.8s done
+#7 DONE 3.1s

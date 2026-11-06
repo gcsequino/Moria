@@ -1,0 +1,16 @@
+{
+  "model": "qwen3:4b-instruct-2507-q4_K_M",
+  "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "maxTokens": 64,
+  "finishReason": "stop",
+  "contentLength": 5,
+  "usage": {
+    "prompt_tokens": 18,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens": 2,
+    "total_tokens": 20
+  },
+  "elapsedSeconds": 3.76138467900455
+}

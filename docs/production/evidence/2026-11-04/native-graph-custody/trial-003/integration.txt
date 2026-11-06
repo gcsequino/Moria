@@ -1,0 +1,40 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph.integration.test.ts
+Running 1 integration test files.
+✖ qualified graph bootstrap preserves standard Iceberg rows and exact array keys (80891.133479ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81408.490869
+
+✖ failing tests:
+
+test at tests/native-dataset-graph.integration.test.ts:1:245
+✖ qualified graph bootstrap preserves standard Iceberg rows and exact array keys (80891.133479ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (138) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:
+  called `Result::unwrap()` on an `Err` value: native graph rooted read
+  
+  Caused by:
+      0: db error
+      1: ERROR: column "profile" does not exist
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"event":"graph_bootstrap_ready","execution":"4a622d6b-4faa-4136-aafa-efbbd096f42c","graphNode":"55ef12ddca297777bdb15a014b17a513224d407576b29d53575e97399fbb3fca","root":"3d87c89208c4e6095e2c10d982ca67f12f3ae1a575d0083f976bc30da5026189","rows":64}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 70.28s\n\n',
+    stderr: '\nthread \'catalog_publication\' (138) panicked at ../../tests/fixtures/native-catalog/harness.rs:302:10:\ncalled `Result::unwrap()` on an `Err` value: native graph rooted read\n\nCaused by:\n    0: db error\n    1: ERROR: column "profile" does not exist\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

@@ -37,7 +37,7 @@ pub trait FunctionPolicy: PlatformBroker {
         tx: &Transaction<'_>,
         context: &SandboxContext,
         result: &Value,
-    ) -> Result<()>;
+    ) -> Result<VerifiedSession>;
     async fn retained(
         &self,
         tx: &Transaction<'_>,
@@ -537,16 +537,16 @@ impl NativeFunctions {
         marks: &[ConsumedMarking],
     ) -> Result<Vec<ConsumedMarking>> {
         ensure!(tx.query_opt("SELECT 1 FROM moria.fs_entries e JOIN moria.fs_resource_bindings b ON b.entry_id=e.id AND b.active JOIN moria.fs_roles r ON r.entry_id=b.root_id AND NOT r.retired WHERE e.resource_id=$1 AND e.environment_id=$2 AND e.kind='resource' AND NOT e.deleted", &[&resource,&session.environment()]).await?.is_some(),"NOT_FOUND");
-        let snapshot = Authority::current(tx, session).await?;
-        let source =
-            Authority::resource_access_for_operation(tx, session, &resource.to_string(), "invoke")
-                .await?
-                .into_iter()
-                .map(|marking| ConsumedMarking {
-                    environment: session.environment().into(),
-                    marking,
-                })
-                .collect();
+        let (snapshot, source) =
+            Authority::current_resource_for_operation(tx, session, &resource.to_string(), "invoke")
+                .await?;
+        let source = source
+            .into_iter()
+            .map(|marking| ConsumedMarking {
+                environment: session.environment().into(),
+                marking,
+            })
+            .collect();
         let marks = labels(&[marks.to_vec(), source], session.environment())?;
         crate::execution::invocation_permission(
             &snapshot.identity,
@@ -658,6 +658,41 @@ impl NativeFunctions {
         parent: Option<&SandboxContext>,
         prepare_only: bool,
     ) -> Result<Value> {
+        for retry in 0..4 {
+            let result = self
+                .invoke_once(
+                    session,
+                    resource,
+                    request_key,
+                    &payload,
+                    parent,
+                    prepare_only,
+                )
+                .await;
+            // A rolled-back child admission has no durable child or released observation.
+            if parent.is_some()
+                && result
+                    .as_ref()
+                    .is_err_and(crate::execution::transaction_conflict)
+                && retry < 3
+            {
+                tokio::time::sleep(Duration::from_millis(10 << retry)).await;
+            } else {
+                return result;
+            }
+        }
+        unreachable!()
+    }
+
+    async fn invoke_once(
+        &self,
+        session: &VerifiedSession,
+        resource: Uuid,
+        request_key: &str,
+        payload: &Value,
+        parent: Option<&SandboxContext>,
+        prepare_only: bool,
+    ) -> Result<Value> {
         key(request_key)?;
         let lock = format!(
             "moria/function/request/{}",
@@ -694,7 +729,7 @@ impl NativeFunctions {
         let source_marks = Self::authorize(tx.client(), session, resource, &[]).await?;
         if let Some(existing)=tx.query_opt("SELECT e.id,f.definition,f.prepare_only FROM moria.runtime_executions e JOIN moria.runtime_function_invocations f ON f.execution=e.id WHERE e.environment=$1 AND e.resource=$2 AND e.principal=$3 AND e.application=$4 AND e.request_key=$5", &[&session.environment(),&resource,&session.principal(),&session.application(),&request_key]).await? {
             ensure!(existing.get::<_,bool>("prepare_only")==prepare_only,"IDEMPOTENCY_CONFLICT");
-            let (normalized,hash)=input(&payload,&spec(&existing.get::<_,Value>("definition"))?).map_err(|_|anyhow::anyhow!("IDEMPOTENCY_CONFLICT"))?;
+            let (normalized,hash)=input(payload,&spec(&existing.get::<_,Value>("definition"))?).map_err(|_|anyhow::anyhow!("IDEMPOTENCY_CONFLICT"))?;
             let old=Self::row(tx.client(),session,existing.get("id")).await?;
             ensure!(old.get::<_,Value>("input")==normalized && old.get::<_,String>("input_hash")==hash,"IDEMPOTENCY_CONFLICT");
             let marks=self.retained(&tx,session,&old).await?;let value=Self::public(&old,marks,false)?;
@@ -717,7 +752,7 @@ impl NativeFunctions {
             .cloned()
             .ok_or_else(|| anyhow::anyhow!("FUNCTION_INVALID"))?;
         let resolved = spec(&definition)?;
-        let (normalized, hash) = input(&payload, &resolved)?;
+        let (normalized, hash) = input(payload, &resolved)?;
         ensure!(
             !prepare_only || resolved.effect == "editProposal",
             "FUNCTION_EFFECT"
@@ -928,9 +963,13 @@ impl NativeFunctions {
         parent: &SandboxContext,
         id: Uuid,
     ) -> Result<ChildProgress> {
+        // Child startup needs a shared parent row while progress authorization is running.
+        let session = {
+            let client = self.db.get().await?;
+            Authority::sandbox_session_in(&client, parent).await?
+        };
         let mut admission = Admission::begin(&self.db, parent.environment(), false, None).await?;
         let tx = admission.client.as_mut().unwrap().transaction().await?;
-        let session = Authority::sandbox_session_in(tx.client(), parent).await?;
         let row = Self::row(tx.client(), &session, id).await?;
         ensure!(
             row.get::<_, Option<Uuid>>("parent_id") == Some(parent.lease().execution)
@@ -986,12 +1025,16 @@ impl NativeFunctions {
     ) -> Result<ChildProgress> {
         ensure!(milliseconds <= 25000, "FUNCTION_INVALID");
         let until = tokio::time::Instant::now() + Duration::from_millis(milliseconds);
+        let mut delay = Duration::from_millis(50);
         loop {
             let progress = self.child_progress(parent, id).await?;
-            if !progress.is_pending() || tokio::time::Instant::now() >= until {
+            let now = tokio::time::Instant::now();
+            if !progress.is_pending() || now >= until {
                 return Ok(progress);
             }
-            tokio::time::sleep(Duration::from_millis(50)).await;
+            // Pending polls release no data; each check still uses current authority.
+            tokio::time::sleep_until(until.min(now + delay)).await;
+            delay = (delay * 2).min(Duration::from_millis(250));
         }
     }
     pub async fn wait(

@@ -7,7 +7,9 @@ pub mod automations;
 pub mod canonical;
 pub mod catalog;
 pub mod changes;
+pub(crate) mod connector_discovery;
 pub mod database;
+pub(crate) mod dataset_commit_delta;
 pub mod dataset_retention;
 pub mod dataset_writer;
 pub mod delivery;
@@ -50,6 +52,7 @@ pub(crate) mod secrets;
 pub mod serving;
 pub mod snapshot;
 pub mod source_runtime;
+pub(crate) mod source_store;
 pub mod storage;
 pub mod transport;
 pub mod values;
@@ -64,3 +67,9 @@ pub fn initialize_reader_limits() -> anyhow::Result<()> {
     );
     Ok(())
 }
+
+pub mod authenticated_file;
+pub mod dataset_graph;
+pub mod dataset_graph_read;
+pub mod native_snapshot_v3;
+pub mod persistent_directory;

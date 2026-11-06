@@ -1,0 +1,174 @@
+✓ Lockfile passes supply-chain policies (verified 4d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 506ms using pnpm v11.25.0
+$ pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter
+$ prettier --check "**/*.{ts,tsx,js,mjs,json,yml,yaml}"
+Checking formatting...
+All matched files use Prettier code style!
+$ tsx scripts/check-architecture.ts
+Protected boundary architecture checks passed.
+$ tsx scripts/generate-sdk.ts --check
+$ tsc --noEmit
+$ node scripts/check-python.mjs
+All done! ✨ 🍰 ✨
+18 files would be left unchanged.
+# Specification validation report
+
+Executed locally for the review package. This is not a platform runtime test report.
+
+- JSON Schema Draft 2020-12 meta-validation: 3 schemas passed.
+- Resource examples: 36 passed; all 23 declared kinds covered.
+- Negative structural cases: 13 rejected as expected.
+- Static cross-resource checks: example manifest passed.
+- Negative semantic cases: 12 structurally valid cases rejected as expected.
+- Local Markdown file links: 25 resolved.
+- Validator: Python jsonschema 4.26.0, format checking enabled; schema references resolved offline.
+
+Install `schemas/requirements.txt`, then run `python schemas/validate.py` from this package. The validator rewrites this report. The example uses placeholder artifact digests, endpoints, project IDs and UIDs; it is not a deployable platform.
+
+Not tested: SQL policy enforcement, transaction races, worker isolation, model integrations, performance, installation or restore. Full expression typing, current grants, dependency packages, ownership and server-side execution checks are future compiler/runtime work. No Foundry reference conformance was executed.
+
+Rejected 6 invalid calibration mutations.
+M0 v0.2 calibration invariants passed; no runtime or capacity claim.
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.315s
+
+OK
+$ pnpm build:management && pnpm build:snotel
+$ vite build --config apps/management/vite.config.ts
+[36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/management/dist/index.html                   0.40 kB │ gzip:  0.27 kB
+apps/management/dist/assets/index-2o2wHpTR.css   12.38 kB │ gzip:  3.42 kB
+apps/management/dist/assets/index-BfsGE9A2.js   260.99 kB │ gzip: 80.67 kB
+apps/management/dist/assets/source-8E1vKdiD.js  274.60 kB │ gzip: 28.67 kB
+
+[32m✓ built in 143ms[39m
+$ vite build --config apps/snotel/vite.config.ts
+[36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 26 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/snotel/dist/index.html                   0.36 kB │ gzip:  0.27 kB
+apps/snotel/dist/assets/index-CShDBEjJ.css    9.10 kB │ gzip:  2.65 kB
+apps/snotel/dist/assets/index-Cys8spqb.js   259.14 kB │ gzip: 81.08 kB
+
+[32m✓ built in 94ms[39m
+$ tsc --noEmit -p examples/station-explorer/tsconfig.json && tsx scripts/verify-starter.ts
+{
+  "ok": true,
+  "app": "station-explorer",
+  "version": "c20f74a976943f94f15efc47d7572bb624aa1a70708ae5fd809265eec221f17b",
+  "verified": [
+    "SDK drift",
+    "Vite build",
+    "artifact integrity",
+    "workflow declaration",
+    "HTTP HTML and JS",
+    "static-only API isolation"
+  ]
+}
+$ tsx scripts/check-indexing.ts
+Verified 19 canonical and 47 typed fingerprint cases.
+
+running 77 tests
+test app_host::tests::immutable_assets_verify_manifest_bytes_and_reject_symlink_replacement ... ok
+test app_host::tests::legacy_manifest_entry_order_is_preserved_and_duplicate_paths_are_rejected ... ok
+test authorization::tests::action_value_expressions_preserve_types_nullability_and_boolean_policy_roots ... ok
+test authorization::tests::grants_markings_destinations_and_environment_are_intersections ... ok
+test authorization::tests::policy_shared_conformance_vectors ... ok
+test authorization::tests::projection_intersects_delegation_and_pinned_current_visibility_before_data ... ok
+test authorization::tests::strict_complexity_and_sql_identifiers_are_enforced ... ok
+test canonical::tests::canonical_cross_runtime_vectors ... ok
+test canonical::tests::javascript_number_and_utf16_ordering ... ok
+test canonical::tests::typed_identity_preserves_normalized_envelope ... ok
+test database::error_tests::public_diagnostics_return_only_known_error_codes ... ok
+test dataset_retention::operator::tests::metadata_pruning_retains_current_snapshot_and_schema ... ok
+test dataset_writer::contract::tests::coverage_and_mode_are_independent_and_closed ... ok
+test dataset_writer::keys::tests::complete_keys_are_typed_ordered_null_rejecting_and_unique_across_batches ... ok
+test dataset_writer::keys::tests::float_zero_keys_use_the_same_logical_identity ... ok
+test delivery::tests::endpoint_never_accepts_redirect_targets_credentials_or_plaintext_remote_hosts ... ok
+test engine_ipc::compact_tests::compact_list_reuses_the_accepted_item_field ... ok
+test engine_ipc::compact_tests::four_column_rows_charge_one_ipc_body_and_share_schema ... ok
+test engine_ipc::compact_tests::pyarrow_uuid_transport_preserves_the_exact_canonical_metadata ... ok
+test engine_ipc::compact_tests::sliced_rows_do_not_charge_or_retain_the_unused_page ... ok
+test engine_ipc::tests::metadata_lengths_and_offsets_are_checked_before_arrow_decode ... ok
+test engine_ipc::tests::scalar_arrays_have_a_preallocation_complexity_bound ... ok
+test execution::tests::exact_input_normalization_and_single_attempt_validation ... ok
+test filesystem::source::validation::tests::compiler_acceptance_matches_all_kind_reference_and_rejections ... ok
+test filesystem::source::validation::tests::dataset_only_scalar_arrays_match_the_shared_column_profile ... ok
+test filesystem::source::validation::tests::object_properties_and_action_inputs_accept_scalar_arrays_too ... ok
+test filesystem::source::validation::tests::trusted_schemas_and_semantic_references_are_independently_checked ... ok
+test filesystem::tests::namespace_boundary_rejects_noncanonical_names_and_untrusted_registration ... ok
+test filesystem_gc::tests::policy_requires_orphan_grace_and_exact_filesystem_namespace ... ok
+test http_admission::tests::accepted_connection_budget_is_held_until_the_socket_closes ... ok
+test http_admission::tests::active_handler_can_finish_after_tcp_idle_but_response_idle_still_expires ... ok
+test http_admission::tests::idle_connections_release_real_socket_capacity ... ok
+test http_admission::tests::response_admission_survives_headers_and_releases_on_end_or_drop ... ok
+test http_auth::navigation_tests::cookie_navigation_is_top_level_safe_method_only ... ok
+test indexing_service::tests::service_revision_is_exact_ascii_canonical_and_binds_all_authority_parts ... ok
+test io::tests::kernel_scope_rejects_escapes_symlinks_and_non_regular_files ... ok
+test lifecycle::tests::completion_and_drop_are_distinct_and_streaming_bytes_are_exact ... ok
+test lifecycle::tests::drain_has_a_finite_deadline ... ok
+test mcp::tests::mirrored_names_are_exact_and_not_authority ... ok
+test model_protocol::tests::bounded_schema_and_provider_outputs_are_validated ... ok
+test model_protocol::tests::stream_requires_terminal_and_handles_split_unicode_and_tool_arguments ... ok
+test models::tests::current_receipt_classification_preserves_the_result_limit ... ok
+test pipelines::tests::checkpoint_identity_tracks_interpretation_without_window_or_authority_generations ... ok
+test platform::tests::action_keys_bind_parent_action_and_exact_guest_key ... ok
+test platform::tests::typed_references_include_nested_arrays_and_skip_nullable_absence ... ok
+test recovery_content::offline::tests::offline_inventory_copies_exact_members_without_database_and_replays ... ok
+test recovery_content::offline::tests::offline_inventory_rejects_changed_provider_version_and_existing_wrong_target ... ok
+test recovery_content::offline::tests::offline_inventory_rejects_identical_unowned_target_and_custody_tamper ... ok
+test recovery_content::offline::tests::offline_inventory_rejects_same_size_backup_corruption_and_logical_revision_changes ... ok
+test recovery_content::tests::backup_data_objects_accept_the_durable_uuid_identity_without_path_syntax ... ok
+test recovery_keys::tests::actual_key_files_are_private_versioned_and_never_followed ... ok
+test retrieval::tests::paragraph_preference_is_deterministic_and_preserves_delimiters ... ok
+test retrieval::tests::unicode_offsets_preserve_complete_text_with_exact_overlap ... ok
+test sandbox::tests::broker_calls_cannot_override_actor_or_select_external_urls ... ok
+test scratch::tests::dedicated_filesystem_required ... ok
+test search::tests::cosine_input_uses_actual_float32_dimension_and_nonzero_profile ... ok
+test serving::tests::consumed_views_ignore_unrelated_fields_but_preserve_old_policy_witnesses ... ok
+test serving::tests::effective_primary_uid_predicates_seek_the_permanent_row_key ... ok
+test serving::tests::request_shapes_are_strict_and_cursors_are_opaque ... ok
+test snapshot::parquet_bounds::tests::compact_nesting_is_bounded ... ok
+test snapshot::parquet_bounds::tests::encoded_column_walk_is_exact ... ok
+test snapshot::parquet_bounds::tests::oversized_page_rejected_before_any_decode ... ok
+test snapshot::parquet_bounds::tests::oversized_value_count_rejected_before_any_decode ... ok
+test snapshot::parquet_bounds::tests::raw_collection_claim_is_rejected_without_allocating ... ok
+test snapshot::parquet_bounds::tests::real_dictionary_array_expansion_is_rejected_before_decode ... ok
+test snapshot::parquet_bounds::tests::real_page_header_size_claim_is_rejected_before_decode ... ok
+test snapshot::parquet_bounds::tests::real_plain_and_small_dictionary_columns_have_exact_bounded_walks ... ok
+test source_runtime::tests::dataset_schema_is_stable_exact_and_bounded ... ok
+test storage::read_window_tests::exact_multipart_discovery_accepts_qualified_empty_key_marker_only_for_exact_rows ... ok
+test storage::read_window_tests::exact_multipart_discovery_never_returns_sibling_uploads_or_markers ... ok
+test storage::read_window_tests::private_window_is_bounded_version_pinned_and_never_authorizes_result_release ... ok
+test values::tests::shared_value_conformance ... ok
+test values::wire_schema_tests::public_wire_shape_retains_exact_strings_nullability_and_object_identity ... ok
+test wire::tests::compiled_source_matches_the_quality_gate ... ok
+test wire::tests::incompatible_reader_is_rejected_before_decoding_its_payload ... ok
+test wire::tests::lease_golden_encoding_preserves_large_fences ... ok
+test worker::mapping_tests::canonical_hidden_fields_survive_mapping_with_exact_types ... ok
+
+test result: ok. 77 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.38s
+
+Rust indexing artifact and tests match /app/services/runtime/ (0fc7cf0ec9465aac28969ac99474c44f9ee4da0f4c166c951a0280ccfd8aa4f0).
+$ node scripts/test-files.mjs local tests/test-files.test.ts
+Running 1 local test files.
+✔ small test gates partition every test file without dropping or duplicating cases (1.29535ms)
+✔ a focused gate runs only explicit existing files and rejects wrong or empty selections (0.297499ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 132.545407

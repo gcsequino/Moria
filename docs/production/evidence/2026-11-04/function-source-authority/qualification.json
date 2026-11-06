@@ -1,0 +1,83 @@
+{
+  "sourceBase": "9aba95696693d77ef69929b163925457b2cdd0b4",
+  "nativeImage": "sha256:50eb26b292c3be5566388ecd7e0f92dd12cc178fca9cfdcd4ff15c3ada80353d",
+  "nativeInputsDigest": "eb41631e4ee5a03d00e821e1c2d8ca189b8d650c17be367ff77553dd609996e0",
+  "sourceArchiveSha256": "25023e648295b3e9c8b2ae5020b87da3a70253a606b27a1e81aca6dfb7e57c55",
+  "sourceManifestSha256": "3483342dfa5caa3e07cc0ccd770ba0b6b5ed5622215669ceb531a60f6508afd5",
+  "nativeBuild": {
+    "exitCode": 0,
+    "wallSeconds": 85.80260967699724
+  },
+  "fullStaticAndNativeProvenance": {
+    "exitCode": 0,
+    "wallSeconds": 28.71440877099667,
+    "nativeUnitsPassed": 117,
+    "nativeUnitsIgnored": 0,
+    "artifactsVerified": 9
+  },
+  "nativeInputEquality": {
+    "nativeInputCount": 144,
+    "nativeInputsByteEqual": true,
+    "differences": []
+  },
+  "artifacts": {
+    "moria-native-transport-test": "e80490732fd9d3a8003ded364fd27842a8f95c3a702236ce814d52f6680a77ee",
+    "moria-native-storage-test": "e688d7501246036dc7ebfd5cc597499122ba97f331bd7336ae8a2ec32611c7c6",
+    "moria-native-sandbox-test": "31efa58fc8151b32109826c2a3c26eb83be306551c6a577f6c43a15734946a12",
+    "moria-native-retention-test": "82eadcaf8046d2d1f6d1ff4f1cce5b8d805eb62bdcc76771834a151625222aec",
+    "moria-native-policy-test": "764fc64b0b7ee7f31f3ffb04518ed3cf608f18f87da2c4843c738e0d5f6de85a",
+    "moria-native-catalog-test": "668871752d9398440e5cd5c9fc6e3125590ebc769551574422b7da48d32c96bb",
+    "moria-indexing-tests": "a0d08847a8ef5a55721b47cd53f04bea81a0ea8ee496b32c3acec5ac666c1f8c",
+    "moria-indexing": "e7da0c54c0de500adfe24ee341c91365dd366b7bf3b35f58a3068729d4169be5",
+    "moria-runtime": "e35c4e5d62de3c22b63ce2293446cc1ee323c6e887ca823de6265c2f2d7cb0ba"
+  },
+  "pairedPostgres": {
+    "exitCode": 0,
+    "wallSeconds": 10.886171329999343,
+    "tests": 8,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootWallSeconds": 8.844147513,
+    "controllerAbsent": true,
+    "labelledChildrenAbsent": true,
+    "scratchPoolsAndTemporaryAbsent": true,
+    "oldSessionResolutions": 3,
+    "groupedSessionResolutions": 2,
+    "identities": [
+      "ordinary workload",
+      "actual issued private job credential"
+    ],
+    "exactStateAndLabels": true,
+    "finalFreshFinishRetained": true,
+    "fixtureOnlyOverlay": "sha256:f6a7bd992232e8f35529410db52612438dc08369c44eceac87f1b50354fc7210",
+    "fixtureSha256": "3138c207f5f7b68ffd87f4c8c8384b5ecea887080c29c68eaf6af03d6d87a419"
+  },
+  "fullFunctions": {
+    "exitCode": 0,
+    "wallSeconds": 71.46632551799848,
+    "tests": 18,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootWallSeconds": 69.484366021,
+    "controllerAbsent": true,
+    "labelledChildrenAbsent": true,
+    "scratchPoolsAndTemporaryAbsent": true
+  },
+  "priorFixtureFailure": {
+    "run": "paired-pg001",
+    "exitCode": 1,
+    "passingSubcases": 6,
+    "failingSubcases": 1,
+    "reason": "The session revocation assertion passed, then fixture cleanup tried to reenable the revoked session and correctly hit the immutable revocation guard. The corrected final test asserts both denied reenable and continued credential denial."
+  },
+  "rawProofDirectory": "/home/gcseq/moria-proofs/authority-grouped-20261105",
+  "remaining": [
+    "Full original Agent file is running on the same native image.",
+    "Ten-case Evaluation, whole-instance and independent complete quality gates remain required.",
+    "No production throughput or capacity certification is implied by the isolated SQL count or functional results."
+  ]
+}

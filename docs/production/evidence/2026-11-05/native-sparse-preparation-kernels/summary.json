@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-05",
+  "frozenCommit": "6bbb705ab373b805d69e53419ced0e16f290f627",
+  "combinedBaseline": "0c36f771d0488e3a683831626b88cf1c4c88253d",
+  "scope": "Bounded sparse Dataset preparation kernels and unchanged graph read custody",
+  "image": {
+    "image": "sha256:10f87f114580ddfec6540761e3a3ae5dda9242a07e40db75565d9b2e0c289856",
+    "tag": "moria-test:mor-bootstrap-061-20261104"
+  },
+  "nativeSourceDigest": "e2638b3ca8906651c577be0d53004c7c0db9185f595067c88432c82d6d695692",
+  "nativeArtifacts": 9,
+  "nativeUnits": 120,
+  "nativeBuild": {
+    "exitCode": 0,
+    "elapsedSeconds": 88.91309302300215,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "network": "none"
+  },
+  "commands": [
+    "pnpm check:static",
+    "pnpm check:indexing",
+    "pnpm test:integration tests/native-dataset-v3.integration.test.ts",
+    "pnpm test:integration tests/native-dataset-graph.integration.test.ts",
+    "pnpm test:integration tests/native-dataset-graph-authority.integration.test.ts"
+  ],
+  "results": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 18.409205128002213
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 10.729220719003933
+    },
+    "v3-core-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 114.2451211650041,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    },
+    "graph-core-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 95.54385233399807,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    },
+    "v3-authority-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 44.75433704900206,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    }
+  },
+  "assertions": {
+    "rowSelectionInvalidBatchLeavesPriorBitsIntact": true,
+    "fullyUnselectedFinalChunk": true,
+    "actualParquetProjectionAcrossNonadjacentRowGroups": true,
+    "allOriginalTypedArrayKeyAndPointOraclesRetained": true,
+    "batchLocatorsEqualEveryOriginalPointLocator": true,
+    "emptyV3ReplacementAndRetainedRead": true,
+    "qualifiedV2BootstrapPreservesHeadAndStandardReadback": true,
+    "warmedPointReaderDeniesCurrentRevocation": true,
+    "originalRootDeadlinesPreserved": true
+  },
+  "logSha256": {
+    "prebuild-static.txt": "14acc521c37ac49406909934ab56872b6dbb33fa8b7eb0f589b22298f1ce5a10",
+    "static-indexing-check.txt": "ed73415744cf2feeb4a618ddcd9f74c3e732497ea6f53a5511c2de96686586de",
+    "v3-core-integration.txt": "515a0b1b3229fea0f344458985a15a688dc327c3869af25721015af7acc7b409",
+    "graph-core-integration.txt": "4acbbfcbedbc7be2e8cbec66f7dfd5b8825fcea56c088e37f93f279c839fb669",
+    "v3-authority-integration.txt": "fd2ff364a84db78c0c4e04ca6502f21a5711d7e8d00bf530f5dce974bdb60c96"
+  },
+  "limitations": [
+    "Sparse writer routing, position-delete publication, actual mutation footprints, and incremental Source consumers are not activated by these kernels.",
+    "Projected position witnesses and path-copied row selections require a live sparse candidate/publication and recovery proof; the new focused unit cases exercise their allocation, ordinal and bitmap primitives.",
+    "The standard-reader sparse mutation oracle and production-scale measurements remain required.",
+    "No AWS resources or live deployment were used."
+  ]
+}

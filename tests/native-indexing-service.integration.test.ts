@@ -16,10 +16,18 @@ import { fingerprint } from '../packages/compiler/src/index.js';
 import { IcebergIndexer } from '../services/ontology/src/indexer.js';
 import { ObjectStore, type ObjectSchema } from '../services/ontology/src/store.js';
 import { managedDatasetRecovery } from './fixtures/native-recovery/managed.js';
+import { prepareSourceStoreProjector } from './fixtures/native-source-store/projector.js';
+import { sourceStagingCollection } from './fixtures/native-source-store/staging.js';
+import { sourceStagingWidth } from './fixtures/native-source-store/width.js';
 
-for (const wide of [false, true])
+for (const [wide, staging, nearCap] of [
+  [false, false, false],
+  [true, false, false],
+  [false, true, false],
+  [true, false, true],
+] as const)
   test(
-    `permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (${wide ? 'maximum width' : 'small rows'})`,
+    `permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (${nearCap ? 'near-cap storage' : staging ? 'staging lifecycle' : wide ? 'maximum width' : 'small rows'})`,
     { timeout: 300000 },
     async (t) => {
       const binary = process.env.MORIA_RUNTIME_BINARY ?? '/usr/local/bin/moria-runtime',
@@ -48,7 +56,7 @@ for (const wide of [false, true])
         enabled: true,
         kind: 'workload',
         attributes: {},
-        markings: ['private', 'secret'],
+        markings: ['permanent/Marking/Private', 'permanent/Marking/Secret'],
       });
       await authority.setApplication(environment, 'fixture', application, operations);
       await authority.setGrants(environment, 'fixture', principal, application, operations);
@@ -99,11 +107,24 @@ for (const wide of [false, true])
         );
       };
       const sourceProperty = wide ? 'v'.repeat(100) : 'value',
-        population = wide ? 2 : 300;
-      const sourceColumns = {
+        population = wide ? 2 : 300,
+        declaredKeys = wide ? [] : ['tenant', sourceProperty];
+      const sourceColumns: Record<string, ObjectSchema['properties'][string]> = {
           uid: { type: 'uid', nullable: false },
           [sourceProperty]: { type: 'string', nullable: false },
           tenant: { type: 'string', nullable: false },
+          ...(nearCap
+            ? Object.fromEntries(
+                Array.from({ length: 21 }, (_, i) => [
+                  `samples_${String(i).padStart(2, '0')}`,
+                  {
+                    type: 'array',
+                    items: { type: 'float64', nullable: false },
+                    nullable: false,
+                  } as const,
+                ]),
+              )
+            : {}),
         } as const,
         schema: ObjectSchema = {
           primaryKey: 'uid',
@@ -115,11 +136,23 @@ for (const wide of [false, true])
         name: 'Permanent native indexing',
         namespace: 'permanent',
       });
+      for (const name of ['Private', 'Secret'])
+        await write(`${name}.resource.json`, {
+          apiVersion: 'moria/v1alpha2',
+          kind: 'Marking',
+          metadata: { namespace: 'permanent', name },
+          spec: { eligibilityGroup: 'fixture', declassifierGroup: 'fixture' },
+        });
+      const projector = wide || staging ? undefined : await prepareSourceStoreProjector(write, t);
       await write('data.resource.json', {
         apiVersion: 'moria/v1alpha2',
         kind: 'Dataset',
         metadata: { namespace: 'permanent', name: 'data' },
-        spec: { columns: sourceColumns, writeModes: ['replace'] },
+        spec: {
+          columns: sourceColumns,
+          ...(wide ? {} : { primaryKey: declaredKeys }),
+          writeModes: ['replace'],
+        },
       });
       await write('records.object.json', {
         apiVersion: 'moria/v1alpha2',
@@ -153,6 +186,10 @@ for (const wide of [false, true])
         `${source}:write`,
         `${target}:index`,
         `${target}:read`,
+        `${target}:write`,
+        ...['source-store-edit', 'source-store-delete', 'source-store-restore'].map(
+          (action) => `${action}:invoke`,
+        ),
       ];
       await authority.setApplication(environment, 'fixture', application, operations);
       await authority.setGrants(environment, 'fixture', principal, application, operations);
@@ -182,6 +219,7 @@ for (const wide of [false, true])
         ];
       const env = {
         PATH: process.env.PATH,
+        ...projector?.env,
         MORIA_INDEXING_DATABASE_SECRET_REF: 'INDEX_SERVICE_DATABASE',
         INDEX_SERVICE_DATABASE: connection,
         MORIA_INDEXING_DATABASE_TLS: 'disable',
@@ -232,7 +270,7 @@ for (const wide of [false, true])
               'tests/fixtures/native-indexing-service/generate.py',
               physical,
               lookup,
-              ...(wide ? ['--wide'] : []),
+              ...(nearCap ? ['--near-cap'] : wide ? ['--wide'] : []),
             ])
           ).stdout,
         ),
@@ -247,11 +285,11 @@ for (const wide of [false, true])
       };
       // Provisioned metadata uses the genuine published Dataset identity/release and the real producer's exact schema.
       await db.pool.query(
-        "INSERT INTO moria.native_storage_namespaces(environment,warehouse_id,table_id,resource,revision,purpose,iceberg_uuid,markings) VALUES($1,'service','data',$2,'v1','dataset-source',$3,ARRAY['private'])",
+        "INSERT INTO moria.native_storage_namespaces(environment,warehouse_id,table_id,resource,revision,purpose,iceberg_uuid,markings) VALUES($1,'service','data',$2,'v1','dataset-source',$3,ARRAY['permanent/Marking/Private'])",
         [environment, source, generated.tableUuid],
       );
       await db.pool.query(
-        "INSERT INTO moria.native_dataset_bindings(environment,resource,reference,revision,columns,iceberg_schema,warehouse_id,table_id,namespace_revision,physical_binding_fingerprint,source_digest) VALUES($1,$2,'permanent/Dataset/data',$3,$4,$5,'service','data','v1',$6,$7)",
+        "INSERT INTO moria.native_dataset_bindings(environment,resource,reference,revision,columns,iceberg_schema,warehouse_id,table_id,namespace_revision,physical_binding_fingerprint,source_digest,primary_key,key_schema_hash) VALUES($1,$2,'permanent/Dataset/data',$3,$4,$5,'service','data','v1',$6,$7,$8,$9)",
         [
           environment,
           source,
@@ -260,6 +298,11 @@ for (const wide of [false, true])
           generated.icebergSchema,
           fingerprint({ backend: 'local', root }),
           publication.digest,
+          declaredKeys,
+          fingerprint({
+            version: 1,
+            keys: declaredKeys.map((name) => ({ name, descriptor: sourceColumns[name] })),
+          }),
         ],
       );
       const serving = {
@@ -267,7 +310,7 @@ for (const wide of [false, true])
         schema,
         policies: {
           resource: target,
-          markings: ['private'],
+          markings: ['permanent/Marking/Private'],
           properties: schema.properties,
           sourceColumns,
           attributes: {},
@@ -279,6 +322,33 @@ for (const wide of [false, true])
         'INSERT INTO moria.native_serving_bindings(environment,resource,object_type_id,revision,definition) VALUES($1,$2,$2::text::uuid,$3,$4)',
         [environment, target, fingerprint(serving), serving],
       );
+      for (const [resource, edits] of [
+        ['source-store-edit', [{ op: 'set', property: 'label', value: { parameter: 'label' } }]],
+        ['source-store-delete', [{ op: 'delete' }]],
+        ['source-store-restore', [{ op: 'restore' }]],
+      ] as const) {
+        await db.pool.query(
+          'INSERT INTO moria.native_serving_actions(environment,resource,object_resource,revision,definition) VALUES($1,$2,$3,$4,$5)',
+          [
+            environment,
+            resource,
+            target,
+            'v1',
+            {
+              resource,
+              revision: 'v1',
+              markings: ['permanent/Marking/Private'],
+              targetParameter: 'uid',
+              inputs: {
+                uid: sourceColumns.uid,
+                ...(resource === 'source-store-edit' ? { label: schema.properties.label } : {}),
+              },
+              condition: { literal: true },
+              edits,
+            },
+          ],
+        );
+      }
       const projection = {
         version: 1,
         sourceFields: ['uid', sourceProperty, 'tenant'],
@@ -302,8 +372,8 @@ for (const wide of [false, true])
         [environment, target, projection],
       );
       const indexer = new IcebergIndexer(new ObjectStore(db.catalog), authority, {
-        source: { kind: 'dataset', resource: source, markings: ['private'] },
-        target: { resource: target, markings: ['private'], schema },
+        source: { kind: 'dataset', resource: source, markings: ['permanent/Marking/Private'] },
+        target: { resource: target, markings: ['permanent/Marking/Private'], schema },
       });
       await indexer.registerDistributed(
         { ...context, sessionHash: hash },
@@ -330,7 +400,7 @@ for (const wide of [false, true])
       );
       const service = randomUUID();
       await db.pool.query(
-        "INSERT INTO moria.runtime_service_authorities(id,environment,principal,application,operations,markings,domains,resource_classes,incarnation) SELECT $1,$2,$3,$4,$5,ARRAY['private','secret'],ARRAY['indexing'],ARRAY['standard'],incarnation FROM moria.indexing_instance",
+        "INSERT INTO moria.runtime_service_authorities(id,environment,principal,application,operations,markings,domains,resource_classes,incarnation) SELECT $1,$2,$3,$4,$5,ARRAY['permanent/Marking/Private','permanent/Marking/Secret'],ARRAY['indexing'],ARRAY['standard'],incarnation FROM moria.indexing_instance",
         [
           service,
           environment,
@@ -415,8 +485,8 @@ for (const wide of [false, true])
         ).rows[0].count,
         '0',
       );
-      let producerMarkings = ['private'];
-      const publish = async () => {
+      let producerMarkings = ['permanent/Marking/Private'];
+      const publish = async (replacementRows?: Record<string, unknown>[]) => {
         const head = (await db.catalog.heads(environment, [source]))[0],
           state = await authority.current(environment, principal, application),
           spec = {
@@ -445,13 +515,22 @@ for (const wide of [false, true])
           )
         ).rows[0].id;
         await native({
-          mode: 'valid',
+          mode: replacementRows ? 'writer-supplied' : 'valid',
           binding,
           snapshots: [{ ...snapshot, revision: namespace.revision }],
+          ...(replacementRows ? { writerRows: { [source]: replacementRows } } : {}),
         });
         return (await db.catalog.heads(environment, [source]))[0];
       };
-      let acceptedBuild = '';
+      let acceptedBuild = '',
+        acceptedRevision = '';
+      const sourceAlias = async (stage: string) =>
+        (
+          await db.pool.query(
+            'SELECT s.*,a.revision::text AS alias_revision,a.indexed_dataset_revision::text,a.indexed_snapshot,a.indexed_root FROM moria.native_source_row_stores s JOIN moria.native_source_generation_aliases a ON a.store=s.id WHERE s.id=$1',
+            [stage],
+          )
+        ).rows[0];
       await t.test(
         'native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution',
         async () => {
@@ -467,7 +546,7 @@ for (const wide of [false, true])
           });
           assert.equal(batches.length, 1);
           assert.ok(batches.every((item) => Number(item.maxWireBytes) <= 16 * 1024 * 1024));
-          if (wide) {
+          if (wide && !nearCap) {
             assert.ok(Number(batches[0].maxWireBytes) > 8 * 1024 * 1024);
             assert.equal(batches[0].batches, '2');
           }
@@ -485,7 +564,7 @@ for (const wide of [false, true])
           ).rows;
           assert.equal(rows.length, population);
           assert.equal(await queryCount(), population / 2);
-          if (wide) {
+          if (wide && !nearCap) {
             const actual = (
               await db.pool.query(
                 'SELECT max(octet_length(r.value::text)+octet_length(r.source_value::text))::text AS bytes FROM moria.staged_source_rows r JOIN moria.source_generations g ON g.stage=r.stage WHERE g.environment=$1 AND g.object_type=$2',
@@ -527,6 +606,100 @@ for (const wide of [false, true])
               [environment],
             )
           ).rows[0].id;
+          const alias = await sourceAlias(acceptedBuild);
+          assert.equal(alias.status, 'published');
+          assert.equal(alias.row_count, String(population));
+          assert.equal(alias.key_count, wide ? '0' : String(population));
+          assert.deepEqual(alias.ordered_keys, declaredKeys);
+          assert.equal(alias.id, acceptedBuild);
+          acceptedRevision = alias.alias_revision;
+          assert.equal(
+            (
+              await db.pool.query(
+                'SELECT count(*)::text FROM moria.native_source_row_stores WHERE environment=$1',
+                [environment],
+              )
+            ).rows[0].count,
+            '1',
+          );
+          const map = (
+            await db.pool.query(
+              "SELECT encode(m.key_hash,'hex') AS hash,convert_from(m.encoded_key,'UTF8')::jsonb AS key,m.uid,r.source_value FROM moria.native_source_key_map m JOIN moria.staged_source_rows r ON r.stage=m.store AND r.uid=m.uid WHERE m.store=$1",
+              [acceptedBuild],
+            )
+          ).rows;
+          assert.equal(map.length, wide ? 0 : population);
+          assert.ok(
+            map.every(
+              (row) =>
+                JSON.stringify(row.key) ===
+                  JSON.stringify(declaredKeys.map((name) => row.source_value[name])) &&
+                row.uid === row.source_value.uid &&
+                row.hash === createHash('sha256').update(JSON.stringify(row.key)).digest('hex'),
+            ),
+          );
+          assert.equal(
+            (
+              await db.pool.query(
+                'SELECT count(*)::text FROM moria.runtime_object_base($1,$2,$3)',
+                [environment, target, acceptedRevision],
+              )
+            ).rows[0].count,
+            String(population),
+          );
+          await assert.rejects(
+            db.pool.query('SELECT moria.runtime_source_store_open($1,$2,1)', [
+              acceptedBuild,
+              randomUUID(),
+            ]),
+            /LEASE_LOST|INDEXING_DELEGATION_INACTIVE|BUILD_NOT_ACTIVE/,
+          );
+          await assert.rejects(
+            db.pool.query(
+              'UPDATE moria.native_source_generation_aliases SET source_version=source_version WHERE store=$1',
+              [acceptedBuild],
+            ),
+            /IMMUTABLE_SOURCE_ALIAS/,
+          );
+          const restricted = await db.pool.connect();
+          try {
+            await restricted.query('BEGIN');
+            await restricted.query(`SET LOCAL ROLE ${role}`);
+            await assert.rejects(
+              restricted.query(
+                'UPDATE moria.native_source_row_stores SET owner=owner WHERE id=$1',
+                [acceptedBuild],
+              ),
+              /SOURCE_STORE_AUTHORITY_REQUIRED/,
+            );
+          } finally {
+            await restricted.query('ROLLBACK');
+            restricted.release();
+          }
+          const forged = await db.pool.connect();
+          try {
+            await forged.query('BEGIN');
+            await assert.rejects(
+              forged.query(
+                'INSERT INTO moria.source_generations(environment,object_type,revision,stage,object_schema,required_markings) SELECT environment,object_type,revision+1000,stage,object_schema,required_markings FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision=$3',
+                [environment, target, acceptedRevision],
+              ),
+              /CHANGE_REVISION_INVALID/,
+            );
+          } finally {
+            await forged.query('ROLLBACK');
+            forged.release();
+          }
+          assert.equal((await sourceAlias(acceptedBuild)).alias_revision, acceptedRevision);
+          assert.equal(
+            (
+              await db.pool.query(
+                'SELECT count(*)::text FROM moria.native_source_generation_aliases WHERE environment=$1',
+                [environment],
+              )
+            ).rows[0].count,
+            '1',
+          );
           await assert.rejects(
             db.pool.query('SELECT moria.runtime_execution_request($1,$2,$3,$4,$5)', [
               registration.metadataBinding,
@@ -539,6 +712,43 @@ for (const wide of [false, true])
           );
         },
       );
+      if (nearCap) {
+        await t.test(
+          'accepted decoded-boundary typed arrays expose physical amplification and defer a controlled legacy layout without poisoning another real build',
+          async () => {
+            await sourceStagingWidth({
+              db,
+              runtime: binary,
+              env,
+              environment,
+              target,
+              publishedBuild: acceptedBuild,
+              publish,
+              diagnostic: (value) => t.diagnostic(JSON.stringify(value)),
+            });
+          },
+        );
+        return;
+      }
+      if (staging) {
+        await t.test(
+          'real closed staging collection preserves published aliases and drains expired private rows through native history once',
+          async () => {
+            await sourceStagingCollection({
+              db,
+              runtime: binary,
+              env,
+              environment,
+              target,
+              source,
+              publishedBuild: acceptedBuild,
+              publish,
+              queryCount,
+            });
+          },
+        );
+        return;
+      }
       if (!wide)
         await t.test(
           'clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication',
@@ -563,6 +773,8 @@ for (const wide of [false, true])
               snapshot,
               bindings,
               rows,
+              markings: ['permanent/Marking/Private', 'permanent/Marking/Secret'],
+              sourceStore: { target, stage: acceptedBuild, revision: acceptedRevision },
             });
           },
         );
@@ -612,6 +824,28 @@ for (const wide of [false, true])
             /AUTHORIZATION_CHANGED|INDEXING_DELEGATION_INACTIVE/,
           );
           await native({ mode: 'index' });
+          const aliases = (
+            await db.pool.query(
+              'SELECT a.store,a.revision::text,moria.runtime_source_stage(a.store,a.environment,a.object_type,a.revision) AS actual FROM moria.native_source_generation_aliases a WHERE a.environment=$1 ORDER BY a.revision',
+              [environment],
+            )
+          ).rows;
+          assert.equal(aliases.length, 2);
+          assert.equal(aliases[0].store, acceptedBuild);
+          assert.equal(aliases[0].revision, acceptedRevision);
+          assert.ok(aliases.every((alias) => alias.store === alias.actual));
+          assert.notEqual(aliases[0].store, aliases[1].store);
+          for (const alias of aliases)
+            assert.equal(
+              (
+                await db.pool.query(
+                  'SELECT count(*)::text FROM moria.runtime_object_base($1,$2,$3)',
+                  [environment, target, alias.revision],
+                )
+              ).rows[0].count,
+              String(population),
+            );
+          assert.equal((await sourceAlias(acceptedBuild)).status, 'published');
           assert.equal(
             (
               await db.pool.query(
@@ -623,6 +857,164 @@ for (const wide of [false, true])
           );
         },
       );
+      if (!wide)
+        await t.test(
+          'new Source aliases preserve real Action overlays and tombstones across replacement and historical reads',
+          async () => {
+            const selected = (
+              await db.pool.query(
+                "SELECT uid,value FROM moria.runtime_object_base($1,$2,$3) WHERE source_value->>'tenant'='a' ORDER BY uid LIMIT 2",
+                [environment, target, acceptedRevision],
+              )
+            ).rows;
+            assert.equal(selected.length, 2);
+            const invoke = async (action: string, input: unknown) => {
+              const response = await fetch(`${base}/api/v1/actions/${action}/invoke`, {
+                method: 'POST',
+                headers: {
+                  authorization: `Bearer ${issued.token}`,
+                  'content-type': 'application/json',
+                  'idempotency-key': randomUUID(),
+                },
+                body: JSON.stringify({ input }),
+              });
+              const receipt = await response.json();
+              assert.equal(response.status, 200, JSON.stringify(receipt));
+              return receipt;
+            };
+            const read = async (uid: string) => {
+              const response = await fetch(`${base}/api/v1/objects/${target}/${uid}`, {
+                headers: { authorization: `Bearer ${issued.token}` },
+              });
+              return { status: response.status, value: await response.json() };
+            };
+            await invoke('source-store-edit', {
+              uid: selected[0].uid,
+              label: 'source-store overlay',
+            });
+            await invoke('source-store-delete', { uid: selected[1].uid });
+            assert.equal(await queryCount(), population / 2 - 1);
+            const rawRows = (
+              await db.pool.query(
+                'SELECT source_value FROM moria.staged_source_rows WHERE stage=$1 ORDER BY uid',
+                [acceptedBuild],
+              )
+            ).rows.map((row) => row.source_value as Record<string, unknown>);
+            await publish(rawRows.filter((row) => row.uid !== selected[1].uid));
+            await native({ mode: 'index' });
+            const missing = (
+              await db.pool.query(
+                'SELECT g.stage,g.revision::text FROM moria.source_generations g WHERE environment=$1 AND object_type=$2 ORDER BY g.revision DESC LIMIT 1',
+                [environment, target],
+              )
+            ).rows[0];
+            assert.equal((await sourceAlias(missing.stage)).key_count, String(population - 1));
+            assert.equal(
+              (
+                await db.pool.query(
+                  'SELECT count(*)::text FROM moria.runtime_object_base($1,$2,$3) WHERE uid=$4',
+                  [environment, target, missing.revision, selected[1].uid],
+                )
+              ).rows[0].count,
+              '0',
+            );
+            assert.equal((await read(selected[1].uid)).status, 404);
+            await publish(rawRows);
+            await native({ mode: 'index' });
+            const live = await read(selected[0].uid),
+              deleted = await read(selected[1].uid);
+            assert.equal(live.status, 200, JSON.stringify(live));
+            assert.equal(live.value.object.label, 'source-store overlay');
+            assert.equal(deleted.status, 404, JSON.stringify(deleted));
+            assert.equal(await queryCount(), population / 2 - 1);
+            const original = (
+              await db.pool.query(
+                'SELECT value FROM moria.runtime_object_base($1,$2,$3) WHERE uid=$4',
+                [environment, target, acceptedRevision, selected[0].uid],
+              )
+            ).rows[0].value;
+            assert.deepEqual(original, selected[0].value);
+            const store = new ObjectStore(db.catalog),
+              c = await db.pool.connect();
+            try {
+              const old = await store.read(
+                c,
+                environment,
+                target,
+                selected[1].uid,
+                acceptedRevision,
+              );
+              assert.ok(old);
+              assert.deepEqual(old.effective, selected[1].value);
+            } finally {
+              c.release();
+            }
+            const aliases = (
+              await db.pool.query(
+                'SELECT a.store,a.revision::text FROM moria.native_source_generation_aliases a WHERE a.environment=$1 AND a.object_type=$2 ORDER BY a.revision',
+                [environment, target],
+              )
+            ).rows;
+            assert.equal(aliases.length, 4);
+            assert.ok(aliases.every((alias) => alias.store !== undefined));
+            assert.equal((await sourceAlias(acceptedBuild)).row_count, String(population));
+            await assert.rejects(
+              db.pool.query('SELECT moria.runtime_source_stage($1,$2,$3,$4)', [
+                acceptedBuild,
+                randomUUID(),
+                target,
+                acceptedRevision,
+              ]),
+              /SOURCE_ALIAS_REQUIRED/,
+            );
+            const currentAlias = aliases[aliases.length - 1];
+            for (let i = 1; i < aliases.length; i++)
+              assert.ok(BigInt(aliases[i].revision) > BigInt(aliases[i - 1].revision));
+            const currentSource = (
+              await db.pool.query(
+                'SELECT g.stage,g.revision::text FROM moria.source_generations g WHERE g.environment=$1 AND g.object_type=$2 ORDER BY g.revision DESC LIMIT 1',
+                [environment, target],
+              )
+            ).rows[0];
+            assert.deepEqual(
+              currentAlias,
+              { store: currentSource.stage, revision: currentSource.revision },
+              JSON.stringify({ aliases, currentSource }),
+            );
+            const projectionProof = await projector!.verify({
+              db,
+              authority,
+              environment,
+              principal,
+              application,
+              target,
+              source,
+              model: publication.resources.find(
+                (resource) => resource.reference === 'permanent/Model/SourceEmbedding',
+              )!.id,
+              token: issued.token,
+              base,
+              runtime: binary,
+              env,
+              expectedRows: population - 1,
+              deletedUid: selected[1].uid,
+              overlayUid: selected[0].uid,
+              store: currentAlias.store,
+            });
+            t.diagnostic(
+              JSON.stringify({
+                fullObjectSource: projectionProof,
+                ordinaryRows: population / 2 - 1,
+              }),
+            );
+            await invoke('source-store-restore', { uid: selected[1].uid });
+            await invoke('source-store-edit', {
+              uid: selected[0].uid,
+              label: selected[0].value.label,
+            });
+            assert.equal(await queryCount(), population / 2);
+          },
+        );
       await t.test(
         'a changed own serving definition records blocked lag without metadata refresh or work acceptance',
         async () => {
@@ -706,7 +1098,7 @@ for (const wide of [false, true])
             )
           ).rows[0].revision;
           await db.pool.query(
-            "UPDATE moria.native_storage_namespaces SET revision='v2',markings=ARRAY['private','secret'] WHERE warehouse_id='service' AND table_id='data'",
+            "UPDATE moria.native_storage_namespaces SET revision='v2',markings=ARRAY['permanent/Marking/Private','permanent/Marking/Secret'] WHERE warehouse_id='service' AND table_id='data'",
           );
           await db.pool.query(
             "UPDATE moria.native_dataset_bindings SET namespace_revision='v2',revision=$3 WHERE environment=$1 AND resource=$2",
@@ -716,13 +1108,13 @@ for (const wide of [false, true])
               fingerprint({
                 source,
                 release: publication.digest,
-                classification: ['private', 'secret'],
+                classification: ['permanent/Marking/Private', 'permanent/Marking/Secret'],
               }),
             ],
           );
           namespace.revision = 'v2';
           env.MORIA_NATIVE_STORAGE_BINDINGS = JSON.stringify(bindings);
-          producerMarkings = ['private', 'secret'];
+          producerMarkings = ['permanent/Marking/Private', 'permanent/Marking/Secret'];
           const head = await publish();
           assert.equal(
             (
@@ -776,6 +1168,119 @@ for (const wide of [false, true])
           );
         },
       );
+      if (!wide)
+        await t.test(
+          'approved bounded history collection retires old Source payload and exact key maps while retaining Search and current stores',
+          async () => {
+            const before = (
+              await db.pool.query(
+                "SELECT id,key_count::text FROM moria.native_source_row_stores WHERE environment=$1 AND status='published'",
+                [environment],
+              )
+            ).rows;
+            assert.ok(before.length >= 5);
+            const protectedStore = (
+              await db.pool.query(
+                "SELECT r.source_stage FROM moria.native_search_rebuilds r JOIN moria.native_search_generations g ON g.id=r.generation WHERE g.environment=$1 AND g.status='active'",
+                [environment],
+              )
+            ).rows[0].source_stage;
+            const protectedKeys = (await sourceAlias(protectedStore)).key_count;
+            // Only fixture-owned timestamps are advanced; live structural Search pins remain intact.
+            await db.pool.query(
+              "UPDATE moria.read_cursors SET expires_at=clock_timestamp()-interval '1 second' WHERE environment=$1",
+              [environment],
+            );
+            await db.pool.query(
+              "UPDATE moria.runtime_history_revisions SET observed_at=clock_timestamp()-interval '3 days' WHERE environment=$1",
+              [environment],
+            );
+            const policy = (
+              await db.pool.query('SELECT moria.runtime_history_approve($1,$2,86400,2) AS id', [
+                environment,
+                'source-history-' + environment,
+              ])
+            ).rows[0].id;
+            const collection = (
+              await db.pool.query('SELECT moria.runtime_history_plan($1) AS id', [policy])
+            ).rows[0].id;
+            assert.ok(
+              BigInt(
+                (
+                  await db.pool.query(
+                    'SELECT floor::text FROM moria.runtime_history_collections WHERE id=$1',
+                    [collection],
+                  )
+                ).rows[0].floor,
+              ) > BigInt(acceptedRevision),
+            );
+            assert.equal(
+              (await db.pool.query('SELECT moria.runtime_history_step($1) AS value', [policy]))
+                .rows[0].value.state,
+              'grace',
+            );
+            await db.pool.query(
+              "UPDATE moria.runtime_history_collections SET observed_at=clock_timestamp()-interval '3 days',not_before=clock_timestamp()-interval '1 day' WHERE id=$1",
+              [collection],
+            );
+            let result: any;
+            for (let i = 0; i < 100; i++) {
+              result = (
+                await db.pool.query('SELECT moria.runtime_history_step($1) AS value', [policy])
+              ).rows[0].value;
+              if (result.state === 'complete') break;
+            }
+            assert.equal(result.state, 'complete', JSON.stringify(result));
+            assert.equal(
+              (
+                await db.pool.query(
+                  'SELECT status FROM moria.native_source_row_stores WHERE id=$1',
+                  [acceptedBuild],
+                )
+              ).rows[0].status,
+              'retired',
+            );
+            assert.equal(
+              (
+                await db.pool.query(
+                  'SELECT count(*)::text FROM moria.native_source_key_map WHERE store=$1',
+                  [acceptedBuild],
+                )
+              ).rows[0].count,
+              '0',
+            );
+            assert.equal(
+              (
+                await db.pool.query(
+                  'SELECT count(*)::text FROM moria.staged_source_rows WHERE stage=$1',
+                  [acceptedBuild],
+                )
+              ).rows[0].count,
+              '0',
+            );
+            await assert.rejects(
+              db.pool.query('SELECT moria.runtime_source_stage($1,$2,$3,$4)', [
+                acceptedBuild,
+                environment,
+                target,
+                acceptedRevision,
+              ]),
+              /SOURCE_ALIAS_REQUIRED/,
+            );
+            assert.equal((await sourceAlias(protectedStore)).status, 'published');
+            assert.equal((await sourceAlias(protectedStore)).key_count, protectedKeys);
+            assert.equal(
+              (
+                await db.pool.query(
+                  'SELECT count(*)::text FROM moria.native_source_key_map WHERE store=$1',
+                  [protectedStore],
+                )
+              ).rows[0].count,
+              protectedKeys,
+            );
+            assert.equal(await queryCount(), population);
+          },
+        );
       assert.equal((await readFile(lookup, 'utf8')).trim().split('\n').length, population);
     },
   );

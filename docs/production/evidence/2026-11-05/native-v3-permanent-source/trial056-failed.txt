@@ -1,0 +1,33 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-service.integration.test.ts
+Running 1 integration test files.
+✖ accepted permanent Source indexes v3 heads independently of its registrar and retains exact array keys (28205.493396ms)
+ℹ {"phase":"actualPermanentV3Admission","acceptedActiveBuilds":0,"blocked":[{"error":"UNSUPPORTED_DATASET_BINDING"}],"datasetHeadUnchanged":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28693.486397
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-service.integration.test.ts:1:832
+✖ accepted permanent Source indexes v3 heads independently of its registrar and retains exact array keys (28205.493396ms)
+  AssertionError [ERR_ASSERTION]: actual accepted permanent service must produce a current managed v3 Source store
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/app/tests/native-dataset-v3-service.integration.test.ts:223:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

@@ -56,7 +56,10 @@ export function encodeMetadataLocation(value: StorageLocation): string {
 }
 
 export function decodeMetadataLocation(value: string): StorageLocation {
-  if (typeof value === 'string' && value.startsWith('moria-snapshot-v2:'))
+  if (
+    typeof value === 'string' &&
+    (value.startsWith('moria-snapshot-v2:') || value.startsWith('moria-snapshot-v3:'))
+  )
     throw new MoriaError(
       'UNSUPPORTED_CAPABILITY',
       'This snapshot requires the native catalog reader.',

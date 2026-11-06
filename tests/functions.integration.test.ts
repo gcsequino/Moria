@@ -179,7 +179,9 @@ test(
               (event) => event.message === 'function started',
             ),
           );
-          const cancelled: any = await functionsCommand(['cancel', running.id], { url });
+          const cancellation = await functionsCommand(['cancel', running.id], { url });
+          assert.deepEqual(cancellation, { id: running.id, cancelRequested: true });
+          const cancelled: any = await functionsCommand(['wait', running.id], { url });
           assert.equal(cancelled.status, 'cancelled');
           await until(
             async () =>

@@ -1,0 +1,108 @@
+   Compiling moria-runtime v0.1.0 (/work/services/runtime)
+warning: method `stream_partition` is never used
+   --> src/dataset_writer/key_run_io.rs:123:19
+    |
+ 74 | impl RunReader {
+    | -------------- method in this implementation
+...
+123 |     pub(crate) fn stream_partition(
+    |                   ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `directory_value` is never used
+   --> src/dataset_writer/key_run_io.rs:191:15
+    |
+191 | pub(crate) fn directory_value(
+    |               ^^^^^^^^^^^^^^^
+
+warning: struct `Source` is never constructed
+ --> src/dataset_writer/key_run_merge.rs:8:8
+  |
+8 | struct Source<'a> {
+  |        ^^^^^^
+
+warning: struct `Merge` is never constructed
+  --> src/dataset_writer/key_run_merge.rs:13:8
+   |
+13 | struct Merge<'a> {
+   |        ^^^^^
+
+warning: methods `advance` and `next` are never used
+  --> src/dataset_writer/key_run_merge.rs:21:14
+   |
+20 | impl Merge<'_> {
+   | -------------- methods in this implementation
+21 |     async fn advance(&mut self, index: usize) -> Result<()> {
+   |              ^^^^^^^
+...
+47 |     async fn next(mut self) -> Result<Option<(RunEntry, Self)>> {
+   |              ^^^^
+
+warning: function `ordered_merge` is never used
+  --> src/dataset_writer/key_run_merge.rs:89:4
+   |
+89 | fn ordered_merge<'a>(
+   |    ^^^^^^^^^^^^^
+
+warning: function `merge_partition_stream` is never used
+   --> src/dataset_writer/key_run_merge.rs:119:15
+    |
+119 | pub(crate) fn merge_partition_stream<'a>(
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `encode_delete_keys` is never used
+  --> src/dataset_writer/rows.rs:73:15
+   |
+73 | pub(crate) fn encode_delete_keys(
+   |               ^^^^^^^^^^^^^^^^^^
+
+warning: method `apply` is never used
+  --> src/dataset_writer/row_selection.rs:87:19
+   |
+23 | impl RowChunk {
+   | ------------- method in this implementation
+...
+87 |     pub(crate) fn apply(&mut self, changes: &[(u64, bool)]) -> Result<()> {
+   |                   ^^^^^
+
+warning: method `data_sequence` is never used
+   --> src/dataset_writer/row_selection.rs:227:19
+    |
+163 | impl ReadSelection {
+    | ------------------ method in this implementation
+...
+227 |     pub(crate) fn data_sequence(&self) -> u64 {
+    |                   ^^^^^^^^^^^^^
+
+warning: method `check_registered_in` is never used
+  --> src/secrets.rs:87:25
+   |
+46 | impl SecretGrant {
+   | ---------------- method in this implementation
+...
+87 |     pub(crate) async fn check_registered_in(
+   |                         ^^^^^^^^^^^^^^^^^^^
+
+warning: methods `grant` and `admit_task` are never used
+   --> src/dataset_graph.rs:82:19
+    |
+ 81 | impl NativeGraph {
+    | ---------------- methods in this implementation
+ 82 |     pub(crate) fn grant(&self) -> &Arc<DatasetIoGrant> {
+    |                   ^^^^^
+...
+505 |     pub(crate) async fn admit_task(
+    |                         ^^^^^^^^^^
+
+warning: method `selection` is never used
+   --> src/native_snapshot_v3.rs:269:25
+    |
+ 65 | impl NativeSnapshot {
+    | ------------------- method in this implementation
+...
+269 |     pub(crate) async fn selection(
+    |                         ^^^^^^^^^
+
+warning: `moria-runtime` (lib) generated 13 warnings
+    Finished `dev` profile [unoptimized] target(s) in 21.90s

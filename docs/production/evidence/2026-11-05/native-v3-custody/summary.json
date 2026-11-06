@@ -1,0 +1,165 @@
+{
+  "base": "c8df84ae6b533f2ff3dfaad6747ea40acc46aa5f",
+  "classification": "Actual v3 head backup, exact-version source collection and new-prefix restore; non-advancing expiry. Production output dispatch and v3 metadata pruning remain pending.",
+  "image": "sha256:cff269aa67869352664cf808da0e1a8ef236ba97ac0d889e8fb83ce2f87cd611",
+  "nativeSourceDigest": "236d30bd229dcf55d250f89ce0c0a96a2cc4ad6b18143079334396e04346bae5",
+  "sourceHashes": {
+    "services/runtime/src/recovery_content.rs": "16432d3f2585bf57c9d9edcd27c18b4ad15bfe8f6420a833c465d17e910d98e0",
+    "services/runtime/src/recovery_content/graph.rs": "f60d7211fb638ea352eaf2ff9e147729e08f73c0b19c56099f62b49b6b265177",
+    "services/runtime/src/recovery_content/offline.rs": "b5384122e8305a1e4a73df11d79d4a589ffe5f13e25ed355f94aea3548cc35e7",
+    "services/runtime/src/dataset_graph_read.rs": "c222c083d55fb8f6574de333ef56db449842e01c5034e2301a4f91ce9105d926",
+    "services/runtime/src/dataset_retention/operator.rs": "d9079b09d7bf2755c18071691a55e6dcc324b978600d022154b4bd0d7a49e676",
+    "services/database/src/dataset-graph-schema.ts": "3022a07616b537edee24ec6818864924a91c4bee91845dfa9d667a34b2a7be9b",
+    "services/runtime/schema.json": "625dbfc1408fca88d645a84bcd66fa89ac9567a98d757a6ed7f17b145b900020",
+    "tests/fixtures/native-retention/graph-custody.ts": "28a042f121a8dbb394b3424e636f279afac9722135c336a5d2110046a1e31bc4",
+    "tests/native-dataset-v3-version.integration.test.ts": "c95395aa6d9d844d66e4624e7720444cb2ed113b7467b6434b293ffad50f0e41"
+  },
+  "artifacts": {
+    "moria-indexing-tests": {
+      "sha256": "45df9c686a4bfc135c3d2208ba628e4caa0d1654c35e84e1fb98693fb7c2e5d5",
+      "bytes": 83339816
+    },
+    "moria-native-transport-test": {
+      "sha256": "d93759e5ece5d9f4956d499f0b42f588a024a40c12d426e69b00ae9a0495cefa",
+      "bytes": 26624216
+    },
+    "moria-native-storage-test": {
+      "sha256": "ea159ee3b169dc4c0022bbab29d5efe7e51a9cb8a6317c8662b7e89e7e1df3e7",
+      "bytes": 101942664
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "bfbc3ce89043be9a3b2c54091da0bb1cc247256c8418d4f7abbab2e13f9d2289",
+      "bytes": 57630080
+    },
+    "moria-native-retention-test": {
+      "sha256": "d58740234edd4311483254bd223fcf267286e7938331e7b85e37473328f43d44",
+      "bytes": 27093816
+    },
+    "moria-native-policy-test": {
+      "sha256": "c73622e523871d699a13b7b22dc4518215dd55219445d6286e11ade36bf3b502",
+      "bytes": 22286968
+    },
+    "moria-native-catalog-test": {
+      "sha256": "418cd223b3568690c70d4ae0653f72bc251dbd2d173045ff7f4850e0966992dc",
+      "bytes": 117319944
+    },
+    "moria-indexing": {
+      "sha256": "d9dc6a2163ef8fef8b7e7a59b799f65cd822d8971eb3b552e8ec199f6be0e784",
+      "bytes": 161311136
+    },
+    "moria-runtime": {
+      "sha256": "85d50db1c1429e5cb8d34bc168effac532a4d110914ab1469f0a6f4cfbf74718",
+      "bytes": 161311128
+    }
+  },
+  "nativeBuild": {
+    "exitCode": 0,
+    "seconds": 22.16230578500108,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "jobs": 1,
+    "executables": 9
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 19.635507578001125
+  },
+  "exactStaticAndIndexing": {
+    "exitCode": 0,
+    "seconds": 27.905796977000136,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "failedPredecessors": {
+    "035": {
+      "exitCode": 1,
+      "seconds": 57.442920506997325,
+      "reason": "Qualified graph capture pins old version; copy_members compares newest HEAD before copy",
+      "controllerAbsent": true
+    },
+    "036": {
+      "exitCode": 1,
+      "seconds": 36.609264525999606,
+      "reason": "Request trace confirms capture GET at old version followed by current HEAD rejection",
+      "controllerAbsent": true
+    },
+    "037": {
+      "exitCode": 1,
+      "seconds": 37.36938838200149,
+      "reason": "Copy GET uses old version; final post-hash current HEAD still rejects the valid copy",
+      "controllerAbsent": true
+    },
+    "038": {
+      "exitCode": 1,
+      "seconds": 41.173438892001286,
+      "reason": "Pinned backup passes; retention approval still restricts stored reader profile to flat v2",
+      "controllerAbsent": true
+    }
+  },
+  "remaining": [
+    "Closed unpublished attached-candidate expiry FK lifecycle regression and correction",
+    "V3 graph metadata pruning and production writer dispatch",
+    "Actual EngineIO/Evaluation/Indexing integration against v3 heads",
+    "Sparse standard position deletes with independent reader proof",
+    "Distributed bootstrap and changed-row journal roots/incremental Source chain pins",
+    "Production workload qualification and full independent CI"
+  ],
+  "actualV3Custody": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 300,
+    "rootSeconds": 86.772058745,
+    "controllerSeconds": 88.03927831600595,
+    "assertions": [
+      "Actual two published v3 heads and immutable replacement journal",
+      "Pinned qualified old version copied despite identical newer current, with exact GET trace",
+      "All reachable graph bytes included without population-sized root members",
+      "Non-advancing expiry preserves current head, journal and standard historical files",
+      "Successor policy drains original retirement and pending propagation blocks collection",
+      "Exact source root version removed after original orphan grace",
+      "Fresh-prefix restore creates new receiver versions and typed current/retained reads",
+      "Restored journal resolves new provider; old producer replay rejected",
+      "Missing backup child leaves restored dispatch disabled; conflicting/reused targets rejected"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "missingQualifiedVersion": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 120,
+    "rootSeconds": 20.114101508,
+    "controllerSeconds": 21.39657929900568,
+    "assertions": [
+      "Actual original qualified root version deleted while identical newest current remains",
+      "GET requests exact missing old version and receives404; no newer substitution",
+      "Exact RECOVERY_ENUMERATION_FAILED and unsealed failed capture",
+      "Source head unchanged; no restore created"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "existingV2Custody": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "rootDeadlineSeconds": 300,
+    "rootSeconds": 104.82916723599999,
+    "controllerSeconds": 106.21668755999417,
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false,
+    "assertions": [
+      "Original v2 flat closure plus native sidecar graph backup",
+      "Exact source graph root collection and new-prefix restore",
+      "Immutable journal recovery, fresh graph receiver qualification and typed reads",
+      "Original successor policy, pending propagation, orphan grace and failure-disabled dispatch"
+    ]
+  }
+}

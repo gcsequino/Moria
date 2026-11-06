@@ -1,0 +1,79 @@
+{
+  "base": "9cfd47bea328e365c3e8af72b35fb68dc248fbab",
+  "classification": "Retained legacy full-build indexing reads actual qualified v3 heads. Managed permanent Source row/key stores and service-origin v3 admission remain separate required gates.",
+  "image": "sha256:a3c037536451ae8003525eef58451b14ee826cd8c4ce399861e525bf0236957a",
+  "nativeSourceDigest": "02d750da1f13e3463475a9462574e3a3c5bad6257c10b51b8b20fbc96e3a5ffd",
+  "testSourceHash": "ccfb2ee05c93ad893e9847ac6f87c80aac015ea6fa873bca17eb713d23b3d6d5",
+  "nativeReuse": {
+    "baseTrial": "046",
+    "nativeInputsIdentical": true,
+    "executables": 9,
+    "verifiedBinaryHashes": {
+      "moria-native-transport-test": "ff4ed413a6162268e8db80cd6b04f9dad5c82e460e9763cd407c8a242af3ee97",
+      "moria-native-storage-test": "1efa8f7ac7636079e5e661a4ad1f53bf2d5b4e939c06b397602bb90fbc694ee5",
+      "moria-native-sandbox-test": "c7d84544fa562f7a2e7510cbebe4a9884a06f1a5c9930d022eeb74b064b3f19c",
+      "moria-native-retention-test": "bf060e9c0feee5ba9b0d025ae5d765ce2c989bd3ebec89be50c98cf54d302089",
+      "moria-native-policy-test": "a454eda8bafda1d81a8c964bb12245b4cb0ab7bbdc389833b59c918a04fe7b72",
+      "moria-native-catalog-test": "e6f0e77635c12e33fb9fa55d5fbc2801f501b884ef7ce9d08d494c28b333cb9b",
+      "moria-indexing-tests": "92a7b2ed38a3f9eb81c9ec9f54a468d38725f820953bffd03453ef150d2111e0",
+      "moria-indexing": "632e861bfaba26c7e20b29d983090a7c8e322d30fe00643a4fd96d4eb8d78303",
+      "moria-runtime": "6c1221159caae3f49546d42ee150791ca024a92081e8e0013e57d0657ee42299"
+    }
+  },
+  "prebuildStatic": {
+    "exitCode": 0,
+    "elapsedSeconds": 19.113565444000415
+  },
+  "exactNativeProvenanceAndUnits": {
+    "exitCode": 0,
+    "seconds": 10.277978914993582,
+    "units": 113,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "actualLegacyGraphReader": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "rootDeadlineSeconds": 300,
+    "rootSeconds": 33.312530839,
+    "controllerSeconds": 34.66167420599959,
+    "assertions": [
+      "Canonical identities allocated by actual native register-domain/resolve commands under ordinary runtime role",
+      "Actual v3 Dataset heads with array primary keys and nullable payload",
+      "Native graph scan task version/profile/file witness",
+      "Exact canonical mapped rows in real full-build Source generation",
+      "Actual empty v3 head creates explicit file:null graph scan task",
+      "Current empty Source generation and retained populated generation read independently",
+      "Indexing changes neither Dataset head nor its actual journal"
+    ],
+    "controllerAbsent": true,
+    "ownedLabelContainersAbsent": true,
+    "externalHostScratchCreated": false
+  },
+  "failedPredecessors": {
+    "047": {
+      "gate": "static only",
+      "reason": "Array item nullability literal widened in fixture type; corrected with shared ObjectSchema property type"
+    },
+    "048": {
+      "reason": "Real graph scan sealed16 rows; reducer correctly rejected unregistered fixture UIDs",
+      "publicError": "UID_UNREGISTERED"
+    },
+    "049-050": {
+      "reason": "Fixture used recovery owning role for a normal identity CLI; Database::schema_lease correctly rejected it before handler. Corrected to ordinary runtime role; no ownership changes or privilege relaxation"
+    },
+    "052": {
+      "reason": "Fixture counted retained active builds as current. Legacy binding revisions do not bind metadata; current query now also matches actual Dataset revision/snapshot/metadata"
+    }
+  },
+  "remaining": [
+    "Real accepted dependent ObjectType/permanent Source service-origin v3 admission and managed complete key map",
+    "V3 graph metadata pruning and production writer activation",
+    "Sparse standard position deletes and independent reader oracle",
+    "Distributed bootstrap, mutation journal roots and incremental Source windows",
+    "Production workload qualification and independent full CI"
+  ]
+}

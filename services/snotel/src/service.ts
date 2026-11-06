@@ -198,6 +198,19 @@ export async function createSnowService(catalog: Catalog, warehouse: string) {
       };
       let plan: Plan | undefined = previous?.plan;
       await checkInitiator?.();
+      const credential = await sessions.mint(ingest, 'snow-ingestion'),
+        ingestion = await sessions.authenticate(`Bearer ${credential.token}`);
+      await catalog.transaction(async (client) => {
+        await checkInitiator?.(client);
+        for (const [index, target] of ['snow-stations', 'snow-observations'].entries())
+          await catalog.admitDataProvenance(
+            client,
+            ingestion.sessionHash!,
+            [target],
+            [datasets[index]],
+            'index',
+          );
+      }, snowEnvironment);
       const state = await authority.current(snowEnvironment, ingest.principal, ingest.application);
       for (const d of datasets) authorize(state.identity, d, 'write');
       for (const type of ['snow-stations', 'snow-observations'])
@@ -285,10 +298,7 @@ export async function createSnowService(catalog: Catalog, warehouse: string) {
           fence,
           securityEpoch: state.epoch,
           outputs: pins,
-          lineage: {
-            source: config.source === 'report-csv' ? 'NRCS Report Generator CSV' : 'NRCS AWDB REST',
-            request: run,
-          },
+          lineage: {},
         },
         checkInitiator,
       );

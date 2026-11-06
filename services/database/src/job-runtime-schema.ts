@@ -104,7 +104,8 @@ BEGIN
   RETURN state;
 END $$;
 CREATE FUNCTION moria.runtime_service_resource_labels(service_id uuid,env text,target uuid,job_domain text,target_revision text,class_name text,
-  requested_resource text,requested_operation text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+  requested_resource text,requested_operation text,additional_operation text) RETURNS jsonb LANGUAGE plpgsql
+  SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
 DECLARE state jsonb; labels jsonb; permission text;
 BEGIN
   state:=moria.runtime_service_target_authority(service_id,env,target,job_domain,target_revision,class_name);
@@ -113,8 +114,18 @@ BEGIN
     THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
   labels:=moria.native_serving_resource_access_state(state,requested_resource,'read');
   IF NOT labels<@(state->'identity'->'markings') THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  -- Both registered operations require the same current data and filesystem read.
+  IF additional_operation IS NOT NULL THEN
+    permission:=requested_resource||':'||additional_operation;
+    IF NOT (state->'identity'->'grantedOperations' ? permission) OR NOT (state->'identity'->'applicationScopes' ? permission)
+      THEN RAISE EXCEPTION 'FORBIDDEN'; END IF;
+  END IF;
   RETURN labels;
 END $$;
+CREATE FUNCTION moria.runtime_service_resource_labels(service_id uuid,env text,target uuid,job_domain text,target_revision text,class_name text,
+  requested_resource text,requested_operation text) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+  SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8,NULL::text)
+$$;
 
 CREATE FUNCTION moria.runtime_service_binding_guard(binding_id uuid) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE b moria.runtime_execution_bindings; registered record; state jsonb;
@@ -320,13 +331,14 @@ BEGIN
   RETURN moria.native_serving_accepted_delegation(proof);
 END $$;
 
-CREATE FUNCTION moria.runtime_job_session_origin(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
-DECLARE s moria.runtime_job_sessions; e moria.runtime_executions; proof jsonb;
+CREATE FUNCTION moria.runtime_job_session_resolution(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE s moria.runtime_job_sessions; e moria.runtime_executions; proof jsonb; validated_state jsonb;
 BEGIN
   SELECT * INTO s FROM moria.runtime_job_sessions WHERE token_hash=private_hash;
   IF NOT FOUND THEN
     IF to_regprocedure('moria.runtime_indexing_job_session_origin(text)') IS NOT NULL THEN
-      RETURN moria.runtime_indexing_job_session_origin(private_hash);
+      proof:=moria.runtime_indexing_job_session_origin(private_hash);
+      IF proof IS NOT NULL THEN RETURN jsonb_build_object('origin',proof); END IF;
     END IF;
     RETURN NULL;
   END IF;
@@ -344,9 +356,27 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
   ELSIF e.status<>'preparing' OR e.owner IS DISTINCT FROM s.owner OR e.fence<>s.fence OR e.lease_until IS NULL OR e.lease_until<=clock_timestamp()
     THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
-  proof:=moria.runtime_job_delegation_guard(e.id);
-  PERFORM moria.runtime_execution_check(e.id);
-  RETURN proof;
+  -- Execution validation traverses the same immutable delegation before this payload is returned.
+  SELECT jsonb_build_object('execution',d.execution,'originKind',d.origin_kind,'originSessionHash',d.origin_session_hash,
+    'serviceAuthority',d.service_authority,'originBinding',d.origin_binding,
+    'environment',d.environment,'principal',d.principal,'application',d.application,
+    'acceptedGrants',to_jsonb(d.accepted_grants),'acceptedScopes',to_jsonb(d.accepted_scopes),
+    'acceptedMarkings',to_jsonb(d.accepted_markings)) INTO proof FROM moria.runtime_job_delegations d WHERE d.execution=e.id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
+  BEGIN
+    validated_state:=moria.runtime_execution_check_state(e.id);
+  EXCEPTION WHEN raise_exception THEN
+    -- Keep purpose revocation ahead of execution epoch errors on denied credentials.
+    PERFORM moria.runtime_job_delegation_guard(e.id);
+    RAISE;
+  END;
+  IF validated_state IS NULL THEN RAISE EXCEPTION 'JOB_DELEGATION_REQUIRED'; END IF;
+  RETURN jsonb_build_object('origin',proof,'validatedState',validated_state);
+END $$;
+
+CREATE FUNCTION moria.runtime_job_session_origin(private_hash text) RETURNS jsonb LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN moria.runtime_job_session_resolution(private_hash)->'origin';
 END $$;
 
 CREATE FUNCTION moria.runtime_job_delegation_accept(execution_id uuid) RETURNS void LANGUAGE plpgsql AS $$
@@ -378,11 +408,18 @@ CREATE FUNCTION moria.runtime_job_session_issue(private_hash text,execution_id u
   worker_fence bigint,host uuid,worker_incarnation uuid) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE e moria.runtime_executions; existing_hash text; accepted_generation bigint;
 BEGIN
+  IF EXISTS(SELECT 1 FROM moria.workload_sessions WHERE token_hash=private_hash
+    UNION ALL SELECT 1 FROM moria.browser_sessions WHERE token_hash=private_hash) THEN RAISE EXCEPTION 'JOB_CREDENTIAL_COLLISION'; END IF;
+  SELECT token_hash INTO existing_hash FROM moria.runtime_job_sessions WHERE execution=execution_id
+    AND task IS NOT DISTINCT FROM task_id AND owner=worker AND fence=worker_fence AND host_id=host AND incarnation=worker_incarnation;
+  IF FOUND THEN
+    -- Exact credential reuse keeps all current guards without upgrading descendant readers.
+    PERFORM moria.runtime_job_session_origin(existing_hash);
+    RETURN existing_hash;
+  END IF;
   SELECT * INTO e FROM moria.runtime_executions WHERE id=execution_id FOR UPDATE;
   IF NOT FOUND OR e.deadline<=clock_timestamp() OR worker_incarnation<>(SELECT incarnation FROM moria.indexing_instance)
     THEN RAISE EXCEPTION 'JOB_LEASE_LOST'; END IF;
-  IF EXISTS(SELECT 1 FROM moria.workload_sessions WHERE token_hash=private_hash
-    UNION ALL SELECT 1 FROM moria.browser_sessions WHERE token_hash=private_hash) THEN RAISE EXCEPTION 'JOB_CREDENTIAL_COLLISION'; END IF;
   PERFORM moria.runtime_worker_check(worker,host,e.resource_class,e.spec->>'domain');
   SELECT w.generation INTO accepted_generation FROM moria.runtime_workers w WHERE w.owner=worker FOR SHARE;
   PERFORM moria.runtime_job_delegation_guard(e.id);
@@ -476,7 +513,7 @@ BEGIN
    OR binding.context->>'parentExecution' IS DISTINCT FROM binding.context->>'serviceParentExecution' THEN RAISE EXCEPTION 'SERVICE_PURPOSE_REVOKED'; END IF;
  SELECT * INTO selected FROM moria.runtime_execution_services s WHERE s.binding=binding_id;
  PERFORM moria.runtime_service_binding_guard(binding_id);
- SELECT * INTO child FROM moria.runtime_executions WHERE binding=binding_id;
+ SELECT e.* INTO child FROM moria.runtime_executions e WHERE e.binding=binding_id;
  IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM moria.runtime_job_delegations WHERE execution=child.id) THEN
    proof:=moria.runtime_sandbox_service_child_metadata(binding.context->>'serviceParentHash',binding.resource);
    IF proof IS NULL OR ROW(proof->>'parent',proof->>'task',proof->>'owner',proof->>'fence',proof->>'incarnation',proof->>'authority',proof->>'revision')

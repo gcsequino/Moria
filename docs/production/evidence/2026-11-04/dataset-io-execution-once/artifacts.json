@@ -1,0 +1,47 @@
+{
+  "moria-indexing-tests": {
+    "executable": "/target/debug/deps/moria_runtime-caa1227c937bb40e",
+    "sha256": "b85a42754b1d9ffcca045ace77b6aaece8528b70196de44d565ac9ab2f9e3593",
+    "bytes": 82698624
+  },
+  "moria-runtime": {
+    "executable": "/target/debug/moria-runtime",
+    "sha256": "83f393d40a27f6e567f39de024e36d006fcae1d34df6401ae72b469649473929",
+    "bytes": 158509224
+  },
+  "moria-indexing": {
+    "executable": "/target/debug/moria-indexing",
+    "sha256": "44ee163b265cc3cc2e83bcaeeb82eac13abf476c1efba3f651f5d39e3351273b",
+    "bytes": 158509296
+  },
+  "moria-native-transport-test": {
+    "executable": "/target/debug/deps/native_transport-c71322eea327c600",
+    "sha256": "f81a27beb6576259da435542861b993e59611419edbced2bd6e91c1478ba3a09",
+    "bytes": 26558728
+  },
+  "moria-native-storage-test": {
+    "executable": "/target/debug/deps/native_storage-18ace889955c532f",
+    "sha256": "758c205563d6aaccf9c4472366b16940e9729c1d6f92178f753ef4a04fe63786",
+    "bytes": 101876824
+  },
+  "moria-native-retention-test": {
+    "executable": "/target/debug/deps/native_retention-0b1a986a52526e96",
+    "sha256": "c38f5120f03d435d911b01b19887621927aa4bd464d1e8ce130d1b8758823de5",
+    "bytes": 27028232
+  },
+  "moria-native-sandbox-test": {
+    "executable": "/target/debug/deps/native_sandbox-1c205eafd7b8b6e9",
+    "sha256": "bd3dd88fb979bf1698c1453a1a51936aaa8e5a2b6fe9e404aac16648d625d7cb",
+    "bytes": 57565000
+  },
+  "moria-native-policy-test": {
+    "executable": "/target/debug/deps/native_policy-685b52096da78e97",
+    "sha256": "66075715c31453c14126c43614ac8a900c2f0bfd5fc64223d8f1d606d14ff9d8",
+    "bytes": 22221440
+  },
+  "moria-native-catalog-test": {
+    "executable": "/target/debug/deps/native_catalog-85e50ef4eacaeaf1",
+    "sha256": "a3120d81523cdb267f9cbf14910989d0611b68874249c5193f44d85815631b1c",
+    "bytes": 116444968
+  }
+}

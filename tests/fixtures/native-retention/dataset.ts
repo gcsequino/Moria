@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, mkdtemp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -344,7 +344,12 @@ export async function managedRetentionDataset(
         harness,
         ['--ignored', '--exact', 'catalog_publication', '--nocapture', '--test-threads=1'],
         {
-          env: { ...nativeEnv, MORIA_NATIVE_CATALOG_FIXTURE: JSON.stringify(fixture) },
+          env: {
+            ...nativeEnv,
+            // Independent harness processes must not share the privileged engine's private cache.
+            MORIA_NATIVE_SNAPSHOT_SCRATCH_ROOT: await mkdtemp(join(db.root, 'catalog-scratch-')),
+            MORIA_NATIVE_CATALOG_FIXTURE: JSON.stringify(fixture),
+          },
           timeout: 120000,
           maxBuffer: 1024 * 1024,
         },
@@ -353,7 +358,7 @@ export async function managedRetentionDataset(
       return output.stdout;
     };
     const writtenRows = new Map<string, Record<string, unknown>[]>();
-    const publish = async (rows: Record<string, unknown>[]) => {
+    const publish = async (rows: Record<string, unknown>[], format: { graph?: boolean } = {}) => {
       const prior = (await db.catalog.heads(environment, [dataset]))[0],
         binding = await bind([], { [dataset]: prior.revision });
       await invoke({
@@ -361,6 +366,7 @@ export async function managedRetentionDataset(
         token,
         binding,
         mode: 'writer-supplied',
+        graphOutput: format.graph ?? false,
         snapshots: [snapshot],
         writerRows: { [dataset]: rows },
         s3Bindings: [datasetStorage],
@@ -379,6 +385,7 @@ export async function managedRetentionDataset(
     const read = async (
       head: { revision: string; snapshotId: string | null; metadataLocation: string | null },
       cancel = true,
+      expected = writtenRows.get(head.snapshotId!),
     ) => {
       const binding = await bind(
         [{ resource: dataset, revision: head.revision, snapshot: head.snapshotId }],
@@ -389,8 +396,8 @@ export async function managedRetentionDataset(
         token,
         binding,
         mode: 'read',
-        expectedRows: writtenRows.get(head.snapshotId!)?.length,
-        writerRows: { [dataset]: writtenRows.get(head.snapshotId!) },
+        expectedRows: expected?.length,
+        writerRows: { [dataset]: expected },
         snapshots: [{ ...snapshot, snapshotId: head.snapshotId }],
         nativeRef: head.metadataLocation,
         s3Bindings: [datasetStorage],
@@ -403,6 +410,7 @@ export async function managedRetentionDataset(
       return { binding, execution, out };
     };
     return {
+      baseUrl: serving.url,
       db,
       s3,
       environment,
@@ -431,6 +439,7 @@ export async function managedRetentionDataset(
       snapshot,
       publish,
       read,
+      start,
       close,
     };
   } catch (error) {

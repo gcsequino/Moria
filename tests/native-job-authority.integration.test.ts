@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import test from 'node:test';
+import { Pool, type PoolClient } from 'pg';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 import { setTimeout as delay } from 'node:timers/promises';
+import { renewalLockFixture } from './fixtures/native-evaluations/renewal-lock.js';
 
 test(
   'registered service jobs require immutable purpose and a current registered lease',
@@ -125,20 +127,21 @@ test(
       `INSERT INTO moria.runtime_workers(owner,host_id,incarnation,resource_classes,domains,expires_at) SELECT $1,$2,incarnation,ARRAY['standard'],ARRAY['transform'],clock_timestamp()+interval '1 hour' FROM moria.indexing_instance`,
       [owner, host],
     );
-    const issue = async (lease: any, workerHost = host) =>
+    const issue = async (
+      lease: any,
+      workerHost = host,
+      client: typeof db.pool | PoolClient = db.pool,
+    ) =>
       (
-        await db.pool.query(
-          'SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7) AS hash',
-          [
-            createHash('sha256').update(randomUUID()).digest('hex'),
-            lease.execution,
-            lease.task,
-            lease.owner,
-            lease.fence,
-            workerHost,
-            lease.incarnation,
-          ],
-        )
+        await client.query('SELECT moria.runtime_job_session_issue($1,$2,$3,$4,$5,$6,$7) AS hash', [
+          createHash('sha256').update(randomUUID()).digest('hex'),
+          lease.execution,
+          lease.task,
+          lease.owner,
+          lease.fence,
+          workerHost,
+          lease.incarnation,
+        ])
       ).rows[0].hash as string;
     const state = async (hash: string) =>
       (await db.pool.query('SELECT moria.native_serving_session($1) AS state', [hash])).rows[0]
@@ -183,6 +186,7 @@ test(
         assert.equal(lease.execution, job.id);
         hash = await issue(lease);
         const current = await state(hash);
+        assert.equal(current.privateValidatedExecution, job.id);
         assert.equal(current.principal, principal);
         assert.deepEqual(current.identity.markings, ['private']);
         assert.deepEqual([...current.identity.grantedOperations].sort(), [...operations].sort());
@@ -196,6 +200,92 @@ test(
           db.pool.query('SELECT moria.native_serving_session_origin($1,false)', [hash]),
           /UNAUTHENTICATED/,
         );
+      },
+    );
+    await t.test('current private credentials traverse accepted delegation once', async () => {
+      const measured = await db.pool.connect();
+      try {
+        const proof = (
+          await measured.query(
+            'SELECT moria.runtime_job_session_origin($1) AS origin,moria.runtime_job_delegation_guard($2) AS delegated,moria.native_serving_job_delegation($2) AS state',
+            [hash, job.id],
+          )
+        ).rows[0];
+        assert.deepEqual(proof.origin, proof.delegated);
+        await measured.query('BEGIN');
+        await measured.query("SET LOCAL track_functions='pl'");
+        const current = (
+          await measured.query('SELECT moria.native_serving_session($1) AS state', [hash])
+        ).rows[0].state;
+        assert.equal(current.principal, principal);
+        assert.deepEqual([...current.identity.grantedOperations].sort(), [...operations].sort());
+        assert.deepEqual(current, { ...proof.state, privateValidatedExecution: job.id });
+        const calls = (
+          await measured.query(
+            "SELECT funcname,calls::int FROM pg_stat_xact_user_functions WHERE schemaname='moria' AND funcname=ANY($1) ORDER BY funcname",
+            [['native_serving_accepted_delegation', 'runtime_job_delegation_guard']],
+          )
+        ).rows;
+        assert.deepEqual(calls, [
+          { funcname: 'native_serving_accepted_delegation', calls: 1 },
+          { funcname: 'runtime_job_delegation_guard', calls: 1 },
+        ]);
+      } finally {
+        await measured.query('ROLLBACK');
+        measured.release();
+      }
+    });
+    await t.test(
+      'private state helpers retain the existing database privilege boundary',
+      async () => {
+        const limitedRole = `job_limited_${randomUUID().replaceAll('-', '')}`;
+        const limitedPassword = randomUUID();
+        await db.pool.query(
+          `CREATE ROLE ${limitedRole} LOGIN PASSWORD '${limitedPassword}'; GRANT USAGE ON SCHEMA moria TO ${limitedRole}`,
+        );
+        const trusted = new Pool({ connectionString: connection });
+        const limited = new Pool({
+          ...db.pool.options,
+          user: limitedRole,
+          password: limitedPassword,
+        });
+        try {
+          const { origin, state } = (
+            await trusted.query(
+              'SELECT moria.runtime_job_session_origin($1) origin,moria.native_serving_job_delegation($2) state',
+              [hash, job.id],
+            )
+          ).rows[0];
+          const probes: [string, unknown[], unknown][] = [
+            [
+              'SELECT moria.runtime_binding_authority_state($1,$2,$3,$4) AS value',
+              [registered, state.securityEpoch, state.instanceEpoch, job.id],
+              state,
+            ],
+            ['SELECT moria.runtime_execution_check_state($1) AS value', [job.id], state],
+            [
+              'SELECT moria.runtime_job_session_resolution($1) AS value',
+              [hash],
+              { origin, validatedState: state },
+            ],
+          ];
+          for (const [sql, values, expected] of probes) {
+            assert.deepEqual((await trusted.query(sql, values)).rows[0].value, expected);
+            await assert.rejects(limited.query(sql, values), { code: '42501' });
+          }
+          assert.equal(
+            (
+              await trusted.query(
+                'SELECT moria.runtime_binding_authority_state($1,$2,$3,NULL) AS value',
+                [registered, state.securityEpoch, state.instanceEpoch],
+              )
+            ).rows[0].value,
+            null,
+          );
+        } finally {
+          await Promise.all([trusted.end(), limited.end()]);
+          await db.pool.query(`DROP OWNED BY ${limitedRole}; DROP ROLE ${limitedRole}`);
+        }
       },
     );
     await t.test(
@@ -251,6 +341,56 @@ test(
         assert.equal(accepted.origin_kind, 'service');
         assert.equal(accepted.parent_execution, job.id);
         assert.equal(accepted.origin_binding, registered);
+        let childLease = (
+          await native('worker-claim', { domains: ['transform'], target: child.id })
+        ).lease;
+        const underSharedAncestors = async (check: (client: PoolClient) => Promise<void>) => {
+          const blocker = await db.pool.connect(),
+            verifier = await db.pool.connect();
+          try {
+            await blocker.query('BEGIN');
+            await blocker.query(
+              'SELECT id FROM moria.runtime_executions WHERE id=ANY($1::uuid[]) ORDER BY id FOR SHARE',
+              [[job.id, child.id]],
+            );
+            await verifier.query('BEGIN');
+            await verifier.query("SET LOCAL lock_timeout='500ms'");
+            await check(verifier);
+          } finally {
+            await verifier.query('ROLLBACK');
+            await blocker.query('ROLLBACK');
+            verifier.release();
+            blocker.release();
+          }
+        };
+        for (const phase of ['task', 'publication']) {
+          if (phase === 'publication') {
+            await native('seal', {
+              lease: childLease,
+              result: { staged: true },
+              digest: 'b'.repeat(64),
+            });
+            childLease = (
+              await native('worker-claim', {
+                domains: ['transform'],
+                publication: true,
+                target: child.id,
+              })
+            ).lease;
+            assert.equal(childLease.task, null);
+          }
+          await underSharedAncestors(async (client) => {
+            await assert.rejects(
+              issue(childLease, host, client),
+              (error: any) => error.code === '55P03',
+            );
+          });
+          const credential = await issue(childLease);
+          await underSharedAncestors(async (client) => {
+            assert.equal(await issue(childLease, host, client), credential);
+          });
+          assert.equal((await state(credential)).principal, principal);
+        }
         await native('cancel', { id: child.id });
       },
     );
@@ -625,18 +765,48 @@ test(
           "UPDATE moria.runtime_execution_tasks SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
           [first.task],
         );
+        await assert.rejects(issue(first), /JOB_LEASE_LOST/);
         const replacement = (
           await native('worker-claim', { domains: ['transform'], target: next.id })
         ).lease;
         assert.equal(replacement.task, first.task);
         assert.ok(BigInt(replacement.fence) > BigInt(first.fence));
         await assert.rejects(state(oldHash), /JOB_LEASE_LOST/);
+        await assert.rejects(issue(first), /JOB_LEASE_LOST/);
         const currentHash = await issue(replacement);
         assert.notEqual(currentHash, oldHash);
         assert.equal((await state(currentHash)).principal, principal);
         await native('cancel', { id: next.id });
         await assert.rejects(state(currentHash), /JOB_LEASE_LOST|JOB_DELEGATION_INACTIVE/);
       },
+    );
+    await renewalLockFixture(
+      t,
+      db.pool,
+      native,
+      async (publication) => {
+        const accepted = await request(await binding());
+        let current = (
+          await native('worker-claim', { domains: ['transform'], target: accepted.id })
+        ).lease;
+        if (publication) {
+          await native('seal', {
+            lease: current,
+            result: { staged: true },
+            digest: 'b'.repeat(64),
+          });
+          current = (
+            await native('worker-claim', {
+              domains: ['transform'],
+              publication: true,
+              target: accepted.id,
+            })
+          ).lease;
+          assert.equal(current.task, null);
+        }
+        return current;
+      },
+      connection,
     );
   },
 );

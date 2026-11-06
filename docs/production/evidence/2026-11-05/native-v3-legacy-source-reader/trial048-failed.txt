@@ -1,0 +1,37 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-source.integration.test.ts
+Running 1 integration test files.
+✖ native indexing consumes actual v3 array-key heads and preserves immutable empty-generation history (29867.942585ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30369.769389
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-source.integration.test.ts:1:489
+✖ native indexing consumes actual v3 array-key heads and preserves immutable empty-generation history (29867.942585ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  {"build":"08e6344b-2a4e-4065-9ccb-8d06d1297771","error":"UID_UNREGISTERED","task":"257ef831-8834-4b38-a0c9-42d685393b40"}
+  
+  thread 'catalog_publication' (139) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:
+  called `Result::unwrap()` on an `Err` value: INDEXING_INCOMPLETE ["failed"]
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"build":"08e6344b-2a4e-4065-9ccb-8d06d1297771","event":"planning","fence":"1","worker":"08fe9ff1-312c-4ce1-9dce-2b9aedcbeada"}\n{"build":"08e6344b-2a4e-4065-9ccb-8d06d1297771","event":"claimed","fence":"1","kind":"scan","task":"1443fa69-258c-44ef-8311-5c1d4be79da0","worker":"08fe9ff1-312c-4ce1-9dce-2b9aedcbeada"}\n{"build":"08e6344b-2a4e-4065-9ccb-8d06d1297771","event":"sealed","rows":"16","task":"1443fa69-258c-44ef-8311-5c1d4be79da0"}\n{"build":"08e6344b-2a4e-4065-9ccb-8d06d1297771","event":"claimed","fence":"1","kind":"reduce","task":"257ef831-8834-4b38-a0c9-42d685393b40","worker":"08fe9ff1-312c-4ce1-9dce-2b9aedcbeada"}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.38s\n\n',
+    stderr: '{"build":"08e6344b-2a4e-4065-9ccb-8d06d1297771","error":"UID_UNREGISTERED","task":"257ef831-8834-4b38-a0c9-42d685393b40"}\n\nthread \'catalog_publication\' (139) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:\ncalled `Result::unwrap()` on an `Err` value: INDEXING_INCOMPLETE ["failed"]\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

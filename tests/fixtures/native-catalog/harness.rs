@@ -1,7 +1,8 @@
 use anyhow::{Context, Result, ensure};
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use moria_runtime::{
     authority::Authority,
+    canonical::canonical_json,
     catalog::*,
     database::Database,
     execution::{Domain, ExecutionAuthority, Lease, TaskPlan},
@@ -15,10 +16,12 @@ use std::{
     collections::BTreeMap,
     io::{BufRead, Write},
     sync::Arc,
+    time::Duration,
 };
 use uuid::Uuid;
 mod capacity;
 mod reader_window;
+mod standard_export;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -54,6 +57,11 @@ struct Fixture {
     #[serde(default)]
     writer_rows: BTreeMap<String, Vec<Value>>,
     expected_rows: Option<usize>,
+    expected_markings: Option<Vec<String>>,
+    #[serde(default)]
+    graph_output: bool,
+    #[serde(default)]
+    prepare_only: bool,
     #[serde(default)]
     s3_bindings: Vec<S3Binding>,
     allocation: Option<capacity::Allocation>,
@@ -63,6 +71,9 @@ struct Fixture {
     registered_host: Option<Uuid>,
     registered_owner: Option<Uuid>,
     header_probe: Option<reader_window::HeaderProbe>,
+    standard_export: Option<String>,
+    #[serde(default)]
+    graph_serial_parity: bool,
 }
 fn event(value: Value) {
     println!("{}", value);
@@ -399,24 +410,240 @@ async fn run() -> Result<()> {
         fixture.registered_host.is_some() == fixture.registered_owner.is_some(),
         "Incomplete registered worker fixture"
     );
-    let task = match (fixture.registered_host, fixture.registered_owner) {
-        (Some(host), Some(owner)) => {
-            execution
-                .claim_registered(owner, host, &[Domain::Sync], false, Some(id))
-                .await?
+    let registered = fixture.registered_host.zip(fixture.registered_owner);
+    let claim = |publication| {
+        let execution = &execution;
+        async move {
+            tokio::time::timeout(Duration::from_secs(5), async {
+                // Other live workers can briefly hold the same resource-class lock.
+                loop {
+                    let claim = match registered {
+                        Some((host, owner)) => {
+                            execution
+                                .claim_registered(
+                                    owner,
+                                    host,
+                                    &[Domain::Sync],
+                                    publication,
+                                    Some(id),
+                                )
+                                .await?
+                        }
+                        None => {
+                            execution
+                                .claim(Uuid::new_v4(), &[Domain::Sync], publication)
+                                .await?
+                        }
+                    };
+                    if let Some(claim) = claim {
+                        ensure!(claim.lease.execution == id);
+                        return Ok(claim);
+                    }
+                    tokio::time::sleep(Duration::from_millis(50)).await;
+                }
+            })
+            .await
+            .context("FIXTURE_CLAIM_TIMEOUT")?
         }
-        _ => {
-            execution
-                .claim(Uuid::new_v4(), &[Domain::Sync], false)
-                .await?
-        }
-    }
-    .unwrap();
-    ensure!(task.lease.execution == id);
+    };
+    let task = claim(false).await?;
     let session = match fixture.registered_host {
         Some(host) => moria_runtime::execution::job_session(&db, &task.lease, host).await?,
         None => session,
     };
+    if matches!(
+        fixture.mode.as_str(),
+        "graph-bootstrap" | "graph-bootstrap-held" | "graph-read" | "graph-read-held"
+    ) {
+        let source = &fixture.snapshots[0];
+        let namespace = IndexNamespace {
+            warehouse_id: source.warehouse_id.clone(),
+            table_id: source.table_id.clone(),
+            revision: source.revision.clone().unwrap_or_else(|| "v1".into()),
+        };
+        let (lease, graph_session) = if fixture.mode.starts_with("graph-bootstrap") {
+            execution
+                .seal(&task.lease, json!({"complete":true}), &"b".repeat(64))
+                .await?;
+            let coordinator = claim(true).await?;
+            ensure!(
+                coordinator.lease.task.is_none(),
+                "FIXTURE_COORDINATOR_REQUIRED"
+            );
+            let coordinator_session = match fixture.registered_host {
+                Some(host) => {
+                    moria_runtime::execution::job_session(&db, &coordinator.lease, host).await?
+                }
+                None => session.clone(),
+            };
+            (coordinator.lease, coordinator_session)
+        } else {
+            (task.lease.clone(), session.clone())
+        };
+        let grant = Arc::new(
+            DatasetIoGrant::acquire(
+                db.clone(),
+                graph_session.clone(),
+                lease.clone(),
+                namespace.clone(),
+            )
+            .await?,
+        );
+        let store = moria_runtime::storage::configured_store_with_fingerprint(&namespace)?.0;
+        let scratch_path = std::path::Path::new(&fixture.root).join(format!("graph-scratch-{id}"));
+        std::fs::create_dir(&scratch_path)?;
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&scratch_path, std::fs::Permissions::from_mode(0o700))?;
+        let scratch = PosixStore::provision(
+            &scratch_path,
+            &namespace.warehouse_id,
+            &namespace.table_id,
+            StorageLimits {
+                max_object_bytes: 128 * 1024 * 1024,
+                chunk_bytes: 1024 * 1024,
+            },
+        )?;
+        let cancel = Cancellation::default();
+        let _renewal = capacity::Renewal::start(db.clone(), lease);
+        let result = async {
+            let basis = if fixture.mode.starts_with("graph-bootstrap") {
+                let receipt = moria_runtime::dataset_writer::bootstrap_v2::bootstrap_expected_head(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    moria_runtime::dataset_writer::visibility::BootstrapBudget {
+                        maximum_data_rows: 1000,
+                        maximum_delete_rows: 0,
+                    },
+                    cancel.clone(),
+                )
+                .await
+                .context("native graph bootstrap")?;
+                event(json!({"event":"graph_bootstrap_ready","execution":id,"root":receipt.root,"graphNode":receipt.graph_node,"rows":receipt.rows}));
+                moria_runtime::dataset_graph_read::ReadBasis::ExpectedHead
+            } else {
+                moria_runtime::dataset_graph_read::ReadBasis::Input
+            };
+            let (context, root) = moria_runtime::dataset_graph_read::GraphReadContext::execution(
+                store,
+                grant.clone(),
+                basis,
+                cancel,
+            )
+            .await
+            .context("native graph rooted read")?;
+            let export = if let Some(directory) = fixture.standard_export.as_deref() {
+                let descriptor = context.descriptor(&root).await?;
+                let metadata = descriptor["metadata"]["name"].as_str()
+                    .ok_or_else(||anyhow::anyhow!("FIXTURE_METADATA_REQUIRED"))?;
+                Some((directory, metadata.to_owned()))
+            } else {
+                None
+            };
+            let snapshot = Arc::new(
+                moria_runtime::native_snapshot_v3::NativeSnapshot::open(context, root)
+                    .await
+                    .context("native graph root decoder")?,
+            );
+            if fixture.mode == "graph-read-held" {
+                let keys: Vec<String> = db.get().await?.query_one(
+                    "SELECT primary_key FROM moria.native_dataset_bindings WHERE environment=$1 AND resource=$2",
+                    &[&graph_session.environment(), &source.resource.parse::<Uuid>()?],
+                ).await?.get(0);
+                let row = fixture.writer_rows.get(&source.resource).and_then(|rows|rows.first()).ok_or_else(||anyhow::anyhow!("FIXTURE_ROWS_REQUIRED"))?;
+                let values = keys.iter().map(|key|row[key].clone()).collect::<Vec<_>>();
+                ensure!(snapshot.lookup_key(&values).await?.is_some(), "FIXTURE_KEY_NOT_FOUND");
+                event(json!({"event":"graph_cached_ready","execution":id}));
+                proceed();
+                snapshot.lookup_key(&values).await?;
+            } else if fixture.mode.ends_with("-held") {
+                proceed();
+            }
+            let columns: Value = db.get().await?.query_one(
+                "SELECT columns FROM moria.native_dataset_bindings WHERE environment=$1 AND resource=$2",
+                &[&session.environment(), &source.resource.parse::<Uuid>()?],
+            ).await?.get(0);
+            let scan_started = std::time::Instant::now();
+            let mut stream = snapshot.clone().scan().await?;
+            let mut actual = BTreeMap::<String, usize>::new();
+            let mut count = 0usize;
+            while let Some(batch) = stream.try_next().await? {
+                for row in typed_rows(&batch, &columns)? {
+                    *actual.entry(row).or_insert(0) += 1;
+                }
+                count += batch.num_rows();
+            }
+            ensure!(count == fixture.expected_rows.unwrap_or(64), "FIXTURE_READBACK_MISMATCH");
+            event(json!({"event":"graph_scan_complete","rows":count,
+                "elapsedMillis":scan_started.elapsed().as_millis()}));
+            if let Some(expected) = fixture.writer_rows.get(&source.resource) {
+                let parity_limit = if fixture.graph_serial_parity { 1 } else { 4 };
+                let schema = snapshot.metadata().current_schema();
+                let expected_rows=if expected.is_empty(){Vec::new()}else{typed_rows(&supplied_batch(schema.as_ref(),expected,&columns)?,&columns)?};
+                for row in expected_rows {
+                    let value = actual.get_mut(&row).ok_or_else(|| anyhow::anyhow!("FIXTURE_READBACK_MISMATCH"))?;
+                    ensure!(*value > 0, "FIXTURE_READBACK_MISMATCH");
+                    *value -= 1;
+                }
+                ensure!(actual.values().all(|count| *count == 0), "FIXTURE_READBACK_MISMATCH");
+                let keys: Vec<String> = db.get().await?.query_one(
+                    "SELECT primary_key FROM moria.native_dataset_bindings WHERE environment=$1 AND resource=$2",
+                    &[&session.environment(), &source.resource.parse::<Uuid>()?],
+                ).await?.get(0);
+                ensure!(snapshot.lookup_keys(&[]).await?.is_empty(), "FIXTURE_BATCH_KEY_MISMATCH");
+                for rows in expected.chunks(1000) {
+                    let values: Vec<_> = rows.iter().map(|row|keys.iter().map(|key| row[key].clone()).collect::<Vec<_>>()).collect();
+                    let batch_started = std::time::Instant::now();
+                    let batched = snapshot.lookup_keys(&values).await?;
+                    ensure!(batched.len() == rows.len(), "FIXTURE_BATCH_KEY_MISMATCH");
+                    event(json!({"event":"graph_batch_keys_complete","rows":rows.len(),
+                        "elapsedMillis":batch_started.elapsed().as_millis()}));
+                    let parity_started = std::time::Instant::now();
+                    let bootstrap = fixture.mode.starts_with("graph-bootstrap");
+                    // Every scalar lookup checks live authority. Four in flight keep
+                    // serial network latency out of the fixture's parity comparison.
+                    futures::stream::iter(rows.iter().zip(values).zip(batched))
+                        .map(|((row, values), batched)| {
+                            let snapshot = &snapshot;
+                            let verify_row = row == &expected[0];
+                            async move {
+                                let locator = snapshot.lookup_key(&values).await?
+                                    .ok_or_else(|| anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
+                                ensure!(batched.as_ref() == Some(&locator), "FIXTURE_BATCH_KEY_MISMATCH");
+                                ensure!(locator.file.starts_with("moria://"), "FIXTURE_KEY_NOT_FOUND");
+                                if bootstrap {
+                                    ensure!(locator.row_hash.is_none(), "FIXTURE_BOOTSTRAP_DIGEST_NOT_DEFERRED");
+                                }
+                                if verify_row {
+                                    let verified = snapshot.read_key_row(&values).await?
+                                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_KEY_NOT_FOUND"))?;
+                                    ensure!(verified.locator.row_hash.is_some(), "FIXTURE_ROW_DIGEST_NOT_VERIFIED");
+                                    ensure!(canonical_json(&verified.value)? == canonical_json(row)?, "FIXTURE_READBACK_MISMATCH");
+                                }
+                                Ok::<_, anyhow::Error>(())
+                            }
+                        })
+                        .buffer_unordered(parity_limit)
+                        .try_for_each(|()| async { Ok(()) })
+                        .await?;
+                    event(json!({"event":"graph_key_parity_checked","rows":rows.len(),
+                        "concurrency":parity_limit,"elapsedMillis":parity_started.elapsed().as_millis()}));
+                }
+            }
+            if let Some((directory, metadata)) = export {
+                let members = standard_export::write(snapshot.as_ref(), directory, &metadata).await?;
+                event(json!({"event":"standard_iceberg_export","members":members}));
+            }
+            event(json!({"event":"graph_bootstrap_read","execution":id,"rows":count,"headUnchanged":true}));
+            Ok::<_, anyhow::Error>(())
+        }.await;
+        return result;
+    }
     if fixture.mode == "marker-denied" {
         let source = &fixture.snapshots[0];
         let namespace = IndexNamespace {
@@ -538,7 +765,11 @@ async fn run() -> Result<()> {
         ensure!(
             selected.resource.to_string() == source.resource
                 && selected.table_uuid == source.table_uuid
-                && selected.markings == vec!["private"]
+                && selected.markings
+                    == fixture
+                        .expected_markings
+                        .clone()
+                        .unwrap_or_else(|| vec!["private".into()])
         );
         let loaded = read_pinned_dataset(
             db.clone(),
@@ -550,13 +781,24 @@ async fn run() -> Result<()> {
         .await?;
         ensure!(
             loaded.pin.metadata_location == fixture.native_ref.as_ref().unwrap().as_str()
-                && loaded.consumed_markings == vec!["private"]
+                && loaded.consumed_markings
+                    == fixture
+                        .expected_markings
+                        .clone()
+                        .unwrap_or_else(|| vec!["private".into()])
         );
         let pin_revision = loaded.pin.revision.clone();
+        ensure!(
+            loaded.pin.snapshot == source.snapshot_id,
+            "FIXTURE_INPUT_PIN_CHANGED"
+        );
         let loaded = loaded.snapshot;
-        let table = loaded.table().await?.into_table();
         let mut historical_rows = 0usize;
         if let Some(snapshot) = &fixture.retained_snapshot {
+            let moria_runtime::catalog::PinnedDatasetSnapshot::FlatV2(legacy) = &loaded else {
+                anyhow::bail!("FIXTURE_RETAINED_FLAT_SNAPSHOT_REQUIRED")
+            };
+            let table = legacy.table().await?.into_table();
             let scan = table
                 .scan()
                 .snapshot_id(snapshot.parse()?)
@@ -570,12 +812,7 @@ async fn run() -> Result<()> {
             let metadata = table.metadata();
             ensure!(metadata.last_sequence_number() == 2 && metadata.snapshots().count() == 2);
         }
-        let scan = table
-            .scan()
-            .snapshot_id(source.snapshot_id.parse()?)
-            .select_all()
-            .build()?;
-        let mut batches = scan.to_arrow().await?;
+        let mut batches = loaded.scan(1000).await?;
         let mut rows = 0usize;
         let expected_ids: std::collections::BTreeMap<String, Uuid> = if fixture.expected_native_rows
         {
@@ -604,9 +841,13 @@ async fn run() -> Result<()> {
             let schema: iceberg::spec::Schema =
                 serde_json::from_value(definition.get("iceberg_schema"))?;
             let columns: Value = definition.get("columns");
-            let batch = supplied_batch(&schema, expected, &columns)?;
+            let expected_rows = if expected.is_empty() {
+                Vec::new()
+            } else {
+                typed_rows(&supplied_batch(&schema, expected, &columns)?, &columns)?
+            };
             let mut rows = BTreeMap::new();
-            for row in typed_rows(&batch, &columns)? {
+            for row in expected_rows {
                 *rows.entry(row).or_insert(0) += 1;
             }
             Some((columns, rows))
@@ -667,7 +908,8 @@ async fn run() -> Result<()> {
             }
             rows += batch.num_rows();
         }
-        ensure!(rows == expected_count && loaded.proof().physical_rows >= rows as u64);
+        ensure!(rows == expected_count);
+        loaded.check_scan_count(rows as u64)?;
         ensure!(
             expected_typed
                 .as_ref()
@@ -736,13 +978,23 @@ async fn run() -> Result<()> {
                         },
                     )?),
                 };
-            let mut writer = moria_runtime::dataset_writer::StreamingDatasetWriter::open(
-                store,
-                grant,
-                selected_schema.clone(),
-                Cancellation::default(),
-            )
-            .await
+            let mut writer = if fixture.graph_output {
+                moria_runtime::dataset_writer::StreamingDatasetWriter::open_graph(
+                    store,
+                    grant,
+                    selected_schema.clone(),
+                    Cancellation::default(),
+                )
+                .await
+            } else {
+                moria_runtime::dataset_writer::StreamingDatasetWriter::open(
+                    store,
+                    grant,
+                    selected_schema.clone(),
+                    Cancellation::default(),
+                )
+                .await
+            }
             .context("WRITER_OPEN")?;
             if fixture.mode == "writer-supplied" {
                 let rows = fixture
@@ -857,33 +1109,30 @@ async fn run() -> Result<()> {
             &"b".repeat(64),
         )
         .await?;
-    let claim = match (fixture.registered_host, fixture.registered_owner) {
-        (Some(host), Some(owner)) => {
-            execution
-                .claim_registered(owner, host, &[Domain::Sync], true, Some(id))
-                .await?
-        }
-        _ => {
-            execution
-                .claim(Uuid::new_v4(), &[Domain::Sync], true)
-                .await?
-        }
-    }
-    .unwrap();
-    ensure!(claim.lease.execution == id);
+    let claim = claim(true).await?;
+    ensure!(claim.lease.task.is_none(), "FIXTURE_COORDINATOR_REQUIRED");
     let session = match fixture.registered_host {
         Some(host) => moria_runtime::execution::job_session(&db, &claim.lease, host).await?,
         None => session,
     };
     let _renewal = capacity::Renewal::start(db.clone(), claim.lease.clone());
-    let mut candidates = Vec::new();
-    for fixture_snapshot in &fixture.snapshots {
+    // Keep special fault modes serial; valid grouped producers use bounded preparation.
+    let parallel = if fixture.mode == "valid" && fixture.closure_limits.is_none() {
+        2
+    } else {
+        1
+    };
+    let prepared = futures::stream::iter(&fixture.snapshots)
+        .map(|fixture_snapshot| {
+            let (db, fixture, session, lease, native_parts, native_schemas) =
+                (&db, &fixture, &session, &claim.lease, &native_parts, &native_schemas);
+            async move {
         let started = std::time::Instant::now();
         let grant = Arc::new(
             DatasetIoGrant::acquire(
                 db.clone(),
                 session.clone(),
-                claim.lease.clone(),
+                lease.clone(),
                 IndexNamespace {
                     warehouse_id: fixture_snapshot.warehouse_id.clone(),
                     table_id: fixture_snapshot.table_id.clone(),
@@ -936,28 +1185,47 @@ async fn run() -> Result<()> {
                     .is_err()
                 );
                 event(json!({"event":"denied","error":"OUTPUT_INVALID","execution":id}));
-                return Ok(());
+                return Ok(None);
             }
-            let candidate = moria_runtime::dataset_writer::prepare_replacement(
-                store.clone(),
-                &scratch,
-                grant.clone(),
-                native_schemas
-                    .get(&fixture_snapshot.resource)
-                    .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
-                    .clone(),
-                std::slice::from_ref(partset),
-                ClosureLimits {
-                    max_entries: 10000,
-                    max_referenced_bytes: 1024 * 1024 * 1024,
-                    max_spool_bytes: 32 * 1024 * 1024,
-                },
-                cancel,
-            )
-            .await
+            let candidate = if fixture.graph_output {
+                moria_runtime::dataset_writer::prepare_graph_replacement(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    native_schemas
+                        .get(&fixture_snapshot.resource)
+                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
+                        .clone(),
+                    std::slice::from_ref(partset),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    cancel,
+                )
+                .await
+            } else {
+                moria_runtime::dataset_writer::prepare_replacement(
+                    store.clone(),
+                    &scratch,
+                    grant.clone(),
+                    native_schemas
+                        .get(&fixture_snapshot.resource)
+                        .ok_or_else(|| anyhow::anyhow!("FIXTURE_SCHEMA_INVALID"))?
+                        .clone(),
+                    std::slice::from_ref(partset),
+                    ClosureLimits {
+                        max_entries: 10000,
+                        max_referenced_bytes: 1024 * 1024 * 1024,
+                        max_spool_bytes: 32 * 1024 * 1024,
+                    },
+                    cancel,
+                )
+                .await
+            }
             .context("WRITER_PREPARE")?;
-            candidates.push(candidate);
-            continue;
+            return Ok(Some(candidate));
         }
         let spool_object = LogicalObject::new(
             &fixture_snapshot.warehouse_id,
@@ -998,7 +1266,7 @@ async fn run() -> Result<()> {
             json!({"event":"closure_hashed","elapsedMillis":started.elapsed().as_millis().to_string()}),
         );
         if fixture.mode == "reader-window" {
-            return reader_window::probe(
+            reader_window::probe(
                 &db,
                 store.clone(),
                 grant.clone(),
@@ -1008,7 +1276,8 @@ async fn run() -> Result<()> {
                 cancel.clone(),
                 id,
             )
-            .await;
+            .await?;
+            return Ok(None);
         }
         let candidate = prepare_snapshot(
             store.clone(),
@@ -1062,9 +1331,25 @@ async fn run() -> Result<()> {
         ensure!(
             NativeSnapshotRef::decode(&format!("moria-snapshot-v2:{}", "x".repeat(4096))).is_err()
         );
+                Ok::<_, anyhow::Error>(Some(candidate))
+            }
+        }).buffered(parallel);
+    futures::pin_mut!(prepared);
+    let mut candidates = Vec::new();
+    while let Some(candidate) = prepared.try_next().await? {
+        let Some(candidate) = candidate else {
+            return Ok(());
+        };
         candidates.push(candidate);
     }
     event(json!({"event":"prepared","candidates":candidates,"lease":claim.lease}));
+    if fixture.prepare_only {
+        ensure!(
+            fixture.graph_output && fixture.mode == "writer-supplied",
+            "FIXTURE_MODE_INVALID"
+        );
+        return Ok(());
+    }
     if fixture.mode != "valid" && fixture.mode != "valid-s3" && !fixture.mode.starts_with("writer")
     {
         proceed();

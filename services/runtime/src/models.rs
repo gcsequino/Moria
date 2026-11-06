@@ -1351,8 +1351,8 @@ impl NativeModels {
                         );
                         let mut stream = response.bytes_stream();
                         let mut decoder = crate::model_protocol::ChatStream::default();
+                        // Probes buffer bounded output; the independent guard and completion fence release.
                         while let Some(part) = stream.next().await {
-                            self.current(&call).await?;
                             decoder
                                 .feed(&part.map_err(|_| anyhow::anyhow!("MODEL_INCOMPLETE"))?)?;
                         }

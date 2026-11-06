@@ -25,6 +25,43 @@ pub struct WriteContract {
     pub expected_head: ExpectedHead,
 }
 
+impl WriteContract {
+    /// The task's physical part schema is derived from the accepted full target schema.
+    /// Delete input keeps exact key order and Iceberg field IDs; its partset still binds
+    /// the complete target schema hash.
+    pub(crate) fn input_schema(
+        &self,
+        target: &iceberg::spec::Schema,
+    ) -> Result<iceberg::spec::Schema> {
+        ensure!(self.version == 2, "DATASET_WRITE_CONTRACT_REQUIRED");
+        match (self.mode.as_str(), self.input_kind.as_str()) {
+            ("replace" | "append" | "upsert", "rows") => Ok(target.clone()),
+            ("delete", "keys") => {
+                ensure!(!self.primary_key.is_empty(), "DATASET_PRIMARY_KEY_MISSING");
+                let fields = self
+                    .primary_key
+                    .iter()
+                    .map(|key| {
+                        let field = target
+                            .as_struct()
+                            .fields()
+                            .iter()
+                            .find(|field| field.name == *key)
+                            .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
+                        ensure!(field.required, "DATASET_PRIMARY_KEY_NULL");
+                        Ok(field.clone())
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                Ok(iceberg::spec::Schema::builder()
+                    .with_schema_id(target.schema_id())
+                    .with_fields(fields)
+                    .build()?)
+            }
+            _ => anyhow::bail!("DATASET_WRITE_CONTRACT_REQUIRED"),
+        }
+    }
+}
+
 fn semantics(definition: Option<&Value>) -> Result<(&str, &str)> {
     let Some(definition) = definition else {
         return Ok(("replace", "full"));
@@ -115,6 +152,50 @@ impl DatasetIoGrant {
 mod tests {
     use super::*;
     use serde_json::json;
+    #[test]
+    fn delete_projection_preserves_ordered_array_key_ids_and_excludes_payload() {
+        let target: iceberg::spec::Schema = serde_json::from_value(json!({
+            "type":"struct", "schema-id":5,
+            "fields":[
+                {"id":1,"name":"id","required":true,"type":"long"},
+                {"id":2,"name":"tags","required":true,"type":{"type":"list","element-id":3,"element-required":true,"element":"string"}},
+                {"id":4,"name":"note","required":false,"type":"string"},
+            ]
+        })).unwrap();
+        let mut contract = WriteContract {
+            version: 2,
+            mode: "delete".into(),
+            coverage: "incremental".into(),
+            input_kind: "keys".into(),
+            schema_hash: crate::dataset_writer::schema_hash(&target).unwrap(),
+            key_schema_hash: format!("sha256:{}", "a".repeat(64)),
+            primary_key: vec!["tags".into(), "id".into()],
+            expected_head: ExpectedHead {
+                revision: "0".into(),
+                snapshot: None,
+                metadata_location: None,
+            },
+        };
+        let input = contract.input_schema(&target).unwrap();
+        assert_eq!(input.schema_id(), target.schema_id());
+        assert_eq!(
+            input.as_struct().fields(),
+            &[
+                target.as_struct().fields()[1].clone(),
+                target.as_struct().fields()[0].clone()
+            ]
+        );
+        contract.primary_key.push("note".into());
+        assert!(contract.input_schema(&target).is_err());
+        contract.primary_key = vec!["missing".into()];
+        assert!(contract.input_schema(&target).is_err());
+        contract.input_kind = "rows".into();
+        assert!(contract.input_schema(&target).is_err());
+        contract.mode = "append".into();
+        contract.primary_key.clear();
+        assert_eq!(contract.input_schema(&target).unwrap(), target);
+    }
+
     #[test]
     fn coverage_and_mode_are_independent_and_closed() {
         for coverage in ["full", "incremental", "appendOnly"] {

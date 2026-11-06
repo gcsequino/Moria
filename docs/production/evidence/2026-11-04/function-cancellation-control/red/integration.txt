@@ -1,0 +1,54 @@
+{"controller": "moria-quality-42ce584d-ecdd-4406-aebd-d86ca212bd07", "image": "sha256:aaa70d92633735539673bbd9e30c0348251888c36c5a35f06e6d4b9a7b6964ac", "scratchPools": ["/tmp/moria-engine-scratch-04301996-7385-47a0-a61c-4351dea0ad86", "/tmp/moria-engine-scratch-488723b0-bab3-4857-9d46-17562af7d5b1"], "temporary": "/tmp/moria-quality-gwb8nuoc"}
+$ node scripts/test-files.mjs integration tests/functions.integration.test.ts
+Running 1 integration test files.
+▶ published TypeScript functions execute in real isolated containers with durable authorized outcomes
+  ✔ invalid native values fail before JSON can coerce them into nullable results (2315.779452ms)
+  ✔ versioned structured values remain exact through real function pipes and typed replay (2248.615391ms)
+  ✖ CLI invokes, inspects and cancels real containers through authenticated HTTP (1234.630386ms)
+  ✔ typed result, retained identity, ordered events and exact-key replay (808.802307ms)
+  ✔ malformed input never reserves a key, and code/output/protocol failures never publish results (15314.804977ms)
+  ✔ worker cannot access host credentials, root writes, daemon socket, external or host network (1215.37438ms)
+  ✔ real container OSDK reads retain current classifications and cannot bypass revocation (759.753619ms)
+  ✔ generated ontology types hydrate references and await promised object/list results in real containers (1198.047815ms)
+  ✔ generated OSDK and raw platform transports run inside real containers (18204.763995ms)
+  ✔ real function containers compose through the platform API with bounded parent identity (1846.057213ms)
+  ✔ CPU, memory and process limits terminate or reject actual resource exhaustion (4929.265261ms)
+  ✔ competing identical invocations accept one attempt and redeployment cannot replace its result (762.865692ms)
+  ✔ cancellation persists, timeout kills code, and revoked authority blocks result access (2022.043621ms)
+  ✔ expired worker fences cannot publish or reexecute, and expired results retain their keys (1198.496497ms)
+  ✔ a killed supervisor is fenced and a replacement removes its surviving sandbox without rerunning code (19314.346533ms)
+  ✔ unknown artifact schemes fail without launching alternate host commands (0.253055ms)
+✖ published TypeScript functions execute in real isolated containers with durable authorized outcomes (77219.983427ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 15
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 77895.196742
+
+✖ failing tests:
+
+test at tests/functions.integration.test.ts:1:4134
+✖ CLI invokes, inspects and cancels real containers through authenticated HTTP (1234.630386ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'cancelled'
+
+      at TestContext.<anonymous> (/app/tests/functions.integration.test.ts:183:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/functions.integration.test.ts:149:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'cancelled',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

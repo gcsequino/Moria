@@ -12,14 +12,19 @@ COPY --chown=builder:builder tests/fixtures/ /build/tests/fixtures/
 USER builder
 RUN --mount=type=cache,target=/home/builder/.cargo/registry,uid=1000,gid=1000 \
     --mount=type=cache,target=/build/services/runtime/target,uid=1000,gid=1000 \
-    cargo fmt --check && cargo build --release --locked -j 2 \
-    && cargo test --release --locked --lib --no-run -j 2 --message-format=json > /tmp/indexing-tests.json \
-    && mkdir /build/out && cp target/release/moria-indexing target/release/moria-runtime /build/out/ \
-    && test_binary="$(sed -n '/"kind":\["lib"\]/s/^.*"executable":"\([^"]*\)".*$/\1/p' /tmp/indexing-tests.json)" \
+    cargo fmt --check \
+    && cargo test --release --locked --lib --test native_policy --test native_storage \
+         --test native_transport --test native_catalog --test native_sandbox --test native_retention \
+         --no-run -j 2 --message-format=json > /tmp/indexing-artifacts.json \
+    && mkdir /build/out \
+    && for binary in moria-indexing moria-runtime; do \
+         executable="$(grep -F "\"name\":\"$binary\"" /tmp/indexing-artifacts.json | sed -n 's/^.*"executable":"\([^"]*\)".*$/\1/p')" \
+         && test -x "$executable" && cp "$executable" "/build/out/$binary" || exit 1; \
+       done \
+    && test_binary="$(sed -n '/"kind":\["lib"\]/s/^.*"executable":"\([^"]*\)".*$/\1/p' /tmp/indexing-artifacts.json)" \
     && test -x "$test_binary" && cp "$test_binary" /build/out/moria-indexing-tests \
     && for harness in policy storage transport catalog sandbox retention; do \
-         cargo test --release --locked --test "native_$harness" --no-run -j 2 --message-format=json > "/tmp/native-$harness.json" \
-         && test_binary="$(sed -n '/"kind":\["test"\]/s/^.*"executable":"\([^"]*\)".*$/\1/p' "/tmp/native-$harness.json")" \
+         test_binary="$(grep -F "\"name\":\"native_$harness\"" /tmp/indexing-artifacts.json | sed -n 's/^.*"executable":"\([^"]*\)".*$/\1/p')" \
          && test -x "$test_binary" \
          && cp "$test_binary" "/build/out/moria-native-$harness-test" || exit 1; \
        done
@@ -35,7 +40,7 @@ COPY workers/data-engine/requirements.lock /tmp/requirements.lock
 RUN pip install --no-cache-dir --only-binary=:all: --require-hashes -r /tmp/requirements.lock
 FROM docker:cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS docker-cli
 FROM pgvector/pgvector@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11 AS vector-extension
-FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5 AS static-check
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=mcp-client /usr/local/lib/python3.11/site-packages /opt/moria-mcp-client
 COPY --from=agent-dependencies /agent/ /opt/moria-agent/
@@ -49,10 +54,6 @@ COPY --from=vector-extension /usr/lib/x86_64-linux-gnu/libpq.so.5* /usr/lib/x86_
 COPY --from=vector-extension /usr/lib/postgresql/18/lib/vector.so /opt/moria-pgvector/vector.so
 COPY --from=vector-extension /usr/share/postgresql/18/extension/vector* /opt/moria-pgvector/extension/
 COPY deploy/test/licenses/pgvector-LICENSE /opt/moria-pgvector/LICENSE
-COPY --from=indexing-build /build/out/moria-indexing /usr/local/bin/moria-indexing
-COPY --from=indexing-build /build/out/moria-indexing-tests /usr/local/bin/moria-indexing-tests
-COPY --from=indexing-build /build/out/moria-runtime /usr/local/bin/moria-runtime
-COPY --from=indexing-build /build/out/moria-native-*-test /usr/local/bin/
 ENV MORIA_POLICY_TEST_BINARY=/usr/local/bin/moria-native-policy-test \
     MORIA_STORAGE_TEST_BINARY=/usr/local/bin/moria-native-storage-test \
     MORIA_RPC_TEST_BINARY=/usr/local/bin/moria-native-transport-test \
@@ -92,4 +93,9 @@ COPY --chown=node:node requirements-dev.txt ./
 COPY --chown=node:node docs/spec/schemas/requirements.txt docs/spec/schemas/
 RUN python3 -m venv .venv && .venv/bin/python -m pip install --no-cache-dir -r workers/iceberg/requirements.txt -r requirements-dev.txt -r docs/spec/schemas/requirements.txt
 COPY --chown=node:node . .
+FROM static-check AS quality
+COPY --from=indexing-build /build/out/moria-indexing /usr/local/bin/moria-indexing
+COPY --from=indexing-build /build/out/moria-indexing-tests /usr/local/bin/moria-indexing-tests
+COPY --from=indexing-build /build/out/moria-runtime /usr/local/bin/moria-runtime
+COPY --from=indexing-build /build/out/moria-native-*-test /usr/local/bin/
 CMD ["pnpm", "check"]

@@ -1,0 +1,17 @@
+{
+  "gitBase": "6cfd8c5909f6f2227d50ca220482d073edb66cac",
+  "sourceArchiveSha256": "f4b056169b89a058aa4a77711b36a0fa931b700930c6c8da3695600a187dc34d",
+  "nativeSourceDigest": "d1f7f631d8aa5cec91d97eb5815c69b0bda44affc5798c308b8088f95449d196",
+  "schema": {
+    "version": 5,
+    "checksum": "6e7856d3d954e5c1d5ce7b6ecce24dcc4305566db4728792461914a4ca14e7e0"
+  },
+  "baseImage": "sha256:4de29f4708eeef97dfd2a4ff66f5e7a531dd27215c60710a5c7caf6e8663d5ee",
+  "focusedImage": "sha256:b9d1727df6293ab4acf24fb6649dd227327bf4b947ea075eb39ba7bfa1932b2b",
+  "fullAgentTestSha256": "12736cc61c25eb2d6b5ee6799abcf1e9840ca2803755463b0d55241b43e75b93",
+  "focusedEntrySha256": "9685c0048cc989df3bf50c772b2999c0128e09ee320624c39edd0a6a329d6286",
+  "focusedEntryChanges": "Only the three-group loop selection is narrowed to service/current authority. All six selected subcase assertions, deadlines and the shared fixture are unchanged.",
+  "nativeArtifacts": 9,
+  "nativeUnits": 79,
+  "buildProfile": "debug"
+}

@@ -1,0 +1,42 @@
+{"controller": "moria-quality-f83adefa-c34e-40bb-b07e-8b4723e27ff2", "image": "sha256:3b711e82baa30f7adc168326b6d05dcbaf4777295d6f1a86cc64068a26c9a96c", "scratchPools": ["/tmp/moria-engine-scratch-89f71da0-88a0-4660-9fd5-b208a0e42e51", "/tmp/moria-engine-scratch-2a200280-d48a-49f2-acc5-b350abe9f98c", "/tmp/moria-engine-scratch-57ae1570-04a0-4b6b-b320-33add33b6b4f"], "temporary": "/tmp/moria-quality-7rpw3iu6"}
+$ node scripts/test-files.mjs integration tests/native-child-progress-lock.integration.test.ts
+Running 1 integration test files.
+▶ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts
+  ✖ a native child progress read preserves a shared parent authority fence during slow child authorization (48649.644388ms)
+✖ native evaluations stream a pinned Dataset once and supervise immutable Agent and evaluator attempts (84887.98953ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85464.912577
+
+✖ failing tests:
+
+test at tests/native-child-progress-lock.integration.test.ts:7:3229
+✖ a native child progress read preserves a shared parent authority fence during slow child authorization (48649.644388ms)
+  error: could not obtain lock on row in relation "runtime_executions"
+      at /app/node_modules/.pnpm/pg-pool@3.14.0_pg@8.23.1/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async <anonymous> (/app/tests/fixtures/native-evaluations/child-progress-lock.ts:74:13) {
+    length: 127,
+    severity: 'ERROR',
+    code: '55P03',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'heapam.c',
+    line: '5299',
+    routine: 'heap_acquire_tuplock'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

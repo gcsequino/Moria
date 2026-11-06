@@ -1,0 +1,37 @@
+$ node scripts/test-files.mjs integration tests/native-indexing-service.integration.test.ts
+Running 1 integration test files.
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (10956.469504ms)
+  ✔ clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication (51220.556992ms)
+  ✔ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (14745.132325ms)
+  ✔ new Source aliases preserve real Action overlays and tombstones across replacement and historical reads (88601.569022ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (9292.493446ms)
+  ✔ broader current policy retains the old generation restriction until a newly captured native build activates (9052.706677ms)
+  ✔ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (9892.617664ms)
+  ✔ disabled registered purpose remains blocked even after further unrelated epoch changes (9920.052132ms)
+  ✔ approved bounded history collection retires old Source payload and exact key maps while retaining Search and current stores (352.314436ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows) (215173.282346ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"d157b939-a2f0-4626-bc99-c867a7d5bd83","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"fe26e284-3b02-4177-9895-caa314a68335"}]}
+ℹ {"fullObjectSource":{"execution":"7413fb22-1512-46a8-95ab-97b3fb37e497","generation":"800a25b1-0674-4171-a495-929f5809bf9f","store":"6f36f684-47f9-4d04-a201-31033075d4d4","rows":299},"ordinaryRows":149}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (6836.645159ms)
+  ✔ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (6607.55903ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (2765.21457ms)
+  ✔ broader current policy retains the old generation restriction until a newly captured native build activates (5033.642292ms)
+  ✔ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (2647.65949ms)
+  ✔ disabled registered purpose remains blocked even after further unrelated epoch changes (2658.706512ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width) (35454.114096ms)
+ℹ {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"0550aed3-3b8d-40e6-92f8-238a5969a7f5","event":"reducer_batches","maxWireBytes":"8388678","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"bff01b11-812f-4946-a1fe-12da1405b915"}]}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (12251.935316ms)
+  ✔ real closed staging collection preserves published aliases and drains expired private rows through native history once (23142.017721ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle) (41977.717135ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"ff44413e-0a6c-4786-93aa-86f37cd6d56d","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"664e16b5-8f7a-4e20-a446-b3bf42ed5854"}]}
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 293112.341605

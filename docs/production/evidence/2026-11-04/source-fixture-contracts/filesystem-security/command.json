@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "600s",
+  "python3",
+  "/home/gcseq/moria-proofs/source-fixture-reconciliation-20261104/static-trial001/source/deploy/test/run-quality.py",
+  "sha256:e7ab403ef3975a9a55f849ae12708613daccb0219b54d65f1880542ca3c5fd88",
+  "pnpm",
+  "test:integration",
+  "tests/filesystem-security.integration.test.ts"
+]

@@ -179,6 +179,10 @@ END $$;
 CREATE FUNCTION moria.activate_source_stage(stage_id uuid, admission_revision bigint DEFAULT NULL) RETURNS bigint LANGUAGE plpgsql AS $$
 DECLARE s moria.source_stages; e moria.environments; h moria.source_generations; next_revision bigint;
 BEGIN
+  PERFORM moria.runtime_indexing_staging_shared(stage_id);
+  IF EXISTS(SELECT 1 FROM moria.indexing_builds WHERE id=stage_id) THEN
+    PERFORM moria.indexing_check(stage_id);
+  END IF;
   SELECT * INTO s FROM moria.source_stages WHERE id=stage_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'STAGE_INVALID'; END IF;
   SELECT * INTO e FROM moria.environments WHERE id=s.environment FOR UPDATE;
@@ -211,6 +215,7 @@ END $$;
 CREATE FUNCTION moria.indexing_activate(build_id uuid, worker_id uuid, worker_fence bigint) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE b moria.indexing_builds; r bigint; result jsonb;
 BEGIN
+  PERFORM moria.runtime_indexing_staging_shared(build_id);
   SELECT * INTO b FROM moria.indexing_builds WHERE id=build_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'BUILD_UNKNOWN'; END IF;
   PERFORM moria.runtime_environment_cell_check(b.environment);
@@ -220,6 +225,7 @@ BEGIN
   IF EXISTS(SELECT 1 FROM moria.indexing_tasks WHERE build=build_id AND status<>'sealed') THEN RAISE EXCEPTION 'STAGE_INVALID'; END IF;
   IF NOT EXISTS(SELECT 1 FROM moria.dataset_heads WHERE environment=b.environment AND dataset=b.source AND revision=b.source_revision) THEN RAISE EXCEPTION 'HEAD_CONFLICT'; END IF;
   r:=moria.activate_source_stage(build_id);
+  PERFORM moria.runtime_source_store_publish(build_id,worker_id,worker_fence,r);
   result:=jsonb_build_object('stage',build_id,'revision',r::text,'sourceRevision',b.source_revision::text);
   INSERT INTO moria.indexing_changes VALUES(b.environment,r,0,b.target,build_id,true);
   UPDATE moria.indexing_builds SET status='active',receipt=result,lease_until=NULL WHERE id=build_id;

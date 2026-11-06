@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-version.integration.test.ts
+Running 1 integration test files.
+✔ v3 backup rejects a missing qualified version despite an identical current copy (20114.101508ms)
+ℹ {"pinnedVersion":"a9b7e043-228d-4528-93d2-fbe0fbc9d58b","currentVersion":"480e1494-3943-4e21-929f-b30165315be9","requests":[{"method":"GET","requestVersion":"a9b7e043-228d-4528-93d2-fbe0fbc9d58b","status":404}],"failedCaptureUnsealed":true,"headUnchanged":true,"noRestoreCreated":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20604.29633

@@ -321,6 +321,7 @@ pub fn authority_error_code(error: &anyhow::Error) -> Option<&'static str> {
         "HISTORY_BUSY",
         "GC_OPERATOR_REQUIRED",
         "RECOVERY_OPERATOR_REQUIRED",
+        "DELIVERY_RECONCILIATION_STALE",
         "MODEL_ORIGIN_IMMUTABLE",
         "SNAPSHOT_SCRATCH_UNAVAILABLE",
         "CLOSURE_BUDGET_UNAVAILABLE",

@@ -1,0 +1,7 @@
+{
+  "base": "43de5387c051f4246b93dfb1a01dd13246301cf1",
+  "changes": {
+    "services/runtime/src/worker.rs": "4850b4fbbdad8bc0d0a2a8a29ff59bb45377ab1b4c2d3faca5027663e692b368",
+    "tests/indexing-rust.integration.test.ts": "af312572a26fe87de2fa71ca5bd77afc00cfc5da65b6e349f73ff974d3058d90"
+  }
+}

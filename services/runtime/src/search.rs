@@ -332,7 +332,21 @@ pub async fn cli(db: Database, arguments: Vec<String>) -> Result<()> {
         let mut terminate =
             tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
         loop {
-            let worked = tokio::select! {_=tokio::signal::ctrl_c()=>break,_=terminate.recv()=>break,result=worker.once()=>result?};
+            let iteration = tokio::select! {_=tokio::signal::ctrl_c()=>break,_=terminate.recv()=>break,result=worker.once()=>result};
+            let worked = match iteration {
+                Ok(worked) => worked,
+                Err(error)
+                    if operation != "once" && error_code(&error) == "CONCURRENT_MODIFICATION" =>
+                {
+                    eprintln!(
+                        "{}",
+                        json!({"event":"search_iteration_retry","error":"CONCURRENT_MODIFICATION"})
+                    );
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                    continue;
+                }
+                Err(error) => return Err(error),
+            };
             if operation == "once" {
                 println!("{}", json!({"worked":worked}));
                 break;

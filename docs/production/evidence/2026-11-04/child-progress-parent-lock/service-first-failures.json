@@ -1,0 +1,30 @@
+[
+  {
+    "sampled_at": "2026-11-05 05:34:15.297214+00",
+    "id": "f018de00-a174-4a4a-bb53-6ee2be00f162",
+    "parent": "6dc99a3f-4ca3-44f8-93c1-2cd6add10bf9",
+    "domain": "evaluation",
+    "status": "failed",
+    "error": "EVALUATION_FAILED",
+    "deadline": "2026-11-05 06:33:26.30856+00",
+    "task": "8c3558a4-93d4-4c16-8a6d-766a228f51c9",
+    "task_status": "cancelled",
+    "task_lease": null,
+    "case_id": "pass",
+    "repeat": 0
+  },
+  {
+    "sampled_at": "2026-11-05 05:34:15.798169+00",
+    "id": "d48d1b93-a9b2-495a-a395-db5b5f5cbfff",
+    "parent": "f018de00-a174-4a4a-bb53-6ee2be00f162",
+    "domain": "agent",
+    "status": "failed",
+    "error": "AGENT_PUBLICATION_FAILED",
+    "deadline": "2026-11-05 05:34:41.296109+00",
+    "task": "2feea06e-e69d-49d3-846a-e68a180ce145",
+    "task_status": "sealed",
+    "task_lease": null,
+    "case_id": "pass",
+    "repeat": 0
+  }
+]

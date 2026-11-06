@@ -1,0 +1,1 @@
+{"controller": "moria-quality-043c24b7-af9a-40a5-b5f4-e2cfac0af30e", "image": "sha256:00d8ec359d30d4c7e5830c305cf62fb9bfbc63e24b86f481a0aba0648bb6a127", "scratchPools": ["/tmp/moria-engine-scratch-cdf90aa4-9afc-4bd3-bdd0-c27f1a605db5", "/tmp/moria-engine-scratch-299db47f-112a-462d-841c-bf5da9f1defa"], "temporary": "/tmp/moria-quality-nl4vlyyi"}

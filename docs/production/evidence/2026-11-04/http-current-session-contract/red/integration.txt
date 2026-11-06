@@ -1,0 +1,176 @@
+{"controller": "moria-quality-b3ffb998-930f-4307-9fc0-cb52d2ef6a6e", "image": "sha256:c1a8e905ecec5744923aae5a18c81a6e3a1a7983233c94ae8a9ceab367d8d992", "scratchPools": ["/tmp/moria-engine-scratch-3fa694e8-1962-4c1a-8242-d3e3b56c6db0", "/tmp/moria-engine-scratch-3a15518e-40f7-435c-9d7a-4164383cb11c"], "temporary": "/tmp/moria-quality-fyqv_6j3"}
+$ node scripts/test-files.mjs integration tests/native-http-admission.integration.test.ts
+Running 1 integration test files.
+▶ native HTTP admission bounds pending bodies across shared and component routes
+  ✖ local CLI profiles use real revocable workload sessions (66.392636ms)
+  ✖ a missed CLI approval disable pulse permanently fences its issued session (8.205542ms)
+  ✖ app-bound browser cookies enforce exact origin and current session (3.738499ms)
+  ✖ managed cells serialize ownership, fence transfer and fail closed on a real DB partition (134.163566ms)
+  ✖ four compiler requests hold their slots through an incomplete body (7.212825ms)
+  ✖ model admission retains its separate32 request budget (9.65803ms)
+  ✖ the shared64 request budget rejects additional work before buffering (4.61495ms)
+  ✖ readiness is current, metrics require instance authority and disabled CLI approval survives restart (14.046228ms)
+  ✖ SIGTERM bounds drain while an actual admitted body is unfinished (4.355219ms)
+✖ native HTTP admission bounds pending bodies across shared and component routes (2431.022787ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 0
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2846.928199
+
+✖ failing tests:
+
+test at tests/native-http-admission.integration.test.ts:1:3594
+✖ local CLI profiles use real revocable workload sessions (66.392636ms)
+  AssertionError [ERR_ASSERTION]: same cached credential must observe current disabled principal
+
+  401 !== 403
+
+      at TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:132:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:97:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 401,
+    expected: 403,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/native-http-admission.integration.test.ts:1:4943
+✖ a missed CLI approval disable pulse permanently fences its issued session (8.205542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  401 !== 403
+
+      at TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:157:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:145:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 401,
+    expected: 403,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/native-http-admission.integration.test.ts:1:5594
+✖ app-bound browser cookies enforce exact origin and current session (3.738499ms)
+  Error [MoriaError]: Identity or application is unavailable
+      at Authority.current (/app/services/security/src/authority.ts:273:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async BrowserSessions.recover (/app/services/security/src/browser-sessions.ts:590:19)
+      at async TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:183:27)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:169:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'FORBIDDEN',
+    details: undefined
+  }
+
+test at tests/native-http-admission.integration.test.ts:1:6887
+✖ managed cells serialize ownership, fence transfer and fail closed on a real DB partition (134.163566ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  401 !== 409
+
+      at TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:249:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:208:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 401,
+    expected: 409,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/native-http-admission.integration.test.ts:1:13626
+✖ four compiler requests hold their slots through an incomplete body (7.212825ms)
+  Error: Pending body unexpectedly returned 401
+      at ClientRequest.<anonymous> (/app/tests/native-http-admission.integration.test.ts:407:18)
+      at ClientRequest.wrapper (node:events:639:12)
+      at ClientRequest.emit (node:events:514:28)
+      at HTTPParser.parserOnIncomingClient (node:_http_client:979:27)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+      at Socket.socketOnData (node:_http_client:814:22)
+      at Socket.emit (node:events:514:28)
+      at addChunk (node:internal/streams/readable:569:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+      at Readable.push (node:internal/streams/readable:400:5)
+
+test at tests/native-http-admission.integration.test.ts:1:14141
+✖ model admission retains its separate32 request budget (9.65803ms)
+  Error: Pending body unexpectedly returned 401
+      at ClientRequest.<anonymous> (/app/tests/native-http-admission.integration.test.ts:407:18)
+      at ClientRequest.wrapper (node:events:639:12)
+      at ClientRequest.emit (node:events:514:28)
+      at HTTPParser.parserOnIncomingClient (node:_http_client:979:27)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+      at Socket.socketOnData (node:_http_client:814:22)
+      at Socket.emit (node:events:514:28)
+      at addChunk (node:internal/streams/readable:569:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+      at Readable.push (node:internal/streams/readable:400:5)
+
+test at tests/native-http-admission.integration.test.ts:1:14534
+✖ the shared64 request budget rejects additional work before buffering (4.61495ms)
+  Error: Pending body unexpectedly returned 401
+      at ClientRequest.<anonymous> (/app/tests/native-http-admission.integration.test.ts:407:18)
+      at ClientRequest.wrapper (node:events:639:12)
+      at ClientRequest.emit (node:events:514:28)
+      at HTTPParser.parserOnIncomingClient (node:_http_client:979:27)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+      at Socket.socketOnData (node:_http_client:814:22)
+      at Socket.emit (node:events:514:28)
+      at addChunk (node:internal/streams/readable:569:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+      at Readable.push (node:internal/streams/readable:400:5)
+
+test at tests/native-http-admission.integration.test.ts:1:15035
+✖ readiness is current, metrics require instance authority and disabled CLI approval survives restart (14.046228ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  401 !== 403
+
+      at TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:492:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/app/tests/native-http-admission.integration.test.ts:473:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 401,
+    expected: 403,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/native-http-admission.integration.test.ts:1:17540
+✖ SIGTERM bounds drain while an actual admitted body is unfinished (4.355219ms)
+  Error: Pending body unexpectedly returned 401
+      at ClientRequest.<anonymous> (/app/tests/native-http-admission.integration.test.ts:407:18)
+      at ClientRequest.wrapper (node:events:639:12)
+      at ClientRequest.emit (node:events:514:28)
+      at HTTPParser.parserOnIncomingClient (node:_http_client:979:27)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+      at Socket.socketOnData (node:_http_client:814:22)
+      at Socket.emit (node:events:514:28)
+      at addChunk (node:internal/streams/readable:569:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)
+      at Readable.push (node:internal/streams/readable:400:5)
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,12 @@
+{
+  "gitHead": "0f6db6bd4e9690e1e1f01d264fab942e2b46426d",
+  "includesWorkingChanges": true,
+  "fileCount": 2881,
+  "sourceBytes": 126520734,
+  "sha256": "0ef02735e928f6b8bdde0e3b3dad251a0b1811b02746f3c081a2375c539e66a1",
+  "sourceDigest": "e6d2fba540d06e95ed82b3bf3f39f815cdc3c04d58d2a47fb9a1b4f3c8ff24ab",
+  "schema": {
+    "version": 5,
+    "checksum": "ffdf46eb6cdec197f453cd9db71967d77e6955fcd78dfc8adee8b13566228dd0"
+  }
+}

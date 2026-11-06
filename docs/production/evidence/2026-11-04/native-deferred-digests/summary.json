@@ -1,0 +1,69 @@
+{
+  "base": "f5f9633",
+  "classification": "explicit deferred-digest run format; projected and distributed bootstrap remain under implementation",
+  "image": "sha256:e64f8cde7a727d415ef410506af64feaee1e764b32aa533b6f700394a9e6d874",
+  "sourceManifestSha256": "463d8db30ba4541c4667bb5ccbffa77b0bb7dd326de683f1f37044b8cd439b2f",
+  "nativeDigest": "a19d669bab07437ec58a41209f94a4615d7bb39137919e6ef484f9346c0f3d5b",
+  "sourceHashes": {
+    "services/runtime/src/dataset_writer/key_run.rs": "3a79cdbbfbc17bb3a9be9d6963012cadfe392601ca6aa8a01d24cef01390e806",
+    "services/runtime/src/dataset_writer/key_run_merge.rs": "1285a2727894d6f7392ad1b2ad9e47e6b00b1006638e8c5f1c657a7fb71c9c26",
+    "services/runtime/src/dataset_writer/bootstrap_v2.rs": "15c80f54e168a90319225a61e52cb15463f430c2998d9183e9da0bf1689a7304"
+  },
+  "artifacts": {
+    "moria-indexing-tests": {
+      "sha256": "87f13928c725f5d4ccb6a75d5b42dbc40ff614ce60c05e37b9bab17524a0d569",
+      "bytes": 62304456
+    },
+    "moria-indexing": {
+      "sha256": "d07f9d7e0607b4a512f608e629fcd85eb908029cd16c141b0420a00d5fc2d5c2",
+      "bytes": 158060128
+    },
+    "moria-runtime": {
+      "sha256": "a85711485b360ed669a4e17f7f5ad959937d296468b4cb947163b2abcb11ed6a",
+      "bytes": 158060056
+    },
+    "moria-native-transport-test": {
+      "sha256": "3f23e41c161eace3d5c19a9db060b9f3c4f475e5fa72a3106e2aea20d99f75a1",
+      "bytes": 26538512
+    },
+    "moria-native-storage-test": {
+      "sha256": "0e4ca848e7545f6fb5a35c74eed855907124331e60ee50762fd6bca9bc24f4e8",
+      "bytes": 101856288
+    },
+    "moria-native-sandbox-test": {
+      "sha256": "edd95495e1bba962205adcd21fb67ad6ae8432d02bea888273bb23f2c386c630",
+      "bytes": 57219464
+    },
+    "moria-native-retention-test": {
+      "sha256": "18832854789393c72320cc332165b44dc4a221b437d22b2dc35963f52337abe3",
+      "bytes": 27007504
+    },
+    "moria-native-policy-test": {
+      "sha256": "e871b639cb6b0ef52b1e75f68c87c53620376fcdda804cf066cc62e6f78ceb92",
+      "bytes": 22200808
+    },
+    "moria-native-catalog-test": {
+      "sha256": "52ff490bd67a0cdc7dc5768db22fa87dd67c24be85bd148d17184c17c6cb873b",
+      "bytes": 115981368
+    }
+  },
+  "validation": {
+    "allNineNativeArtifactsMatch": true,
+    "unitsPassed": 96,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "rustfmt": true
+  },
+  "verified": [
+    "new version3 header and digest tags round-trip known zero hashes, explicitly deferred states and deletion independently",
+    "original version2 known-hash record remains readable",
+    "new deferred tags rejected under oldversion2; unknown versions and mismatched headers rejected"
+  ],
+  "notVerified": [
+    "projected-key bootstrap emitting deferred digests",
+    "qualified touched-row digest derivation",
+    "distributed bootstrap task receipts",
+    "v3 sparse writer publication and whole-platform gate"
+  ]
+}

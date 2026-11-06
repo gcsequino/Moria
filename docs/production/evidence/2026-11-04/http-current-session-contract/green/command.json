@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "150s",
+  "python3",
+  "/home/gcseq/moria-proofs/http-session-contracts-20261104/source/deploy/test/run-quality.py",
+  "sha256:c76cf717f32e1f7d92dd1f64c31bb3218e14111e791c1b4f4843726451a798c8",
+  "pnpm",
+  "test:integration",
+  "tests/native-http-admission.integration.test.ts"
+]

@@ -21,21 +21,7 @@ the setting or failed operation, without printing URLs or database error details
 using Node's trust store. `disable` is an explicit option for isolated loopback
 fixtures. Other TLS modes are rejected. Remote TLS deployment remains unverified.
 
-`MORIA_DATABASE_POOL_MAX` defaults to 10 (4–100). The minimum of four
-connections covers the actual bundled handlers with the lifetime schema lease:
-
-- Snow: schema lease + `Jobs.tick` supervisor + Snow ingestion lock + one
-  query/transaction connection. Staging and publication run sequentially; their
-  transaction callbacks reuse the supplied client for fencing and completion.
-- Weather: schema lease + supervisor + publication transaction + the nested
-  `Authority.current` query in `snow.ingestionGuard(client)`. Weather has no
-  separate ingestion-lock connection. Its remaining guard checks and completion
-  reuse the publication client.
-
-Real PostgreSQL tests measure four simultaneously checked-out connections in
-both paths, with injected synthetic downloads and no retries. Smaller pools are
-rejected. This minimum supports sequential bundled jobs; concurrent API work
-needs additional headroom.
+`MORIA_DATABASE_POOL_MAX` defaults to 10 (4–100) for the TypeScript administration connection pool. Budget the separate native process connections and any additional clients for the complete deployment.
 `MORIA_DATABASE_REPLICAS` defaults to 1;
 `MORIA_DATABASE_CONNECTION_BUDGET` defaults to 20 (minimum 5). Validation requires
 `replicas × pool maximum + 1 <= budget`, reserving one migration connection.
@@ -44,13 +30,6 @@ leave additional server connections for administration and other clients. This
 is configuration validation, not cluster-wide admission or a capacity claim.
 Connection acquisition times out after 5 seconds; idle pool connections after
 30 seconds. Migration uses a separate maximum-one-connection pool.
-
-The existing `MORIA_LOCAL_DIR`, warehouse paths, application access keys, OIDC
-configuration and recovery commands retain their behavior. This change does not
-relocate authentication secrets or convert the local host into a complete
-production deployment. Management/Snow listener ports are validated before any
-local state is opened. The development database port is not a listener owned by
-external mode.
 
 ## Roles and schema ownership
 
@@ -87,7 +66,7 @@ shared lock until release, including transactions and one-shot pool queries.
 Lease loss stops new checkout admission and initiates service shutdown; already
 active database work retains migration exclusion while draining. A checkout
 verifies the schema under its own lock before exposing the connection. Failed
-lock cleanup destroys the connection instead of returning it to the pool. Version 3 records a checksum of the filesystem-enabled baseline DDL;
+lock cleanup destroys the connection instead of returning it to the pool. The version marker records the exact baseline DDL checksum;
 missing, unknown or checksum-mismatched schema versions cannot serve. The
 migration command initializes a fresh database or verifies an already-versioned
 schema. It never bootstraps identities, grants or application data. An existing
@@ -129,21 +108,17 @@ then restart the scoped runtime and verify identities, grants, edits and auth
 before enabling routing/jobs. Older binaries do not honor the advisory lock and
 must remain stopped. No live migration or restore is performed by this issue.
 
-This development release supports schema version 4 with its exact baseline checksum.
-Version 4 adds the Rust indexing protocol's durable work and shared publication
-authority. It requires a fresh isolated database; no automatic version-3 upgrade
-or live installation migration is included.
-Version 1 and 2 databases must be recreated using a new disposable directory; no upgrade
-or data-preservation path is provided. Unknown versions fail closed; there is no
-automatic downgrade, security rollback, rolling-upgrade or zero-downtime promise.
-Changing migration ownership requires human invariant review before merge.
+This checkout expects schema version 5 with its exact baseline checksum.
+Use a fresh database for isolated development. Unknown versions and checksum
+mismatches fail closed. Rehearse versioned migration and rollback before applying
+any supported upgrade to an existing installation.
 
 ## Evidence and limits
 
 The SQL integration suite uses an isolated PostgreSQL cluster owned by the test
 harness, outside the API lifecycle, synthetic records, real Iceberg files and a
 separate restricted runtime login. Existing management HTTP refresh/edit/restart,
-Snow sync, OIDC, revocation and CLI recovery assertions run against that role.
+OIDC, revocation and CLI recovery assertions run against that role.
 The original embedded database stop/start test remains. External API/pool shutdown
 leaves PostgreSQL queryable, and reconnect preserves edits. Migration tests compare
 all existing table rows before/after repeated versioned migration, reject concurrent

@@ -1198,32 +1198,40 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
           (await fetch(hosted.url, { headers: { authorization: `Bearer ${token}` } })).status,
           403,
         );
-        const ticketResponse = await fetch(`${hosted.url}/api/auth/recovery-ticket`, {
-          method: 'POST',
-          headers: { 'x-moria-app-key': appKey },
-        });
-        assert.equal(ticketResponse.status, 200, await ticketResponse.clone().text());
-        const recoveryURL = new URL((await ticketResponse.json()).url);
-        const recovered = await fetch(`${hosted.url}/api/auth/recover`, {
-          method: 'POST',
-          headers: { origin: hosted.url, 'content-type': 'application/json' },
-          body: JSON.stringify({
-            ticket: new URLSearchParams(recoveryURL.hash.slice(1)).get('recovery'),
-          }),
-        });
-        assert.equal(recovered.status, 200, await recovered.clone().text());
-        const cookie = recovered.headers
-          .getSetCookie()
-          .find((value) => value.includes('Path=/;'))!
-          .split(';')[0];
-        assert(
-          recovered.headers.getSetCookie().some((value) => value.includes('Path=/api/; Max-Age=0')),
-        );
-        const browserTransport = createTransport({
-          baseUrl: hosted.url,
-          fetch: (url, init) =>
-            fetch(url, { ...init, headers: { ...init?.headers, origin: hosted.url, cookie } }),
-        });
+        const recoverHostedCookie = async () => {
+          const ticketResponse = await fetch(`${hosted.url}/api/auth/recovery-ticket`, {
+            method: 'POST',
+            headers: { 'x-moria-app-key': appKey },
+          });
+          assert.equal(ticketResponse.status, 200, await ticketResponse.clone().text());
+          const recoveryURL = new URL((await ticketResponse.json()).url);
+          const recovered = await fetch(`${hosted.url}/api/auth/recover`, {
+            method: 'POST',
+            headers: { origin: hosted.url, 'content-type': 'application/json' },
+            body: JSON.stringify({
+              ticket: new URLSearchParams(recoveryURL.hash.slice(1)).get('recovery'),
+            }),
+          });
+          assert.equal(recovered.status, 200, await recovered.clone().text());
+          const cookie = recovered.headers
+            .getSetCookie()
+            .find((value) => value.includes('Path=/;'))!
+            .split(';')[0];
+          assert(
+            recovered.headers
+              .getSetCookie()
+              .some((value) => value.includes('Path=/api/; Max-Age=0')),
+          );
+          return cookie;
+        };
+        const hostedTransport = (cookie: string) =>
+          createTransport({
+            baseUrl: hosted.url,
+            fetch: (url, init) =>
+              fetch(url, { ...init, headers: { ...init?.headers, origin: hosted.url, cookie } }),
+          });
+        let cookie = await recoverHostedCookie();
+        let browserTransport = hostedTransport(cookie);
         const browserSession = await browserTransport.auth.session();
         assert.equal(browserSession.user?.principal, principal);
         const html = await fetch(hosted.url, { headers: { cookie } });
@@ -1335,7 +1343,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                   foundation: { rootId: published.root.id, digest: published.publication.digest },
                   marking: classification,
                   endpoint,
-                  chat: actual('qwen3:4b'),
+                  chat: actual('qwen3:4b-instruct-2507-q4_K_M'),
                   embedding: actual('nomic-embed-text:latest'),
                 });
               })()
@@ -1501,6 +1509,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                 : []),
               ...(instancePipeline
                 ? [
+                    `${instancePipeline.transform}:read`,
                     `${instancePipeline.transform}:build`,
                     `${instancePipeline.output}:read`,
                     `${instancePipeline.output}:write`,
@@ -1575,6 +1584,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
           const pipelineOwner = randomUUID();
           if (instancePipeline && instanceLogic) {
             const pipelineOperations = [
+              `${instancePipeline.transform}:read`,
               `${instancePipeline.transform}:build`,
               `${instanceLogic.cases}:read`,
               `${instancePipeline.output}:read`,
@@ -2038,7 +2048,11 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
               assert.ok([200, 202].includes(response.status), await response.clone().text());
               return response.json();
             };
-            const poll = async (path: string, accepted: { id: string; status: string }) => {
+            const poll = async (
+              path: string,
+              accepted: { id: string; status: string },
+              expected: 'succeeded' | 'completed' = 'succeeded',
+            ) => {
               let current = accepted;
               const deadline = Date.now() + 120000;
               while (['queued', 'accepted', 'running', 'preparing'].includes(current.status)) {
@@ -2058,7 +2072,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                 assert.equal(response.status, 200, await response.clone().text());
                 current = await response.json();
               }
-              assert.equal(current.status, 'succeeded');
+              assert.equal(current.status, expected);
               return current;
             };
             const input = (mode: string, prompt: string, value: number | null = null) => ({
@@ -2097,12 +2111,20 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
             );
             const casesNamespace = (
               await db.pool.query(
-                'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource WHERE b.environment=$1 AND b.resource=$2',
+                'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource::text WHERE b.environment=$1 AND b.resource=$2',
                 [environment, instanceLogic.cases],
               )
             ).rows[0];
+            const casesStorage = bindings.find(
+              ({ namespace }) =>
+                namespace.warehouseId === casesNamespace.warehouse_id &&
+                namespace.tableId === casesNamespace.table_id &&
+                namespace.revision === casesNamespace.namespace_revision,
+            );
+            assert(casesStorage, 'Use the registered physical Evaluation Dataset store');
             await native({
               mode: 'writer-supplied',
+              root: casesStorage.root,
               binding: await createProducer(
                 instanceLogic.cases,
                 instanceLogic.published.publication.digest,
@@ -2132,7 +2154,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
             const evaluation = await request(`/api/v1/evaluations/${instanceLogic.suite}/runs`, {
               wait: false,
             });
-            const evaluated = await poll('/api/v1/evaluation-runs/', evaluation);
+            const evaluated = await poll('/api/v1/evaluation-runs/', evaluation, 'completed');
             domainExecutions.evaluation = evaluation.id;
             const cases = await request(`/api/v1/evaluation-runs/${evaluation.id}/cases`);
             assert.equal(cases.cases.length, 1);
@@ -2188,7 +2210,6 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
               engineWorker = await startInstanceEngine({
                 host,
                 runtimeEnvironment: engineEnvironment,
-                operatorEnvironment: { ...engineEnvironment, SOURCE_RUNTIME_DATABASE: admin.href },
               });
               const accepted = await request(
                 `/api/v1/pipelines/${instancePipeline.transform}/executions`,
@@ -2200,7 +2221,7 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
               assert.ok(BigInt(head.revision) > 0n);
               const outputNamespace = (
                 await db.pool.query(
-                  'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource WHERE b.environment=$1 AND b.resource=$2',
+                  'SELECT b.warehouse_id,b.table_id,b.namespace_revision,n.iceberg_uuid FROM moria.native_dataset_bindings b JOIN moria.native_storage_namespaces n ON n.environment=b.environment AND n.resource=b.resource::text WHERE b.environment=$1 AND b.resource=$2',
                   [environment, instancePipeline.output],
                 )
               ).rows[0];
@@ -2220,11 +2241,11 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                   },
                 ],
               });
-              const resolved = inspected
+              const marker = inspected
                 .split('\n')
-                .filter((line) => line.startsWith('{'))
-                .map((line) => JSON.parse(line))
-                .find((value) => value.event === 'resolved');
+                .find((line) => line.includes('"event":"resolved"'));
+              assert(marker, 'Native catalog must emit its resolved Dataset pin');
+              const resolved = JSON.parse(marker.slice(marker.indexOf('{')));
               assert.equal(resolved.pin.resource, instancePipeline.output);
               assert.equal(resolved.pin.revision, head.revision);
               assert.ok(resolved.pin.markings.includes(classification));
@@ -2345,7 +2366,16 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
                   },
                   body: JSON.stringify(input),
                 },
-              );
+              ).catch((error: unknown) => {
+                console.error(
+                  JSON.stringify({
+                    event: 'whole-instance-search-listener-failed',
+                    operation,
+                    process: browserManagement.diagnostics(),
+                  }),
+                );
+                throw error;
+              });
               assert.equal(response.status, 200, await response.clone().text());
               return response.json();
             };
@@ -2615,18 +2645,27 @@ async function boot(){const ticket=new URLSearchParams(location.hash.slice(1)).g
             if (attempt === 1799) throw new Error('Native browser acceptance was not completed');
             await delay(1000);
           }
+          cookie = await recoverHostedCookie();
+          browserTransport = hostedTransport(cookie);
           for (const name of ['browser-ui-created', 'browser-created', 'browser-app-created']) {
             await assertBrowserCreated(name);
           }
           assert.equal(
             (
               await db.pool.query(
-                "SELECT count(*)::int n FROM moria.runtime_function_receipts r JOIN moria.runtime_function_invocations i ON i.execution=r.execution WHERE i.entry_id=(SELECT id FROM moria.fs_entries WHERE resource_id=$1::uuid AND kind='resource' AND NOT deleted) AND r.result->'value'='42'::jsonb",
+                "SELECT count(*)::int n FROM moria.runtime_function_receipts r JOIN moria.runtime_function_invocations i ON i.execution=r.execution WHERE i.entry_id=(SELECT id FROM moria.fs_entries WHERE resource_id=$1::uuid AND kind='resource' AND NOT deleted) AND i.parent_id IS NULL AND r.result->'value'='42'::jsonb",
                 [fn],
               )
             ).rows[0].n,
             1,
             'Management Function form must run the actual worker',
+          );
+          console.log(
+            JSON.stringify({
+              event: 'whole-instance-browser-readback',
+              objects: 3,
+              topLevelFunctionReceipts: 1,
+            }),
           );
           browserCreates = 2;
         }

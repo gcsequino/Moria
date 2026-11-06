@@ -1,5 +1,271 @@
 # Implementation checkpoint
 
+See the [current development handoff](HANDOFF.md) for the latest hosted results,
+archived experiments, and the order of the remaining gates.
+
+## November 5 Linux Function and Pipeline fixes
+
+Local Linux reproduced two Function failures from hosted CI. Docker cleanup
+now shares one removal promise between early stop and final cleanup, preserving
+the CPU-limit result. The live revocation fixture waits for the guest log
+and observation to settle before revoking the worker. The Docker compatibility
+test and all 18 Functions tests pass with their original limits.
+[Function evidence](production/evidence/2026-11-05/linux-function-gates.md)
+
+Pipeline batches ordered service provenance, paired service permissions,
+and requester Dataset reads. The follow-up local 64-input and 64-output
+subtest finished in 22.663 seconds, including its assertions, under the
+original 30-second request deadline. The corrected run passed all nine
+Pipeline subtests and seven provenance tests. It verified grouped
+publication, spill recovery, and denial after removal of a live write grant. [Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
+· [Pipeline follow-up](https://github.com/gcsequino/Moria/issues/83)
+
+The Dataset v3 readback harness keeps four scalar checks in flight. Its
+isolated run compared all 64 keys with the batch result, verified the first
+row's digest, and checked all 64 typed rows independently through PyIceberg
+and PyArrow. The full test passed in 130.970 seconds, including the empty
+replacement, retained snapshot, and journal checks. The native readback
+deadline stayed at 120 seconds.
+The original graph bootstrap file also passed in 77.691 seconds against
+its 120-second deadline. It verified all 64 ordered array keys, nullable
+non-key data, and standard Iceberg readback of the retained head.
+
+The native recovery suite passed all seven tests against isolated stores.
+The filesystem and S3-compatible clean-host restores verified multipart
+metadata, exact content, and keys before enabling dispatch. The lost pause
+acknowledgement test preserved fencing and reconciled the exact retry.
+An already-applied external effect stayed uncertain without repeat dispatch.
+The managed indexing suite passed all 23 tests. Its clean-host restore
+rebound typed Iceberg data and read retained snapshots before and after a
+new native publication.
+
+The composed local browser fixture passed both tests. The management UI
+created a record and invoked the Function with input `41`, returning
+`42`. The protected hosted origin served the published management bundle
+and created a separate record. The fixture verified all three stored
+records, including the SDK-created record, one top-level Function receipt,
+and the later Source ACL checks. The same instance ran real Agent, local
+model, Evaluation, Pipeline, Search, and Automation work before browser
+sign-in. It verified authorization revocation without provider calls.
+[Browser and recovery follow-up](https://github.com/gcsequino/Moria/issues/84)
+
+The Connector custody file passed all 15 tests in 251.332 seconds under
+its 300-second root deadline. The phase trace measured 30.309 and 34.824
+seconds for the first two publications and 8.094 seconds for independent
+typed readback. It passed Secret reflection, upstream faults, and in-flight
+revocation while retaining the prior head and cursor.
+
+The native Agent suite passed all 24 tests. A separate live run stopped the
+SDK worker after queue admission and verified that fixture cleanup cancelled
+the exact queued Agent without starting an attempt. The following Agent cases
+ran successfully with their original deadlines.
+
+Hosted Linux at `3f24ad7` reported 1,334 passes, 25 failures, and one
+cancellation. The Function fixes, Dataset bootstrap and replacement, and
+64-output admission passed there. Maximum-width admission and grouped
+publication still failed on that revision. Agent lifecycle, Evaluation
+scheduling, and Connector sandbox accounting also remain open. The
+ten-case service Evaluation exceeds its original 90-second lifecycle
+barrier in isolation. [Hosted Linux result](https://github.com/gcsequino/Moria/actions/runs/42111707604)
+· [Hosted accounting diagnostic](https://github.com/gcsequino/Moria/actions/runs/42126546769)
+· [Linux follow-up](https://github.com/gcsequino/Moria/issues/82)
+
+The combined `0103728` release build passed all ten Pipeline tests and
+seven native recovery tests. The full-width Pipeline subtest took 23.927
+seconds, including its assertions. The service Evaluation still exceeded
+its original 90-second barrier with optimized native artifacts. Two
+browser attempts stopped before sign-in at a contended Catalog publication
+claim. The fixture now uses the same bounded claim retry for execution and
+publication. The matched follow-up passed both browser tests, including
+three persisted records, one top-level Function receipt, and the final
+Source authority checks.
+[Current Linux run](https://github.com/gcsequino/Moria/actions/runs/42130357789)
+
+The next Pipeline revision passed all ten local tests. The 64-input and
+64-output subtest took 20.335 seconds, including assertions. Grouped
+publication read 18,000 rows and committed both outputs with one receipt
+in 60.268 seconds. The Catalog authority counter passed all 21 checks
+after targeting the function the runtime calls. Both Evaluation scheduler
+fixtures passed after observing worker startup before shutdown.
+[Pipeline evidence](production/evidence/2026-11-05/linux-pipeline-admission.md)
+
+All seven native recovery tests and both composed browser tests passed
+again on exact `77a50db` source with matching unoptimized artifacts.
+The browser test verified three stored objects, one top-level Function
+receipt with value 42, and current Source revocation. The controller,
+five scratch pools, and temporary directory were removed.
+
+The quality runner now
+gives the Catalog, Evaluation, and Pipeline integration files dedicated
+runner time. Selection tests verified that all files remain included.
+An intentional failure in the first group preserved the overall failure
+while allowing the dedicated group to run. The original per-test
+deadlines remain in place.
+
+## November 5 Agent publication identity reuse
+
+The native platform returns the already verified credential identity after its
+existing final publication context check. Agent publication uses that identity
+for the original fresh retained Source/model/ledger checks and fenced execution
+completion in the same serializable transaction, avoiding two adjacent context
+checks around rebuilding the same identity. Function publication keeps its
+original path. No authorization snapshot is cached; lock modes and deadlines
+are unchanged.
+
+A real committed receipt's exact transaction measures six worker checks before
+this change and four afterward, with one receipt and the original result in both
+runs. All nine artifacts, full static/provenance and 117 native units pass on the
+frozen `0c36f77` base plus this change. The original Agent file passes 24/24 and
+Functions passes 18/18 with no skips or cancellations and verified cleanup.
+Evaluation and complete current-platform qualification remain open. See
+[Agent publication evidence](production/evidence/2026-11-04/agent-publication-identity/README.md).
+
+## November 5 grouped Function Source authority
+
+Function authorization now resolves current session state and its operation Source
+labels within one credential-bound SQL statement. Exact environment/principal/
+application identity is checked before Source lookup. The native permission checks,
+preceding resource existence check and final fresh authority check remain intact;
+there is no cross-call authority cache or limit/lock/isolation change.
+
+A real PostgreSQL composition passes 8/8: actual ordinary and private job credentials
+traverse session resolution three times before grouping and twice after grouping,
+with exact state/labels and the final fresh finish retained. Ordered errors, stale
+actual task fences, private helper permissions, Source proofs, classifications,
+policy denies and irreversible revocation remain checked. The full original
+Functions file passes 18/18; all fixtures are cleaned. The combined `9aba9569` base
+plus this change passes static checks, all nine fingerprints and 117 native units.
+The full Agent file is running; Evaluation, whole-instance and independent complete
+quality gates remain open. See
+[Function authority evidence](production/evidence/2026-11-04/function-source-authority/README.md).
+
+## November 5 bounded Connector schema discovery
+
+The native Connection runtime now implements explicit `schemaDiscovery` alongside
+replace/full `batchRead`. Discovery uses the current Connection and exact Secret
+use grants through the existing approved transport, has a read-only sandbox
+binding and no Dataset IO pins, and returns a typed bounded schema proposal.
+Actual single-task sealing and current authority gate completion and retained
+result release; Dataset schema, head and checkpoint state remain unchanged.
+SDK, CLI and native HTTP entry points select the capability explicitly. Neutral
+readiness requires an executable capability/profile pair. Continuous read,
+writeback and additional batch write modes remain unavailable.
+
+The frozen component based on `0118a645` passes static checks, all nine native
+artifact fingerprints and 113 native units. Its complete real Source/HTTP/OCI/SQL
+file passes 15/15 with no skips or cancellations, including cancellation,
+revocation, typed proposal rejection, identical-key capability isolation, normal
+batch typed publication and lost-COMMIT replay. All original limits remain intact
+and every owned fixture is cleaned. The original Connector custody regression
+also passes 15/15 on identical native inputs and its unchanged fixture body, in
+216.438 seconds within the original 300-second root limit. Current-platform
+integration and independent complete quality checks remain required. See
+[discovery evidence](production/evidence/2026-11-04/connector-schema-discovery/README.md).
+
+## November 4 private-origin repeated validation
+
+Current private credentials now traverse accepted delegation once on successful
+resolution, returning the identical immutable proof only after complete execution
+validation. Domain failures preserve the previous service/parent revocation error
+precedence. Worker, lease, fence, incarnation, purpose and current capability
+intersection remain checked; no authorization cache or deadline change is added.
+A real PostgreSQL counter regression fails against the old two-traversal resolver
+and passes against one traversal with exact proof equality. All 12 authority cases,
+complete static checks, nine artifact fingerprints and 77 native units pass on the
+frozen component source. Automation still fails child dispatch and remains under
+investigation. See `production/evidence/2026-11-04/job-origin-single-traversal`.
+
+## November 4 filesystem authority and current integration results
+
+The filesystem authority resolver now removes eight redundant inner edge
+deduplications while retaining recursive UNION cycle/duplicate elimination.
+Actual graph sets, labels and required proofs agree across three dependency
+geometries; the measured leaf plan falls from 20.356 ms to 2.782 ms. The complete
+filesystem/Source suite passes 19/19 including duplicate paths, cycles, live deny
+and marking changes. Static checks, exact nine artifacts and 77 native units pass.
+
+The repaired four-file runtime run executes all 52 results with zero skips or
+cancellations: 46 pass and six fail including parent results. Full Functions pass
+18/18, including lost-COMMIT cases; Agent passes 20/21 subcases. Evaluation's
+first ten-case run passes, but repeat/version comparison and service Automation
+composition remain open. Pipeline setup expires during its first 16-head producer
+at 14 completed heads, before Pipeline subcases. Its widths and original producer
+deadline remain unchanged. The earlier exact first-group diagnostic passed; it
+is insufficient qualification of the full file.
+
+The Pipeline fixture gives its two producers separate output Datasets while
+retaining 64-input/64-output admission. Agent setup now closes its database when
+image acquisition fails; a real controlled acquisition failure exits promptly.
+An interrupted test run and local Docker bridge recovery remain recorded. See
+`production/evidence/2026-11-04/acl-query-edges` for raw results and exact identities.
+
+## November 4 complete cold baseline and build budget
+
+The complete cold baseline on frozen `54d839e` builds all nine release artifacts,
+passes static checks and 77 native units, then fails its full functional suite:
+1,196 pass, 67 fail including parent results, zero skips/cancellations. The runner
+is stopped. Independent CI on `4e2b661` passes static/build/bootstrap but reaches
+the outer 45-minute job watchdog before the complete suite finishes. The measured
+preparation plus suite requires about an hour, so aggregate CI/hook budgets now
+allow completion without changing individual test or operation deadlines.
+Native artifact preparation batches the library and six harnesses in one Cargo
+invocation; actual JSON selection preserves all nine executable hashes. A new
+cold release timing remains unmeasured. See
+`production/evidence/2026-11-04/cold-baseline` for exact source/results/failures.
+
+## November 4 current private-session lock correction
+
+A measured Evaluation failure came from repeated private credential issuance
+requesting an exclusive execution lock behind valid child readers, then blocking
+its own lease renewal/failure path. Exact immutable credential reuse now invokes
+the full current origin/worker/lease/delegation checks without that exclusive
+upgrade. First issuance remains fenced. The old-schema real shared-lock regression
+fails; the new full job-authority suite passes 11/11 with zero skips, including
+task and publication phases, expired leases, old fences and worker disablement.
+Rust formatting, complete static checks, nine-artifact provenance and 77 native
+units pass on the frozen rebuilt source. Broader composed proofs are in progress.
+Evidence is `production/evidence/2026-11-04/job-session-reuse`.
+
+## November 4 development feedback fixes
+
+The Agent integration file now has three fresh fixture roots instead of one
+aggregate 300-second root. All 21 original subcases retain their waits and
+assertions. Its first complete run is 22/24 including roots, zero skips or
+cancellations: the Automation service's Function-child admission barrier and its
+parent root fail, while admission/model, child isolation/lifecycle and the other
+five current-authority/service subcases pass. This is an exposed product failure,
+not a reason to extend deadlines. See `production/evidence/2026-11-04/agent-fixture-split`.
+
+The canonical Dockerfile now has a `static-check` target with no native compile
+dependency. Its actual cold build and offline `check:static` pass. Independent CI
+runs that job before building Rust and the full quality environment. The focused
+local gate passes 478/478 cases with zero skips in 22.46 seconds.
+
+Real focused execution exposed a Docker error-message case mismatch in cleanup.
+Cleanup now requires a successful exact-name container listing to prove absence;
+Docker failures still preserve owned scratch. Each run prints its controller and
+scratch identifiers before launch. Real exit-zero and exit-seven lifecycle
+smokes preserve the exact exit code and leave no owned pools or temporary paths.
+
+The authoritative checkout is now persistent Linux storage. Development uses
+`check:static`, `test:local` and explicit-file `test:integration` gates before the
+complete `check`; final checks still include every case with original deadlines.
+The same fresh-pool Docker runner accepts focused commands and retains its
+ownership/cleanup checks. The starter is now included in normal SDK generation
+and SDK drift checking, and its generated output is current.
+
+Full static validation, all 77 native units and two test-selection regression
+cases pass in the exact offline image. The first selector check caught and
+corrected an implicit TypeScript parameter type; both runs are retained under
+`production/evidence/2026-11-04/development-gates`. Full integration remains open.
+
+Workload v0.2 approval validation now accepts approved implementation targets
+only with consistent status, implementation scope and a real calendar date.
+Historical proposed v0.2 remains readable; v0.1 remains historical. Capability
+results propagate target approval without enabling certification or production
+claims. Black, all 17 workload/value Python cases and the six-mutation CLI
+self-test pass in the offline test environment.
+
 ## November 4 remote checkpoint
 
 This checkpoint preserves the latest recoverable shared implementation and its
@@ -943,7 +1209,7 @@ both bundled application builds and the starter hosting check passed. The cached
 test image's missing declared Black dependency was installed in the isolated test
 workspace before the successful run; no acceptance gate was disabled.
 
-For the current review summary, start with [the October 15 morning report](MORNING-REPORT-2026-10-15.md). The sections below preserve chronological checkpoints; later entries supersede earlier status and remaining-work notes.
+The sections below preserve dated checkpoints. For current integration status and open gates, see [the November 5 checkpoint](#native-integration-and-production-goals--november-5-2026).
 
 Current work is an internal prototype, not the completed first slice. Private remote: gcsequino/Moria. User authorized autonomous local development, WSL/Docker and local inference. No shared deployment or paid model use.
 
@@ -2767,5 +3033,402 @@ certification.
 
 Dataset key verification checkpoint (2026-10-31): frozen composite-key v6 passed 3/3 native integration tests with zero skips (125.88s), including exact boundary scalar values, canonical composite duplicates, null-key rejection, preserved prior typed rows/head, and live-reader retained-history compaction. Evidence: `docs/production/evidence/2026-10-31/native-retention/dataset-composite-pk-v6-20261031T133255Z/`. Incremental MOR/qualified graph and Source delta publication remain under implementation and are not enabled by this checkpoint.
 
-
 Million-object v10 checkpoint (2026-10-31): exact count/sum/xor oracle passed on the frozen qualified seek release build. Unchanged short open-loop windows completed 600/600 at 20/s (successful p95 56.806ms), 1,500/1,500 at 50/s (63.524ms), and 2,962/3,000 at 100/s (464.074ms; 38 RESOURCE_LIMIT/HTTP429). The 100/s window still fails and this is not full production certification. Raw all-arrival/deadline/success-only metrics, operation-level failed arrivals and resource observations are retained under `docs/production/evidence/2026-10-31/native-projection/qualified-seek-million-v10-20261031T124948Z/`. Native preparation took 1,874.83s; all trial artifacts and limits are recorded.
+
+### Current Source and revocation fixture reconciliation (2026-11-04)
+
+Catalog and filesystem classification fixtures now register, publish and apply
+actual Source definitions before exercising domain access. Their inherited-label,
+atomic publication and live-revocation assertions retain the production active
+resource binding checks. Fixtures that disable a principal assert that its old
+credential remains revoked after reenable and mint a new credential for later
+independent operations. Native PostgreSQL vector setup tolerates the extension
+that the quality image already installs, while retaining its exact engine and
+cosine assertions. Focused results and the initial failed expectation are retained
+in `production/evidence/2026-11-04/source-fixture-contracts`. These functional
+checks do not certify production capacity; the complete independent quality gate
+remains required for the integrated revision.
+
+## November 4 Connector custody implementation checkpoint
+
+Connector acceptance now binds up to eight exact operator credential slots to
+current caller/service use grants, immutable approval generations and semantic
+cursor revisions. Fresh guards cover claim, callback, in-flight work, publication
+and result release; material remains in the native HTTP host. Known reflected
+material is withheld. The operator can inspect exact Connector approval requests
+without reading credentials. Full replacement remains the supported write profile;
+other modes and capabilities still require implementation and qualification.
+
+The frozen source compiles all nine native artifacts, passes complete static
+checks, provenance and all 79 native units. The new real Sync/Dataset/checkpoint
+fixture is written and typechecks but has not yet run. Runtime proof, latest full
+quality gates and production-scale evidence remain open; this checkpoint does
+not complete N09.
+
+The first composed Connector trial passes custody and generation fencing but
+fails engine setup: the shared instance fixture supplied an administrative DB
+connection to scratch registration, which requires a non-owning runtime role.
+Both fixture callers now use that required role. The next diagnostic exposes
+Secret use incorrectly entering a data-operation-only batch helper. Secret use
+now calls the existing exact Secret-aware filesystem authority helper, retaining
+its kind, operation, markings and current file checks. Expected claim denials are
+classified so one denied job cannot stop the worker. A queued Secret file denial
+and subsequent successful window are added to the real fixture; fresh combined
+native build and runtime qualification are pending. No runtime restriction or
+individual deadline is relaxed.
+
+### Connector custody and checkpoint qualification
+
+The registered native replace/full Sync profile now passes eight focused checks
+with eight exact operator-approved credentials, a real isolated Python/Arrow
+guest, typed Dataset readback, durable semantic cursor reuse and live socket
+revocation. The caller needs exact logical operations without filesystem browsing.
+[Proof and remaining scope](production/evidence/2026-11-04/connector-secret-custody/README.md)
+retain the failed readback trial and exact artifact/fixture identities. Optional
+capabilities, other write modes, full HTTP/worker fault coverage and scale testing
+remain open; this is not complete N09 qualification.
+
+Function cancellation fixture checkpoint (2026-11-04): the real CLI/API test now
+checks the accepted cancellation control receipt and separately verifies terminal
+state through authenticated CLI wait, retaining actual Docker cleanup checks.
+The full file passed 17/17 with zero skips; all nine artifact checks, 79 native
+units and static checks passed. Evidence and the original failed expectation are
+under `production/evidence/2026-11-04/function-cancellation-control`.
+
+SQL provenance checkpoint (2026-11-04): external Snow imports preserve durable
+request/configuration/raw-pin audit without presenting audit field names as
+Dataset lineage. Fixed internal source-to-object pairs use current verified
+provenance admission. The legacy indexer checks current permissions/session
+before classification SQL and retains final publication checks. Reconciled
+rollback, lineage and independent browser-origin fixtures passed the full SQL
+file, 48/48 with zero skips, plus all nine artifacts, 79 native units and static
+checks. Original and interrupted failures are retained under
+`production/evidence/2026-11-04/sql-provenance-contracts`.
+
+### Connector bounded HTTP failures and capability membership
+
+The actual registered Sync/OCI guest fixture now passes 13/13 checks, adding
+redirect, truncated-response, HTTP503, oversized-body and original HTTP-timeout
+failures with exactly one request/attempt and unchanged prior head/checkpoint.
+Batch admission accepts an unordered implementation capability set containing
+`batchRead`; other operation dispatch remains unavailable. The exact all-nine/81
+unit build, static checks and runtime evidence are retained in
+`production/evidence/2026-11-04/connector-http-faults`. This remains functional
+replace/full qualification, with the remaining N09 scope recorded there.
+Native MOR primitives checkpoint (2026-11-04): the library now includes
+receiver-qualified graph traversal, authenticated bounded range reads,
+path-copy directories, packed key/locator runs, streamed merge, exact row
+selection and bounded verified-v2 bootstrap. `cargo check --locked --lib -j2`
+and all 91 library tests pass, with no ignored or filtered tests. An isolated
+PostgreSQL check applies the graph schema and rejects unissued read/reuse claims.
+The graph and Source delta schemas remain excluded from the installed baseline;
+v2 dispatch is unchanged. C04 publication, sidecar retention/clean-host recovery,
+sparse writer activation and Source delta publication remain unverified.
+See `production/NATIVE-MOR-PRIMITIVES.md` and
+`production/evidence/2026-11-04/native-mor-primitives/` for scope and results.
+
+Native graph custody checkpoint (2026-11-04): the fresh baseline now installs
+receiver-qualified graph custody. Real coordinator bootstrap preserves the
+published v2 head; backup includes every reachable graph content member at its
+exact provider version. Fresh isolated restore requalifies actual copied bytes
+under new physical versions and incarnation, reconstructs retained roots and
+bounded references, and preserves standard Iceberg typed readback. Graph GC
+protects pending propagation, respects unchanged grace, and drains committed
+retirements across a disabled-policy successor without changing their original
+physical/incarnation authority.
+
+Frozen trial008 passes static checks, all nine exact native artifacts, 91 native
+units and the full custody integration (1/1, zero skips/cancellations, 164.04s controller wall time),
+including real policy succession, busy propagation, conflicting version/reused
+target and missing backup-child failures with disabled dispatch. The predecessor
+SQL's policy-successor regression is reproduced red. Earlier trial005 separately
+passes typed/array key readback and warmed-cache authority revocation (2/2);
+these are not combined same-source results. Its 64-row positive has little
+margin under the unchanged 120-second root deadline. Failed trials are retained.
+C04 v3 publication, sparse writers, distributed projected-key bootstrap, Source
+delta publication, full independent gates and production capacity remain open.
+See `production/NATIVE-MOR-PRIMITIVES.md` and
+`production/evidence/2026-11-04/native-graph-custody/` for exact scope/results.
+
+Indexing admission checkpoint (2026-11-04): revoked preclaim work now becomes a
+durable failed build instead of terminating the shared drain. Known authority
+rejections use savepoint isolation under the selected row lock; unknown/schema
+errors still propagate, and no lease is fabricated. The schema-lease test watches
+its actual PostgreSQL blocker while retaining migration fencing assertions.
+All original indexing cases plus actual plan/task/advance failure-isolation
+regressions passed 16/16, with all nine artifacts, 79 native units and static
+checks. Evidence: `production/evidence/2026-11-04/indexing-preclaim-isolation`.
+Native key-index correction (2026-11-04): bounded and streaming partial compaction
+now retain tombstones so untouched older levels cannot resurrect deleted keys.
+The actual v3 root validator permits paired tombstone directories with zero live
+rows while preserving positive-row, pairing and count checks. All three new
+regressions fail on prior behavior (91 existing units pass) and pass after the
+fix; frozen trial009 passes all 94 native units, nine-artifact provenance and
+full static checks. This is library correctness evidence, not an activated
+all-deleted Dataset mutation proof. `production/NATIVE-MOR-INDEX-PROTOCOL.md`
+settles explicit deferred digests, version-three run tags with version-two reads,
+exact touched-row verification and bounded distributed projected-key bootstrap.
+Those remaining APIs, sparse publication and their integration proofs remain
+under implementation. Evidence: `production/evidence/2026-11-04/native-index-tombstones/`.
+
+### Decoded Connector reflection and instance-fenced test scratch
+
+The host now rejects known credential material after JSON decoding as well as in
+raw bytes, covering escaped values and keys before any guest response. The real
+15/15 Connector gate verifies absent material in logs/staged checkpoints alongside
+the existing custody, typed Dataset, HTTP and revocation cases; all99 native units
+and artifact fingerprints plus full static checks pass. Separate test instances
+now receive separate freshly provisioned scratch pools, preserving incarnation
+fencing. Evidence and retained failures are in
+`production/evidence/2026-11-04/connector-decoded-reflection`. Full Pipeline, final
+integrated quality/CI, remaining capability handlers and scale targets stay open.
+
+### Bounded model capability probes
+
+Probes now buffer their bounded provider stream under the existing independent
+live guard and protected completion fence, avoiding duplicate full authorization
+per token. Full Models19/19 and Secret custody11/11 pass, including actual held
+probe revocation; all99 native units/artifact fingerprints and static checks pass.
+The real local Qwen3/Nomic trial now completes all chat/stream/tool/structured and
+embedding probes before a later logic-configuration API failure. Retained failed
+composed trials and exact component proof are in
+`production/evidence/2026-11-04/model-buffered-probes`; full platform and capacity
+qualification remain open.
+Deferred digest format checkpoint (2026-11-04): new native runs use explicit
+version-three tags for deferred hash/locator entries. Locators represent a
+missing digest explicitly; a verified all-zero digest is still a known digest.
+Readers preserve version-two known-record compatibility and reject new tags
+under that older version, unknown versions and mismatched headers. Frozen
+trial010 passes all 96 native units and exact provenance for all nine rebuilt
+executables. Current bootstrap still emits verified payload hashes; projected
+scanning, touched-row derivation, distributed task closure and sparse publication
+remain unactivated. Evidence: `production/evidence/2026-11-04/native-deferred-digests/`.
+
+Projected key derivation checkpoint (2026-11-04): serial keyed bootstrap now
+projects actual typed key columns and records explicit deferred digests. Exact
+receiver-qualified retained v2 member/version receipts can use the existing
+verified-spool/retained-subset path; unsupported legacy versions retain full
+validation. The new touched-key API resolves the actual qualified locator,
+checks file/physical row/sequence/selection, applies existing Parquet allocation
+guards, validates the complete typed row and full encoded key, verifies any
+known digest and rechecks current authority. It accepts no supplied locator.
+
+Frozen trial013 passes static checks, all nine native artifacts, 96 units and
+64-row array-key/nullable-payload readback with every bootstrap digest deferred
+and a full typed point-row oracle (1/1, zero skips/cancellations; 101.67s root under
+120s, 108.75s controller). A failed helper test exposed generic schema validation
+accepting extra columns; exact key/full-row column guards now reject them.
+Initial chunk certification still performs one-time full byte authentication
+when prior receipts are absent. Distributed tasks, new-loader negatives,
+latest-format authority/C08 reruns, actual standard position-delete oracle,
+sparse C04 publication and production workloads remain open. Both Dataset
+contracts now explicitly use standard position deletes to preserve accepted
+array keys, with actual installed-reader proof required before activation.
+Evidence: `production/evidence/2026-11-04/native-projected-keys/`.
+
+Qualified native loader checkpoint (2026-11-04): retained-v2 reuse now requires
+the stored sealed reader profile, environment, Dataset and snapshot to agree
+with the actual current head. Root wrappers and pages are read at their exact
+qualified provider version with unchanged hash, canonical and structure checks.
+A real old-version deletion trace reproduced newer-current substitution before
+the fix. The corrected reader explicitly requests the old version, accepts it
+while present and rejects its actual absence without head or graph publication.
+
+Frozen trial015 passes full static checks, nine-artifact provenance, all 99
+native units and 12 integration cases across four separate sequential files
+(4 version traces, 6 qualification negatives, 1 warmed authority revocation,
+1 full C08 custody), with no skipped or cancelled cases. C08 passed in 133.71s
+root / 146.46s controller and retains exact-version collection, policy successor
+propagation, independent clean-host typed recovery, fresh qualifications and
+missing-child rejection with dispatch disabled. All controllers were removed.
+Wrong point locators, sequence, full key, digest and schema have negative units;
+a real installed Parquet two-row-group unit verifies relative selection.
+Evidence: `production/evidence/2026-11-04/native-qualified-loader/`.
+
+The earlier trial013 array-key positive remains separate evidence. No sparse
+Dataset mode or distributed bootstrap is enabled by this checkpoint. Their
+publication/journal integration, independent standard position-delete readback,
+large multi-row-group Dataset and legacy fallback fixtures, whole-platform CI
+and approved capacity ladder remain required.
+
+Dataset commit journal checkpoint (2026-11-04): actual managed replacements and
+certified unchanged metadata pruning append immutable contiguous edges in their
+existing publication transaction. Records bind exact qualified old/new roots,
+normalized Iceberg schema and existing partset hash, ordered keys/current key
+hash, immutable binding revision, actual candidate or maintenance-run UUID and
+sealed completion/publication receipt. Existing private Job versus authenticated
+session authority paths remain distinct. Metadata pruning records mode=null and
+checks exact current-snapshot/non-history-metadata equivalence; native decoding
+validates the actual persisted semantics before commit. A non-advancing result
+creates no fabricated Dataset revision.
+
+Frozen trial021 passes full static checks, all nine exact native artifacts, all
+102 units and the real two-case journal gate (0 skipped/cancelled; 31.26s and
+32.13s roots under unchanged 120s deadlines, 64.92s controller). Native publication
+acknowledgement replay creates no duplicate edge. Ordinary journal insertion and
+updates are denied. An exact injected journal failure rolls back head,
+publication, execution completion and journal, preserving prior typed rows.
+Earlier failures and a safe synthetic schema diagnostic are retained in
+`production/evidence/2026-11-04/native-dataset-commit-journal/`.
+
+Sparse mutation/no-op/row-compaction producers, qualified changed-row/delete-key
+roots, chain-derived actual indexing pins/consumer IO, incremental Source/Search
+activation and distributed bootstrap remain open. A fresh full graph recovery
+rerun after this schema addition, combined whole-platform checks, independent
+current CI and production workload evidence are still required. This fresh
+baseline checkpoint does not migrate a live installation.
+
+Replacement journal recovery checkpoint (2026-11-04): TS-only overlay022 on the
+exact trial021 native artifacts passes static/provenance, all 102 units and the
+full C08 gate (1/1, zero skips/cancellations; 152.87s root under unchanged 300s,
+154.19s controller). Two actual backed-up replacement journal records retain
+their immutable identities, normalized schema/key/binding facts and exact
+producer/publication/completion receipts. Every basis/result root resolves
+through the actual new-physical/new-incarnation restore qualification. Real
+HEAD/GET/SHA checks use copied wrapper versions at the fresh prefix; original
+audit versions return 404 there. Actual newly authorized typed reads recover
+both heads, while old-incarnation journal producer reentry fails exactly with
+CANDIDATE_STALE and changes no record. Existing graph collection/succession and
+missing-backup disabled-dispatch coverage remains green. Evidence:
+`production/evidence/2026-11-04/native-dataset-commit-journal/recovery/`.
+This backup precedes metadata pruning; its later unchanged edge is not claimed
+restored. Sparse v3 publication and actual incremental window custody/replay
+remain under implementation.
+
+V3 Catalog foundation work in progress (2026-11-04): strict version-three
+references, a metadata-independent versioned index summary, actual stored-root
+profile dispatch and a common bounded native batch-stream interface are staged
+on the development branch. Catalog/EngineIO/Evaluation wiring is partial. No v3
+head producer or sparse mode is activated; Worker/attestation, staged validation,
+root registration, recovery/pruning and actual end-to-end qualification remain
+pending. These edits have formatting/schema generation only; native/static and
+integration checks have not yet run. This checkpoint preserves unfinished source
+before integrating the current Source store/IO changes.
+
+Unactivated v3 foundation checkpoint (2026-11-05): frozen trial025 passes full
+static checks, exact provenance for all nine rebuilt native artifacts and all
+112 library units with no ignored/filtered tests. It compiles strict v2/v3
+reference dispatch, the metadata-independent index-summary binding, actual
+stored-root profile selection and common Catalog/EngineIO/Evaluation bounded
+scan adapters against the integrated Source/store/IO baseline. Legacy unscoped
+readers reject both native formats. The existing FlatV2 retained-snapshot test
+keeps its standard-table/history/count assertions; common scans use the
+format-aware count witness. Failed compiler-memory and adapter trials are
+preserved. Evidence: `production/evidence/2026-11-05/native-v3-catalog-foundation/`.
+
+No v3 head or sparse mode is activated by these checks. Actual stage-bound
+preparation, root qualification/publication, Worker/attestation, recovery/pruning
+and runtime integration remain pending before activation. This is a bounded
+foundation checkpoint rather than completion of N09 or N18.
+
+V3 custody checkpoint (2026-11-05): trial039 qualifies two actual v3 published
+heads through backup, non-advancing expiry, exact source root-version collection
+and fresh-prefix restore. Capture, full byte/hash copy and post-copy validation
+use persisted receiver-qualified versions; an identical newer current version
+cannot replace them. A missing selected version yields the exact enumeration
+failure with no sealed capture or head change. Fresh restore qualifications,
+typed current/retained graph reads, journal root remapping, original successor
+policy/propagation behavior and dispatch-disabled failure cases are exercised.
+The original v2 sidecar custody regression uses the same exact image. Static
+checks and all 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-custody/summary.json).
+
+Production output selection remains unchanged. V3 expiry retains current
+standard metadata/history files until graph metadata pruning is implemented;
+it fabricates neither a revision nor a delta edge. The closed unpublished attached-candidate expiry/retirement origin mismatch is
+qualified separately below. V3 reader integration, sparse position-delete writes,
+distributed bootstrap, incremental Source chains, production scale qualification
+and full independent CI remain required.
+
+Private v3 candidate cleanup (2026-11-05): trial044 genuinely prepares/attaches
+a second candidate, cancels its actual execution and runs normal retention
+planning. The stage becomes abandoned, its references/queue drain, and the
+private root expires and becomes a garbage candidate. The published baseline
+head, immutable journal and typed read remain unchanged. Private expiry retains
+its real GC-plan origin; no maintenance lease, run or history retirement is
+invented. The existing published-history path remains separate. Exact pointer
+checks now use a fixed-size canonical root-key index and preserve conservative
+protection by any published history. Static checks, all nine rebuilt artifacts
+and 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-private-expiry/summary.json).
+
+## Native Source bootstrap and staging lifecycle
+
+The managed full-build Source bootstrap checkpoint publishes immutable generation aliases and complete declared-key maps over the existing staged population. Static checks, all nine matching native artifacts, 99 units and the full 17-case real indexing service file passed, including compound Dataset keys, maximum-width unkeyed rows, Action tombstones, registered FullObjectSource/Search access, fresh-backend recovery and published-history cleanup. The scoped contract and retained evidence are in `docs/production/NATIVE-SOURCE-STORES.md` and `docs/production/evidence/2026-11-04/source-store-bootstrap/`.
+
+Closed-build staging core correctness passed the focused 3/3 real native lifecycle with all nine artifacts, 106 units and full static checks: published builds retain all aliased data while temporary spills are removed; expired unpublished builds require real closure/policy/reference checks and write barriers before bounded payload/projection cleanup. Actual policy successor, write/backup barriers, private payload/orphan cleanup and published-data preservation assertions passed; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-core/`. Indexed pending discovery with bounded legacy reconciliation passed focused 3/3 with six index access-path checks; evidence is in `docs/production/evidence/2026-11-04/indexing-staging-queue/`. The full 20-case indexing service file passed with zero skips or cancellations in 309.67 seconds and all original root deadlines unchanged. The added near-cap profile passes 3/3 with all nine exact artifacts, 106 units and full static checks. A genuinely admitted typed-array row has 4,194,273 decoded value bytes; ordinary stored spill size is 471,656 bytes while inline source JSONB is 25,165,867 bytes. A separately controlled identical-content legacy EXTERNAL layout exceeds the unchanged 16 MiB collection budget, receives bounded operator-blocked diagnostics with an unchanged cursor/payload, and does not strand another eligible build. All test resources were removed. Evidence: `production/evidence/2026-11-05/indexing-staging-width/`. Universal accepted physical-width bounds and automatic oversized legacy-row reclamation remain unqualified; this is not complete collector capacity evidence. Sparse Source/Dataset delta activation remains closed. No production capacity certification is inferred from the local correctness populations.
+
+Native journal/Source integration (2026-11-05): trial046 combines the committed
+Source staging/renewal baseline with v3 C04/C08 work. The first complete Source
+run exposed an overly strict journal basis check at a logical namespace
+revision change. Results still require the current namespace; retained bases
+now derive from their actual Catalog revision and exact sealed current
+physical/incarnation qualification, with expired/mismatched identities rejected
+and the helper denied to ordinary callers. The original complete Source file
+passes 20/20, including classified-head/disabled-purpose behavior, recovery,
+real Action history and native staging collection. The two original journal
+cases pass with additional historical-root negatives and atomic rollback, and
+the actual v3 replacement/empty path passes on the same nine-artifact image.
+Static checks and 113 units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-journal-source-qualification/summary.json).
+
+No v3 production writer or sparse Source window is enabled by this checkpoint.
+Actual v3 Source reader integration and graph metadata pruning remain pending,
+along with sparse standard position-delete production, distributed bootstrap,
+production workload qualification and independent full CI.
+
+Retained full-build v3 reader (2026-11-05): trial054 passes actual native graph
+scan/reduction over array-key and nullable-row v3 heads with real registered
+identities. Empty current and populated historical Source generations pass;
+indexing does not mutate Dataset head or journal. The retained legacy contract
+is tested explicitly; managed complete key maps and permanent service-origin
+v3 admission remain separate pending runtime gates. This is a test-only
+checkpoint with all nine binaries reused byte-for-byte from qualified trial046,
+full static checks and 113 native units. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-legacy-source-reader/summary.json).
+
+Permanent Source v3 reader (2026-11-05): trial058 passes actual dependent
+ObjectType Source compilation/imports, operator-approved service admission,
+token-free native indexing and exact complete array-key maps. Typed Object
+get verifies every populated row. Revoking the actual registrar token then
+publishing an empty v3 head triggers fresh permanent-service admission; empty
+current and populated retained Source history pass. Admission now requires an
+actual sealed native2/3 root with matching stored profile and current
+physical/incarnation qualification. Normal IO authority and production writer
+selection remain unchanged. The original complete v2 Source file passes 20/20
+with zero skips or cancellations under its unchanged root deadlines. Static,
+all nine matching rebuilt artifacts and 113 native units pass. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-permanent-source/summary.json).
+
+Native v3 metadata pruning (2026-11-05): expiration now uses its actual fenced
+maintenance producer to preserve retained standard snapshots and path-copy the
+exact file directory without a Parquet scan. Current snapshot/summary and all
+key/selection/index identities stay unchanged. Qualified ready stages transfer
+to history only with the atomic head, expiry, receipt and metadataPrune journal
+commit. Non-advancing expiry emits no edge; old physical heads continue to
+protect bytes until their actual graph retirement drains. The focused proof
+includes real retained-pin custody, deferred commit rollback, exact source GC,
+pruned-current/retained fresh-prefix recovery and the existing recovery
+negatives. Evidence:
+[qualification](production/evidence/2026-11-05/native-v3-metadata-pruning/summary.json).
+Production writer/sparse activation and production capacity remain unqualified.
+
+## Source commit-window custody
+
+The qualified native custody slice derives a live range from the actual accepted build and active Source alias. It protects superseded intermediate Dataset roots without scanning other builds during C04. The actual coordinator qualifies resumable journal pages with exact history/publication/producer receipts and current physical receiver custody. Real v2 and v3 fixtures exercised two certified metadata-pruning edges, supersession, bounded page resume, repeated acknowledgement, ordinary modification denial, wrong owner denial and actual cancellation. No fabricated work or root qualification was used.
+
+All nine exact native artifacts, 113 units, full static checks, both custody cases and the original permanent-v3 case passed without skips or cancellations. All controllers and scratch pools were removed. Evidence: `production/evidence/2026-11-05/source-commit-window-custody/`. Unchanged alias/projection reuse, sparse mutation publication and production workloads remain unqualified. See `production/NATIVE-SOURCE-COMMIT-WINDOWS.md`.
+
+## Native integration and production goals · November 5, 2026
+
+The persistent Linux checkout, focused integration commands, and artifact
+provenance checks are in place. See the
+[latest Linux and integration results](#november-5-linux-function-and-pipeline-fixes),
+[native component inventory and API contracts](production/RUST-PLATFORM-PROGRAM.md),
+and [draft integration PR](https://github.com/gcsequino/Moria/pull/81).
+
+- Native v3 replacement, empty publication, metadata pruning and exact-version recovery have scoped proofs. An independent Iceberg reader verified the unchanged replacement files. The isolated sparse writer passed static checks. Its native build and live Connector proof still need to exercise append, upsert, delete, position-delete readback, and checkpoint-only completion. [Reader evidence](production/evidence/2026-11-05/native-standard-iceberg-v3-baseline/summary.json) · [Sparse writes](https://github.com/gcsequino/Moria/issues/85)
+- The separate `f096509` Source branch passed five live cases and 113 native units. Certified metadata-only v2 and v3 commits reused the Source store, key map and typed projection. The v3 Search generation advanced coverage with zero new embedding inputs. Integration and sparse mutation journal consumption remain open. [Qualified Source evidence](https://github.com/gcsequino/Moria/blob/f09650966828e895bef9eceddf9a8c5bdb575960/docs/production/evidence/2026-11-05/source-unchanged-publication/summary.json) · [Source and Search](https://github.com/gcsequino/Moria/issues/86)
+- Connector discovery and custody have scoped proofs. Operator-only Delivery reconciliation passed 12 live cases and is in the checkpoint. The separate Action-origin writeback candidate built all nine artifacts and passed 120 native units. Its first live test stopped during Source setup with `SOURCE_RUNTIME_PROFILE_INVALID`. The fixture-only retry passed static and native checks and needs its live run. [Delivery evidence](production/evidence/2026-11-05/delivery-operator-reconciliation.md) · [Connector writeback](https://github.com/gcsequino/Moria/issues/87)
+
+The v0.2 production ladder is the implementation target. Capacity qualification requires the 1m, 10m, 50m and 100m runs, declared rates and outcome accounting, recovery, soaks, failure domains and cost measurements. Earlier short runs are exploratory. [Production goal](https://github.com/gcsequino/Moria/issues/1) · [Workload harness](https://github.com/gcsequino/Moria/issues/20) · [Certification](https://github.com/gcsequino/Moria/issues/11)

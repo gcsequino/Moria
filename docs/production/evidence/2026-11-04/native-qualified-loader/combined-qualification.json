@@ -1,0 +1,19 @@
+{
+  "tree": "cc4b78f983ed66bc786b63cb2c0c63ea80c47397",
+  "firstParent": "e9210f1d986df5b928f9f83ea53b721e59cf71a0",
+  "secondParent": "3d69801feffaaba7b9ed63b5c429b56526868813",
+  "rawEvidenceWhitespacePreserved": [
+    "native-projected-keys/initial-import-compile-error.txt"
+  ],
+  "nativeSourceDigest": "11c4225c850ad071bc931d1931395ff8b3f84775bb58f02573cc9cdc77ea20a9",
+  "image": "sha256:78c7fa1d0f30c86196c50bdc90bb08c3df96b156381957c62a767c7c5fc3a2c9",
+  "nativeArtifacts": 9,
+  "nativeUnitTests": {
+    "passed": 105,
+    "failed": 0,
+    "ignored": 0
+  },
+  "static": "passed",
+  "proof": "/home/gcseq/moria-proofs/combined-qualified-loader-20261105",
+  "fullPlatformAndCapacityQualification": "pending"
+}

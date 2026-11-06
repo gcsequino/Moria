@@ -1,0 +1,31 @@
+{"controller": "moria-quality-b59623e2-0f82-4781-bcd5-eddd1d8dd939", "image": "sha256:bce33d12abef8a3f85d9a6cff990eaa0f349bae3bdf55e1a36aa4df22b794660", "scratchPools": ["/tmp/moria-engine-scratch-445d060a-51f4-456a-a2f5-900155eab161", "/tmp/moria-engine-scratch-148ee99c-6aa4-4329-ae27-f62bc7f8b4ed", "/tmp/moria-engine-scratch-043d5d36-3c8a-4b8a-9276-cc9477bc58ed"], "temporary": "/tmp/moria-quality-ck0488xd"}
+$ node scripts/test-files.mjs integration tests/native-models.integration.test.ts
+Running 1 integration test files.
+▶ native model gateway protects real HTTP chat, embeddings, schemas and streams
+  ✔ configured capabilities remain unavailable until actual probes pass (668.860463ms)
+  ✔ stable calls replay exactly without another provider request; conflicts fail (516.102831ms)
+  ✔ structured output and tool arguments use a real bounded JSON Schema validator (765.14066ms)
+  ✔ embeddings preserve input order and exact generation dimension, rejecting zero and malformed vectors (466.074077ms)
+  ✔ streams retain ordered text and terminal result; broken streams never restart (339.178653ms)
+  ✔ stream combinations require their own probe and preserve provider extensions (1703.842317ms)
+  ✔ revocation during inference blocks result release and preserves the failed attempt (159.585065ms)
+  ✔ an unobserved binding disable and re-enable cannot revive an admitted call (322.182905ms)
+  ✔ stream revocation blocks later events and its terminal result (162.780277ms)
+  ✔ cross-process cancellation interrupts waiting inference and retains uncertain admission (893.383057ms)
+  ✔ provider bodies and caller-selected endpoints remain bounded and protected (390.816714ms)
+  ✔ the persistent native HTTP role serves authenticated APIs and bounds concurrent inference (1097.508253ms)
+  ✔ one shared class budget covers native execution leases and model calls in both directions (1529.071241ms)
+  ✔ bounded embedding batches retain one vector copy and terminal validation failures are recorded (1507.129611ms)
+  ✔ a permanently lost COMMIT acknowledgment releases admission and replays the committed receipt (5911.56649ms)
+  ✔ Ollama embedding transport disables truncation and records terminal context failure (1022.358915ms)
+  ✔ expired capability proofs fail before contacting the provider (257.127036ms)
+  ✔ a buffered capability probe remains fenced while upstream is held (791.321718ms)
+✔ native model gateway protects real HTTP chat, embeddings, schemas and streams (19652.936988ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20019.630014

@@ -1,0 +1,29 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-v3-service.integration.test.ts
+Running 1 integration test files.
+✖ accepted permanent Source indexes v3 heads independently of its registrar and retains exact array keys (31053.688799ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31573.960592
+
+✖ failing tests:
+
+test at tests/native-dataset-v3-service.integration.test.ts:1:832
+✖ accepted permanent Source indexes v3 heads independently of its registrar and retains exact array keys (31053.688799ms)
+  Error [MoriaError]: Resource requires its ontology file or repository export
+      at invalid (/app/packages/compiler/src/source-core.ts:12:9)
+      at assembleSource (/app/packages/compiler/src/source-core.ts:166:7)
+      at compileSource (/app/packages/compiler/src/browser.ts:39:43)
+      at publishBrowserSource (/app/packages/platform/src/source.ts:119:27)
+      at async publishNativeSource (/app/tests/fixtures/native-source/setup.ts:95:9)
+      at async TestContext.<anonymous> (/app/tests/native-dataset-v3-service.integration.test.ts:46:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'SOURCE_INVALID',
+    details: undefined
+  }
+[ELIFECYCLE] Command failed with exit code 1.

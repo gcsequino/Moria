@@ -129,7 +129,7 @@ export async function queryRows(
   // Constant stage keys let PostgreSQL use the (stage,uid) index for ordered LIMIT.
   const heads = await c.query(
     `SELECT pins.kind,h.revision,h.stage FROM (VALUES('pinned',$3::bigint),('current',$4::bigint)) pins(kind,revision)
-    JOIN LATERAL (SELECT revision,stage FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=pins.revision ORDER BY revision DESC LIMIT 1) h ON TRUE`,
+    JOIN LATERAL (SELECT revision,moria.runtime_source_stage(stage,environment,object_type,revision) AS stage FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=pins.revision ORDER BY revision DESC LIMIT 1) h ON TRUE`,
     [environment, policy.resource, revision, currentRevision],
   );
   const pinned = heads.rows.find((h) => h.kind === 'pinned'),

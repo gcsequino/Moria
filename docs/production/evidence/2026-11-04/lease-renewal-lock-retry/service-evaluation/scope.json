@@ -1,0 +1,5 @@
+{
+  "scope": "Original ten-case service Evaluation with all accepted Source setup, worker/context/purpose/progress/parent-lock and retry fault assertions retained. Read-only200ms waiter/root-lease sampling only; no private native instrumentation in this production image.",
+  "baselineFixture": "/home/gcseq/moria-proofs/evaluation-publication-locks-20261105-trial002/native-evaluation-publication-locks.integration.test.ts",
+  "limits": "Original guards, absolute deadlines, widths and resource limits unchanged."
+}

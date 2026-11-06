@@ -1,0 +1,60 @@
+[
+  {
+    "event": "evaluation_progress_transaction_retries",
+    "intermittent": 5,
+    "committed_successes": 5,
+    "persistent": 4,
+    "bounded_resumes": 1,
+    "recovered": 1,
+    "identity": [
+      {
+        "kind": "intermittent",
+        "case_execution": "7978c2e4-b2bf-4ac2-9526-b34e4b98591a",
+        "child": "4d7130d8-66a8-43ff-a5c2-6ae014da6e62",
+        "attempts": 1,
+        "exact_input": true,
+        "exact_parent": true
+      },
+      {
+        "kind": "persistent",
+        "case_execution": "c1c88578-4fb8-4b40-a576-b4699774a38e",
+        "child": "26871b7c-8810-47e1-b1a4-4e86d8909068",
+        "attempts": 1,
+        "exact_input": true,
+        "exact_parent": true
+      }
+    ]
+  },
+  {
+    "event": "child_progress_parent_lock",
+    "pid": 396,
+    "parent": "26871b7c-8810-47e1-b1a4-4e86d8909068",
+    "sharedProbe": true,
+    "exclusiveProbeBlocked": true
+  },
+  {
+    "event": "evaluation_resume_identity_probes",
+    "livePositive": true,
+    "wrongCase": true,
+    "wrongPurpose": true,
+    "storedMetadataNegatives": 4,
+    "productionPredicateParity": true
+  },
+  {
+    "event": "evaluation_resume_public_withheld",
+    "get": true,
+    "replay": true
+  },
+  {
+    "event": "evaluation_resume_conflict_injected",
+    "sqlstate": "40001"
+  },
+  {
+    "event": "evaluation_progress_transaction_retry_state",
+    "intermittent": 5,
+    "committed_successes": 5,
+    "persistent": 4,
+    "bounded_resumes": 1,
+    "recovered": 1
+  }
+]

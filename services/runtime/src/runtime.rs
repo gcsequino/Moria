@@ -44,7 +44,7 @@ async fn run() -> Result<()> {
         );
         return Ok(());
     }
-    let db = if [
+    let operator_command = [
         "recovery",
         "secret",
         "restore-from",
@@ -54,7 +54,8 @@ async fn run() -> Result<()> {
         "filesystem-retention",
     ]
     .contains(&command.as_str())
-    {
+        || (command == "delivery" && env::args().nth(2).as_deref() == Some("reconcile"));
+    let db = if operator_command {
         Database::configured_recovery()?
     } else {
         Database::configured()?
@@ -62,16 +63,7 @@ async fn run() -> Result<()> {
     if command == "restore-from" {
         return crate::recovery_control::restore_from(db).await;
     }
-    if [
-        "recovery",
-        "secret",
-        "retention",
-        "dataset-retention",
-        "history-retention",
-        "filesystem-retention",
-    ]
-    .contains(&command.as_str())
-    {
+    if operator_command {
         db.recovery_schema_lease().await?;
     } else {
         db.schema_lease().await?;
@@ -185,6 +177,8 @@ async fn run() -> Result<()> {
             let mut client = db.get().await?;
             let tx = client.transaction().await?;
             tx.query_one("SELECT moria.runtime_indexing_retry_authority($1)", &[&id])
+                .await?;
+            tx.query_one("SELECT moria.runtime_source_store_retry($1)", &[&id])
                 .await?;
             let row=tx.query_one("UPDATE moria.indexing_builds b SET status=CASE WHEN planned THEN 'running' ELSE 'pending' END,error=NULL,owner=NULL,fence=fence+1,lease_until=clock_timestamp() WHERE id=$1 AND status='failed' AND EXISTS(SELECT 1 FROM moria.dataset_heads h WHERE h.environment=b.environment AND h.dataset=b.source AND h.revision=b.source_revision) RETURNING planned",&[&id]).await?;
             tx.query_one("SELECT moria.indexing_check($1)", &[&id])

@@ -1,0 +1,9 @@
+{
+  "source": "original local pinned OCI archives; no external downloads during guest tests",
+  "nodeRootDigest": "a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5",
+  "registryRootDigest": "d4032d4cc323c1731c707931ecada07a53076eac38e3b61ae57533f170f2c6c3",
+  "rootManifestDigestsVerified": true,
+  "method": "Restore original named digest references to the unchanged imported root blobs in the private containerd image store; archive save omitted those names. No guest artifact checks or pinned image constants changed.",
+  "privateDriver": "overlayfs",
+  "privateNetworkNamespace": "moria-docker-api-20261104"
+}

@@ -1,0 +1,65 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-commit-delta.integration.test.ts
+Running 1 integration test files.
+✖ actual replacement and metadata pruning append exact contiguous publication edges (10039.515552ms)
+✖ failure while recording a real edge rolls back Dataset publication and completion (10039.508765ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20583.000337
+
+✖ failing tests:
+
+test at tests/native-dataset-commit-delta.integration.test.ts:1:389
+✖ actual replacement and metadata pruning append exact contiguous publication edges (10039.515552ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (131) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: JOB_RECEIPT_AUTHORITY_REQUIRED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"candidates":["43ca1950-01e9-4461-9bb5-a7a8af790547"],"event":"prepared","lease":{"execution":"3cc9a1d0-65ba-4fc2-a7dc-ccc29c66883a","fence":"1","incarnation":"5e165e0a-fded-48fe-b0aa-e707718e6d45","leaseUntil":"2026-11-05 05:14:49.894957+00","owner":"b0256be5-74ea-4b92-9407-f86fbd83ecf4","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 5.03s\n\n',
+    stderr: "\nthread 'catalog_publication' (131) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: JOB_RECEIPT_AUTHORITY_REQUIRED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-dataset-commit-delta.integration.test.ts:1:4146
+✖ failure while recording a real edge rolls back Dataset publication and completion (10039.508765ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (210) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: JOB_RECEIPT_AUTHORITY_REQUIRED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"candidates":["85c510f8-17ee-41cf-9741-f063b87e1437"],"event":"prepared","lease":{"execution":"50b5880e-fbc9-4873-a49f-87d98e7f23b3","fence":"1","incarnation":"01b6ceee-f701-4d67-ad44-780a4a85f71a","leaseUntil":"2026-11-05 05:15:03.090345+00","owner":"08ca0881-61a9-4a5e-8b54-9fb03a05e667","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 5.04s\n\n',
+    stderr: "\nthread 'catalog_publication' (210) panicked at ../../tests/fixtures/native-catalog/harness.rs:303:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: JOB_RECEIPT_AUTHORITY_REQUIRED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+[ELIFECYCLE] Command failed with exit code 1.

@@ -39,15 +39,15 @@ pub(super) struct Expiration {
     time_seconds: u64,
 }
 #[derive(Clone)]
-struct Grant {
-    db: Database,
-    id: Uuid,
-    owner: Uuid,
-    fence: i64,
-    incarnation: Uuid,
-    namespace: IndexNamespace,
-    state: Value,
-    cancel: Cancellation,
+pub(crate) struct Grant {
+    pub(crate) db: Database,
+    pub(crate) id: Uuid,
+    pub(crate) owner: Uuid,
+    pub(crate) fence: i64,
+    pub(crate) incarnation: Uuid,
+    pub(crate) namespace: IndexNamespace,
+    pub(crate) state: Value,
+    pub(crate) cancel: Cancellation,
 }
 impl fmt::Debug for Grant {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -57,13 +57,13 @@ impl fmt::Debug for Grant {
     }
 }
 impl Grant {
-    fn scope(&self) -> String {
+    pub(crate) fn scope(&self) -> String {
         format!(
             "dataset-maintenance/{}/{}/{}/{}",
             self.id, self.owner, self.fence, self.incarnation
         )
     }
-    async fn check(&self) -> Result<()> {
+    pub(crate) async fn check(&self) -> Result<()> {
         self.cancel.check()?;
         let state: Value = self
             .db
@@ -212,19 +212,27 @@ pub(super) async fn approve(db: &Database, input: Approval) -> Result<Value> {
     let head: i64 = binding.get("head_revision");
     let mut after = 0i64;
     loop {
-        let rows=client.query("SELECT h.revision,r.key,l.physical_fingerprint,r.reader_profile,l.sealed FROM moria.snapshot_history h LEFT JOIN moria.runtime_dataset_roots r ON r.key=moria.runtime_dataset_root_key(h.metadata_location) LEFT JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.physical_fingerprint=$5 AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=r.key WHERE h.environment=$1 AND h.dataset=$2 AND h.revision>$3 AND h.revision<=$4 AND e.root IS NULL ORDER BY h.revision LIMIT 256",&[&input.environment,&dataset,&after,&head,&physical]).await?;
+        let rows=client.query("SELECT h.revision,h.metadata_location,r.key,r.root,r.sealed AS root_sealed,l.physical_fingerprint,r.reader_profile,l.sealed FROM moria.snapshot_history h LEFT JOIN moria.runtime_dataset_roots r ON r.key=moria.runtime_dataset_root_key(h.metadata_location) AND r.environment=h.environment AND r.dataset=h.dataset AND r.metadata_location=h.metadata_location LEFT JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.physical_fingerprint=$5 AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=r.key WHERE h.environment=$1 AND h.dataset=$2 AND h.revision>$3 AND h.revision<=$4 AND e.root IS NULL ORDER BY h.revision LIMIT 256",&[&input.environment,&dataset,&after,&head,&physical]).await?;
         if rows.is_empty() {
             break;
         }
         for row in &rows {
+            let reference = NativeSnapshotRef::decode(&row.get::<_, String>("metadata_location"))?;
+            let profile = match reference.version {
+                2 => "iceberg-v2-cow-flat-bounded-v2",
+                3 => crate::native_snapshot_v3::PROFILE,
+                _ => anyhow::bail!("GC_UNTRACKED_ROOT"),
+            };
             ensure!(
                 row.get::<_, Option<String>>("key").is_some()
+                    && row.get::<_, Option<Value>>("root")
+                        == Some(serde_json::to_value(&reference)?)
+                    && row.get::<_, Option<bool>>("root_sealed") == Some(true)
                     && row
                         .get::<_, Option<String>>("physical_fingerprint")
                         .as_deref()
                         == Some(&physical)
-                    && row.get::<_, Option<String>>("reader_profile").as_deref()
-                        == Some("iceberg-v2-cow-flat-bounded-v2")
+                    && row.get::<_, Option<String>>("reader_profile").as_deref() == Some(profile)
                     && row.get::<_, Option<bool>>("sealed") == Some(true),
                 "GC_UNTRACKED_ROOT"
             );
@@ -364,7 +372,11 @@ async fn bytes(
     );
     Ok(serde_json::from_slice(&data)?)
 }
-async fn put(store: &dyn ObjectStore, grant: Arc<Grant>, value: &Value) -> Result<SealedObject> {
+pub(super) async fn put(
+    store: &dyn ObjectStore,
+    grant: Arc<Grant>,
+    value: &Value,
+) -> Result<SealedObject> {
     let data = canonical_json(value)?.into_bytes();
     ensure!(data.len() <= 8 * 1024 * 1024, "METADATA_BYTE_LIMIT");
     let object = LogicalObject::new(
@@ -386,7 +398,10 @@ async fn put(store: &dyn ObjectStore, grant: Arc<Grant>, value: &Value) -> Resul
     }
     writer.seal().await
 }
-fn prune_metadata(mut value: Value, keep: &std::collections::BTreeSet<i64>) -> Result<Value> {
+pub(super) fn prune_metadata(
+    mut value: Value,
+    keep: &std::collections::BTreeSet<i64>,
+) -> Result<Value> {
     let original = value.clone();
     let current = value["current-snapshot-id"]
         .as_i64()
@@ -444,7 +459,7 @@ pub(super) async fn expire(db: &Database, input: Expiration) -> Result<Value> {
     }
     result
 }
-async fn commit_without_head(
+pub(super) async fn commit_without_head(
     grant: Arc<Grant>,
     input: &Expiration,
     selected: &[String],
@@ -485,7 +500,7 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
     let old_location = grant.state["oldMetadata"].as_str().unwrap();
     let expected: i64 = grant.state["expectedRevision"].as_str().unwrap().parse()?;
     let before: i64 = input.before_revision.parse()?;
-    let roots=grant.db.get().await?.query("SELECT DISTINCT r.key,r.snapshot_id FROM moria.runtime_dataset_roots r JOIN moria.snapshot_history h ON h.metadata_location=r.metadata_location AND h.environment=r.environment AND h.dataset=r.dataset LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=r.key WHERE r.environment=$1 AND r.dataset=$2 AND h.revision<$3 AND h.revision<=$4 AND e.root IS NULL AND r.retention_origin+make_interval(secs=>$6::bigint::double precision)<=clock_timestamp() AND NOT moria.runtime_dataset_root_pinned_except(r.key,$5) ORDER BY r.key LIMIT $7",&[&environment,&dataset,&before,&expected,&grant.id,&grant.state["retainSeconds"].as_str().unwrap().parse::<i64>()?,&(input.maximum_roots as i64)]).await?;
+    let roots=grant.db.get().await?.query("SELECT DISTINCT r.key,r.snapshot_id FROM moria.runtime_dataset_roots r JOIN moria.snapshot_history h ON h.metadata_location=r.metadata_location AND h.environment=r.environment AND h.dataset=r.dataset LEFT JOIN moria.runtime_dataset_expired_roots e ON e.root=r.key WHERE r.environment=$1 AND r.dataset=$2 AND h.revision<$3 AND h.revision<=$4 AND r.metadata_location<>$8 AND e.root IS NULL AND r.retention_origin+make_interval(secs=>$6::bigint::double precision)<=clock_timestamp() AND NOT moria.runtime_dataset_root_pinned_except(r.key,$5) ORDER BY r.key LIMIT $7",&[&environment,&dataset,&before,&expected,&grant.id,&grant.state["retainSeconds"].as_str().unwrap().parse::<i64>()?,&(input.maximum_roots as i64),&old_location]).await?;
     let selected: Vec<String> = roots.iter().map(|r| r.get("key")).collect();
     let store = storage::configured_store_with_fingerprint(&grant.namespace)?.0;
     ensure!(
@@ -493,6 +508,9 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
         "GC_PROVIDER_CHANGED"
     );
     let old_ref = NativeSnapshotRef::decode(old_location)?;
+    if old_ref.version == 3 {
+        return super::prune_graph::expire(grant, input, &selected, store).await;
+    }
     let old_root = catalog::snapshot_root(
         store.as_ref(),
         grant.clone(),
@@ -659,13 +677,124 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
     )
     .await?;
     grant.check().await?;
+    copy_key_certificate(&grant, &reference, root.proof.snapshot_id).await?;
+
+    commit_pruned(
+        grant, input, &selected, &original, &pruned, &table, &reference,
+    )
+    .await
+}
+
+pub(super) async fn copy_key_certificate(
+    grant: &Grant,
+    reference: &NativeSnapshotRef,
+    snapshot_id: i64,
+) -> Result<()> {
+    grant.check().await?;
+    let environment = grant.state["environment"].as_str().unwrap();
+    let dataset = grant.state["dataset"].as_str().unwrap();
+    let old_location = grant.state["oldMetadata"].as_str().unwrap();
     let location = reference.encode()?;
     if let Some(binding)=grant.db.get().await?.query_opt("SELECT key_schema_hash,cardinality(primary_key)>0 FROM moria.native_dataset_bindings WHERE environment=$1 AND resource::text=$2",&[&environment,&dataset]).await? && binding.get::<_,bool>(1) {
             let key_hash:String=binding.get(0);
-            let changed=grant.db.get().await?.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) SELECT moria.runtime_dataset_root_key($1),key_schema_hash,snapshot_id,key_rows FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($2) AND key_schema_hash=$3 AND snapshot_id=$4 ON CONFLICT DO NOTHING",&[&location,&old_location,&key_hash,&root.proof.snapshot_id.to_string()]).await?;
+            let changed=grant.db.get().await?.execute("INSERT INTO moria.runtime_dataset_key_certificates(root,key_schema_hash,snapshot_id,key_rows) SELECT moria.runtime_dataset_root_key($1),key_schema_hash,snapshot_id,key_rows FROM moria.runtime_dataset_key_certificates WHERE root=moria.runtime_dataset_root_key($2) AND key_schema_hash=$3 AND snapshot_id=$4 ON CONFLICT DO NOTHING",&[&location,&old_location,&key_hash,&snapshot_id.to_string()]).await?;
             ensure!(changed==1,"DATASET_PRIMARY_KEY_PROOF_REQUIRED");
     }
+    grant.check().await
+}
 
+pub(super) async fn retained_graph_snapshots(
+    grant: &Grant,
+    original: &Value,
+    snapshot_id: i64,
+    selected: &[String],
+) -> Result<std::collections::BTreeSet<i64>> {
+    let environment = grant.state["environment"].as_str().unwrap();
+    let dataset = grant.state["dataset"].as_str().unwrap();
+    let mut keep = std::collections::BTreeSet::from([snapshot_id]);
+    let snapshots = original["snapshots"]
+        .as_array()
+        .ok_or_else(|| anyhow::anyhow!("MISSING_SNAPSHOTS"))?;
+    let ids = snapshots
+        .iter()
+        .map(|snapshot| {
+            snapshot["snapshot-id"]
+                .as_i64()
+                .map(|id| id.to_string())
+                .ok_or_else(|| anyhow::anyhow!("SNAPSHOT_MISMATCH"))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    // Bound Catalog lookups to snapshot descriptors already present in the authenticated metadata.
+    for page in ids.chunks(256) {
+        grant.check().await?;
+        let rows=grant.db.get().await?.query(
+            "SELECT wanted.snapshot_id,EXISTS(SELECT 1 FROM moria.snapshot_history h JOIN moria.runtime_dataset_roots r ON r.key=moria.runtime_dataset_root_key(h.metadata_location) AND r.metadata_location=h.metadata_location AND r.environment=h.environment AND r.dataset=h.dataset WHERE h.environment=$1 AND h.dataset=$2 AND h.snapshot_id=wanted.snapshot_id AND NOT EXISTS(SELECT 1 FROM moria.runtime_dataset_expired_roots e WHERE e.root=r.key) AND NOT (r.key=ANY($3::text[]))) AS retained,EXISTS(SELECT 1 FROM moria.snapshot_history h JOIN moria.runtime_dataset_roots r ON r.key=moria.runtime_dataset_root_key(h.metadata_location) AND r.metadata_location=h.metadata_location AND r.environment=h.environment AND r.dataset=h.dataset JOIN moria.runtime_dataset_root_locations l ON l.root=r.key AND l.sealed AND l.incarnation=(SELECT incarnation FROM moria.indexing_instance) WHERE h.environment=$1 AND h.dataset=$2 AND h.snapshot_id=wanted.snapshot_id AND r.sealed AND l.physical_fingerprint=$4) AS known FROM unnest($5::text[]) wanted(snapshot_id)",
+            &[&environment,&dataset,&selected,&grant.state["physicalFingerprint"].as_str().unwrap(),&page],
+        ).await?;
+        for row in rows {
+            if row.get::<_, bool>("retained") || !row.get::<_, bool>("known") {
+                keep.insert(row.get::<_, String>("snapshot_id").parse()?);
+            }
+        }
+    }
+    if let Some(refs) = original["refs"].as_object() {
+        for reference in refs.values() {
+            keep.insert(
+                reference["snapshot-id"]
+                    .as_i64()
+                    .ok_or_else(|| anyhow::anyhow!("UNRESOLVED_SNAPSHOT_REFERENCE"))?,
+            );
+        }
+    }
+    Ok(keep)
+}
+
+pub(super) async fn commit_pruned(
+    grant: Arc<Grant>,
+    input: &Expiration,
+    selected: &[String],
+    original: &Value,
+    pruned: &Value,
+    table: &iceberg::spec::TableMetadata,
+    reference: &NativeSnapshotRef,
+) -> Result<Value> {
+    let environment = grant.state["environment"].as_str().unwrap();
+    let dataset = grant.state["dataset"].as_str().unwrap();
+    let old_location = grant.state["oldMetadata"].as_str().unwrap();
+    let expected: i64 = grant.state["expectedRevision"].as_str().unwrap().parse()?;
+    let snapshot_id = table
+        .current_snapshot_id()
+        .ok_or_else(|| anyhow::anyhow!("SNAPSHOT_MISMATCH"))?;
+    let location = reference.encode()?;
+    let binding = grant.db.get().await?.query_one("SELECT primary_key,key_schema_hash,iceberg_schema,revision FROM moria.native_dataset_bindings WHERE environment=$1 AND resource::text=$2 AND enabled", &[&environment,&dataset]).await?;
+    let delta_profile = crate::dataset_commit_delta::profile(
+        table.current_schema(),
+        &binding.get::<_, Value>(2),
+        &binding.get::<_, String>(3),
+        &binding.get::<_, Vec<String>>(0),
+        &binding.get::<_, String>(1),
+    )?;
+    let equivalence = crate::dataset_commit_delta::metadata_prune_receipt(
+        &original,
+        &pruned,
+        &grant
+            .db
+            .get()
+            .await?
+            .query_one(
+                "SELECT moria.runtime_dataset_root_key($1)",
+                &[&old_location],
+            )
+            .await?
+            .get::<_, String>(0),
+        &grant
+            .db
+            .get()
+            .await?
+            .query_one("SELECT moria.runtime_dataset_root_key($1)", &[&location])
+            .await?
+            .get::<_, String>(0),
+    )?;
     let mut client = grant.db.get().await?;
     let tx = client.transaction().await?;
     tx.query_one(
@@ -692,7 +821,7 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
         .await?
         .get(0);
     ensure!(fresh == grant.state, "GC_POLICY_CHANGED");
-    for key in &selected {
+    for key in selected {
         ensure!(
             !tx.query_one(
                 "SELECT moria.runtime_dataset_root_pinned_except($1,$2)",
@@ -703,9 +832,9 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
             "GC_REFERENCE_PRESENT"
         );
     }
-    let updated=tx.query_opt("UPDATE moria.dataset_heads SET revision=revision+1,metadata_location=$4,snapshot_id=$5 WHERE environment=$1 AND dataset=$2 AND revision=$3 AND metadata_location=$6 RETURNING revision",&[&environment,&dataset,&expected,&location,&root.proof.snapshot_id.to_string(),&old_location]).await?.ok_or_else(||anyhow::anyhow!("HEAD_CONFLICT"))?.get::<_,i64>(0);
-    tx.execute("INSERT INTO moria.snapshot_history(environment,dataset,revision,metadata_location,snapshot_id,execution,lineage) VALUES($1,$2,$3,$4,$5,$6,$7)",&[&environment,&dataset,&updated,&location,&root.proof.snapshot_id.to_string(),&format!("dataset-maintenance/{}",grant.id),&json!({dataset:expected.to_string()})]).await?;
-    for key in &selected {
+    let updated=tx.query_opt("UPDATE moria.dataset_heads SET revision=revision+1,metadata_location=$4,snapshot_id=$5 WHERE environment=$1 AND dataset=$2 AND revision=$3 AND metadata_location=$6 RETURNING revision",&[&environment,&dataset,&expected,&location,&snapshot_id.to_string(),&old_location]).await?.ok_or_else(||anyhow::anyhow!("HEAD_CONFLICT"))?.get::<_,i64>(0);
+    tx.execute("INSERT INTO moria.snapshot_history(environment,dataset,revision,metadata_location,snapshot_id,execution,lineage) VALUES($1,$2,$3,$4,$5,$6,$7)",&[&environment,&dataset,&updated,&location,&snapshot_id.to_string(),&format!("dataset-maintenance/{}",grant.id),&json!({dataset:expected.to_string()})]).await?;
+    for key in selected {
         tx.execute("INSERT INTO moria.runtime_dataset_expired_roots(root,policy,maintenance) VALUES($1,$2,$3)",&[&key,&input.policy,&grant.id]).await?;
     }
     let revision: i64 = tx
@@ -720,7 +849,7 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
         &[&environment, &dataset, &updated, &revision],
     )
     .await?;
-    let receipt = json!({"run":grant.id,"policy":input.policy,"revision":revision.to_string(),"outputs":[{"dataset":dataset,"revision":updated.to_string(),"snapshotId":root.proof.snapshot_id.to_string()}],"expiredRoots":selected,"headChanged":true});
+    let receipt = json!({"run":grant.id,"policy":input.policy,"revision":revision.to_string(),"outputs":[{"dataset":dataset,"revision":updated.to_string(),"snapshotId":snapshot_id.to_string()}],"expiredRoots":selected,"headChanged":true});
     tx.query_one(
         "SELECT moria.runtime_dataset_maintenance_check($1,$2,$3,$4)",
         &[&grant.id, &grant.owner, &grant.fence, &grant.incarnation],
@@ -728,6 +857,14 @@ async fn expire_current(grant: Arc<Grant>, input: &Expiration) -> Result<Value> 
     .await?;
     tx.execute("UPDATE moria.runtime_dataset_maintenance_runs SET status='committed',finished_at=clock_timestamp(),new_metadata=$4,receipt=$5 WHERE id=$1 AND owner=$2 AND fence=$3 AND status='preparing'",&[&grant.id,&grant.owner,&grant.fence,&location,&receipt]).await?;
     tx.execute("INSERT INTO moria.publications(environment,execution,request_hash,receipt) VALUES($1,$2,$3,$4)",&[&environment,&format!("dataset-maintenance/{}",grant.id),&fingerprint(&serde_json::to_value(input)?)?,&receipt]).await?;
+    let semantics: Value = tx
+        .query_one(
+            "SELECT moria.runtime_dataset_commit_record_maintenance($1,$2,$3,$4)",
+            &[&grant.id, &delta_profile, &equivalence, &receipt],
+        )
+        .await?
+        .get(0);
+    crate::dataset_commit_delta::validate_semantics(semantics)?;
     tx.commit().await?;
     Ok(receipt)
 }

@@ -1,0 +1,55 @@
+{"controller": "moria-quality-21f76e4f-79f2-4e0b-89f4-45b97c95bed4", "image": "sha256:c5d2c0251bf5df4415c651da150a18cc4ee07502534ead4bf199438ce517932e", "scratchPools": ["/tmp/moria-engine-scratch-76ecc178-9293-4e04-aef6-61a84cc73331", "/tmp/moria-engine-scratch-46db1e36-60bf-4242-bedd-3e2a7ca4f2bb"], "temporary": "/tmp/moria-quality-8ri9y2mr"}
+$ node scripts/test-files.mjs integration tests/catalog-storage-publication.integration.test.ts
+Running 1 integration test files.
+▶ local: durable scoped metadata publication
+  ✔ filesystem input classifications cannot be omitted from publication outputs (3190.838452ms)
+  ✔ Iceberg read-back, atomic two-output heads/history/checkpoint and acknowledgment retry (2830.763546ms)
+  ✔ nonempty lineage persists exact provenance for both outputs (1815.507506ms)
+  ✔ nonempty lineage rejects missing input grant without publication (57.682808ms)
+  ✔ nonempty lineage rejects missing input application scope without publication (52.465374ms)
+  ✔ nonempty lineage rejects missing inherited marking without publication (49.8034ms)
+  ✔ upload cannot publish a partial candidate (1303.265452ms)
+  ✔ uncertain cannot publish a partial candidate (1237.464937ms)
+  ✔ cancel cannot publish a partial candidate (689.583664ms)
+  ✔ revoke cannot publish a partial candidate (719.612717ms)
+  ✔ epoch cannot publish a partial candidate (700.168586ms)
+  ✔ expired cannot publish a partial candidate (732.193511ms)
+  ✔ replaced cannot publish a partial candidate (795.619966ms)
+  ✔ head cannot publish a partial candidate (761.271744ms)
+  ✔ checkpoint cannot publish a partial candidate (786.294472ms)
+  ✔ session expiry is checked inside the final publication transaction (724.062798ms)
+  ✔ cancellation interrupts a stalled metadata source (45.907444ms)
+  ✔ competing publication wins atomically (1446.933284ms)
+  ✔ reject invalid metadata, table, snapshot, sizes and caller location (995.947724ms)
+  ✔ write grants, application scope, markings, session and exact Dataset are required (41.853174ms)
+✔ local: durable scoped metadata publication (21009.484167ms)
+▶ s3: durable scoped metadata publication
+  ✔ filesystem input classifications cannot be omitted from publication outputs (2982.825313ms)
+  ✔ Iceberg read-back, atomic two-output heads/history/checkpoint and acknowledgment retry (2473.967435ms)
+  ✔ nonempty lineage persists exact provenance for both outputs (1744.436586ms)
+  ✔ nonempty lineage rejects missing input grant without publication (60.448396ms)
+  ✔ nonempty lineage rejects missing input application scope without publication (60.192105ms)
+  ✔ nonempty lineage rejects missing inherited marking without publication (55.373065ms)
+  ✔ upload cannot publish a partial candidate (1260.735768ms)
+  ✔ uncertain cannot publish a partial candidate (1263.907108ms)
+  ✔ cancel cannot publish a partial candidate (643.482659ms)
+  ✔ revoke cannot publish a partial candidate (717.680916ms)
+  ✔ epoch cannot publish a partial candidate (750.620163ms)
+  ✔ expired cannot publish a partial candidate (767.807179ms)
+  ✔ replaced cannot publish a partial candidate (749.043006ms)
+  ✔ head cannot publish a partial candidate (717.352795ms)
+  ✔ checkpoint cannot publish a partial candidate (764.150318ms)
+  ✔ session expiry is checked inside the final publication transaction (719.853459ms)
+  ✔ cancellation interrupts a stalled metadata source (39.654425ms)
+  ✔ competing publication wins atomically (1428.945414ms)
+  ✔ reject invalid metadata, table, snapshot, sizes and caller location (1048.160068ms)
+  ✔ write grants, application scope, markings, session and exact Dataset are required (45.064671ms)
+✔ s3: durable scoped metadata publication (20342.64227ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41851.090252

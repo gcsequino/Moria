@@ -1,0 +1,20 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--cpus",
+    "2",
+    "--memory",
+    "4g",
+    "--mount",
+    "type=bind,src=/home/gcseq/moria-mor-recovery-20261104/docs,dst=/app/docs,readonly",
+    "moria-test:mor-bootstrap-008-20261104",
+    "pnpm",
+    "check:static"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 26.324790716171265
+}

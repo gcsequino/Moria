@@ -1,0 +1,23 @@
+{"controller": "moria-quality-87305b60-42ac-41e0-8278-5d2ad7c2227b", "image": "sha256:bce33d12abef8a3f85d9a6cff990eaa0f349bae3bdf55e1a36aa4df22b794660", "scratchPools": ["/tmp/moria-engine-scratch-45d70093-e712-49b5-8d6d-4f2aaf2ce863", "/tmp/moria-engine-scratch-5432535b-c6bc-421a-bbbd-08c380dff3d1", "/tmp/moria-engine-scratch-25118af4-835d-4ecf-86bd-57d21232189b"], "temporary": "/tmp/moria-quality-su7g70g0"}
+$ node scripts/test-files.mjs integration tests/native-secrets.integration.test.ts
+Running 1 integration test files.
+▶ Source secrets require exact operator custody and current actor authority
+  ✔ a Source declaration alone grants no material, and ordinary callers cannot approve custody (784.191679ms)
+  ✔ actual caller needs SecretReference.use independently of Model.invoke (1047.881008ms)
+  ✔ Secret use does not grant independent filesystem browsing (425.731653ms)
+  ✔ material semantic revision invalidates old capability evidence without returning material (1982.27128ms)
+  ✔ disable and reenable cannot revive an accepted in-flight grant (975.917997ms)
+  ✔ changed logical declaration requires new explicit custody approval (2037.002325ms)
+  ✔ stale operator Model routes cannot survive a changed actual declaration (3122.184246ms)
+  ✔ approved private material cannot flow to a public destination policy (3848.464082ms)
+  ✔ a dependent Model uses the actual separately owned Secret release (2126.167321ms)
+  ✔ actual Secret declaration file classification gates use before dispatch (273.732464ms)
+✔ Source secrets require exact operator custody and current actor authority (19510.054413ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19955.999159

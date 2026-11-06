@@ -376,8 +376,5 @@ Only the trusted test supervisor receives the approved test Docker socket.
 User function containers receive no daemon socket. No deployment or production
 capacity certification has been performed.
 
-The completed function audit passed the full Linux `pnpm check`, with no failures
-or skips, plus the Python, schema, SDK, build and starter checks. Current type-system
-verification is recorded in [IMPLEMENTATION.md](IMPLEMENTATION.md). The actual console
-component was also exercised against the real worker for invoke, retry, events
-and cancellation, followed by sandbox cleanup.
+See the [implementation checkpoint](IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026)
+for the current independent Linux gate and open Function regressions.

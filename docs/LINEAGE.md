@@ -1,5 +1,7 @@
 # Data, execution and workflow lineage
 
+This guide describes the legacy compatibility API and its recorded lineage views. The native console uses the current Source and resource routes. [Native caller audit](production/NATIVE-CALLER-AUDIT.md)
+
 Moria's first lineage view connects persisted metadata so an operator can trace recorded dataset and object publications, inspect versions and see the work that produced them. The view does not infer causal edges from similar names or close timestamps.
 
 ## Reference model
@@ -8,7 +10,7 @@ Foundry Data Lineage is a source-to-consumer data-flow exploration tool: dataset
 
 Foundry Workflow Lineage is broader than execution history. It maps Ontology resources and their use in applications, actions, functions, models and related components, supporting dependency inspection and change impact. Its documented capabilities include downstream property usage, resource details and version/refactor operations. Moria must keep declared workflow dependency, observed execution and data derivation distinct. A job-attempt list alone is not equivalent to Workflow Lineage. [Official Workflow Lineage overview](https://www.palantir.com/docs/foundry/workflow-lineage/overview)
 
-## Current data and execution slice
+## Legacy data and execution slice
 
 `services/lineage/src/service.ts` reads the catalog in a repeatable-read transaction. The management endpoint supplies the administrator authorization boundary; the reader itself is an internal API, not a per-resource authorization implementation.
 

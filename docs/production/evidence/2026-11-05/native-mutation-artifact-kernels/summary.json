@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-05",
+  "frozenBaseCommit": "6af2acef2e42d8741375222c46e499569da0fecb",
+  "sourceCorrections": {
+    "services/runtime/src/dataset_writer/key_run_io.rs": "8edc8a5051a957e2e84efc22b17f4d83151df2d05974b889f2533d0dc1e0956d",
+    "services/runtime/src/dataset_writer/key_run_set.rs": "db5983249cce9373f63df1bff1adf70c371e6dec4c9d95abb6a2161be885618b"
+  },
+  "scope": "Qualified build of bounded mutation artifact kernels with live unchanged native v3 replacement regression",
+  "compilerCorrection": "Import Arc and type producer partition range bytes explicitly; use scoped update module rather than unused re-export.",
+  "image": {
+    "image": "sha256:e432d6065934df6ff543423fd70227860c9178111f753039c5568b5293401a45",
+    "tag": "moria-test:mor-bootstrap-063-20261104"
+  },
+  "nativeSourceDigest": "79ec9b98a77f0c3fd3bb6164f90fc9ec44eb75bd64c8b8241746ea47e7b8d87b",
+  "nativeArtifacts": 9,
+  "nativeUnits": 125,
+  "nativeBuild": {
+    "exitCode": 0,
+    "elapsedSeconds": 88.80738568700326,
+    "jobs": 1,
+    "cpus": 2,
+    "memoryGiB": 4,
+    "network": "none"
+  },
+  "commands": [
+    "pnpm check:static",
+    "pnpm check:indexing",
+    "pnpm test:integration tests/native-dataset-v3.integration.test.ts"
+  ],
+  "results": {
+    "prebuild-static": {
+      "exitCode": 0,
+      "elapsedSeconds": 22.30656316099339
+    },
+    "static-indexing-check": {
+      "exitCode": 0,
+      "elapsedSeconds": 13.691662694996921
+    },
+    "v3-core-integration": {
+      "exitCode": 0,
+      "elapsedSeconds": 145.65399633700144,
+      "controllerAbsent": true,
+      "externalHostScratchCreated": false,
+      "proofLabelContainersAbsent": true
+    }
+  },
+  "assertions": {
+    "standardPositionFieldsAndIds": true,
+    "sortedPositionCodecRejectsDuplicates": true,
+    "spillPackedPartialCompactionPreservesTombstone": true,
+    "overlapClosureIncludesBoundaryEqualHashes": true,
+    "explicitCompactionBudget": true,
+    "footprintCountsAndCanonicalBigintIdentity": true,
+    "actualV3ReplacementTypedAndBatchReadbackUnchanged": true,
+    "originalRootDeadlinePreserved": true
+  },
+  "logSha256": {
+    "prebuild-static.txt": "a45e50c10771f31de04ba0a9839fc6d18fa922b07240996fa8fc4c15ad730cc5",
+    "static-indexing-check.txt": "f9ae34d4abaf75c795fa78c5456ade640f6607b4edf57c605bd6f67824b1d836",
+    "v3-core-integration.txt": "01aa1d197365f3af4dcc13a95f5357c385234ad1a2560823fa3eb7135d97b3bf",
+    "compile-062-errors.txt": "dc2b2735513caadf11bf9d5c7ba6abbefa5b922d352ca5b9e9677e93e00a1074"
+  },
+  "limitations": [
+    "Position-delete sealing, mutation footprint production, and compaction are not routed by the production writer in this checkpoint.",
+    "The live gate is a replacement regression; it does not claim actual position-delete publication, independent standard-reader mutation compatibility, recovery, or production-scale capacity.",
+    "Later task input, manifest assembly and independent export drafts are outside this frozen result.",
+    "No AWS resources or live deployment were used."
+  ]
+}

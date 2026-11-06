@@ -556,7 +556,7 @@ impl NativeEvaluations {
         );
         let agents = tx
             .query(
-                "SELECT agent_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND agent_execution IS NOT NULL LIMIT 1001",
+                "SELECT agent_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND agent_execution IS NOT NULL ORDER BY case_id,repeat LIMIT 1001",
                 &[&row.get::<_, Uuid>("id")],
             )
             .await?;
@@ -573,6 +573,7 @@ impl NativeEvaluations {
                 crate::sandbox::retained_observations_in(tx.client(), evaluator.get(0)).await?,
             );
         }
+        let marks = union(&[marks], session.environment())?;
         execution::invocation_permission(
             &Authority::current(tx, session).await?.identity,
             row.get("resource"),
@@ -583,17 +584,6 @@ impl NativeEvaluations {
                 .map(|label| label.marking.clone())
                 .collect::<Vec<_>>(),
         )?;
-        let children=tx.query("SELECT agent_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND agent_execution IS NOT NULL ORDER BY case_id,repeat LIMIT 1001",&[&row.get::<_,Uuid>("id")]).await?;
-        ensure!(children.len() <= 1000, "EVALUATION_CASE_LIMIT");
-        for child in children {
-            marks = union(
-                &[
-                    marks,
-                    self.agents.retained_in(tx, session, child.get(0)).await?,
-                ],
-                session.environment(),
-            )?;
-        }
         Ok(marks)
     }
     pub async fn invoke(
@@ -634,7 +624,10 @@ impl NativeEvaluations {
         let state = Authority::current(&*tx, session).await?;
         let limits=tx.query_opt("SELECT maximum_cases,maximum_repeats,maximum_parallel FROM moria.runtime_evaluation_environments WHERE environment=$1 AND application=$2 AND enabled FOR SHARE",&[&session.environment(),&session.application()]).await?.ok_or_else(||anyhow::anyhow!("EVALUATION_ENVIRONMENT_REQUIRED"))?;
         if let Some(row)=tx.query_opt("SELECT id FROM moria.runtime_executions WHERE environment=$1 AND resource=$2 AND principal=$3 AND application=$4 AND request_key=$5",&[&session.environment(),&resource,&session.principal(),&session.application(),&key]).await?{
-            let header=Self::header(tx.client(),session,row.get(0)).await?;let marks=self.retained(&tx,session,&header).await?;let result=Self::public(tx.client(),&header,marks).await?;tx.commit().await?;admission.release().await?;return Ok(result);
+            let id = row.get(0);
+            tx.commit().await?;
+            admission.release().await?;
+            return self.get(session, id).await;
         }
         let (entry, release, definition, source_marks) =
             source(tx.client(), session, resource).await?;
@@ -1037,14 +1030,7 @@ impl NativeEvaluations {
             Cancellation::default(),
         )
         .await?;
-        let table = loaded.snapshot.table().await?;
-        let scan = table
-            .into_table()
-            .scan()
-            .snapshot_id(loaded.pin.snapshot.parse()?)
-            .select_all()
-            .build()?;
-        let mut batches = scan.to_arrow().await?;
+        let mut batches = loaded.snapshot.scan(1000).await?;
         let mut cases = Vec::new();
         let mut ids = BTreeSet::new();
         while let Some(batch) = batches.try_next().await? {
@@ -1173,14 +1159,10 @@ impl NativeEvaluations {
     }
     async fn case_once(&self, lease: &Lease, host: Uuid) -> Result<Value> {
         let session = self.live(lease, host).await?;
-        let agent = self
+        let agent_id = self
             .agents
             .invoke_evaluation_case(&session, lease.execution)
             .await?;
-        let agent_id: Uuid = agent["id"]
-            .as_str()
-            .ok_or_else(|| anyhow::anyhow!("EVALUATION_AGENT_INVALID"))?
-            .parse()?;
         {
             let mut client = self.db.get().await?;
             let tx = client.transaction().await?;
@@ -1318,21 +1300,6 @@ impl NativeEvaluations {
     async fn publish_control(&self, lease: &Lease, host: Uuid) -> Result<()> {
         let session = self.live(lease, host).await?;
         let root:Uuid=self.db.get().await?.query_one("SELECT COALESCE((SELECT evaluation FROM moria.runtime_evaluation_cases WHERE execution=$1),$1)",&[&lease.execution]).await?.get(0);
-        if root == lease.execution {
-            loop {
-                let mut client = self.db.get().await?;
-                let tx = client.transaction().await?;
-                self.live_in(tx.client(), lease, host).await?;
-                tx.execute("UPDATE moria.runtime_evaluation_cases c SET outcome='error',error='CASE_WORKER_LOST',finished_at=clock_timestamp() FROM moria.runtime_executions e WHERE c.evaluation=$1 AND e.id=c.execution AND e.status IN ('failed','cancelled') AND c.outcome IN ('pending','running')",&[&root]).await?;
-                let pending:i64=tx.query_one("SELECT count(*) FROM moria.runtime_evaluation_cases WHERE evaluation=$1 AND outcome IN ('pending','running')",&[&root]).await?.get(0);
-                tx.commit().await?;
-                if pending == 0 {
-                    break;
-                }
-                drop(client);
-                tokio::time::sleep(Duration::from_millis(100)).await;
-            }
-        }
         let mut admission = Admission::begin(&self.db, session.environment(), false, None).await?;
         let tx = admission.client.as_mut().unwrap().transaction().await?;
         self.live_in(tx.client(), lease, host).await?;
@@ -1356,6 +1323,7 @@ impl NativeEvaluations {
         self.live_in(tx.client(), lease, host).await?;
         let completion = if root == lease.execution {
             ensure!(header.get::<_, bool>("loaded"), "EVALUATION_NOT_READY");
+            tx.execute("UPDATE moria.runtime_evaluation_cases c SET outcome='error',error='CASE_WORKER_LOST',finished_at=clock_timestamp() FROM moria.runtime_executions e WHERE c.evaluation=$1 AND e.id=c.execution AND e.status IN ('failed','cancelled') AND c.outcome IN ('pending','running')",&[&root]).await?;
             let counts=tx.query_one("SELECT count(*)::text,count(*) FILTER(WHERE outcome='pass')::text,count(*) FILTER(WHERE outcome='fail')::text,count(*) FILTER(WHERE outcome='error')::text,avg(score)::float8,stddev_samp(score)::float8,count(*) FILTER(WHERE outcome IN ('pending','running')) FROM moria.runtime_evaluation_cases WHERE evaluation=$1",&[&root]).await?;
             ensure!(counts.get::<_, i64>(6) == 0, "EVALUATION_NOT_READY");
             let summary = json!({"total":counts.get::<_,String>(0),"passed":counts.get::<_,String>(1),"failed":counts.get::<_,String>(2),"errors":counts.get::<_,String>(3),"meanScore":counts.get::<_,Option<f64>>(4),"scoreStandardDeviation":counts.get::<_,Option<f64>>(5)});

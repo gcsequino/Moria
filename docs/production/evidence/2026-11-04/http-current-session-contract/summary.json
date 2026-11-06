@@ -1,0 +1,20 @@
+{
+  "red": {
+    "tests": 10,
+    "pass": 0,
+    "fail": 10,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 2846.928199
+  },
+  "green": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 10469.078516
+  }
+}

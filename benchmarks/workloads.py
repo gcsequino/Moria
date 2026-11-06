@@ -5,7 +5,7 @@ import json
 import math
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
 
 OPERATIONS = (
     "detail",
@@ -47,14 +47,27 @@ TEXT = {"type": "string", "minLength": 1}
 SCHEMA = _object(
     {
         "contractVersion": _constant("0.2"),
-        "status": _constant("proposed-calibration-not-certified"),
+        "status": {
+            "enum": [
+                "proposed-calibration-not-certified",
+                "implementation-targets-not-certified",
+            ]
+        },
         "referenceWorkload": TEXT,
-        "approval": _object(
-            {
-                "numericTargetsApproved": _constant(False),
-                "productionClaimsAllowed": _constant(False),
-            }
-        ),
+        "approval": {
+            **_object(
+                {
+                    "numericTargetsApproved": {"type": "boolean"},
+                    "approvalScope": _constant("implementation-targets"),
+                    "approvedOn": {"type": "string", "format": "date"},
+                    "productionClaimsAllowed": _constant(False),
+                }
+            ),
+            "required": ["numericTargetsApproved", "productionClaimsAllowed"],
+            "if": {"properties": {"numericTargetsApproved": _constant(True)}},
+            "then": {"required": ["approvalScope", "approvedOn"]},
+            "else": {"properties": {"approvalScope": False, "approvedOn": False}},
+        },
         "units": _object(
             {
                 "externalRates": _constant("scheduled logical API arrivals per second"),
@@ -253,7 +266,7 @@ def _finite_errors(value, path="$"):
 def validate_calibration(data):
     """Return a detached validated JSON object, or raise CalibrationError. Never mutate input."""
     errors = _finite_errors(data)
-    for error in Draft202012Validator(SCHEMA).iter_errors(data):
+    for error in Draft202012Validator(SCHEMA, format_checker=FormatChecker()).iter_errors(data):
         path = "$" + "".join(
             f"[{part}]" if isinstance(part, int) else f".{part}" for part in error.absolute_path
         )
@@ -339,7 +352,7 @@ def check_capabilities(data, operations, *, scope):
         },
         "fullProfileOperationCoverage": not missing,
         "fullProfileCertified": False,
-        "numericTargetsApproved": False,
+        "numericTargetsApproved": profile["approval"]["numericTargetsApproved"],
         "productionClaimsAllowed": False,
     }
 
@@ -351,6 +364,11 @@ def _cross_field_errors(data):
         if not condition:
             errors.append(message)
 
+    require(
+        data["approval"]["numericTargetsApproved"]
+        == (data["status"] == "implementation-targets-not-certified"),
+        "$.approval.numericTargetsApproved: approval must match $.status",
+    )
     require(sum(data["mixPercent"].values()) == 100, "$.mixPercent: operation mix must total 100")
     profiles = data["profiles"]
     require(

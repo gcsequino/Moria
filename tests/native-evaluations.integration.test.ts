@@ -18,6 +18,11 @@ import { evaluationsClient } from '../packages/platform/src/evaluations.js';
 import { createTransport } from '../packages/platform/src/transport.js';
 import { transactionCommitProxy } from './fixtures/runtime/postgres-proxy.js';
 import { fingerprint } from '../packages/compiler/src/index.js';
+import { evaluationResumeFixture } from './fixtures/native-evaluations/resume.js';
+import { evaluationPurposeFixture } from './fixtures/native-evaluations/purpose.js';
+import { childProgressLockFixture } from './fixtures/native-evaluations/child-progress-lock.js';
+import { evaluationProgressRetryFixture } from './fixtures/native-evaluations/progress-retry.js';
+import { evaluationReplaySnapshot } from './fixtures/native-evaluations/replay-snapshot.js';
 
 const execute = promisify(execFile);
 async function until(check: () => Promise<boolean>, timeout = 90000) {
@@ -569,6 +574,15 @@ test(
       void done.catch(() => {});
       return { child, done, output: () => output, error: () => error };
     };
+    const stopWorker = async (worker: ReturnType<typeof start>, event: string) => {
+      await until(async () => {
+        assert.equal(worker.child.exitCode, null, worker.error());
+        assert.equal(worker.child.signalCode, null, worker.error());
+        return worker.output().includes(`"event":"${event}"`);
+      }, 10000);
+      worker.child.kill('SIGTERM');
+      await worker.done;
+    };
     const server = start(['serve'], undefined, { MORIA_NATIVE_LISTEN: '127.0.0.1:0' });
     let api = '';
     await until(async () => {
@@ -1111,8 +1125,7 @@ test(
       'a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL',
       async () => {
         assert.ok(evaluationWorker);
-        evaluationWorker.child.kill('SIGTERM');
-        await evaluationWorker.done;
+        await stopWorker(evaluationWorker, 'evaluation-worker');
         const proxy = await transactionCommitProxy(
           Number(db.pool.options.port),
           'INSERT INTO moria.runtime_evaluation_receipts',
@@ -1121,27 +1134,47 @@ test(
         const url = new URL(connection);
         url.port = String(proxy.port);
         const accepted = await native('invoke', { resource: suite, key: 'run-lost-commit' });
+        const replaySession = await sessions.mint(
+          { environment, principal, application },
+          'fixture',
+        );
+        const snapshotGate = await evaluationReplaySnapshot(
+          db.pool,
+          accepted.id,
+          suite,
+          createHash('sha256').update(replaySession.token).digest('hex'),
+        );
         const worker = start(['evaluations', 'worker'], undefined, {
           EVALUATION_DATABASE: url.toString(),
         });
         try {
-          await Promise.race([
+          const replay = snapshotGate.replay(
+            () =>
+              native('invoke', { resource: suite, key: 'run-lost-commit' }, replaySession.token),
             proxy.committed,
+            AbortSignal.timeout(90000),
+          );
+          const duringCommit = await Promise.race([
+            replay,
             worker.done.then(() => assert.fail('Worker stopped before root COMMIT')),
-            delay(90000).then(async () =>
-              assert.fail(
-                JSON.stringify({
-                  message: 'Actual root COMMIT was not reached',
-                  checkpoints: proxy.checkpoints,
-                  worker: worker.error(),
-                  agentWorker: agentWorker?.error(),
-                  agentExit: agentWorker?.child.exitCode,
-                  result: await native('get', { id: accepted.id }),
-                  diagnostics: await diagnostics(accepted.id),
-                }),
-              ),
+          ]).catch(async (error: unknown) =>
+            assert.fail(
+              JSON.stringify({
+                message: error instanceof Error ? error.message : String(error),
+                checkpoints: proxy.checkpoints,
+                worker: worker.error(),
+                agentWorker: agentWorker?.error(),
+                agentExit: agentWorker?.child.exitCode,
+                result: await native('get', { id: accepted.id }).catch((error: unknown) => ({
+                  error: error instanceof Error ? error.message : String(error),
+                })),
+                diagnostics: await diagnostics(accepted.id),
+              }),
             ),
-          ]);
+          );
+          assert.equal(duringCommit.id, accepted.id);
+          assert.equal(duringCommit.status, 'running');
+          assert.equal(duringCommit.summary, null);
           assert.equal(
             (
               await db.pool.query(
@@ -1196,7 +1229,11 @@ test(
           );
         } finally {
           worker.child.kill('SIGKILL');
-          await proxy.close();
+          try {
+            await proxy.close();
+          } finally {
+            await snapshotGate.close();
+          }
           evaluationWorker = start(['evaluations', 'worker']);
         }
       },
@@ -1260,6 +1297,119 @@ test(
         }
       },
     );
+    await t.test('ready case publication takes its suite slot before new case work', async () => {
+      await db.pool.query(
+        'INSERT INTO moria.runtime_evaluation_environments(environment,application,maximum_cases,maximum_repeats,maximum_parallel) VALUES($1,$2,12,4,2) ON CONFLICT(environment) DO NOTHING',
+        [environment, application],
+      );
+      const ownedWorkers = [
+        agentWorker ? null : start(['agents', 'worker']),
+        functionWorker ? null : start(['functions', 'worker']),
+      ];
+      const previous = evaluationWorker;
+      if (previous?.child.exitCode === null) {
+        await stopWorker(previous, 'evaluation-worker');
+      }
+      let id: string | undefined;
+      try {
+        const accepted = await native('invoke', {
+          resource: suite,
+          key: 'case-publication-priority',
+        });
+        id = accepted.id;
+        assert.equal(accepted.status, 'queued');
+        const once = (operation = 'once') =>
+          start(['evaluations', operation]).done.then(JSON.parse);
+        assert.deepEqual(await once(), { worked: true });
+        const caseRows = async () =>
+          (
+            await db.pool.query(
+              'SELECT c.execution,c.evaluator_execution,e.status,t.status AS task FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions e ON e.id=c.execution JOIN moria.runtime_execution_tasks t ON t.execution=e.id WHERE c.evaluation=$1 ORDER BY e.created_at,e.id',
+              [id],
+            )
+          ).rows;
+        const control = start(['evaluations', 'once']);
+        await until(async () => {
+          assert.equal(control.child.exitCode, null, control.error());
+          return Boolean((await caseRows())[0]?.evaluator_execution);
+        });
+        assert.deepEqual(await once('evaluator-once'), { worked: true });
+        assert.deepEqual(await once('evaluator-once'), { worked: true });
+        assert.deepEqual(JSON.parse(await control.done), { worked: true });
+        const [sealed, pending] = await caseRows();
+        assert.deepEqual(
+          [sealed.status, sealed.task, pending.status, pending.task],
+          ['running', 'sealed', 'queued', 'pending'],
+        );
+        const targetedClaim = () =>
+          start(
+            ['execution', 'worker-claim'],
+            { domains: ['evaluation'], target: pending.execution },
+            {
+              MORIA_EXECUTION_WORKER_OWNER: owner,
+              MORIA_EXECUTION_HOST_ID: host,
+            },
+          ).done.then(JSON.parse);
+        assert.equal(
+          await targetedClaim(),
+          null,
+          'A real pending claim must defer to the sealed case',
+        );
+
+        const checkAdmission = async (client: typeof db.pool | import('pg').PoolClient) =>
+          (
+            await client.query('SELECT moria.runtime_evaluation_case_admission($1) AS accepted', [
+              pending.execution,
+            ])
+          ).rows[0].accepted;
+        const probe = await db.pool.connect();
+        try {
+          await probe.query('BEGIN');
+          await probe.query('SELECT 1 FROM moria.runtime_executions WHERE id=$1 FOR UPDATE', [
+            sealed.execution,
+          ]);
+          assert.equal(
+            await checkAdmission(db.pool),
+            true,
+            'A currently locked sibling cannot claim the freed slot',
+          );
+          await probe.query('ROLLBACK');
+          await probe.query('BEGIN');
+          await probe.query(
+            'INSERT INTO moria.runtime_execution_cancellations(execution,root,requested_by) VALUES($1,$1,$2)',
+            [sealed.execution, { environment, principal, application }],
+          );
+          assert.equal(
+            await checkAdmission(probe),
+            true,
+            'A cancelled sibling cannot block pending work',
+          );
+        } finally {
+          await probe.query('ROLLBACK');
+          probe.release();
+        }
+
+        assert.deepEqual(await once(), { worked: true });
+        const afterPublication = await caseRows();
+        assert.equal(afterPublication[0].status, 'succeeded');
+        assert.equal(afterPublication[1].task, 'pending');
+        const next = await targetedClaim();
+        assert.equal(next.lease.execution, pending.execution);
+      } finally {
+        try {
+          if (id) assert.deepEqual(await native('cancel', { id }), { id, cancelRequested: true });
+        } finally {
+          if (previous) evaluationWorker = start(['evaluations', 'worker']);
+          await Promise.all(
+            ownedWorkers.map(async (worker, index) => {
+              if (worker?.child.exitCode === null) {
+                await stopWorker(worker, index === 0 ? 'agent-worker' : 'function-worker');
+              }
+            }),
+          );
+        }
+      }
+    });
     await t.test(
       'a Source automation dispatches a service evaluation with exact case-bound Agent and evaluator purposes',
       async () => {
@@ -1300,7 +1450,11 @@ test(
           MORIA_AUTOMATION_WORKER_OWNER: controlOwner,
           MORIA_AUTOMATION_HOST_ID: host,
         };
+        let resume: Awaited<ReturnType<typeof evaluationResumeFixture>> | undefined;
+        const progressRetries = await evaluationProgressRetryFixture(db.pool, agent);
+        let progressLock: Awaited<ReturnType<typeof childProgressLockFixture>> | undefined;
         try {
+          progressLock = await childProgressLockFixture(db.pool, tool);
           const configuration = {
             serviceAuthority: service,
             suiteServiceRevision: 'suite-v1',
@@ -1363,12 +1517,20 @@ test(
             ).rows[0].status,
             'succeeded',
           );
-          const result = await terminal(firing.child);
+          progressRetries.arm(firing.child);
+          resume = await evaluationResumeFixture(db.pool, firing.child, api, publicToken);
+          const [result] = await Promise.all([
+            terminal(firing.child),
+            resume.done,
+            progressLock.done,
+            progressRetries.done,
+          ]);
           assert.equal(
             result.status,
             'completed',
             JSON.stringify({ result, ...(await diagnostics(firing.child)) }),
           );
+          await evaluationPurposeFixture(db.pool, firing.child);
           const cases = (
             await db.pool.query(
               'SELECT execution,agent_execution,evaluator_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1',
@@ -1475,6 +1637,9 @@ test(
           );
           await assert.rejects(native('get', { id: firing.child }), /EVALUATION_SERVICE_REVOKED/);
         } finally {
+          await progressLock?.close();
+          await progressRetries.close();
+          await resume?.close();
           await db.pool.query(
             'UPDATE moria.runtime_source_automation_schedules SET enabled=false WHERE resource=$1',
             [automation],
@@ -1484,6 +1649,57 @@ test(
         }
       },
     );
+    await t.test('unready roots leave two control workers available for actual cases', async () => {
+      await db.pool.query(
+        'INSERT INTO moria.runtime_evaluation_environments(environment,application,maximum_cases,maximum_repeats,maximum_parallel) VALUES($1,$2,12,4,2) ON CONFLICT(environment) DO NOTHING',
+        [environment, application],
+      );
+      const previousWorker = evaluationWorker;
+      if (previousWorker?.child.exitCode === null) {
+        await stopWorker(previousWorker, 'evaluation-worker');
+      }
+      const ids: string[] = [];
+      let worker: ReturnType<typeof start> | undefined;
+      try {
+        for (const key of ['concurrent-first', 'concurrent-second']) {
+          const accepted = await native('invoke', { resource: suite, key });
+          assert.equal(accepted.status, 'queued');
+          ids.push(accepted.id);
+        }
+        const activeWorker = start(['evaluations', 'worker'], undefined, {
+          MORIA_EVALUATION_CONCURRENCY: '2',
+        });
+        worker = activeWorker;
+        await until(async () => {
+          assert.equal(activeWorker.child.exitCode, null, activeWorker.error());
+          const { rows } = await db.pool.query(
+            "SELECT root.status,fixture.status AS fixture_status,EXISTS(SELECT 1 FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions child ON child.id=c.execution WHERE c.evaluation=root.id AND c.outcome IN ('pending','running') AND child.status IN ('queued','running','preparing')) AS has_unfinished_cases,EXISTS(SELECT 1 FROM moria.runtime_evaluation_cases c JOIN moria.runtime_job_delegations d ON d.execution=c.agent_execution AND d.parent_execution=c.execution WHERE c.evaluation=root.id) AS accepted_case_agent FROM moria.runtime_executions root JOIN moria.runtime_execution_tasks fixture ON fixture.execution=root.id WHERE root.id=ANY($1::uuid[])",
+            [ids],
+          );
+          assert.equal(rows.length, 2);
+          for (const row of rows) {
+            if (row.has_unfinished_cases) {
+              assert.equal(row.status, 'running', JSON.stringify(rows));
+            }
+          }
+          return (
+            rows.every((row) => row.fixture_status === 'sealed') &&
+            rows.some((row) => row.accepted_case_agent)
+          );
+        });
+      } finally {
+        try {
+          for (const id of ids) {
+            assert.deepEqual(await native('cancel', { id }), { id, cancelRequested: true });
+          }
+        } finally {
+          if (worker?.child.exitCode === null) {
+            await stopWorker(worker, 'evaluation-worker');
+          }
+          if (previousWorker) evaluationWorker = start(['evaluations', 'worker']);
+        }
+      }
+    });
     await t.test(
       'current clearance and registration protect retained case scores, summaries and events',
       async () => {

@@ -1,0 +1,29 @@
+{"controller": "moria-quality-78cc4261-4092-4899-b859-9d8cc57f6ab8", "image": "sha256:307b46beec546e5d8d4d3bfa9d2ee86f1d57748464d429741f51d42e3d5673ff", "scratchPools": ["/tmp/moria-engine-scratch-fa42ddfb-3fbf-4631-8934-4446c38caedd", "/tmp/moria-engine-scratch-e1831ab5-bc0f-430f-9bbe-524331c362a0"], "temporary": "/tmp/moria-quality-a5znucoe"}
+$ node scripts/test-files.mjs integration tests/indexing-rust.integration.test.ts
+Running 1 integration test files.
+▶ Rust indexing publishes complete native Iceberg partitions through the shared authority
+  ✔ source publication rollback leaves neither a new head nor indexing intent (19.551016ms)
+  ✔ replacement fences a paused Rust executor without a second upload (1249.740756ms)
+  ✔ a newer accepted snapshot supersedes an older prepared attempt (1454.171658ms)
+  ✔ actual COMMIT survives killing Rust before its acknowledgment arrives (8140.140031ms)
+  ✔ duplicate UIDs across different Iceberg files prevent activation (1160.590804ms)
+  ✔ operator retry reuses pinned input after a real file access failure (894.936827ms)
+  ✔ cancellation prevents activation and cannot revoke a committed success (259.312193ms)
+  ✔ corrupt binary task plans fail before any object generation is exposed (357.467198ms)
+  ✔ loss of the lifetime schema lease stops admission while checked-out connections fence migration (373.176905ms)
+  ✔ revocation before release preserves the previous object head (371.719052ms)
+  ✔ generic imports persist source/served status and recover in a new workspace instance (5612.658823ms)
+  ▶ revoked preclaim work cannot poison an independent build drain
+    ✔ plan (2584.85922ms)
+    ✔ task (2835.437631ms)
+    ✔ advance (3205.994059ms)
+  ✔ revoked preclaim work cannot poison an independent build drain (8633.352917ms)
+✔ Rust indexing publishes complete native Iceberg partitions through the shared authority (33099.953267ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33825.924436

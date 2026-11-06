@@ -612,6 +612,7 @@ test(
         const blocker = await db.pool.connect();
         await blocker.query('BEGIN');
         await blocker.query('LOCK moria.instance_state IN ACCESS EXCLUSIVE MODE');
+        const blockerPid = (await blocker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
         const running = start('worker');
         t.after(() => running.process.kill('SIGKILL'));
         t.after(async () => {
@@ -622,12 +623,23 @@ test(
         for (let i = 0; i < 200 && !checkedOut; i++) {
           checkedOut = (
             await db.pool.query(
-              "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1 AND wait_event_type='Lock' AND query LIKE 'SELECT moria.indexing_claim_check%') AS waiting",
-              [role],
+              "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1 AND wait_event_type='Lock' AND $2=ANY(pg_blocking_pids(pid))) AS waiting",
+              [role, blockerPid],
             )
           ).rows[0].waiting;
           if (!checkedOut) await delay(10);
         }
+        if (!checkedOut)
+          t.diagnostic(
+            JSON.stringify(
+              (
+                await db.pool.query(
+                  "SELECT pid,state,wait_event_type,query,pg_blocking_pids(pid) AS blockers FROM pg_stat_activity WHERE application_name='moria-indexing' AND usename=$1",
+                  [role],
+                )
+              ).rows,
+            ),
+          );
         assert.equal(
           checkedOut,
           true,
@@ -854,5 +866,88 @@ test(
         );
       },
     );
+
+    await t.test('revoked preclaim work cannot poison an independent build drain', async (t) => {
+      const workspace = await createWorkspace(db.catalog, join(db.root, 'generic'), {
+        distributedIndexing: true,
+      });
+      for (const phase of ['plan', 'task', 'advance'] as const)
+        await t.test(phase, async () => {
+          await authority.setGrants(environment, 'fixture', 'pipeline', 'indexing', operations);
+          await indexer.registerDistributed(session, { targetId, warehouse, partitions: 4 });
+          const rejected = await publish();
+          if (phase !== 'plan') await start('plan').done;
+          if (phase === 'advance') {
+            let pending = 0;
+            for (let attempt = 0; attempt < 16; attempt++) {
+              pending = Number(
+                (
+                  await db.pool.query(
+                    "SELECT count(*) FROM moria.indexing_tasks WHERE build=$1 AND status<>'sealed'",
+                    [rejected.id],
+                  )
+                ).rows[0].count,
+              );
+              if (!pending) break;
+              await start('task').done;
+            }
+            assert.equal(pending, 0, 'all actual tasks must seal before coordinator admission');
+          }
+          const head = (
+            await db.pool.query(
+              'SELECT max(revision)::text AS revision FROM moria.source_generations WHERE environment=$1',
+              [environment],
+            )
+          ).rows[0].revision;
+          await authority.setGrants(environment, 'fixture', 'pipeline', 'indexing', [
+            'source:read',
+            'objects:read',
+          ]);
+          const accepted = await workspace.ingest('operator', [
+            {
+              id: 'independent-' + phase,
+              title: 'Independent ' + phase,
+              region: 'West',
+              status: 'Open',
+              notes: 'Valid work behind a revoked candidate',
+            },
+          ]);
+          assert.equal(accepted.indexing, 'pending');
+          await start('drain').done;
+          assert.deepEqual(
+            (
+              await db.pool.query('SELECT status,error FROM moria.indexing_builds WHERE id=$1', [
+                rejected.id,
+              ])
+            ).rows[0],
+            { status: 'failed', error: 'AUTHORIZATION_CHANGED' },
+          );
+          assert.equal(
+            (
+              await db.pool.query(
+                'SELECT max(revision)::text AS revision FROM moria.source_generations WHERE environment=$1',
+                [environment],
+              )
+            ).rows[0].revision,
+            head,
+          );
+          assert.equal(
+            (
+              await db.pool.query('SELECT count(*) FROM moria.source_generations WHERE stage=$1', [
+                rejected.id,
+              ])
+            ).rows[0].count,
+            '0',
+          );
+          const status = await workspace.status();
+          assert.equal(status.indexingStatus, 'active');
+          assert.equal(status.servedSourceRevision, accepted.sourceRevision);
+          const page = await workspace.service.query(
+            { environment: 'local-workspace', principal: 'operator', application: 'local-ui' },
+            { pageSize: 10 },
+          );
+          assert.equal(page.objects[0].title, 'Independent ' + phase);
+        });
+    });
   },
 );

@@ -1,0 +1,187 @@
+{
+  "error": "{\"worker\":\"{\\\"error\\\":\\\"INDEXING_FAILED\\\"}\\n\",\"states\":[{\"id\":\"15c00163-0cb5-4cd9-9aeb-a07f6e04e782\",\"domain\":\"evaluation\",\"status\":\"preparing\",\"error\":null},{\"id\":\"2db17321-5d69-4511-8ce6-2de37fb15c44\",\"domain\":\"evaluation\",\"status\":\"failed\",\"error\":\"EVALUATION_FAILED\"},{\"id\":\"dda3a486-4373-40b5-9a7c-77d669726f6a\",\"domain\":\"evaluation\",\"status\":\"running\",\"error\":null},{\"id\":\"dc723a8f-9200-46eb-8fdd-f0722d10ae47\",\"domain\":\"evaluation\",\"status\":\"running\",\"error\":null},{\"id\":\"1211f6ae-0aed-41b5-a99e-c8bc5bb120de\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"f018ab4c-1b48-440e-9145-3d3e60d0d63e\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"1842ce93-88f4-49af-8940-480ed0fa7f8c\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"62ef0150-445e-4c55-92ae-0d7ee3f4d22d\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"1a89a69a-553f-4e61-b9a0-2520033a496e\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"f4106c86-fc45-49ab-8a39-46c590af203f\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"331eab16-34b8-4d03-9a02-882085597154\",\"domain\":\"evaluation\",\"status\":\"queued\",\"error\":null},{\"id\":\"0b8e3207-6982-46b7-9c37-b86e708233c5\",\"domain\":\"agent\",\"status\":\"failed\",\"error\":\"FUNCTION_FAILED\"},{\"id\":\"a6ebadf7-7c47-40b8-a933-3ed43f208f4d\",\"domain\":\"agent\",\"status\":\"failed\",\"error\":\"FUNCTION_FAILED\"},{\"id\":\"162044f8-4550-4fdd-b4d4-6b3ca8d41fdc\",\"domain\":\"agent\",\"status\":\"preparing\",\"error\":null},{\"id\":\"28dd3594-f4cf-45b2-985e-fd0599184108\",\"domain\":\"function\",\"status\":\"failed\",\"error\":\"DEADLINE_EXCEEDED\"}],\"failures\":[{\"id\":\"2db17321-5d69-4511-8ce6-2de37fb15c44\",\"domain\":\"evaluation\",\"created_at\":\"2026-11-05 03:24:49.453487+00\",\"kind\":\"failed\",\"payload\":{\"code\":\"EVALUATION_FAILED\",\"cause\":\"FUNCTION_OBSERVATION_INCOMPLETE\",\"sqlstate\":null}},{\"id\":\"0b8e3207-6982-46b7-9c37-b86e708233c5\",\"domain\":\"agent\",\"created_at\":\"2026-11-05 03:24:49.596706+00\",\"kind\":\"failed\",\"payload\":{\"error\":\"FUNCTION_FAILED\"}},{\"id\":\"28dd3594-f4cf-45b2-985e-fd0599184108\",\"domain\":\"function\",\"created_at\":\"2026-11-05 03:25:21.331536+00\",\"kind\":\"failed\",\"payload\":{\"error\":\"DEADLINE_EXCEEDED\"}},{\"id\":\"a6ebadf7-7c47-40b8-a933-3ed43f208f4d\",\"domain\":\"agent\",\"created_at\":\"2026-11-05 03:25:21.46368+00\",\"kind\":\"failed\",\"payload\":{\"error\":\"FUNCTION_FAILED\"}}],\"agentModelCalls\":[],\"gatewayCalls\":[{\"state\":\"succeeded\",\"error\":null}],\"functionLogFailurePhases\":[\"service_evaluation_sandbox_failure domain=agent phase=selected code=FUNCTION_FAILED sqlstate=P0001 guard=JOB_LEASE_LOST frames=PL/pgSQL function runtime_job_session_origin(text) line 19 at RAISE; PL/pgSQL function native_serving_session(text) line 10 at assignment; PL/pgSQL function runtime_evaluation_service_metadata(text,uuid,text,text) line 12 at assignment; PL/pgSQL function runtime_evaluation_service_binding_guard(uuid) line 6 at assignment; PL/pgSQL function runtime_binding_authority(uuid,bigint,bigint,uuid) line 22 at PERFORM; PL/pgSQL function runtime_execution_check(uuid) line 27 at PERFORM; PL/pgSQL function moria.runtime_task_check(uuid,uuid,bigint) line 6 at PERFORM\",\"service_evaluation_sandbox_failure domain=agent phase=final code=FUNCTION_FAILED sqlstate=P0001 guard=JOB_LEASE_LOST frames=PL/pgSQL function runtime_job_session_origin(text) line 19 at RAISE; PL/pgSQL function native_serving_session(text) line 10 at assignment; PL/pgSQL function runtime_evaluation_service_metadata(text,uuid,text,text) line 12 at assignment; PL/pgSQL function runtime_evaluation_service_binding_guard(uuid) line 6 at assignment; PL/pgSQL function runtime_binding_authority(uuid,bigint,bigint,uuid) line 22 at PERFORM; PL/pgSQL function runtime_execution_check(uuid) line 27 at PERFORM; PL/pgSQL function moria.runtime_task_check(uuid,uuid,bigint) line 6 at PERFORM\",\"service_evaluation_sandbox_failure domain=agent phase=selected code=FUNCTION_FAILED sqlstate=55P03 guard=NON_DOMAIN_ERROR frames=PL/pgSQL function runtime_job_session_origin(text) line 11 at SQL statement; PL/pgSQL function native_serving_session(text) line 10 at assignment\",\"service_evaluation_sandbox_failure domain=agent phase=final code=FUNCTION_FAILED sqlstate=55P03 guard=NON_DOMAIN_ERROR frames=PL/pgSQL function runtime_job_session_origin(text) line 11 at SQL statement; PL/pgSQL function native_serving_session(text) line 10 at assignment\",\"service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=agent_progress code=CONCURRENT_MODIFICATION sqlstate=40001 guard=NON_DOMAIN_ERROR\",\"service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=case_retry_0 code=CONCURRENT_MODIFICATION sqlstate=40001 guard=NON_DOMAIN_ERROR\",\"service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=invoke_agent code=FUNCTION_OBSERVATION_INCOMPLETE sqlstate=NONE guard=FUNCTION_OBSERVATION_INCOMPLETE\",\"service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=case_retry_1 code=FUNCTION_OBSERVATION_INCOMPLETE sqlstate=NONE guard=FUNCTION_OBSERVATION_INCOMPLETE\"],\"sandboxObservations\":[{\"id\":\"0b8e3207-6982-46b7-9c37-b86e708233c5\",\"domain\":\"agent\",\"status\":\"failed\",\"case_id\":\"pass\",\"repeat\":0,\"state\":\"failed\",\"error\":\"FUNCTION_FAILED\",\"observation_pending\":\"1\",\"observation_blocked\":true},{\"id\":\"a6ebadf7-7c47-40b8-a933-3ed43f208f4d\",\"domain\":\"agent\",\"status\":\"failed\",\"case_id\":\"pass\",\"repeat\":1,\"state\":\"failed\",\"error\":\"FUNCTION_FAILED\",\"observation_pending\":\"1\",\"observation_blocked\":true},{\"id\":\"162044f8-4550-4fdd-b4d4-6b3ca8d41fdc\",\"domain\":\"agent\",\"status\":\"preparing\",\"case_id\":\"fail\",\"repeat\":0,\"state\":\"sealed\",\"error\":null,\"observation_pending\":null,\"observation_blocked\":false}]}",
+  "states": [
+    {
+      "id": "15c00163-0cb5-4cd9-9aeb-a07f6e04e782",
+      "domain": "evaluation",
+      "status": "preparing",
+      "error": null
+    },
+    {
+      "id": "2db17321-5d69-4511-8ce6-2de37fb15c44",
+      "domain": "evaluation",
+      "status": "failed",
+      "error": "EVALUATION_FAILED"
+    },
+    {
+      "id": "dda3a486-4373-40b5-9a7c-77d669726f6a",
+      "domain": "evaluation",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "dc723a8f-9200-46eb-8fdd-f0722d10ae47",
+      "domain": "evaluation",
+      "status": "running",
+      "error": null
+    },
+    {
+      "id": "1211f6ae-0aed-41b5-a99e-c8bc5bb120de",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "f018ab4c-1b48-440e-9145-3d3e60d0d63e",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "1842ce93-88f4-49af-8940-480ed0fa7f8c",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "62ef0150-445e-4c55-92ae-0d7ee3f4d22d",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "1a89a69a-553f-4e61-b9a0-2520033a496e",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "f4106c86-fc45-49ab-8a39-46c590af203f",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "331eab16-34b8-4d03-9a02-882085597154",
+      "domain": "evaluation",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "id": "0b8e3207-6982-46b7-9c37-b86e708233c5",
+      "domain": "agent",
+      "status": "failed",
+      "error": "FUNCTION_FAILED"
+    },
+    {
+      "id": "a6ebadf7-7c47-40b8-a933-3ed43f208f4d",
+      "domain": "agent",
+      "status": "failed",
+      "error": "FUNCTION_FAILED"
+    },
+    {
+      "id": "162044f8-4550-4fdd-b4d4-6b3ca8d41fdc",
+      "domain": "agent",
+      "status": "preparing",
+      "error": null
+    },
+    {
+      "id": "28dd3594-f4cf-45b2-985e-fd0599184108",
+      "domain": "function",
+      "status": "failed",
+      "error": "DEADLINE_EXCEEDED"
+    }
+  ],
+  "failures": [
+    {
+      "id": "2db17321-5d69-4511-8ce6-2de37fb15c44",
+      "domain": "evaluation",
+      "created_at": "2026-11-05 03:24:49.453487+00",
+      "kind": "failed",
+      "payload": {
+        "code": "EVALUATION_FAILED",
+        "cause": "FUNCTION_OBSERVATION_INCOMPLETE",
+        "sqlstate": null
+      }
+    },
+    {
+      "id": "0b8e3207-6982-46b7-9c37-b86e708233c5",
+      "domain": "agent",
+      "created_at": "2026-11-05 03:24:49.596706+00",
+      "kind": "failed",
+      "payload": {
+        "error": "FUNCTION_FAILED"
+      }
+    },
+    {
+      "id": "28dd3594-f4cf-45b2-985e-fd0599184108",
+      "domain": "function",
+      "created_at": "2026-11-05 03:25:21.331536+00",
+      "kind": "failed",
+      "payload": {
+        "error": "DEADLINE_EXCEEDED"
+      }
+    },
+    {
+      "id": "a6ebadf7-7c47-40b8-a933-3ed43f208f4d",
+      "domain": "agent",
+      "created_at": "2026-11-05 03:25:21.46368+00",
+      "kind": "failed",
+      "payload": {
+        "error": "FUNCTION_FAILED"
+      }
+    }
+  ],
+  "agentModelCalls": [],
+  "gatewayCalls": [
+    {
+      "state": "succeeded",
+      "error": null
+    }
+  ],
+  "functionLogFailurePhases": [
+    "service_evaluation_sandbox_failure domain=agent phase=selected code=FUNCTION_FAILED sqlstate=P0001 guard=JOB_LEASE_LOST frames=PL/pgSQL function runtime_job_session_origin(text) line 19 at RAISE; PL/pgSQL function native_serving_session(text) line 10 at assignment; PL/pgSQL function runtime_evaluation_service_metadata(text,uuid,text,text) line 12 at assignment; PL/pgSQL function runtime_evaluation_service_binding_guard(uuid) line 6 at assignment; PL/pgSQL function runtime_binding_authority(uuid,bigint,bigint,uuid) line 22 at PERFORM; PL/pgSQL function runtime_execution_check(uuid) line 27 at PERFORM; PL/pgSQL function moria.runtime_task_check(uuid,uuid,bigint) line 6 at PERFORM",
+    "service_evaluation_sandbox_failure domain=agent phase=final code=FUNCTION_FAILED sqlstate=P0001 guard=JOB_LEASE_LOST frames=PL/pgSQL function runtime_job_session_origin(text) line 19 at RAISE; PL/pgSQL function native_serving_session(text) line 10 at assignment; PL/pgSQL function runtime_evaluation_service_metadata(text,uuid,text,text) line 12 at assignment; PL/pgSQL function runtime_evaluation_service_binding_guard(uuid) line 6 at assignment; PL/pgSQL function runtime_binding_authority(uuid,bigint,bigint,uuid) line 22 at PERFORM; PL/pgSQL function runtime_execution_check(uuid) line 27 at PERFORM; PL/pgSQL function moria.runtime_task_check(uuid,uuid,bigint) line 6 at PERFORM",
+    "service_evaluation_sandbox_failure domain=agent phase=selected code=FUNCTION_FAILED sqlstate=55P03 guard=NON_DOMAIN_ERROR frames=PL/pgSQL function runtime_job_session_origin(text) line 11 at SQL statement; PL/pgSQL function native_serving_session(text) line 10 at assignment",
+    "service_evaluation_sandbox_failure domain=agent phase=final code=FUNCTION_FAILED sqlstate=55P03 guard=NON_DOMAIN_ERROR frames=PL/pgSQL function runtime_job_session_origin(text) line 11 at SQL statement; PL/pgSQL function native_serving_session(text) line 10 at assignment",
+    "service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=agent_progress code=CONCURRENT_MODIFICATION sqlstate=40001 guard=NON_DOMAIN_ERROR",
+    "service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=case_retry_0 code=CONCURRENT_MODIFICATION sqlstate=40001 guard=NON_DOMAIN_ERROR",
+    "service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=invoke_agent code=FUNCTION_OBSERVATION_INCOMPLETE sqlstate=NONE guard=FUNCTION_OBSERVATION_INCOMPLETE",
+    "service_evaluation_retry_failure execution=2db17321-5d69-4511-8ce6-2de37fb15c44 phase=case_retry_1 code=FUNCTION_OBSERVATION_INCOMPLETE sqlstate=NONE guard=FUNCTION_OBSERVATION_INCOMPLETE"
+  ],
+  "sandboxObservations": [
+    {
+      "id": "0b8e3207-6982-46b7-9c37-b86e708233c5",
+      "domain": "agent",
+      "status": "failed",
+      "case_id": "pass",
+      "repeat": 0,
+      "state": "failed",
+      "error": "FUNCTION_FAILED",
+      "observation_pending": "1",
+      "observation_blocked": true
+    },
+    {
+      "id": "a6ebadf7-7c47-40b8-a933-3ed43f208f4d",
+      "domain": "agent",
+      "status": "failed",
+      "case_id": "pass",
+      "repeat": 1,
+      "state": "failed",
+      "error": "FUNCTION_FAILED",
+      "observation_pending": "1",
+      "observation_blocked": true
+    },
+    {
+      "id": "162044f8-4550-4fdd-b4d4-6b3ca8d41fdc",
+      "domain": "agent",
+      "status": "preparing",
+      "case_id": "fail",
+      "repeat": 0,
+      "state": "sealed",
+      "error": null,
+      "observation_pending": null,
+      "observation_blocked": false
+    }
+  ]
+}

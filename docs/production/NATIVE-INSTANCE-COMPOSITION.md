@@ -72,11 +72,12 @@ chat capabilities and embedding, and denial before independent grants.
 Its [metadata](evidence/2026-10-31/native-instance/whole-instance-model-v24-20261031T143321Z/metadata.json)
 records the immutable artifacts and command.
 
-The broader Agent/Evaluation/Search/Pipeline/Automation composition is staged
-in `tests/native-source-runtime.integration.test.ts`; it is not yet a passing
-whole-instance result. Its backend preflight must finish all enabled domains and
-current-revocation checks before browser tickets are issued. Browser acceptance
-then uses that same published instance and the shipped React bundle.
+The composed November 5 fixture completed the native local-model Agent,
+one Evaluation case, Pipeline and exact output pin, Search with real
+embeddings, Automation and current-revocation checks. It reached the browser
+handoff and timed out waiting for interactive verification. The [checkpoint](../IMPLEMENTATION.md#native-integration-and-production-goals--november-5-2026)
+records the result. [Browser and clean-host recovery](https://github.com/gcsequino/Moria/issues/84)
+remain open.
 
 Production-scale performance remains unqualified. A correct small functional
 instance, exact million-object oracle or a successful individual query plan does

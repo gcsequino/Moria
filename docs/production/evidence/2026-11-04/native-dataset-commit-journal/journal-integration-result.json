@@ -1,0 +1,21 @@
+{
+  "exitCode": 0,
+  "elapsedSeconds": 64.92111630799991,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    "moria-mor-journal-021-20261104",
+    "--label",
+    "moria.test.proof=moria-mor-journal-021-20261104",
+    "sha256:11b6179186888dbcf8826e9f73d4aaed452b81528fd6f509cba719ef4f493eee",
+    "pnpm",
+    "test:integration",
+    "tests/native-dataset-commit-delta.integration.test.ts"
+  ],
+  "controllerAbsent": true,
+  "externalHostScratchCreated": false
+}

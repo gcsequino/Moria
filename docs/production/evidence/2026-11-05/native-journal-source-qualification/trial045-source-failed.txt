@@ -1,0 +1,140 @@
+$ node scripts/test-files.mjs integration tests/native-indexing-service.integration.test.ts
+Running 1 integration test files.
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (18485.420688ms)
+  ✔ clean-host recovery rebinds managed typed Iceberg and retains prior snapshots after another real native publication (43086.577958ms)
+  ✔ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (11338.146725ms)
+  ✔ new Source aliases preserve real Action overlays and tombstones across replacement and historical reads (88878.865043ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (9902.694613ms)
+  ✔ broader current policy retains the old generation restriction until a newly captured native build activates (9514.754234ms)
+  ✖ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (10126.998681ms)
+  ✖ disabled registered purpose remains blocked even after further unrelated epoch changes (9358.876681ms)
+  ✔ approved bounded history collection retires old Source payload and exact key maps while retaining Search and current stores (355.346904ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (small rows) (213576.789762ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"baecc57b-f8cc-4730-9206-07fed8155424","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"d2580dbd-425f-473f-87c3-280a6fb32da4"}]}
+ℹ {"fullObjectSource":{"execution":"4f5c2751-6417-41b5-825f-c6310a92bcd3","generation":"f2346fd5-9d91-47c7-958c-ad0eec280178","store":"3060e846-03ce-43c7-a421-0c8ad8c7860b","rows":299},"ordinaryRows":149}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (9627.435019ms)
+  ✔ unrelated environment and instance changes authorize fresh metadata for the next head without replacing old proofs (9583.338293ms)
+  ✔ a changed own serving definition records blocked lag without metadata refresh or work acceptance (4176.416983ms)
+  ✔ broader current policy retains the old generation restriction until a newly captured native build activates (6791.814042ms)
+  ✖ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (4020.652047ms)
+  ✖ disabled registered purpose remains blocked even after further unrelated epoch changes (4151.393484ms)
+✖ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (maximum width) (47980.092989ms)
+ℹ {"profile":"mapped-maximum-width","reducerBatches":[{"batches":"2","build":"34821c84-65d5-41e7-b377-be8a2c5074c7","event":"reducer_batches","maxWireBytes":"8388678","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"ec8c0c9d-9451-47ba-a392-033c20a89b06"}]}
+▶ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle)
+  ✔ native registration accepts a genuine mapped source, retains raw policy columns and performs no generic indexing execution (10911.987021ms)
+  ✔ real closed staging collection preserves published aliases and drains expired private rows through native history once (16443.113888ms)
+✔ permanent indexing purposes refresh unrelated epochs, preserve mapped canonical rows and fail closed on own definition changes (staging lifecycle) (34880.902996ms)
+ℹ {"profile":"mapped-small","reducerBatches":[{"batches":"1","build":"dfce6c54-db35-48e0-ab6c-c6811a4ea437","event":"reducer_batches","maxWireBytes":"44480","normalBatchLimitBytes":"8388608","singleRowLimitBytes":"16777216","task":"7b756abb-3349-471c-9f7e-9e66f8eaeb19"}]}
+ℹ tests 20
+ℹ suites 0
+ℹ pass 14
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 296906.056203
+
+✖ failing tests:
+
+test at tests/native-indexing-service.integration.test.ts:1:30034
+✖ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (10126.998681ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (335) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: DATASET_DELTA_ROOT_UNQUALIFIED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"elapsedMillis":"2510","event":"closure_hashed"}\n{"elapsedMillis":"9795","event":"candidate_registered"}\n{"candidates":["345662d0-d5ae-4e81-8c81-4201552bdb7a"],"event":"prepared","lease":{"execution":"b781df6d-39ef-4287-ac65-a4fbff74ae20","fence":"1","incarnation":"fb5a7391-884b-4671-b446-ba725e52a4fb","leaseUntil":"2026-11-05 11:11:47.762836+00","owner":"ceb1356f-f77b-44ca-9dae-0ec106c64255","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 10.11s\n\n',
+    stderr: "\nthread 'catalog_publication' (335) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: DATASET_DELTA_ROOT_UNQUALIFIED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-indexing-service.integration.test.ts:1:31526
+✖ disabled registered purpose remains blocked even after further unrelated epoch changes (9358.876681ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (345) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: DATASET_DELTA_ROOT_UNQUALIFIED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"elapsedMillis":"2359","event":"closure_hashed"}\n{"elapsedMillis":"9022","event":"candidate_registered"}\n{"candidates":["f71ad9ed-4e80-4a97-8de2-adfe4fe0a22f"],"event":"prepared","lease":{"execution":"cabf74c2-be07-4c45-9800-010dbbf097ff","fence":"1","incarnation":"fb5a7391-884b-4671-b446-ba725e52a4fb","leaseUntil":"2026-11-05 11:11:57.892165+00","owner":"319a015d-5be4-4d1b-965c-90ab9650f51d","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 9.34s\n\n',
+    stderr: "\nthread 'catalog_publication' (345) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: DATASET_DELTA_ROOT_UNQUALIFIED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-indexing-service.integration.test.ts:1:30034
+✖ a newly classified Dataset saves its valid head while the older explicit index floor remains blocked (4020.652047ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (467) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: DATASET_DELTA_ROOT_UNQUALIFIED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"elapsedMillis":"936","event":"closure_hashed"}\n{"elapsedMillis":"3680","event":"candidate_registered"}\n{"candidates":["aa7e5b2a-c34b-4213-ac89-8b1774d56408"],"event":"prepared","lease":{"execution":"7155bb52-9e62-4346-a95b-374700ba0449","fence":"1","incarnation":"878f72d2-339b-440c-a4ed-d5feb5d4e00f","leaseUntil":"2026-11-05 11:12:56.077149+00","owner":"02befa92-ad9e-460e-9897-b5c383324e32","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 4.00s\n\n',
+    stderr: "\nthread 'catalog_publication' (467) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: DATASET_DELTA_ROOT_UNQUALIFIED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+
+test at tests/native-indexing-service.integration.test.ts:1:31526
+✖ disabled registered purpose remains blocked even after further unrelated epoch changes (4151.393484ms)
+  Error: Command failed: /usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1
+  
+  thread 'catalog_publication' (475) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:
+  called `Result::unwrap()` on an `Err` value: db error
+  
+  Caused by:
+      ERROR: DATASET_DELTA_ROOT_UNQUALIFIED
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 101,
+    killed: false,
+    signal: null,
+    cmd: '/usr/local/bin/moria-native-catalog-test --ignored --exact catalog_publication --nocapture --test-threads=1',
+    stdout: '\nrunning 1 test\ntest catalog_publication ... {"elapsedMillis":"979","event":"closure_hashed"}\n{"elapsedMillis":"3818","event":"candidate_registered"}\n{"candidates":["d7836b1c-6d77-4651-a1f8-a5eba2b74fb5"],"event":"prepared","lease":{"execution":"4b93d7b1-0c9e-45ea-88d3-95b6c689edf9","fence":"1","incarnation":"878f72d2-339b-440c-a4ed-d5feb5d4e00f","leaseUntil":"2026-11-05 11:13:00.096305+00","owner":"56592ae3-cc58-4219-9bc0-534a3aa9603c","task":null}}\nFAILED\n\nfailures:\n\nfailures:\n    catalog_publication\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 4.14s\n\n',
+    stderr: "\nthread 'catalog_publication' (475) panicked at ../../tests/fixtures/native-catalog/harness.rs:308:10:\ncalled `Result::unwrap()` on an `Err` value: db error\n\nCaused by:\n    ERROR: DATASET_DELTA_ROOT_UNQUALIFIED\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+[ELIFECYCLE] Command failed with exit code 1.

@@ -103,8 +103,8 @@ BEGIN
   RETURN seq;
 END $$;
 
-CREATE FUNCTION moria.runtime_binding_authority(binding_id uuid, environment_epoch bigint, instance_epoch bigint, execution_proof uuid DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $$
-DECLARE b moria.runtime_execution_bindings; p record; valid boolean; delegated jsonb;
+CREATE FUNCTION moria.runtime_binding_authority_state(binding_id uuid, environment_epoch bigint, instance_epoch bigint, execution_proof uuid) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE b moria.runtime_execution_bindings; p record; valid boolean; delegated jsonb; purpose_delegated boolean;
 BEGIN
   SELECT * INTO b FROM moria.runtime_execution_bindings WHERE id=binding_id;
   IF NOT FOUND OR NOT b.enabled THEN RAISE EXCEPTION 'BINDING_CHANGED'; END IF;
@@ -123,10 +123,18 @@ BEGIN
     OR (p.kind='human' AND p.synced_at<=clock_timestamp()-interval '60 seconds')
     OR NOT b.operations<@p.scopes OR NOT b.operations<@p.grants OR NOT b.markings<@p.markings
     THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
-  IF b.context->>'automationFiring' IS NOT NULL THEN PERFORM moria.runtime_automation_binding_guard(b.id); END IF;
-  IF b.context->>'evaluationCase' IS NOT NULL THEN PERFORM moria.runtime_evaluation_service_binding_guard(b.id); END IF;
-  IF b.context->>'serviceParentExecution' IS NOT NULL THEN PERFORM moria.runtime_sandbox_service_child_binding_guard(b.id); END IF;
+  purpose_delegated:=execution_proof IS NOT NULL AND EXISTS(
+    SELECT 1 FROM moria.runtime_executions e JOIN moria.runtime_job_delegations d ON d.execution=e.id
+    WHERE e.id=execution_proof AND e.binding=b.id AND e.context=b.context
+      AND d.origin_kind='service' AND d.origin_binding=b.id
+      AND ROW(d.environment,d.principal,d.application)=ROW(b.environment,b.context->>'principal',b.context->>'application'));
+  IF NOT purpose_delegated THEN
+    IF b.context->>'automationFiring' IS NOT NULL THEN PERFORM moria.runtime_automation_binding_guard(b.id); END IF;
+    IF b.context->>'evaluationCase' IS NOT NULL THEN PERFORM moria.runtime_evaluation_service_binding_guard(b.id); END IF;
+    IF b.context->>'serviceParentExecution' IS NOT NULL THEN PERFORM moria.runtime_sandbox_service_child_binding_guard(b.id); END IF;
+  END IF;
   IF execution_proof IS NOT NULL THEN
+    BEGIN
       IF NOT EXISTS(SELECT 1 FROM moria.runtime_executions e JOIN moria.runtime_job_delegations d ON d.execution=e.id
         WHERE e.id=execution_proof AND e.binding=b.id AND e.context=b.context
           AND ROW(d.environment,d.principal,d.application)=ROW(b.environment,b.context->>'principal',b.context->>'application'))
@@ -137,6 +145,15 @@ BEGIN
         OR NOT to_jsonb(b.operations)<@(delegated->'identity'->'grantedOperations')
         OR NOT to_jsonb(b.operations)<@(delegated->'identity'->'applicationScopes')
         OR NOT to_jsonb(b.markings)<@(delegated->'identity'->'markings') THEN RAISE EXCEPTION 'AUTHORIZATION_CHANGED'; END IF;
+    EXCEPTION WHEN raise_exception THEN
+      -- Preserve direct purpose error precedence while validating a successful delegation once.
+      IF purpose_delegated THEN
+        IF b.context->>'automationFiring' IS NOT NULL THEN PERFORM moria.runtime_automation_binding_guard(b.id); END IF;
+        IF b.context->>'evaluationCase' IS NOT NULL THEN PERFORM moria.runtime_evaluation_service_binding_guard(b.id); END IF;
+        IF b.context->>'serviceParentExecution' IS NOT NULL THEN PERFORM moria.runtime_sandbox_service_child_binding_guard(b.id); END IF;
+      END IF;
+      RAISE;
+    END;
   ELSIF b.context->>'sessionHash' IS NOT NULL THEN
     SELECT EXISTS(SELECT 1 FROM moria.workload_sessions s WHERE s.token_hash=b.context->>'sessionHash'
       AND s.environment=b.environment AND s.principal=b.context->>'principal' AND s.application=b.context->>'application'
@@ -159,6 +176,13 @@ BEGIN
     END IF;
     IF NOT valid THEN RAISE EXCEPTION 'UNAUTHENTICATED'; END IF;
   END IF;
+  IF execution_proof IS NOT NULL THEN RETURN delegated; END IF;
+  RETURN NULL;
+END $$;
+
+CREATE FUNCTION moria.runtime_binding_authority(binding_id uuid, environment_epoch bigint, instance_epoch bigint, execution_proof uuid DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM moria.runtime_binding_authority_state(binding_id,environment_epoch,instance_epoch,execution_proof);
 END $$;
 
 CREATE FUNCTION moria.runtime_binding_check(binding_id uuid) RETURNS void LANGUAGE plpgsql AS $$
@@ -168,8 +192,8 @@ BEGIN
   PERFORM moria.runtime_binding_authority(binding_id,b.security_epoch,b.instance_epoch);
 END $$;
 
-CREATE FUNCTION moria.runtime_execution_check(execution_id uuid) RETURNS void LANGUAGE plpgsql AS $$
-DECLARE e moria.runtime_executions; acknowledged record; proof uuid;
+CREATE FUNCTION moria.runtime_execution_check_state(execution_id uuid) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE e moria.runtime_executions; acknowledged record; proof uuid; delegated jsonb;
 BEGIN
   SELECT * INTO e FROM moria.runtime_executions WHERE id=execution_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'EXECUTION_UNKNOWN'; END IF;
@@ -186,29 +210,35 @@ BEGIN
       WHERE a.execution=e.id AND a.binding=e.binding AND a.incarnation=(SELECT incarnation FROM moria.indexing_instance)
       AND ((t.status='pending' AND t.attempts=0 AND a.owner IS NULL AND a.fence IS NULL)
         OR (t.status IN ('running','sealed') AND t.attempts=1 AND t.owner=a.owner AND t.fence=a.fence));
-    IF FOUND THEN PERFORM moria.runtime_binding_authority(e.binding,acknowledged.security_epoch,acknowledged.instance_epoch,proof);
-    ELSE PERFORM moria.runtime_binding_authority(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
+    IF FOUND THEN delegated:=moria.runtime_binding_authority_state(e.binding,acknowledged.security_epoch,acknowledged.instance_epoch,proof);
+    ELSE delegated:=moria.runtime_binding_authority_state(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
   ELSIF e.spec->>'domain'='agent' THEN
     SELECT a.security_epoch,a.instance_epoch INTO acknowledged FROM moria.runtime_agent_epochs a
       JOIN moria.runtime_execution_tasks t ON t.id=a.task AND t.execution=a.execution
       WHERE a.execution=e.id AND a.binding=e.binding AND a.incarnation=(SELECT incarnation FROM moria.indexing_instance)
       AND ((t.status='pending' AND t.attempts=0 AND a.owner IS NULL AND a.fence IS NULL)
         OR (t.status IN ('running','sealed') AND t.attempts=1 AND t.owner=a.owner AND t.fence=a.fence));
-    IF FOUND THEN PERFORM moria.runtime_binding_authority(e.binding,acknowledged.security_epoch,acknowledged.instance_epoch,proof);
-    ELSE PERFORM moria.runtime_binding_authority(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
+    IF FOUND THEN delegated:=moria.runtime_binding_authority_state(e.binding,acknowledged.security_epoch,acknowledged.instance_epoch,proof);
+    ELSE delegated:=moria.runtime_binding_authority_state(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
   ELSIF e.spec->>'domain'='maintenance' AND EXISTS(SELECT 1 FROM moria.runtime_source_automation_controls c WHERE c.execution=e.id) THEN
     SELECT a.security_epoch,a.instance_epoch INTO acknowledged FROM moria.runtime_source_automation_epochs a
       JOIN moria.runtime_execution_tasks t ON t.id=a.task AND t.execution=a.execution
       WHERE a.execution=e.id AND a.binding=e.binding AND a.incarnation=(SELECT incarnation FROM moria.indexing_instance)
       AND ((t.status='pending' AND a.owner IS NULL AND a.fence IS NULL)
         OR (t.status IN ('running','sealed') AND t.owner=a.owner AND t.fence=a.fence));
-    IF FOUND THEN PERFORM moria.runtime_binding_authority(e.binding,acknowledged.security_epoch,acknowledged.instance_epoch,proof);
-    ELSE PERFORM moria.runtime_binding_authority(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
-  ELSE PERFORM moria.runtime_binding_authority(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
+    IF FOUND THEN delegated:=moria.runtime_binding_authority_state(e.binding,acknowledged.security_epoch,acknowledged.instance_epoch,proof);
+    ELSE delegated:=moria.runtime_binding_authority_state(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
+  ELSE delegated:=moria.runtime_binding_authority_state(e.binding,(SELECT security_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),(SELECT instance_epoch FROM moria.runtime_execution_bindings WHERE id=e.binding),proof); END IF;
   IF e.status IN ('failed','cancelled') OR (e.status<>'succeeded' AND e.deadline<=clock_timestamp())
     THEN RAISE EXCEPTION 'EXECUTION_INACTIVE'; END IF;
   IF NOT EXISTS(SELECT 1 FROM moria.runtime_execution_bindings b WHERE b.id=e.binding AND b.spec=e.spec AND b.context=e.context
     AND b.environment=e.environment AND b.resource=e.resource) THEN RAISE EXCEPTION 'BINDING_CHANGED'; END IF;
+  RETURN delegated;
+END $$;
+
+CREATE FUNCTION moria.runtime_execution_check(execution_id uuid) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM moria.runtime_execution_check_state(execution_id);
 END $$;
 
 CREATE FUNCTION moria.runtime_execution_request(binding_id uuid, logical_key text, normalized_input jsonb, normalized_hash text, task_plans jsonb) RETURNS uuid LANGUAGE plpgsql AS $$

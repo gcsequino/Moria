@@ -1,0 +1,12 @@
+[
+  "timeout",
+  "--signal=TERM",
+  "--kill-after=45s",
+  "600s",
+  "python3",
+  "/home/gcseq/moria-proofs/source-fixture-reconciliation-20261104/static-trial001/source/deploy/test/run-quality.py",
+  "sha256:0fc2d0f7430be9009a80025f9898de0037171b31fbab10af54e485c304a06824",
+  "pnpm",
+  "test:integration",
+  "tests/catalog-storage.integration.test.ts"
+]

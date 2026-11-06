@@ -488,6 +488,118 @@ test(
       await assert.rejects(run.done, /UNDECLARED_DATASET/);
     });
     await t.test(
+      'Dataset IO validates a matching private execution once and keeps ordinary and mismatched checks',
+      async () => {
+        const before = await heads();
+        const owner = randomUUID(),
+          host = randomUUID();
+        await db.pool.query(
+          `INSERT INTO moria.runtime_workers(owner,host_id,incarnation,resource_classes,domains,expires_at)
+         SELECT $1,$2,incarnation,ARRAY['standard'],ARRAY['sync'],clock_timestamp()+interval '1 hour' FROM moria.indexing_instance`,
+          [owner, host],
+        );
+        const run = start({
+          binding: await binding(),
+          mode: 'hold',
+          registeredOwner: owner,
+          registeredHost: host,
+        });
+        const prepared = await run.event('prepared');
+        try {
+          const privateHash = (
+            await db.pool.query(
+              'SELECT token_hash FROM moria.runtime_job_sessions WHERE execution=$1 AND task IS NULL',
+              [prepared.lease.execution],
+            )
+          ).rows[0].token_hash;
+          const current = (
+            await db.pool.query('SELECT moria.native_serving_session($1) AS state', [privateHash])
+          ).rows[0].state;
+          const ordinary = (
+            await db.pool.query('SELECT moria.native_serving_session($1) AS state', [sessionHash])
+          ).rows[0].state;
+          assert.equal(ordinary.privateValidatedExecution, undefined);
+          const args = [
+            prepared.lease.execution,
+            prepared.lease.owner,
+            prepared.lease.fence,
+            prepared.lease.incarnation,
+            snapshots[0].warehouseId,
+            snapshots[0].tableId,
+            (
+              await db.pool.query(
+                'SELECT revision FROM moria.native_storage_namespaces WHERE warehouse_id=$1 AND table_id=$2',
+                [snapshots[0].warehouseId, snapshots[0].tableId],
+              )
+            ).rows[0].revision,
+          ];
+          const measure = async (hash: string) => {
+            const client = await db.pool.connect();
+            try {
+              await client.query('BEGIN');
+              await client.query("SET LOCAL track_functions='all'");
+              const calls = async () =>
+                Number(
+                  (
+                    await client.query(
+                      "SELECT COALESCE(sum(calls),0)::text AS calls FROM pg_stat_xact_user_functions WHERE funcid='moria.runtime_execution_check_state(uuid)'::regprocedure::oid",
+                    )
+                  ).rows[0].calls,
+                );
+              const before = await calls();
+              const state = (
+                await client.query(
+                  'SELECT moria.runtime_dataset_io_check($1,$2,NULL,$3,$4,$5,$6,$7,$8,false) AS state',
+                  [hash, ...args],
+                )
+              ).rows[0].state;
+              assert.equal(
+                (await calls()) - before,
+                1,
+                'one fresh execution validation per IO check',
+              );
+              if (hash === privateHash) {
+                assert.equal(
+                  (
+                    await db.pool.query(
+                      'SELECT id FROM moria.runtime_executions WHERE id=$1 FOR SHARE NOWAIT',
+                      [args[0]],
+                    )
+                  ).rowCount,
+                  1,
+                  'the live publication IO check permits a concurrent shared reader',
+                );
+                await assert.rejects(
+                  db.pool.query(
+                    'SELECT id FROM moria.runtime_executions WHERE id=$1 FOR UPDATE NOWAIT',
+                    [args[0]],
+                  ),
+                  { code: '55P03' },
+                );
+              }
+              return state;
+            } finally {
+              await client.query('ROLLBACK');
+              client.release();
+            }
+          };
+          assert.deepEqual(await measure(privateHash), await measure(sessionHash));
+          assert.equal(current.privateValidatedExecution, prepared.lease.execution);
+          await assert.rejects(
+            db.pool.query(
+              'SELECT moria.runtime_dataset_io_check($1,$2,$3,$4,$5,$6,$7,$8,$9,false)',
+              [privateHash, args[0], randomUUID(), ...args.slice(1)],
+            ),
+            /AUTHORIZATION_CHANGED/,
+          );
+        } finally {
+          run.child.kill('SIGKILL');
+          await assert.rejects(run.done);
+        }
+        await assertUnchanged(before, prepared.lease.execution);
+      },
+    );
+    await t.test(
       'a registered Sync producer replays only its exact completed receipt while private IO and caller-forged metadata state stay denied',
       async (t) => {
         const owner = randomUUID(),

@@ -1,0 +1,12 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph.integration.test.ts
+Running 1 integration test files.
+✔ qualified graph bootstrap preserves standard Iceberg rows and exact array keys (101667.358601ms)
+ℹ {"rows":64,"allKeysLookedUp":true,"arrayOrderAndDuplicatesPreserved":true,"nullableNonKey":true,"headUnchanged":true,"standardV2Readback":true}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102183.501078

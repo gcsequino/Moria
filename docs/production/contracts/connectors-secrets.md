@@ -1,19 +1,90 @@
 # Connector capability and secret contracts
 
-This is the N09 implementation contract. The initial native pipeline profile implements `batchRead` with full coverage and replacement output. It explicitly rejects other capabilities, write modes and nonempty `Connection.secrets`; those rejections are not completion of the accepted Source contract. [Pipelines](pipelines.md) defines supervision and grouped publication. [Engine I/O](engine-io.md) defines the bounded Arrow transport.
+This is the N09 implementation contract. The native pipeline profile implements `batchRead` with full coverage and replacement output and bounded read-only `schemaDiscovery`. Other capabilities and write modes remain rejected; those rejections are not completion of the accepted Source contract. [Pipelines](pipelines.md) defines supervision and grouped publication. [Engine I/O](engine-io.md) defines the bounded Arrow transport.
 
 ## Capability admission
 
+The native credential implementation now accepts up to eight declared references
+with exact operator mappings. Its static checks, all nine artifact fingerprints
+and 99 native units pass on a frozen build. The real registered worker/OCI guest
+passes fifteen focused custody/checkpoint/HTTP checks, including independent typed row
+readback, in-flight revocation and bounded provider failures; see
+[custody](../evidence/2026-11-04/connector-secret-custody/README.md) and
+[HTTP qualification](../evidence/2026-11-04/connector-http-faults/README.md).
+Other write modes, coverage, `continuousRead` and `writeback` remain unavailable. This checkpoint
+must not be presented as complete N09 qualification.
+
+The operator destination's `credentials` array contains `secret` (resolved UUID),
+`materialRef` (host environment reference), `header` and `scheme` (`raw` or
+`bearer`). It must map every declared secret exactly once, at most eight slots,
+with distinct lower-case `authorization` or `x-` header names. Transport, cookie
+and proxy headers are rejected. Empty mappings retain the existing single bearer
+slot; multiple declared secrets require explicit mappings. These values are
+trusted operator metadata, never guest request fields. `secret inspect-connector`
+returns the exact approval requests without reading material; `secret approve`
+and `secret disable` retain operator-only custody control.
+
+Accepted windows pin every approval identity, generation, incarnation and semantic
+material revision. Ordinary callers and registered services independently need
+all exact use operations. Current checks cover claim, callbacks, in-flight polling,
+publication and result release. A missed disable/reenable pulse cannot revive a
+window. The cursor hashes semantic material revisions and header interpretation,
+excluding current credential bytes and approval generations. Reflected known
+material in a provider response is rejected in both raw bytes and decoded JSON
+values/keys before any guest response is released.
+[Decoded reflection proof](../evidence/2026-11-04/connector-decoded-reflection/README.md).
+
 The released `Connection` selects one immutable `connector/v1` implementation, a validated configuration, stream, coverage, write mode, output Dataset and declared SecretReferences. The accepted execution pins each of those identities, schemas and revisions. Public input cannot select a different implementation, endpoint, secret, mode, destination or actor. Configuration validation uses the same offline trusted schema registry as Source publication; schema references cannot fetch network or local files.
 
-| Source capability | Required operational behavior                                                                                                                                                                                                                    | Current qualification                                                                                |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full engine boundary has functional proof; Sync checkpoint and fault proof remains required. |
-| `schemaDiscovery` | Read-only bounded discovery through the same fixed transport and current SecretReference grants. Proposed schemas are typed metadata and cannot silently mutate an accepted output schema or publish data.                                       | Rejected before code; implementation and proof required.                                             |
-| `continuousRead`  | Bounded execution windows with durable source cursor/watermark, explicit restart boundary and backpressure. Each window publishes its output and cursor atomically. A worker replacement cannot transparently rerun arbitrary started user code. | Rejected before code; implementation and proof required.                                             |
-| `writeback`       | Explicit external side-effect intents, destination policy, idempotency capability and uncertain-outcome reconciliation. A successful Dataset publication does not prove an external effect occurred exactly once.                                | Rejected before code; implementation and proof required.                                             |
+| Source capability | Required operational behavior                                                                                                                                                                                                                    | Current qualification                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `batchRead`       | One admitted, bounded, single-attempt guest program streams accepted rows; output, checkpoint CAS and execution completion publish atomically.                                                                                                   | Replace/full typed publication, cursor reuse, custody revocation and HTTP failure checks pass; acknowledgement/supervisor fault coverage remains required. |
+| `schemaDiscovery` | Read-only bounded discovery through the same fixed transport and current SecretReference grants. Proposed schemas are typed metadata and cannot silently mutate an accepted output schema or publish data.                                       | Actual worker/HTTP/SQL discovery file passes 15/15, including lost COMMIT acknowledgement and current retained-result denial.                              |
+| `continuousRead`  | Bounded execution windows with durable source cursor/watermark, explicit restart boundary and backpressure. Each window publishes its output and cursor atomically. A worker replacement cannot transparently rerun arbitrary started user code. | Rejected before code; implementation and proof required.                                                                                                   |
+| `writeback`       | Explicit external side-effect intents, destination policy, idempotency capability and uncertain-outcome reconciliation. A successful Dataset publication does not prove an external effect occurred exactly once.                                | Rejected before code; implementation and proof required.                                                                                                   |
 
 Capability sets are normalized sets, not an ordering-sensitive magic array. Each requested operation must be declared by the implementation and supported by the configured adapter profile. Merely accepting a declaration or advertising a capability does not authorize dispatch.
+
+## Bounded schema discovery
+
+[Discovery qualification](../evidence/2026-11-04/connector-schema-discovery/README.md)
+records all nine native artifacts, 113 unit checks and the real fifteen-case
+Source/HTTP/OCI/SQL integration file.
+
+`pipelines.discover(resource, {idempotencyKey, wait?})`, `moria pipelines discover`, and the
+native discovery command request the explicit `schemaDiscovery` capability. The
+HTTP execution request accepts `capability: "schemaDiscovery"`; omitted capability
+retains normal `batchRead` behavior. The implementation must declare the requested
+capability. Neutral configuration/readiness validation requires an executable
+capability/profile pair: replace/full `batchRead`, or `schemaDiscovery`.
+Discovery and batch invocations have separate identities even when actor,
+Connection and request key are identical.
+
+Discovery accepts the immutable configured stream and uses the existing current
+Connection `read`/`sync`, exact SecretReference `use`, approved destination and
+registered service checks. It has a read-only sandbox binding, no Dataset IO
+pins or Dataset grants, and no checkpoint. The guest receives metadata and may
+make GET requests without request bodies through the same fixed transport;
+operator POST permission cannot widen this capability. There are at most 32
+engine callbacks and at most 1 MiB of aggregate destination response bytes,
+further narrowed by the accepted profile. Credentials remain in the native host.
+
+A connector's `discover(context)` returns `{columns, primaryKey}`. The host fixes
+`version: 1` and `stream` from accepted metadata. The typed proposal is at most
+32 KiB and 256 nonempty columns and uses the existing Dataset value-type and
+ordered primary-key validators. A key may be empty; declared key fields must
+exist, be unique and be nonnullable. Unknown fields, invalid types and another
+stream fail with the static `PIPELINE_DISCOVERY_INVALID` code.
+
+The result is `{schemaDiscovery: {version: 1, stream, columns, primaryKey}}`.
+Staging binds the proposal to the actual execution, task, owner and fence.
+Completion rederives the proposal from the actual single sealed task, checks
+current authority again, and commits the execution result atomically. It does
+not invoke Dataset publication, mutate the output schema, advance a Dataset
+head, or alter a checkpoint. Cancellation, owner/fence changes and current
+approval revocation prevent completion and retained result release. A later
+reenable cannot revive a revoked execution. Replaying a completed request returns
+its exact retained result through the current gate and cannot rerun guest code.
 
 ## Output and checkpoint identity
 

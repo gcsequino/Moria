@@ -1,0 +1,39 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-qualification.integration.test.ts
+Running 1 integration test files.
+✔ qualified bootstrap rejects head mismatch without publishing a sidecar (20470.65181ms)
+ℹ {"fault":"head","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects profile mismatch without publishing a sidecar (11093.093207ms)
+ℹ {"fault":"profile","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects physical mismatch without publishing a sidecar (10720.281632ms)
+ℹ {"fault":"physical","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✔ qualified bootstrap rejects incarnation mismatch without publishing a sidecar (15455.682869ms)
+ℹ {"fault":"incarnation","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+✖ qualified bootstrap rejects memberVersion mismatch without publishing a sidecar (41273.979768ms)
+✔ qualified bootstrap rejects missingMember mismatch without publishing a sidecar (17425.72995ms)
+ℹ {"fault":"missingMember","headUnchanged":true,"dispatchUnchanged":true,"noGraphPublication":true,"guardsEnabledDuringProof":true}
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 116903.913801
+
+✖ failing tests:
+
+test at tests/native-dataset-graph-qualification.integration.test.ts:1:417
+✖ qualified bootstrap rejects memberVersion mismatch without publishing a sidecar (41273.979768ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/native-dataset-graph-qualification.integration.test.ts:44:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /STORAGE_VERSION_CHANGED/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

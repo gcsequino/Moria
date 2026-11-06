@@ -1,0 +1,19 @@
+{
+  "baseHead": "977a646fb537c439d140a20ba50c7cc378aaf8a2",
+  "nativeDigest": "b652526e815228862e6e4b4040c8b32fd03dbe5e01c70b85b8cfc6910837e9e8",
+  "nativeUnits": 99,
+  "overlay": [
+    {
+      "path": "deploy/test/run-quality.py",
+      "sha256": "b3d458ea744ffc3d7c339a0891341eeb787da23b2c8c96f6f27fc4d3733da601"
+    },
+    {
+      "path": "services/runtime/src/pipelines.rs",
+      "sha256": "ac6e3deae59bb42a6cf70f52c1f2d8fc751f840730d5029f208efcc23cbedccd"
+    },
+    {
+      "path": "tests/fixtures/native-connectors/custody.ts",
+      "sha256": "4503372075cf989902b2663e4803f1c5423a81857ef23a0781c208811fefc930"
+    }
+  ]
+}

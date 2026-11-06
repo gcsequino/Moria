@@ -11,14 +11,18 @@ from pyiceberg.catalog.sql import SqlCatalog
 from pyiceberg.io import FileIO, OutputFile
 from pyiceberg.io.pyarrow import PyArrowFileIO
 from pyiceberg.schema import Schema
-from pyiceberg.types import NestedField, StringType, UUIDType
+from pyiceberg.types import DoubleType, ListType, NestedField, StringType, UUIDType
 
 root, uid_path = Path(sys.argv[1]), Path(sys.argv[2])
-wide = len(sys.argv) > 3 and sys.argv[3] == "--wide"
+near_cap = len(sys.argv) > 3 and sys.argv[3] == "--near-cap"
+wide = near_cap or (len(sys.argv) > 3 and sys.argv[3] == "--wide")
 logical = "moria://service/data"
 objects = {}
 property_name = "v" * 100 if wide else "value"
 uids = uid_path.read_text().splitlines()
+label = "x" * (4 * 1024 * 1024 - 80) if wide and not near_cap else None
+numeric = [0.0] * 99862 if near_cap else None
+
 
 
 class Output(OutputFile):
@@ -67,18 +71,24 @@ table = catalog.create_table(
         NestedField(1, "uid", UUIDType(), required=True),
         NestedField(2, property_name, StringType(), required=True),
         NestedField(3, "tenant", StringType(), required=True),
+        *(
+            [NestedField(4 + i, f"samples_{i:02}", ListType(element_id=100+i, element_type=DoubleType(), element_required=True), required=True) for i in range(21)]
+            if near_cap else []
+        ),
     ),
     location=logical,
     properties={"format-version": "2"},
 )
-for start in range(0, len(uids), 8 if wide else 100):
+batch_rows = 1 if near_cap else (8 if wide else 100)
+for start in range(0, len(uids), batch_rows):
     rows = [
         {
             "uid": uuid.UUID(uid).bytes,
-            property_name: ("x" * (4 * 1024 * 1024 - 80) if wide else f"row-{i}"),
+            property_name: (label if wide and not near_cap else f"row-{i}"),
+            **({f"samples_{j:02}": numeric for j in range(21)} if near_cap else {}),
             "tenant": "a" if i % 2 == 0 else "b",
         }
-        for i, uid in enumerate(uids[start : start + (8 if wide else 100)], start)
+        for i, uid in enumerate(uids[start : start + batch_rows], start)
     ]
     table.append(pa.Table.from_pylist(rows, schema=table.schema().as_arrow()))
 metadata_path = objects[table.metadata_location]

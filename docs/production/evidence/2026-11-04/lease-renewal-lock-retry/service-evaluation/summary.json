@@ -1,0 +1,57 @@
+{
+  "result": {
+    "exitCode": 1,
+    "wallSeconds": 121.31608812500053
+  },
+  "failureEventCount": 0,
+  "failureEvents": [],
+  "successfulSandboxes": [
+    {
+      "id": "c1c34b5c-3f29-41c3-b9dd-559daae1f405",
+      "domain": "agent",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "id": "ea902693-f6f8-4539-b461-a82e046e72ec",
+      "domain": "agent",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "id": "77c5a832-8ff8-42f3-92c8-23a3571ae2ee",
+      "domain": "evaluator",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "id": "70b790d5-5175-4352-9e67-d188bb7fed2f",
+      "domain": "evaluator",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "id": "a9de9a1b-cf3e-4819-a77a-408f4574dfc3",
+      "domain": "function",
+      "status": "succeeded",
+      "error": null
+    },
+    {
+      "id": "f7fd9050-f89f-4703-ac39-b3ff148efab1",
+      "domain": "function",
+      "status": "succeeded",
+      "error": null
+    }
+  ],
+  "remainingExecutionCounts": {
+    "evaluation:preparing": 1,
+    "evaluation:succeeded": 1,
+    "evaluation:running": 3,
+    "evaluation:queued": 6,
+    "agent:succeeded": 2,
+    "evaluator:succeeded": 2,
+    "agent:running": 2,
+    "function:succeeded": 2
+  },
+  "scope": "Original ten-case service Evaluation retained; lifecycle barrier remains red. All retry/identity/public withholding/parent lock probes passed; no capacity/completion claim."
+}

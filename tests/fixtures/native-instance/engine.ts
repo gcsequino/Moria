@@ -25,7 +25,7 @@ export function instanceEnginePool(): Pool {
 export async function startInstanceEngine(input: {
   host: string;
   runtimeEnvironment: NodeJS.ProcessEnv;
-  operatorEnvironment: NodeJS.ProcessEnv;
+  pool?: Pool;
 }) {
   const controller = process.env.MORIA_TEST_CONTROLLER;
   assert.ok(controller, 'A task-owned controller is required for the privileged scratch janitor');
@@ -76,15 +76,24 @@ export async function startInstanceEngine(input: {
       child.once('exit', (code, signal) =>
         code === 0
           ? resolve()
-          : reject(Error('Native engine lifecycle failed: ' + (code ?? signal) + ' ' + error)),
+          : reject(
+              Error(
+                'Native engine ' +
+                  arguments_.join(' ') +
+                  ' failed: ' +
+                  (code ?? signal) +
+                  ' ' +
+                  error,
+              ),
+            ),
       );
     });
     void done.catch(() => {});
-    return { child, done, output: () => output };
+    return { child, done, output: () => output, error: () => error };
   };
-  const pool = instanceEnginePool();
+  const pool = input.pool ?? instanceEnginePool();
   for (const slot of pool.slots) {
-    await start(['scratch', 'register'], input.operatorEnvironment, {
+    await start(['scratch', 'register'], input.runtimeEnvironment, {
       ...slot.registration,
       hostId: input.host,
       resourceClass: 'engine-spill',
@@ -93,7 +102,17 @@ export async function startInstanceEngine(input: {
   const worker = start(['pipelines', 'worker'], input.runtimeEnvironment, undefined, true);
   let pid: string | undefined;
   const signal = async (name: 'TERM' | 'KILL') => {
-    const child = spawn('docker', ['exec', '--user', '0', controller, 'kill', '-' + name, pid!]);
+    const child = spawn('docker', [
+      'exec',
+      '--user',
+      '0',
+      controller,
+      '/app/.venv/bin/python',
+      '-c',
+      'import os,signal,sys\ntry: os.kill(int(sys.argv[1]),getattr(signal,"SIG"+sys.argv[2]))\nexcept ProcessLookupError: pass',
+      pid!,
+      name,
+    ]);
     await new Promise<void>((resolve, reject) => {
       child.once('error', reject);
       child.once('exit', (code) =>
@@ -136,6 +155,11 @@ export async function startInstanceEngine(input: {
     throw error;
   }
   return {
+    check: () =>
+      assert.ok(
+        worker.child.exitCode === null && worker.child.signalCode === null,
+        'Native engine exited: ' + worker.error(),
+      ),
     restoreOwnership: async (directory: string) => {
       assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
       assert.match(basename(directory), /^catalog-storage-[A-Za-z0-9]+$/);

@@ -1,0 +1,32 @@
+{"controller": "moria-quality-86d27901-5558-4a1a-b0bd-34e2e2e53afb", "image": "sha256:2b984d841bdba6b258031c1735a5a9e56d7419767d077ecd0b1bff679748608e", "scratchPools": ["/tmp/moria-engine-scratch-6321c5cc-a977-4abe-aa1c-94f9a0e90814", "/tmp/moria-engine-scratch-59ed3dc8-c46f-45e8-9d48-20f1e813e4cd"], "temporary": "/tmp/moria-quality-xunojaqm"}
+$ node scripts/test-files.mjs integration tests/filesystem-source.integration.test.ts
+Running 1 integration test files.
+▶ managed source roots checkout, publish, plan and activate coherent definitions
+  ✔ ACL graph duplicates and cycles retain live markings and denies (217.601005ms)
+  ✔ registered roots preserve metadata dotfiles and allocate stable exported resource identities (737.789663ms)
+  ✔ sibling roots are independent and duplicate/nested source registration is rejected (504.245936ms)
+  ✔ plans bind release, principal, current policy and expected active revision (273.887514ms)
+  ✔ missing declarations are retained until explicit dependency-checked deletion (418.808258ms)
+  ✔ repeated Source history keeps current classification checks authoritative (3969.854351ms)
+  ✔ replacement retains future restrictions on its original source (1096.97999ms)
+{"event":"source_declaration_same_call_counters","requests":2,"scalar":[{"funcname":"native_filesystem_acl_targets_state","calls":2,"self_time":36.583},{"funcname":"native_serving_session","calls":2,"self_time":0.074}],"batch":[{"funcname":"native_filesystem_acl_targets_state","calls":1,"self_time":14.103},{"funcname":"native_serving_session","calls":1,"self_time":0.006}],"scope":"actual metadata checks only; no model inference timing attribution"}
+  ✔ fresh replacement uses live declaration files while pinned historical files remain protected (2253.651656ms)
+  ✔ omitted definitions retain future restrictions on their declaration directory (1243.966267ms)
+  ✔ activation respects a resource-level publish deny (1107.616875ms)
+  ✔ activation respects a resource-level delete deny (1048.392568ms)
+  ✔ identical namespaces in independent projects activate without identity collisions (1406.143825ms)
+  ✔ pinned cross-project inputs retain their owning project classifications (1181.848387ms)
+  ✔ identical imported names from different projects require explicit disambiguation (333.801446ms)
+  ✔ active transitive dependencies prevent retirement, and retired consumers release that protection (1278.736268ms)
+  ✔ same-project pinned source dependencies remain usable (358.254445ms)
+  ✔ cross-project transform outputs require active writable placements and inherit producer restrictions (1714.133805ms)
+  ✔ code repositories publish CI export manifests without loading source modules (580.454064ms)
+✔ managed source roots checkout, publish, plan and activate coherent definitions (21532.021126ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22065.62117

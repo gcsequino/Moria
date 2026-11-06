@@ -1,0 +1,11 @@
+{
+  "baseImage": "sha256:00d8ec359d30d4c7e5830c305cf62fb9bfbc63e24b86f481a0aba0648bb6a127",
+  "scope": "first Evaluation subcase only; seven explicit diagnostic skips; no product/runtime/assertion/deadline changes",
+  "originalTestSha256": "59f5aa9e29152896807c9f4054f7f65c8b4b0e5a0c11903b5b5d8e7b1416c8c1",
+  "overlaySha256": "3807cb2e256d76447c4991fc4a62d938abcb7be1e8e1291c1579c40a90a2e20e",
+  "checkoutHead": "33e3da7e18f8c882c0659a5f0cf94aaeed3ff607",
+  "priorTrial": "/home/gcseq/moria-proofs/evaluation-lock-trial003-20261104",
+  "hostRunnerSha256": "8c594b10376d09541dfc5dd4a2c0ed2ae435cef4a1525512d97f90e438257f66",
+  "diagnosticImage": "sha256:940c6d0c818ba978ea86533f27a048f1d2dd8b7bb6b9d7148876861182ccf346",
+  "cleanup": "Stop exact already-owned worker handles in firstcase finally before Source restoration; only after allfirstcase assertions orfailure"
+}

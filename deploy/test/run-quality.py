@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the complete offline gate with fresh, independently fenced engine scratch."""
+"""Run an offline test command with fresh, independently fenced engine scratch."""
 
 import json
 import os
@@ -72,14 +72,23 @@ def cleanup_registries(proof):
 
 
 def main():
-    if os.geteuid() != 0 or len(sys.argv) != 2:
-        raise SystemExit("Run as root on the disposable Docker host: run-quality.py IMAGE")
+    if os.geteuid() != 0 or len(sys.argv) < 2:
+        raise SystemExit(
+            "Run as root on the disposable Docker host: run-quality.py IMAGE [COMMAND ...]"
+        )
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_./:@-]{0,1023}", sys.argv[1]):
         raise SystemExit("An exact Docker image reference is required")
     provisioner = Path(__file__).with_name("provision-engine-scratch.py")
     name = "moria-quality-" + str(uuid.uuid4())
     temporary = Path(tempfile.mkdtemp(prefix="moria-quality-", dir="/tmp"))
     temporary.chmod(0o1777)
+    pool_variables = [
+        "MORIA_ENGINE_SCRATCH_POOL_JSON",
+        "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON",
+        "MORIA_CONNECTOR_SCRATCH_POOL_JSON",
+        "MORIA_CONNECTOR_DISCOVERY_SCRATCH_POOL_JSON",
+        "MORIA_CONNECTOR_DISCOVERY_RESTART_SCRATCH_POOL_JSON",
+    ]
     pools = []
     owned_roots = []
 
@@ -89,7 +98,7 @@ def main():
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGHUP, interrupted)
     try:
-        for _ in range(2):
+        for _ in pool_variables:
             root = Path("/tmp") / ("moria-engine-scratch-" + str(uuid.uuid4()))
             owned_roots.append(root)
             pool = json.loads(
@@ -125,19 +134,31 @@ def main():
             "--env",
             "MORIA_TEST_PROOF_ID=" + name,
         ]
-        for variable, pool in zip(
-            ["MORIA_ENGINE_SCRATCH_POOL_JSON", "MORIA_NATIVE_INSTANCE_SCRATCH_POOL_JSON"], pools
-        ):
+        for variable, pool in zip(pool_variables, pools, strict=True):
             command += ["--env", variable + "=" + json.dumps(pool)]
             command += ["--mount", f"type=bind,src={pool['root']},dst={pool['root']}"]
             for slot in pool["slots"]:
                 command += ["--device", slot["device"] + ":" + slot["device"] + ":r"]
-        command += [sys.argv[1], "bash", ".openhands/hooks/quality-gate.sh"]
+        command += [sys.argv[1], *(sys.argv[2:] or ["bash", ".openhands/hooks/quality-gate.sh"])]
+        print(
+            json.dumps(
+                {
+                    "controller": name,
+                    "image": sys.argv[1],
+                    "scratchPools": [pool["root"] for pool in pools],
+                    "temporary": str(temporary),
+                }
+            ),
+            flush=True,
+        )
         return subprocess.run(command).returncode
     finally:
         subprocess.run(["docker", "stop", "--time", "15", name], capture_output=True, timeout=30)
-        inspected = subprocess.run(["docker", "inspect", name], capture_output=True, timeout=10)
-        if inspected.returncode == 0 or b"No such object" not in inspected.stderr:
+        controllers = subprocess.check_output(
+            ["docker", "ps", "--all", "--quiet", "--filter", "name=^/" + name + "$"],
+            timeout=10,
+        )
+        if controllers.strip():
             raise RuntimeError(
                 "Quality controller absence is unconfirmed; preserve scratch for inspection"
             )

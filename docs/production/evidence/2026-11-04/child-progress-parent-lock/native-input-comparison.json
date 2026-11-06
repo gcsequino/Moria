@@ -1,0 +1,12 @@
+{
+  "nativeInputFiles": 131,
+  "changes": [
+    {
+      "path": "services/runtime/src/functions.rs",
+      "beforeSha256": "4adf4d7cf53766fde61a194384f4085efac3d94e04d6c2b941125127ee9356d3",
+      "afterSha256": "94db868de835bd01bb24e0b707adb710afc601e58567829ecb0f178717fbfcc5"
+    }
+  ],
+  "beforeNativeDigest": "1cec26500fb618508c7ea08a34de70d6db54b873e8c99d419ced01ce0cb706cd",
+  "afterNativeDigest": "27800c39aba00e0c6bbfc6ec517cd59e3aa38da06d75b349645c14fcc5aa6006"
+}

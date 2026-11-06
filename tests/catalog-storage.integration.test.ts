@@ -20,9 +20,9 @@ import {
 import { database } from './fixtures/catalog-storage/database.js';
 import { startS3 } from './fixtures/storage-s3/server.js';
 import { iceberg } from './iceberg-helper.js';
-import { FilesystemStore } from '../services/filesystem/src/store.js';
 import { FilesystemAuthority } from '../services/security/src/filesystem.js';
 import { filesystemRoot } from '../packages/contracts/filesystem.js';
+import { publishedResources } from './fixtures/catalog-storage/source.js';
 
 const logical = {
   version: 1 as const,
@@ -433,12 +433,10 @@ for (const provider of ['local', 's3'] as const) {
       await t.test(
         'filesystem classifications are returned and changes abort even a cleared reader mid-stream',
         async () => {
-          const security = new FilesystemAuthority(authority),
-            store = new FilesystemStore(catalog),
-            resourceId = randomUUID();
+          const security = new FilesystemAuthority(authority);
           const instanceId = await security.createPrincipal('admin', 'workload');
           await security.bindPrincipal('admin', environment, 'reader', instanceId);
-          const operations = [`${dataset}:read`, `${resourceId}:read`, 'filesystem:read'];
+          const operations = [`${dataset}:read`, 'filesystem:read'];
           await authority.setApplication(environment, 'admin', 'app', operations);
           await authority.setGrants(environment, 'admin', 'reader', 'app', operations);
           await authority.syncPrincipal(environment, 'admin', 'reader', {
@@ -458,29 +456,26 @@ for (const provider of ['local', 's3'] as const) {
               },
             ],
           });
-          const actor = { environment, principal: 'admin', application: 'app' };
-          const parentReceipt = await store.apply(actor, randomUUID(), [
-            {
-              op: 'create',
-              kind: 'directory',
-              parentId: filesystemRoot,
-              expectedParentRevision: (await store.get(filesystemRoot)).revision,
-              name: 'runtime',
-              scope: { projectId: randomUUID(), environmentId: environment },
-            },
-          ]);
-          const parent = parentReceipt.entries.find((entry) => entry.name === 'runtime')!;
-          const receipt = await store.apply(actor, randomUUID(), [
-            {
-              op: 'create',
-              kind: 'resource',
-              parentId: parent.id,
-              expectedParentRevision: parent.revision,
-              name: 'dataset',
-              resourceId,
-            },
-          ]);
-          const entry = receipt.entries.find((item) => item.name === 'dataset')!;
+          const [entry] = await publishedResources(
+            catalog,
+            join(db.root, 'source-files'),
+            environment,
+            [
+              {
+                apiVersion: 'moria/v1alpha2',
+                kind: 'Dataset',
+                metadata: { namespace: 'test', name: 'data' },
+                spec: {
+                  columns: { value: { type: 'string', nullable: false } },
+                  writeModes: ['replace'],
+                },
+              },
+            ],
+          );
+          const resourceId = entry.resourceId!;
+          const scopedOperations = [...operations, `${resourceId}:read`];
+          await authority.setApplication(environment, 'admin', 'app', scopedOperations);
+          await authority.setGrants(environment, 'admin', 'reader', 'app', scopedOperations);
           await security.setPolicy('admin', entry.id, '0', {
             markings: [{ environment, marking: 'protected' }],
             grants: [],

@@ -1,0 +1,3 @@
+[Wed Nov  4 23:56:28 2026] Memory cgroup stats for /system.slice/docker-f4a81b74be64c58c07a7b3930fc429cc67d47bcf5f3c046b1aa9eab196b9d3d9.scope:
+[Wed Nov  4 23:56:28 2026] oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=docker-f4a81b74be64c58c07a7b3930fc429cc67d47bcf5f3c046b1aa9eab196b9d3d9.scope,mems_allowed=0,oom_memcg=/system.slice/docker-f4a81b74be64c58c07a7b3930fc429cc67d47bcf5f3c046b1aa9eab196b9d3d9.scope,task_memcg=/system.slice/docker-f4a81b74be64c58c07a7b3930fc429cc67d47bcf5f3c046b1aa9eab196b9d3d9.scope,task=rustc,pid=23347,uid=1000
+[Wed Nov  4 23:56:28 2026] Memory cgroup out of memory: Killed process 23347 (rustc) total-vm:4876008kB, anon-rss:2047408kB, file-rss:121832kB, shmem-rss:0kB, UID:1000 pgtables:7976kB oom_score_adj:0

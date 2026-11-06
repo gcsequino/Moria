@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { createServer, type ServerResponse } from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
+import { Client } from 'pg';
 import { database } from './fixtures/catalog-storage/database.js';
 import { Authority } from '../services/security/src/authority.js';
 
@@ -124,7 +125,8 @@ test(
       `GRANT USAGE ON SCHEMA moria TO ${role}; GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA moria TO ${role}; GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA moria TO ${role}`,
     );
     const url = `postgresql://${role}:${password}@127.0.0.1:${db.pool.options.port}/postgres`;
-    const start = (domain: string, command: string, input: unknown = {}) => {
+    const operatorUrl = `postgresql://${db.pool.options.user}:${encodeURIComponent(db.pool.options.password as string)}@127.0.0.1:${db.pool.options.port}/postgres`;
+    const start = (domain: string, command: string, input: unknown = {}, connection = url) => {
       const child = spawn(
         process.env.MORIA_INDEXING_BINARY ?? '/usr/local/bin/moria-indexing',
         [domain, command],
@@ -132,7 +134,7 @@ test(
           env: {
             PATH: '/usr/local/bin:/usr/bin:/bin',
             MORIA_INDEXING_DATABASE_SECRET_REF: 'DELIVERY_FIXTURE_DATABASE',
-            DELIVERY_FIXTURE_DATABASE: url,
+            DELIVERY_FIXTURE_DATABASE: connection,
             MORIA_INDEXING_DATABASE_TLS: 'disable',
             MORIA_DELIVERY_ALLOW_LOOPBACK_HTTP: '1',
             DELIVERY_FIXTURE_AUTH: providerSecret,
@@ -165,6 +167,12 @@ test(
       return { child, done };
     };
     const native = (command: string, input: unknown = {}) => start('delivery', command, input).done;
+    const reconcile = (input: {
+      id: string;
+      expectedFence: string;
+      resolution: string;
+      evidence: string;
+    }) => start('delivery', 'reconcile', input, operatorUrl).done;
     const once = () => native('once', { owner: randomUUID() });
     const state = (id: string) => native('status', { id });
     const spec = {
@@ -419,20 +427,71 @@ test(
         assert.equal((await once()).worked, false);
         const current = await state(id);
         await assert.rejects(native('retry', { id, expectedFence: current.fence }));
-        await assert.rejects(
-          native('reconcile', {
-            id,
-            expectedFence: '999',
-            resolution: 'delivered',
-            evidence: 'fixture:confirmed',
-          }),
-        );
-        await native('reconcile', {
+        const record = {
           id,
           expectedFence: current.fence,
           resolution: 'delivered',
           evidence: `fixture:terminal-receipt/${id}`,
-        });
+        };
+        await assert.rejects(native('reconcile', record), /RECOVERY_OPERATOR_REQUIRED/);
+        const worker = new Client({ connectionString: url });
+        await worker.connect();
+        try {
+          await assert.rejects(
+            worker.query(
+              'SELECT moria.runtime_delivery_reconcile($1,$2,$3,$4)',
+              Object.values(record),
+            ),
+            /RECOVERY_OPERATOR_REQUIRED/,
+          );
+          await assert.rejects(
+            worker.query(
+              'INSERT INTO moria.runtime_delivery_reconciliations(delivery,expected_fence,resolution,evidence) VALUES($1,$2,$3,$4)',
+              Object.values(record),
+            ),
+            /RECOVERY_OPERATOR_REQUIRED/,
+          );
+          for (const sql of [
+            "UPDATE moria.runtime_deliveries SET status='pending' WHERE id=$1",
+            'UPDATE moria.runtime_deliveries SET fence=fence+1 WHERE id=$1',
+            'DELETE FROM moria.runtime_deliveries WHERE id=$1',
+          ])
+            await assert.rejects(worker.query(sql, [id]), /RECOVERY_OPERATOR_REQUIRED/);
+        } finally {
+          await worker.end();
+        }
+        await assert.rejects(
+          db.pool.query("UPDATE moria.runtime_deliveries SET status='pending' WHERE id=$1", [id]),
+          /DELIVERY_RECONCILIATION_REQUIRED/,
+        );
+        await assert.rejects(
+          reconcile({ ...record, expectedFence: '999' }),
+          /DELIVERY_RECONCILIATION_STALE/,
+        );
+        assert.equal((await state(id)).fence, current.fence);
+        await reconcile(record);
+        const history = 'moria.runtime_delivery_reconciliations';
+        const readHistory = () =>
+          db.pool.query(
+            `SELECT expected_fence::text AS fence,resolution,evidence FROM ${history} WHERE delivery=$1`,
+            [id],
+          );
+        assert.deepEqual((await readHistory()).rows, [
+          { fence: current.fence, resolution: record.resolution, evidence: record.evidence },
+        ]);
+        for (const sql of [
+          `UPDATE ${history} SET evidence='changed' WHERE delivery=$1`,
+          `DELETE FROM ${history} WHERE delivery=$1`,
+        ])
+          await assert.rejects(db.pool.query(sql, [id]), /IMMUTABLE_DELIVERY_RECONCILIATION/);
+        await assert.rejects(
+          db.pool.query(`TRUNCATE ${history}`),
+          /IMMUTABLE_DELIVERY_RECONCILIATION/,
+        );
+        await assert.rejects(reconcile(record), /DELIVERY_RECONCILIATION_STALE/);
+        assert.deepEqual((await readHistory()).rows, [
+          { fence: current.fence, resolution: record.resolution, evidence: record.evidence },
+        ]);
         assert.equal((await state(id)).status, 'delivered');
         mode = 'normal';
         assert.equal((await once()).worked, false);
@@ -456,7 +515,7 @@ test(
         assert.equal((await once()).worked, false);
         assert.equal(observations.filter((entry) => entry.id === id).length, 1);
         const uncertain = await state(id);
-        await native('reconcile', {
+        await reconcile({
           id,
           expectedFence: uncertain.fence,
           resolution: 'delivered',
@@ -481,7 +540,7 @@ test(
         const current = await state(id);
         assert.equal(current.status, 'uncertain');
         assert.equal(effects.get(id), 1);
-        await native('reconcile', {
+        await reconcile({
           id,
           expectedFence: current.fence,
           resolution: 'delivered',
@@ -533,7 +592,7 @@ test(
         const uncertain = await state(id);
         assert.equal(uncertain.status, 'uncertain');
         assert.equal(effects.get(id), undefined);
-        await native('reconcile', {
+        await reconcile({
           id,
           expectedFence: uncertain.fence,
           resolution: 'notDelivered',
@@ -568,11 +627,35 @@ test(
             .rows[0].count,
           '0',
         );
+        const uncertainId = await action('revoked-uncertain-delivery', nonIdem);
+        mode = 'reject';
+        await once();
+        const uncertain = await state(uncertainId);
+        assert.equal(uncertain.status, 'uncertain');
+        mode = 'normal';
         const id = await action('revoked-delivery');
         const before = observations.length;
         await authority.setGrants(environment, 'fixture', 'pipeline', 'native-delivery', [
           'notify:invoke',
         ]);
+        await assert.rejects(
+          reconcile({
+            id: uncertainId,
+            expectedFence: uncertain.fence,
+            resolution: 'notDelivered',
+            evidence: 'fixture:revoked',
+          }),
+          /AUTHORIZATION_CHANGED/,
+        );
+        assert.deepEqual(
+          (
+            await db.pool.query(
+              'SELECT status, (SELECT count(*) FROM moria.runtime_delivery_reconciliations WHERE delivery=$1) AS records FROM moria.runtime_deliveries WHERE id=$1',
+              [uncertainId],
+            )
+          ).rows,
+          [{ status: 'uncertain', records: '0' }],
+        );
         await once();
         assert.equal(observations.length, before);
         assert.equal(

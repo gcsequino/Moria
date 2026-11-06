@@ -1,3 +1,4 @@
+import { connectorCustody } from './fixtures/native-connectors/custody.js';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
@@ -279,8 +280,12 @@ test(
       { length: 64 },
       (_, index) => `Fanin${index.toString().padStart(2, '0')}`,
     );
-    for (const name of fanout) columns[name] = { id: long, total: long };
-    for (const name of fanin) columns[name] = { id: long, total: long };
+    const maximumOutputs = Array.from(
+      { length: 64 },
+      (_, index) => `Maximum${index.toString().padStart(2, '0')}`,
+    );
+    for (const name of [...fanout, ...fanin, ...maximumOutputs])
+      columns[name] = { id: long, total: long };
     const definitions: Resource[] = Object.entries(columns).map(([name, columns]) => ({
       apiVersion: 'moria/v1alpha2',
       kind: 'Dataset',
@@ -303,7 +308,7 @@ test(
           inputs: ['inputA', 'inputB', 'inputC'],
           outputs: fanout,
         },
-        { name: 'Maximum', artifact: image.artifact, inputs: fanin, outputs: fanout },
+        { name: 'Maximum', artifact: image.artifact, inputs: fanin, outputs: maximumOutputs },
       ].map((item) => ({
         apiVersion: 'moria/v1alpha2' as const,
         kind: 'Transform' as const,
@@ -641,7 +646,7 @@ test(
           ['Verify', ['Proof']],
           ['Confirm', ['Confirmed']],
           ['Fanout', fanout],
-          ['Maximum', fanout],
+          ['Maximum', maximumOutputs],
         ] as const) {
           await db.pool.query(
             "INSERT INTO moria.runtime_service_targets(environment,resource,domain,binding_revision,resource_class,authority) VALUES($1,$2,'transform','v1','engine-spill',$3)",
@@ -729,6 +734,19 @@ test(
           )
         ).rows[0];
         assert.deepEqual(row, { operations: 194, outputs: 64, inputs: 64 });
+        const currentPins = (
+          await db.pool.query(
+            `SELECT count(*)::int AS pins
+             FROM moria.runtime_pipeline_executions p
+             JOIN moria.runtime_executions e ON e.id=p.execution
+             JOIN moria.runtime_execution_bindings b ON b.id=e.binding
+             CROSS JOIN LATERAL jsonb_each(p.inputs) input(name,value)
+             WHERE p.execution=$1 AND input.value->'pin'->>'securityEpoch'=b.security_epoch::text
+               AND input.value->'pin'->>'instanceEpoch'=b.instance_epoch::text`,
+            [accepted.id],
+          )
+        ).rows[0];
+        assert.equal(currentPins.pins, 64);
         assert.equal(
           (
             await db.pool.query(
@@ -799,6 +817,77 @@ test(
               ).rows[0].labels,
             );
           assert.deepEqual(await batch(), expected);
+          const output = id('Dataset', 'Detail');
+          const serviceArgs = [
+            service,
+            environment,
+            id('Transform', 'Join'),
+            'transform',
+            'v1',
+            'engine-spill',
+            output,
+            'read',
+          ];
+          const paired = () =>
+            client.query(
+              'SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8,$9) AS labels',
+              [...serviceArgs, 'write'],
+            );
+          const read = () =>
+            client.query(
+              'SELECT moria.runtime_service_resource_labels($1,$2,$3,$4,$5,$6,$7,$8) AS labels',
+              serviceArgs,
+            );
+          const readLabels = (await read()).rows;
+          assert.deepEqual((await paired()).rows, readLabels);
+          await client.query('SAVEPOINT output_write_scope');
+          const revokedWrite = await client.query(
+            'UPDATE moria.permissions SET operations=array_remove(operations,$4) WHERE environment=$1 AND principal=$2 AND application=$3',
+            [environment, principal, serviceApp, output + ':write'],
+          );
+          assert.equal(revokedWrite.rowCount, 1);
+          assert.deepEqual((await read()).rows, readLabels);
+          await assert.rejects(paired(), (error: any) => error.message === 'FORBIDDEN');
+          await client.query('ROLLBACK TO SAVEPOINT output_write_scope');
+          const sessionHash = createHash('sha256').update(user.token).digest('hex');
+          const sessionBatch = async () =>
+            (
+              await client.query(
+                'SELECT moria.native_serving_resource_access_batch($1,$2) AS labels',
+                [sessionHash, JSON.stringify(requests)],
+              )
+            ).rows[0].labels;
+          const sessionExpected = [];
+          for (const request of requests)
+            sessionExpected.push(
+              (
+                await client.query(
+                  'SELECT moria.native_serving_resource_access($1,$2,$3) AS labels',
+                  [sessionHash, request.resource, request.operation],
+                )
+              ).rows[0].labels,
+            );
+          assert.deepEqual(await sessionBatch(), sessionExpected);
+          const reads = requests.filter(({ operation }) => operation === 'read');
+          assert.deepEqual(
+            (
+              await client.query(
+                'SELECT moria.native_serving_resource_access_batch($1,$2,true) AS labels',
+                [sessionHash, JSON.stringify(reads)],
+              )
+            ).rows[0].labels,
+            await Promise.all(
+              reads.map(
+                async ({ resource }) =>
+                  (
+                    await client.query(
+                      "SELECT moria.native_resource_filesystem_access($1,$2,'read') AS labels",
+                      [sessionHash, resource],
+                    )
+                  ).rows[0].labels,
+              ),
+            ),
+          );
           for (const mutation of [
             [
               "UPDATE moria.native_dataset_bindings SET enabled=false,revision='sha256:'||repeat('f',64) WHERE environment=$1 AND resource=$2",
@@ -994,9 +1083,14 @@ test(
       await until(async () => {
         assert.equal(worker.child.exitCode, null, worker.error());
         const result = await request(`/api/v1/pipeline-executions/${id}`);
-        assert.equal(result.response.status, 200, JSON.stringify(result.value));
-        value = result.value;
-        if (Date.now() - lastProgress >= 10000) {
+        const pending = result.response.status === 409;
+        if (pending) {
+          assert.equal(result.value.error?.code, 'FUNCTION_OBSERVATION_INCOMPLETE');
+        } else {
+          assert.equal(result.response.status, 200, JSON.stringify(result.value));
+          value = result.value;
+        }
+        if (!pending && Date.now() - lastProgress >= 10000) {
           lastProgress = Date.now();
           console.log(
             'PIPELINE_LIVE_CONTROL=' +
@@ -1021,8 +1115,32 @@ test(
             if (bytes > workerRssObserved) workerRssObserved = bytes;
           }
         }
-        return ['succeeded', 'failed', 'cancelled'].includes(value.status);
-      }, 135000);
+        return !pending && ['succeeded', 'failed', 'cancelled'].includes(value.status);
+      }, 135000).catch(async (error: unknown) => {
+        const lifecycle = (
+          await db.pool.query(
+            `SELECT e.status,e.error,t.status AS task_status,t.attempts,s.state AS sandbox_state,
+               s.error AS sandbox_error,s.observation_pending IS NOT NULL AS observation_pending,
+               s.observation_blocked,s.cleaned,e.finished_at<=e.deadline AS within_deadline
+             FROM moria.runtime_executions e
+             LEFT JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+             LEFT JOIN moria.runtime_sandbox_attempts s ON s.execution=e.id
+             WHERE e.id=$1 AND e.environment=$2`,
+            [id, environment],
+          )
+        ).rows;
+        const events = (
+          await db.pool.query(
+            `SELECT v.kind,v.payload->>'phase' AS phase,v.payload->>'error' AS error,
+               v.payload->>'code' AS code,v.payload->>'elapsedMillis' AS elapsed_millis
+             FROM moria.runtime_execution_events v JOIN moria.runtime_executions e ON e.id=v.execution
+             WHERE e.id=$1 AND e.environment=$2 AND v.kind IN('enginePhase','brokerFailed','failed')
+             ORDER BY v.sequence DESC LIMIT 12`,
+            [id, environment],
+          )
+        ).rows;
+        throw new Error(JSON.stringify({ lifecycle, events }), { cause: error });
+      });
       if (value.status === 'succeeded')
         assert.equal(
           (
@@ -1092,6 +1210,9 @@ test(
           )
         ).rows[0].payload;
         assert.ok(BigInt(io.calls) > 32n, JSON.stringify(io));
+        const chunkBytes = 1024n * 1024n;
+        const packedReads = (BigInt(io.metrics.inputBytes) + chunkBytes - 1n) / chunkBytes;
+        assert.ok(BigInt(io.methods.inputBatch) <= packedReads + 6n, JSON.stringify(io));
         assert.equal(io.outputs, 2);
         assert.equal(io.metrics.inputRowsEncoded, '18000');
         assert.equal(io.metrics.outputRowsAppended, '6010');
@@ -1237,3 +1358,5 @@ test(
     );
   },
 );
+
+test('native Connector custody and checkpoint publication', { timeout: 300000 }, connectorCustody);

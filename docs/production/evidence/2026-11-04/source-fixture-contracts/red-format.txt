@@ -1,0 +1,7 @@
+$ pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter
+$ prettier --check "**/*.{ts,tsx,js,mjs,json,yml,yaml}"
+Checking formatting...
+[warn] tests/filesystem-security.integration.test.ts
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

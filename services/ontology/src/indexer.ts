@@ -260,6 +260,22 @@ export class IcebergIndexer {
     if (!session.sessionHash)
       throw new MoriaError('UNAUTHENTICATED', 'Index registration requires a verified session');
     await this.store.catalog.transaction(async (c) => {
+      const state = await this.authority.current(
+        session.environment,
+        session.principal,
+        session.application,
+        c,
+      );
+      authorize(state.identity, source.resource, 'read', source.markings);
+      authorize(state.identity, target.resource, 'index', target.markings);
+      await this.authority.assertCurrent(
+        c,
+        session.environment,
+        session.principal,
+        session.application,
+        state.epoch,
+        session.sessionHash,
+      );
       const sourceLabels = await this.authority.resourceAccess(c, session, source.resource);
       const targetLabels = new Set([
         ...target.markings,

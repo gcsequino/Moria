@@ -1,0 +1,842 @@
+{
+  "diagnostic": "pipeline-first16-current-guards",
+  "elapsedMs": 103517,
+  "heads": 16,
+  "allConfiguredInputs": 67,
+  "deadlineSeconds": 120,
+  "exitCode": 0,
+  "registeredCandidates": 16,
+  "functionTimings": [
+    {
+      "schemaname": "moria",
+      "funcname": "native_filesystem_acl_targets_operations_state",
+      "calls": "5228",
+      "total_time": 32805.718,
+      "self_time": 32805.718
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_accepted_delegation",
+      "calls": "10490",
+      "total_time": 9774.279,
+      "self_time": 7559.586
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_session_origin",
+      "calls": "10492",
+      "total_time": 2217.872,
+      "self_time": 1908.411
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_binding_authority",
+      "calls": "5244",
+      "total_time": 7216.885,
+      "self_time": 1400.487
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_operational",
+      "calls": "10424",
+      "total_time": 1035.228,
+      "self_time": 1035.228
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_delegation_guard",
+      "calls": "5277",
+      "total_time": 917.595,
+      "self_time": 917.595
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_session_origin",
+      "calls": "5215",
+      "total_time": 8671.317,
+      "self_time": 909.953
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_filesystem_resource_access_operations_state",
+      "calls": "5228",
+      "total_time": 33690.042,
+      "self_time": 884.212
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_io_check",
+      "calls": "5196",
+      "total_time": 51415.063,
+      "self_time": 817.97
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_resource_access_batch_state",
+      "calls": "5196",
+      "total_time": 35663.278,
+      "self_time": 748.83
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_kind",
+      "calls": "5228",
+      "total_time": 650.789,
+      "self_time": 650.789
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_session",
+      "calls": "5217",
+      "total_time": 13990.343,
+      "self_time": 416.737
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_check",
+      "calls": "5243",
+      "total_time": 7744.525,
+      "self_time": 360.808
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_connection_admit",
+      "calls": "9189",
+      "total_time": 436.396,
+      "self_time": 341.476
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_recovery_check",
+      "calls": "15735",
+      "total_time": 241.143,
+      "self_time": 241.143
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_binding",
+      "calls": "5196",
+      "total_time": 220.275,
+      "self_time": 220.275
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_origins",
+      "calls": "10424",
+      "total_time": 250.998,
+      "self_time": 211.006
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_environment_cell_check",
+      "calls": "15735",
+      "total_time": 413.887,
+      "self_time": 172.63
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_data_resource",
+      "calls": "20848",
+      "total_time": 115.501,
+      "self_time": 115.501
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_worker_check",
+      "calls": "5253",
+      "total_time": 110.509,
+      "self_time": 110.509
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_object_read",
+      "calls": "3854",
+      "total_time": 109.855,
+      "self_time": 109.855
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_cli_session_check",
+      "calls": "15709",
+      "total_time": 109.092,
+      "self_time": 109.092
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_schema_admit",
+      "calls": "9189",
+      "total_time": 94.787,
+      "self_time": 94.787
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_labels_policy_state",
+      "calls": "5196",
+      "total_time": 89.429,
+      "self_time": 89.429
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_gc_io_check",
+      "calls": "5196",
+      "total_time": 76.124,
+      "self_time": 76.124
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_issue",
+      "calls": "112",
+      "total_time": 1229.005,
+      "self_time": 72.724
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_job_delegation",
+      "calls": "5243",
+      "total_time": 5816.276,
+      "self_time": 14.716
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_commit_record_execution",
+      "calls": "16",
+      "total_time": 103.945,
+      "self_time": 6.699
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_root_publication_check",
+      "calls": "32",
+      "total_time": 6.378,
+      "self_time": 5.806
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_snapshot_publish",
+      "calls": "2",
+      "total_time": 333.442,
+      "self_time": 5.596
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_admit_write",
+      "calls": "112",
+      "total_time": 1232.795,
+      "self_time": 3.751
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_acceptance_validate",
+      "calls": "1",
+      "total_time": 3.998,
+      "self_time": 2.837
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_delegation_accept",
+      "calls": "1",
+      "total_time": 10.438,
+      "self_time": 2.713
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_request",
+      "calls": "1",
+      "total_time": 16.269,
+      "self_time": 2.492
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_resource_access_state",
+      "calls": "32",
+      "total_time": 140.301,
+      "self_time": 2.371
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_commit_root_check",
+      "calls": "16",
+      "total_time": 2.309,
+      "self_time": 2.309
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_dataset_receipt_access",
+      "calls": "32",
+      "total_time": 184.562,
+      "self_time": 1.983
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_multipart_mutation",
+      "calls": "224",
+      "total_time": 1.71,
+      "self_time": 1.71
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_event",
+      "calls": "5",
+      "total_time": 1.809,
+      "self_time": 1.642
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_restore_issue_guard",
+      "calls": "224",
+      "total_time": 1.613,
+      "self_time": 1.613
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_acceptance_state",
+      "calls": "2",
+      "total_time": 4.888,
+      "self_time": 1.529
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_receipt_authority",
+      "calls": "32",
+      "total_time": 37.933,
+      "self_time": 1.407
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_head_contract",
+      "calls": "16",
+      "total_time": 1.357,
+      "self_time": 1.357
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_job_session_issue",
+      "calls": "2",
+      "total_time": 10.529,
+      "self_time": 1.224
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_history_execution_expiry",
+      "calls": "27",
+      "total_time": 1.212,
+      "self_time": 1.212
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_commit_profile_check",
+      "calls": "16",
+      "total_time": 1.118,
+      "self_time": 1.118
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "indexing_enqueue",
+      "calls": "16",
+      "total_time": 1.111,
+      "self_time": 1.111
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_root_immutable",
+      "calls": "16",
+      "total_time": 0.93,
+      "self_time": 0.93
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_complete",
+      "calls": "1",
+      "total_time": 4.354,
+      "self_time": 0.803
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_immutable",
+      "calls": "29",
+      "total_time": 0.791,
+      "self_time": 0.791
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_reap",
+      "calls": "2",
+      "total_time": 0.778,
+      "self_time": 0.778
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_commit_edge_required",
+      "calls": "16",
+      "total_time": 0.669,
+      "self_time": 0.669
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_root_assert",
+      "calls": "32",
+      "total_time": 0.572,
+      "self_time": 0.572
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_task_check",
+      "calls": "2",
+      "total_time": 5.806,
+      "self_time": 0.334
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_execution_dataset_pin_admit",
+      "calls": "1",
+      "total_time": 0.266,
+      "self_time": 0.266
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_snapshot_data_assert",
+      "calls": "16",
+      "total_time": 0.173,
+      "self_time": 0.173
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_graph_publish",
+      "calls": "16",
+      "total_time": 0.146,
+      "self_time": 0.146
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_binding_check",
+      "calls": "1",
+      "total_time": 2.214,
+      "self_time": 0.128
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "native_serving_filesystem_resource_access_state",
+      "calls": "32",
+      "total_time": 133.974,
+      "self_time": 0.114
+    },
+    {
+      "schemaname": "moria",
+      "funcname": "runtime_dataset_commit_delta_owner",
+      "calls": "16",
+      "total_time": 0.108,
+      "self_time": 0.108
+    }
+  ],
+  "walBefore": [
+    {
+      "value": {
+        "wal_fpi": 1718,
+        "wal_bytes": 23194588,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "wal_records": 131202,
+        "wal_buffers_full": 589
+      }
+    }
+  ],
+  "walAfter": [
+    {
+      "value": {
+        "wal_fpi": 1757,
+        "wal_bytes": 26969955,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "wal_records": 189440,
+        "wal_buffers_full": 589
+      }
+    }
+  ],
+  "ioBefore": [
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkread",
+        "extends": null,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkwrite",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "init",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": 0,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 1214679,
+        "reads": 547,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 1185,
+        "evictions": 0,
+        "read_time": 2.672,
+        "fsync_time": 0,
+        "read_bytes": 4972544,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0.052000000000000005,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 10051584,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "vacuum",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "temp relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": null,
+        "fsyncs": 1,
+        "object": "wal",
+        "reuses": null,
+        "writes": 1,
+        "context": "init",
+        "extends": null,
+        "evictions": null,
+        "read_time": null,
+        "fsync_time": 0,
+        "read_bytes": null,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 16777216,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": 0,
+        "fsyncs": 953,
+        "object": "wal",
+        "reuses": null,
+        "writes": 1542,
+        "context": "normal",
+        "extends": null,
+        "evictions": null,
+        "read_time": 0,
+        "fsync_time": 12.15,
+        "read_bytes": 0,
+        "write_time": 0.074,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 18866176,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    }
+  ],
+  "ioAfter": [
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkread",
+        "extends": null,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "bulkwrite",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "init",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": 0,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 14595495,
+        "reads": 619,
+        "fsyncs": 0,
+        "object": "relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 1314,
+        "evictions": 0,
+        "read_time": 16.436,
+        "fsync_time": 0,
+        "read_bytes": 5562368,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 1.485,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 11255808,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "relation",
+        "reuses": 0,
+        "writes": 0,
+        "context": "vacuum",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": 0,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": 0
+      }
+    },
+    {
+      "value": {
+        "hits": 0,
+        "reads": 0,
+        "fsyncs": null,
+        "object": "temp relation",
+        "reuses": null,
+        "writes": 0,
+        "context": "normal",
+        "extends": 0,
+        "evictions": 0,
+        "read_time": 0,
+        "fsync_time": null,
+        "read_bytes": 0,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": 0,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 0,
+        "backend_type": "client backend",
+        "extend_bytes": 0,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": null,
+        "fsyncs": 1,
+        "object": "wal",
+        "reuses": null,
+        "writes": 1,
+        "context": "init",
+        "extends": null,
+        "evictions": null,
+        "read_time": null,
+        "fsync_time": 0,
+        "read_bytes": null,
+        "write_time": 0,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 16777216,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    },
+    {
+      "value": {
+        "hits": null,
+        "reads": 0,
+        "fsyncs": 15523,
+        "object": "wal",
+        "reuses": null,
+        "writes": 16113,
+        "context": "normal",
+        "extends": null,
+        "evictions": null,
+        "read_time": 0,
+        "fsync_time": 19382.996,
+        "read_bytes": 0,
+        "write_time": 104.517,
+        "writebacks": null,
+        "extend_time": null,
+        "stats_reset": "2026-11-05T07:35:31.783875+00:00",
+        "write_bytes": 141647872,
+        "backend_type": "client backend",
+        "extend_bytes": null,
+        "writeback_time": null
+      }
+    }
+  ],
+  "scope": "First16-head real producer only; all67input fixtures retained; no Pipeline acceptance subcases."
+}

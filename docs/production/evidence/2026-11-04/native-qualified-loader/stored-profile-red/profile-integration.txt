@@ -1,0 +1,29 @@
+$ node scripts/test-files.mjs integration tests/native-dataset-graph-profile-receipt.integration.test.ts
+Running 1 integration test files.
+✖ a mismatched stored receiver profile cannot authorize bootstrap (31875.255563ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32374.975463
+
+✖ failing tests:
+
+test at tests/native-dataset-graph-profile-receipt.integration.test.ts:1:322
+✖ a mismatched stored receiver profile cannot authorize bootstrap (31875.255563ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (/app/tests/native-dataset-graph-profile-receipt.integration.test.ts:21:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /DATASET_GRAPH_ANCESTRY_REQUIRED/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+[ELIFECYCLE] Command failed with exit code 1.

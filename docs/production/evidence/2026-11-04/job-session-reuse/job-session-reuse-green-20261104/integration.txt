@@ -1,0 +1,78 @@
+{"controller": "moria-quality-ca2ec605-f63c-4148-91f2-0f259d863023", "image": "sha256:9fdde67bf9c4581b9eb97c8c051979b104733ec341336a5f679a54053e0de900", "scratchPools": ["/tmp/moria-engine-scratch-97a5ac83-7881-48e1-902b-de0346398065", "/tmp/moria-engine-scratch-9a4c8585-8e18-4c04-81a4-7fa559efaa8c"], "temporary": "/tmp/moria-quality-l0z6tp1a"}
+TAP version 13
+# Subtest: registered service jobs require immutable purpose and a current registered lease
+    # Subtest: registered service admission has no ordinary session and cannot mint before an actual lease
+    ok 1 - registered service admission has no ordinary session and cannot mint before an actual lease
+      ---
+      duration_ms: 154.394108
+      type: 'test'
+      ...
+    # Subtest: unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+    ok 2 - unregistered legacy bindings and mismatched purposes cannot acquire a service capability
+      ---
+      duration_ms: 192.674521
+      type: 'test'
+      ...
+    # Subtest: private service descendants remain inside the exact registered target and parent capability
+    ok 3 - private service descendants remain inside the exact registered target and parent capability
+      ---
+      duration_ms: 1673.939957
+      type: 'test'
+      ...
+    # Subtest: a generic operator claim cannot mint a registered private worker credential
+    ok 4 - a generic operator claim cannot mint a registered private worker credential
+      ---
+      duration_ms: 301.831897
+      type: 'test'
+      ...
+    # Subtest: missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+    ok 5 - missed registry disable pulses cannot be repaired by acknowledging current authorization epochs
+      ---
+      duration_ms: 471.628298
+      type: 'test'
+      ...
+    # Subtest: current target, application, grants, clearance, worker scope and actor disable revoke private authority
+    ok 6 - current target, application, grants, clearance, worker scope and actor disable revoke private authority
+      ---
+      duration_ms: 1552.463785
+      type: 'test'
+      ...
+    # Subtest: missed principal, application and instance disable pulses require explicit fresh service reapproval
+    ok 7 - missed principal, application and instance disable pulses require explicit fresh service reapproval
+      ---
+      duration_ms: 1855.322251
+      type: 'test'
+      ...
+    # Subtest: an unobserved worker disable and restore cannot revive a live lease or private credential
+    ok 8 - an unobserved worker disable and restore cannot revive a live lease or private credential
+      ---
+      duration_ms: 378.841884
+      type: 'test'
+      ...
+    # Subtest: a genuinely expired worker registration remains fenced after its expiry is extended
+    ok 9 - a genuinely expired worker registration remains fenced after its expiry is extended
+      ---
+      duration_ms: 2530.790884
+      type: 'test'
+      ...
+    # Subtest: lease takeover invalidates the old private credential and replacement capabilities remain bounded
+    ok 10 - lease takeover invalidates the old private credential and replacement capabilities remain bounded
+      ---
+      duration_ms: 450.446213
+      type: 'test'
+      ...
+    1..10
+ok 1 - registered service jobs require immutable purpose and a current registered lease
+  ---
+  duration_ms: 12724.766902
+  type: 'test'
+  ...
+1..1
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13030.459476

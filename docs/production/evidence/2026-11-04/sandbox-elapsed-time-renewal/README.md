@@ -1,0 +1,21 @@
+# Sandbox renewal follows elapsed time
+
+Agents, Transform, and Sync sandbox attempts renewed their 30-second task lease after eight completed authority checks. Each check slept one second and could then spend several seconds validating live authority. Slow checks therefore delayed renewal beyond the existing lease lifetime.
+
+The complete ten-case service Evaluation diagnostic captured the first failure as an actual Agent task expiry, before any Function or case failure. Agent `bef1523c-86a4-4c81-93a5-6e88389e32ff` was last renewed at `04:33:58.061979`, expired at `04:34:28.061979`, and failed with `WORKER_LOST` at `04:34:28.193625`, while its execution deadline remained `04:34:36.701760`. A second Agent expired similarly. The earlier private resume identity, pending public withholding, and injected real `40001` checks all passed. These are separate from the previously corrected pending-observation replay error.
+
+The 200 ms diagnostic captured actual PostgreSQL PIDs and blocker chains. At `04:34:27.972`, PID 538 checked Function `cc19532d-c5fd-43b2-857b-310e2fa936d4` and waited on callback PID 553, which waited on PID 391 validating Agent `bef1523c-86a4-4c81-93a5-6e88389e32ff`. The Agent is execution tuple `(4,7)`. The chain terminated in an active authority statement, with no observed wait cycle. The bounded record omits SQL bodies, bind values, credentials, and input payloads. A separate 28.69-second execution-table waiter cannot be attributed precisely from the deliberately limited query metadata.
+
+The guard now checks the monotonic eight-second renewal deadline before and after its existing authority check. Renewal still performs the complete execution/task/worker/fence validation. Every existing check remains, including the post-renewal check. Lease lifetime, operation limits, execution deadlines, denial behavior, and Function/Evaluator renewal behavior are unchanged. There is no concurrent renewal task or authority cache.
+
+A deterministic regression advances a monotonic clock through six-second checks. Agent and engine renewals become due at 8, 21, 29, 42, and 50 seconds; counting eight checks would first renew at 56 seconds. It also checks the 7999/8000 ms boundary and that Function/Evaluator attempts do not renew through this path.
+
+All nine debug native artifacts were rebuilt from the frozen source. Full static checks, artifact provenance, and all 100 native unit tests pass, with zero ignored tests. Native input digest: `6566d4bc2bbcf65473e595fd562deeaf67a51ccf3632bf4d6927907cee10f004`. Production test image: `sha256:81f86fc94da48b3143a3cefa82b22672a50427d7ad6589e2bc07de68e890cda4`.
+
+The complete ten-case service Evaluation run remains red: exit 1 in 120.212 seconds, with zero skipped/cancelled test cases and all original assertions and limits. The real private identity negatives, public pending GET/replay withholding, and injected `40001` all pass. The two pass-case Agents now renew repeatedly and retain live task leases through their original execution deadlines (`04:47:19.127658` and `04:47:19.320443`); no `WORKER_LOST` remains in the captured states or failures. Their final task leases are capped at those exact deadlines.
+
+The earlier failures are now the two Function deadlines (`04:47:09.553199` and `04:47:09.719793`). Both Function attempts have no pending observation and are not observation-blocked at terminal capture, but their work still exceeds the original 30-second budget. The Agents subsequently reach their original 60-second deadlines, and a case correctly withholds an incomplete private observation. This qualifies the renewal correction and preserves the remaining service Evaluation liveness failure; it does not establish full service Evaluation success, whole-platform integration, or production capacity.
+
+The post-change run uses unmodified production SQL and native binaries from the exact frozen build, plus a read-only 500 ms execution/task lease sampler. Its owned controller, proof-labelled containers, three scratch pools, and temporary directory were all absent after normal runner cleanup.
+
+Persistent raw proofs: `/home/gcseq/moria-proofs/sandbox-wallclock-renewal-native-20261105` and `/home/gcseq/moria-proofs/acl-requested-operations-native-20261105/eval-blockers`.

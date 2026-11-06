@@ -1,0 +1,12 @@
+✔ a warmed native key-run reader rejects revoked current authority (37878.672057ms)
+ℹ {"readerWarmed":true,"revocationObserved":true,"noResultReleased":true}
+✔ qualified graph bootstrap preserves standard Iceberg rows and exact array keys (120158.395946ms)
+ℹ {"rows":64,"allKeysLookedUp":true,"arrayOrderAndDuplicatesPreserved":true,"nullableNonKey":true,"headUnchanged":true,"standardV2Readback":true}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158763.180601

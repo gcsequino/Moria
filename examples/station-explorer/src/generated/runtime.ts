@@ -37,6 +37,8 @@ export interface ObjectResult<T> {
 export interface ActionResult {
   revision: string;
   proposed?: boolean;
+  created?: { objectType: string; uid: string; version: string }[];
+  changed?: { objectType: string; uid: string; version: string; deleted: boolean }[];
 }
 
 /** An identity handle; every property fetch uses the current authorized transport. */
@@ -237,8 +239,34 @@ export function actionClient<I>(
       undefined,
       {
         type: 'object',
-        properties: { revision: text, proposed: { type: 'boolean', nullable: false } },
-        optional: ['proposed'],
+        properties: {
+          revision: text,
+          proposed: { type: 'boolean', nullable: false },
+          created: {
+            type: 'list',
+            items: {
+              type: 'object',
+              properties: {
+                objectType: text,
+                uid: { type: 'uid', nullable: false },
+                version: text,
+              },
+            },
+          },
+          changed: {
+            type: 'list',
+            items: {
+              type: 'object',
+              properties: {
+                objectType: text,
+                uid: { type: 'uid', nullable: false },
+                version: text,
+                deleted: { type: 'boolean', nullable: false },
+              },
+            },
+          },
+        },
+        optional: ['proposed', 'created', 'changed'],
       },
       {},
       settings,

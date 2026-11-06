@@ -1,0 +1,16 @@
+✓ Lockfile passes supply-chain policies (verified 4d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 601ms using pnpm v11.25.0
+$ pnpm format:check && pnpm check:architecture && pnpm sdk:check && pnpm typecheck && pnpm check:python && pnpm build && pnpm check:starter
+$ prettier --check "**/*.{ts,tsx,js,mjs,json,yml,yaml}"
+Checking formatting...
+All matched files use Prettier code style!
+$ tsx scripts/check-architecture.ts
+Protected boundary architecture checks passed.
+$ tsx scripts/generate-sdk.ts --check
+$ tsc --noEmit
+tests/test-files.test.ts(11,17): error TS7006: Parameter 'file' implicitly has an 'any' type.
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

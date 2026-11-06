@@ -1,0 +1,8 @@
+{
+  "scope": "Complete original ten-case Source service Evaluation setup, all workers/lifecycle/pinning/privacy/revocation assertions;5 intermittent committed progress transactions and4 consecutive conflict boundary witnesses; existing reap40001/exactUUIDresume/privateidentity/publicwithholding/parent shared fence tests retained",
+  "nativeInputDigest": "d3ddd55053a99df33a2a5394460cce4829026aa0ba28a6c8881990bf7b3ad954",
+  "guards": "All source/model/task/fence/parent and strict terminal gates retained; same isolation,4 per-transaction attempts,10/20/40ms backoff, absolute30s Function/60s Agent/120s fixture limits",
+  "nativeArtifact": "Exact production109 all-nine debug binaries, no native instrumentation or product SQL overlay",
+  "fixtureSha256": "78f10b9d83d718760214cc0868cd4cdd321bf941c9432c7cdcbfb2ba3a5e2806",
+  "retryHelperSha256": "174eff07bed4a82f7316f1af754360bae1780a1a5bdbdd92ce3231e23121a4e4"
+}
