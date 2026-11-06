@@ -22,6 +22,7 @@ import { evaluationResumeFixture } from './fixtures/native-evaluations/resume.js
 import { evaluationPurposeFixture } from './fixtures/native-evaluations/purpose.js';
 import { childProgressLockFixture } from './fixtures/native-evaluations/child-progress-lock.js';
 import { evaluationProgressRetryFixture } from './fixtures/native-evaluations/progress-retry.js';
+import { evaluationReplaySnapshot } from './fixtures/native-evaluations/replay-snapshot.js';
 
 const execute = promisify(execFile);
 async function until(check: () => Promise<boolean>, timeout = 90000) {
@@ -1125,12 +1126,27 @@ test(
         const url = new URL(connection);
         url.port = String(proxy.port);
         const accepted = await native('invoke', { resource: suite, key: 'run-lost-commit' });
+        const replaySession = await sessions.mint(
+          { environment, principal, application },
+          'fixture',
+        );
+        const snapshotGate = await evaluationReplaySnapshot(
+          db.pool,
+          accepted.id,
+          suite,
+          createHash('sha256').update(replaySession.token).digest('hex'),
+        );
         const worker = start(['evaluations', 'worker'], undefined, {
           EVALUATION_DATABASE: url.toString(),
         });
         try {
-          await Promise.race([
+          const replay = snapshotGate.replay(
+            () =>
+              native('invoke', { resource: suite, key: 'run-lost-commit' }, replaySession.token),
             proxy.committed,
+          );
+          const duringCommit = await Promise.race([
+            replay,
             worker.done.then(() => assert.fail('Worker stopped before root COMMIT')),
             delay(90000).then(async () =>
               assert.fail(
@@ -1148,6 +1164,9 @@ test(
               ),
             ),
           ]);
+          assert.equal(duringCommit.id, accepted.id);
+          assert.equal(duringCommit.status, 'running');
+          assert.equal(duringCommit.summary, null);
           assert.equal(
             (
               await db.pool.query(
@@ -1202,7 +1221,11 @@ test(
           );
         } finally {
           worker.child.kill('SIGKILL');
-          await proxy.close();
+          try {
+            await proxy.close();
+          } finally {
+            await snapshotGate.close();
+          }
           evaluationWorker = start(['evaluations', 'worker']);
         }
       },
