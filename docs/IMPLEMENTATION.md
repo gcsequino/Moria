@@ -72,7 +72,10 @@ seven native recovery tests. The full-width Pipeline subtest took 23.927
 seconds, including its assertions. The service Evaluation still exceeded
 its original 90-second barrier with optimized native artifacts. Two
 browser attempts stopped before sign-in at a contended Catalog publication
-claim. The browser fixture on the earlier matching build passed.
+claim. The fixture now uses the same bounded claim retry for execution and
+publication. The matched follow-up passed both browser tests, including
+three persisted records, one top-level Function receipt, and the final
+Source authority checks.
 [Current Linux run](https://github.com/gcsequino/Moria/actions/runs/42130357789)
 
 ## November 5 Agent publication identity reuse
