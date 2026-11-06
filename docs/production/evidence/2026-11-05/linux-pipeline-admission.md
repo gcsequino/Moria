@@ -57,3 +57,20 @@ the native artifacts after a test-only correction.
 ```text
 sha256:e589bbe233625d61b5b17cc8d9f81ea2713ca6078c8a5201d357fd03270c4e0b
 ```
+
+## Combined release-profile check
+
+The exact combined revision `0103728` passed all ten Pipeline tests with
+Cargo's optimized release profile, matching the hosted build profile.
+The 64-output and 64-input/64-output subtests took 12.672 and 23.927 seconds.
+The grouped publication subtest took 90.842 seconds and verified both
+output heads and the single receipt. The full test took 490.530 seconds
+with no skips or cancellations. The test controller and all scratch pools
+were removed.
+
+All nine matching release artifacts, static checks, and 126 native unit
+tests passed. [Independent Linux run](https://github.com/gcsequino/Moria/actions/runs/42130357789)
+
+```text
+sha256:59dfe40aa5f5ef26d47af549e1b5c6c03b5683e11cc4e0a3e70674155a41fa6b
+```

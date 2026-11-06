@@ -67,6 +67,14 @@ barrier in isolation. [Hosted Linux result](https://github.com/gcsequino/Moria/a
 · [Hosted accounting diagnostic](https://github.com/gcsequino/Moria/actions/runs/42126546769)
 · [Linux follow-up](https://github.com/gcsequino/Moria/issues/82)
 
+The combined `0103728` release build passed all ten Pipeline tests and
+seven native recovery tests. The full-width Pipeline subtest took 23.927
+seconds, including its assertions. The service Evaluation still exceeded
+its original 90-second barrier with optimized native artifacts. Two
+browser attempts stopped before sign-in at a contended Catalog publication
+claim. The browser fixture on the earlier matching build passed.
+[Current Linux run](https://github.com/gcsequino/Moria/actions/runs/42130357789)
+
 ## November 5 Agent publication identity reuse
 
 The native platform returns the already verified credential identity after its
