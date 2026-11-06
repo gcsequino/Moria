@@ -128,8 +128,9 @@ export async function queryRows(
   // Resolve immutable generation pointers first, in the same MVCC transaction.
   // Constant stage keys let PostgreSQL use the (stage,uid) index for ordered LIMIT.
   const heads = await c.query(
-    `SELECT pins.kind,h.revision,h.stage FROM (VALUES('pinned',$3::bigint),('current',$4::bigint)) pins(kind,revision)
-    JOIN LATERAL (SELECT revision,moria.runtime_source_stage(stage,environment,object_type,revision) AS stage FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=pins.revision ORDER BY revision DESC LIMIT 1) h ON TRUE`,
+    `SELECT pins.kind,h.revision,selection.* FROM (VALUES('pinned',$3::bigint),('current',$4::bigint)) pins(kind,revision)
+    JOIN LATERAL (SELECT revision,stage FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=pins.revision ORDER BY revision DESC LIMIT 1) h ON TRUE
+    CROSS JOIN LATERAL moria.runtime_source_stage_selection(h.stage,$1,$2,h.revision) selection`,
     [environment, policy.resource, revision, currentRevision],
   );
   const pinned = heads.rows.find((h) => h.kind === 'pinned'),
@@ -147,13 +148,15 @@ export async function queryRows(
     values.push(v);
     return `$${values.length}`;
   };
-  const pinnedTable = pinned.stage ? 'moria.staged_source_rows' : 'moria.source_rows';
-  const currentTable = live.stage ? 'moria.staged_source_rows' : 'moria.source_rows';
+  const stageRows = (head: { stage: string; source_version: string; head_version: string }) =>
+    `moria.runtime_source_canonical_rows(${bind(head.stage)}::uuid,${bind(head.source_version)}::bigint,${bind(head.head_version)}::bigint)`;
+  const pinnedTable = pinned.stage ? stageRows(pinned) : 'moria.source_rows';
+  const currentTable = live.stage ? stageRows(live) : 'moria.source_rows';
   const pinnedConstraint = pinned.stage
-    ? `p.stage=${bind(pinned.stage)}::uuid`
+    ? 'TRUE'
     : `p.environment=$1 AND p.object_type=$2 AND p.revision=${bind(pinned.revision)}::bigint`;
   const currentConstraint = live.stage
-    ? `r.stage=${bind(live.stage)}::uuid`
+    ? 'TRUE'
     : `r.environment=$1 AND r.object_type=$2 AND r.revision=${bind(live.revision)}::bigint`;
   const sqlType = (type: ValueType): string => {
     switch (type.type) {

@@ -10,6 +10,17 @@ CREATE TABLE moria.native_source_row_stores(
  owner uuid NOT NULL,fence bigint NOT NULL CHECK(fence>0),incarnation uuid NOT NULL,
  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
+-- Keep the current canonical UID index and archive only tuples closed by a Source version.
+-- Published versions beyond one require the separately qualified sparse writer.
+ALTER TABLE moria.staged_source_rows ADD COLUMN source_from bigint NOT NULL DEFAULT 1 CHECK(source_from=1);
+CREATE TABLE moria.native_source_canonical_history(
+ store uuid NOT NULL REFERENCES moria.native_source_row_stores(id),
+ uid uuid NOT NULL REFERENCES moria.object_homes(uid),
+ source_from bigint NOT NULL CHECK(source_from>0),
+ source_to bigint NOT NULL CHECK(source_to>source_from),
+ value jsonb NOT NULL,source_value jsonb CHECK(source_value IS NULL OR jsonb_typeof(source_value)='object'),
+ PRIMARY KEY(store,uid,source_from)
+);
 CREATE TABLE moria.native_source_key_map(
  store uuid NOT NULL REFERENCES moria.native_source_row_stores(id),key_hash bytea NOT NULL CHECK(octet_length(key_hash)=32),
  collision integer NOT NULL CHECK(collision BETWEEN 0 AND 63),encoded_key bytea NOT NULL CHECK(octet_length(encoded_key) BETWEEN 1 AND 4194304),
@@ -31,6 +42,12 @@ BEGIN
  RETURN CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;
 END $$;
 CREATE TRIGGER native_source_store_owner BEFORE INSERT OR UPDATE OR DELETE ON moria.native_source_row_stores FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_store_owner();
+CREATE TRIGGER native_source_canonical_history_owner BEFORE INSERT OR UPDATE OR DELETE ON moria.native_source_canonical_history
+ FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_store_owner();
+CREATE FUNCTION moria.runtime_source_canonical_history_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN RAISE EXCEPTION 'IMMUTABLE_SOURCE_HISTORY';END $$;
+CREATE TRIGGER native_source_canonical_history_immutable BEFORE UPDATE ON moria.native_source_canonical_history
+ FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_canonical_history_immutable();
 CREATE TRIGGER native_source_keys_owner BEFORE INSERT OR UPDATE OR DELETE ON moria.native_source_key_map FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_store_owner();
 CREATE TRIGGER native_source_alias_owner BEFORE INSERT OR UPDATE OR DELETE ON moria.native_source_generation_aliases FOR EACH ROW EXECUTE FUNCTION moria.runtime_source_store_owner();
 CREATE FUNCTION moria.runtime_source_alias_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -184,36 +201,63 @@ BEGIN
  UPDATE moria.native_source_row_stores SET status='loading',row_count=NULL,key_count=NULL WHERE id=input_build;
 END $$;
 
--- A generation's environment revision remains distinct from its immutable physical Source store.
-CREATE FUNCTION moria.runtime_source_stage(input_stage uuid,input_environment text,input_target text,input_generation_revision bigint DEFAULT NULL) RETURNS uuid
+-- Public and compatibility readers bind an exact logical alias; an unpublished
+-- projection stage still reads its own version-one rows before it has an alias.
+CREATE FUNCTION moria.runtime_source_stage_selection(input_stage uuid,input_environment text,input_target text,
+ input_generation_revision bigint DEFAULT NULL,input_at_revision bigint DEFAULT NULL)
+ RETURNS TABLE(stage uuid,source_version bigint,head_version bigint)
  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
-DECLARE store moria.native_source_row_stores;
+DECLARE store moria.native_source_row_stores;selected_version bigint;latest_version bigint;
 BEGIN
- IF input_stage IS NULL THEN RETURN NULL;END IF;
+ IF input_stage IS NULL THEN RETURN QUERY SELECT NULL::uuid,NULL::bigint,NULL::bigint;RETURN;END IF;
  SELECT * INTO store FROM moria.native_source_row_stores WHERE id=input_stage;
- IF NOT FOUND THEN RETURN input_stage;END IF;
+ IF NOT FOUND THEN RETURN QUERY SELECT input_stage,1::bigint,1::bigint;RETURN;END IF;
  IF store.environment<>input_environment OR store.object_type<>input_target OR store.status='retired' THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
  IF store.status IN ('loading','sealed') THEN
   IF input_generation_revision IS NOT NULL OR NOT EXISTS(SELECT 1 FROM moria.indexing_builds b WHERE b.id=input_stage AND b.environment=input_environment AND b.target=input_target AND b.status IN ('planning','running','preparing','ready')) THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
- ELSIF NOT EXISTS(SELECT 1 FROM moria.native_source_generation_aliases a JOIN moria.source_generations g
+  RETURN QUERY SELECT input_stage,1::bigint,1::bigint;RETURN;
+ END IF;
+ SELECT a.source_version INTO selected_version FROM moria.native_source_generation_aliases a JOIN moria.source_generations g
   ON g.environment=a.environment AND g.object_type=a.object_type AND g.revision=a.revision AND g.stage=input_stage
-  WHERE a.environment=input_environment AND a.object_type=input_target AND a.store=input_stage AND a.source_version=1
-  AND (input_generation_revision IS NULL OR a.revision=input_generation_revision)) THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
- RETURN store.id;
+  WHERE a.environment=input_environment AND a.object_type=input_target AND a.store=input_stage
+  AND (input_generation_revision IS NULL OR a.revision=input_generation_revision)
+  AND (input_at_revision IS NULL OR a.revision<=input_at_revision)
+  ORDER BY a.revision DESC LIMIT 1;
+ IF NOT FOUND THEN RAISE EXCEPTION 'SOURCE_ALIAS_REQUIRED';END IF;
+ IF input_generation_revision IS NULL AND input_at_revision IS NULL THEN latest_version:=selected_version;
+ ELSE SELECT a.source_version INTO latest_version FROM moria.native_source_generation_aliases a
+  WHERE a.store=input_stage ORDER BY a.revision DESC LIMIT 1;END IF;
+ RETURN QUERY SELECT input_stage,selected_version,latest_version;
 END $$;
+CREATE FUNCTION moria.runtime_source_stage(input_stage uuid,input_environment text,input_target text,input_generation_revision bigint DEFAULT NULL) RETURNS uuid
+ LANGUAGE sql STABLE AS $$
+ SELECT selection.stage FROM moria.runtime_source_stage_selection(input_stage,input_environment,input_target,input_generation_revision) selection
+$$;
+CREATE FUNCTION moria.runtime_source_canonical_rows(input_stage uuid,input_version bigint,input_head_version bigint)
+ RETURNS TABLE(uid uuid,value jsonb,source_value jsonb) LANGUAGE sql STABLE AS $$
+ SELECT current_row.uid,current_row.value,COALESCE(current_row.source_value,current_row.value)
+  FROM moria.staged_source_rows current_row WHERE current_row.stage=input_stage AND current_row.source_from<=input_version
+ UNION ALL
+ SELECT old.uid,old.value,COALESCE(old.source_value,old.value)
+  FROM moria.native_source_canonical_history old WHERE input_version<input_head_version AND old.store=input_stage
+   AND old.source_from<=input_version AND old.source_to>input_version
+$$;
 CREATE OR REPLACE FUNCTION moria.runtime_object_base_stage(stage_id uuid,env text,target text,at_revision bigint)
  RETURNS TABLE(uid uuid,value jsonb,source_value jsonb,action_created boolean) LANGUAGE sql STABLE AS $$
- WITH store AS MATERIALIZED(SELECT moria.runtime_source_stage(stage_id,env,target) AS id)
- SELECT r.uid,r.value,COALESCE(r.source_value,r.value),false FROM store s JOIN moria.staged_source_rows r ON r.stage=s.id
+ WITH selection AS MATERIALIZED(SELECT * FROM moria.runtime_source_stage_selection(stage_id,env,target,NULL,at_revision)),
+ actual AS NOT MATERIALIZED(SELECT r.* FROM selection s CROSS JOIN LATERAL moria.runtime_source_canonical_rows(s.stage,s.source_version,s.head_version) r)
+ SELECT r.uid,r.value,r.source_value,false FROM actual r
  UNION ALL SELECT c.uid,c.value,c.source_value,c.action_created FROM moria.runtime_object_creations_at(env,target,at_revision) c
- WHERE NOT EXISTS(SELECT 1 FROM store s JOIN moria.staged_source_rows r ON r.stage=s.id AND r.uid=c.uid)
+ WHERE NOT EXISTS(SELECT 1 FROM actual r WHERE r.uid=c.uid)
 $$;
 CREATE OR REPLACE FUNCTION moria.runtime_object_base(env text,target text,at_revision bigint)
  RETURNS TABLE(uid uuid,value jsonb,source_value jsonb,action_created boolean) LANGUAGE sql STABLE AS $$
- WITH generation AS MATERIALIZED(SELECT g.revision,moria.runtime_source_stage(g.stage,env,target,g.revision) AS stage FROM moria.source_generations g
-  WHERE g.environment=env AND g.object_type=target AND g.revision<=at_revision ORDER BY g.revision DESC LIMIT 1),
+ WITH generation AS MATERIALIZED(
+  SELECT g.revision,s.* FROM (SELECT g.revision,g.stage FROM moria.source_generations g
+   WHERE g.environment=env AND g.object_type=target AND g.revision<=at_revision ORDER BY g.revision DESC LIMIT 1) g
+  CROSS JOIN LATERAL moria.runtime_source_stage_selection(g.stage,env,target,g.revision) s),
  actual AS NOT MATERIALIZED(
-  SELECT r.uid,r.value,COALESCE(r.source_value,r.value) AS source_value FROM generation g JOIN moria.staged_source_rows r ON r.stage=g.stage
+  SELECT r.* FROM generation g CROSS JOIN LATERAL moria.runtime_source_canonical_rows(g.stage,g.source_version,g.head_version) r
   UNION ALL SELECT r.uid,r.value,r.value FROM generation g JOIN moria.source_rows r
   ON r.environment=env AND r.object_type=target AND r.revision=g.revision WHERE g.stage IS NULL)
  SELECT a.uid,a.value,a.source_value,false FROM actual a

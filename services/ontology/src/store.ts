@@ -346,8 +346,13 @@ export class ObjectStore {
   ) {
     // Legacy generations remain readable after the additive migration.
     return c.query(
-      `WITH generation AS (SELECT revision,moria.runtime_source_stage(stage,environment,object_type,revision) AS stage FROM moria.source_generations WHERE environment=$1 AND object_type=$2 AND revision<=$4 ORDER BY revision DESC LIMIT 1)
-      SELECT r.value FROM generation g JOIN moria.staged_source_rows r ON r.stage=g.stage AND r.uid=$3
+      `WITH generation AS (
+      SELECT g.revision,selection.* FROM (SELECT revision,stage FROM moria.source_generations
+       WHERE environment=$1 AND object_type=$2 AND revision<=$4 ORDER BY revision DESC LIMIT 1) g
+      CROSS JOIN LATERAL moria.runtime_source_stage_selection(g.stage,$1,$2,g.revision) selection)
+      SELECT r.value FROM generation g
+      CROSS JOIN LATERAL moria.runtime_source_canonical_rows(g.stage,g.source_version,g.head_version) r
+      WHERE r.uid=$3
       UNION ALL SELECT r.value FROM generation g JOIN moria.source_rows r ON r.environment=$1 AND r.object_type=$2 AND r.revision=g.revision AND r.uid=$3 WHERE g.stage IS NULL`,
       [environment, objectType, uid, revision],
     );
