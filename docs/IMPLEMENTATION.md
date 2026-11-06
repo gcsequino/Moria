@@ -1,5 +1,8 @@
 # Implementation checkpoint
 
+See the [current development handoff](HANDOFF.md) for the latest hosted results,
+archived experiments, and the order of the remaining gates.
+
 ## November 5 Linux Function and Pipeline fixes
 
 Local Linux reproduced two Function failures from hosted CI. Docker cleanup
