@@ -574,6 +574,15 @@ test(
       void done.catch(() => {});
       return { child, done, output: () => output, error: () => error };
     };
+    const stopWorker = async (worker: ReturnType<typeof start>, event: string) => {
+      await until(async () => {
+        assert.equal(worker.child.exitCode, null, worker.error());
+        assert.equal(worker.child.signalCode, null, worker.error());
+        return worker.output().includes(`"event":"${event}"`);
+      }, 10000);
+      worker.child.kill('SIGTERM');
+      await worker.done;
+    };
     const server = start(['serve'], undefined, { MORIA_NATIVE_LISTEN: '127.0.0.1:0' });
     let api = '';
     await until(async () => {
@@ -1116,8 +1125,7 @@ test(
       'a real root receipt COMMIT with a lost acknowledgement replays once after worker SIGKILL',
       async () => {
         assert.ok(evaluationWorker);
-        evaluationWorker.child.kill('SIGTERM');
-        await evaluationWorker.done;
+        await stopWorker(evaluationWorker, 'evaluation-worker');
         const proxy = await transactionCommitProxy(
           Number(db.pool.options.port),
           'INSERT INTO moria.runtime_evaluation_receipts',
@@ -1300,8 +1308,7 @@ test(
       ];
       const previous = evaluationWorker;
       if (previous?.child.exitCode === null) {
-        previous.child.kill('SIGTERM');
-        await previous.done;
+        await stopWorker(previous, 'evaluation-worker');
       }
       let id: string | undefined;
       try {
@@ -1394,10 +1401,9 @@ test(
         } finally {
           if (previous) evaluationWorker = start(['evaluations', 'worker']);
           await Promise.all(
-            ownedWorkers.map(async (worker) => {
+            ownedWorkers.map(async (worker, index) => {
               if (worker?.child.exitCode === null) {
-                worker.child.kill('SIGTERM');
-                await worker.done;
+                await stopWorker(worker, index === 0 ? 'agent-worker' : 'function-worker');
               }
             }),
           );
@@ -1650,8 +1656,7 @@ test(
       );
       const previousWorker = evaluationWorker;
       if (previousWorker?.child.exitCode === null) {
-        previousWorker.child.kill('SIGTERM');
-        await previousWorker.done;
+        await stopWorker(previousWorker, 'evaluation-worker');
       }
       const ids: string[] = [];
       let worker: ReturnType<typeof start> | undefined;
@@ -1689,8 +1694,7 @@ test(
           }
         } finally {
           if (worker?.child.exitCode === null) {
-            worker.child.kill('SIGTERM');
-            await worker.done;
+            await stopWorker(worker, 'evaluation-worker');
           }
           if (previousWorker) evaluationWorker = start(['evaluations', 'worker']);
         }
