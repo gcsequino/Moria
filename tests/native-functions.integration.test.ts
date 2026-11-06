@@ -996,7 +996,7 @@ const response=await context.platform.fetch('/api/v1/objects/records/'+input.uid
     );
     await t.test(
       'native worker pool supports bounded nested invocations and function-backed action preparation',
-      async () => {
+      async (caseTest) => {
         const child = spawn(
           process.execPath,
           ['--import', 'tsx', 'apps/cli/src/main.ts', 'functions', 'worker'],
@@ -1034,10 +1034,32 @@ const response=await context.platform.fetch('/api/v1/objects/records/'+input.uid
             });
           });
           assert.equal(await readlink(`/proc/${child.pid}/exe`), await realpath(binary));
+          const childResource = resources.get('child')!;
+          await db.pool.query(`CREATE SEQUENCE public.test_nested_function_admissions;
+            CREATE FUNCTION public.test_nested_function_conflict() RETURNS trigger
+            LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,moria AS $$
+            BEGIN
+              IF NEW.parent_id IS NOT NULL AND EXISTS(
+                SELECT 1 FROM moria.runtime_executions WHERE id=NEW.execution AND resource='${childResource}'::uuid
+              ) THEN
+                IF nextval('public.test_nested_function_admissions')=1 THEN
+                  RAISE EXCEPTION 'test nested Function admission conflict' USING ERRCODE='40001';
+                END IF;
+              END IF;
+              RETURN NEW;
+            END $$;
+            CREATE TRIGGER test_nested_function_conflict AFTER INSERT ON moria.runtime_function_invocations
+            FOR EACH ROW EXECUTE FUNCTION public.test_nested_function_conflict()`);
+          caseTest.after(async () => {
+            await db.pool
+              .query(`DROP TRIGGER test_nested_function_conflict ON moria.runtime_function_invocations;
+              DROP FUNCTION public.test_nested_function_conflict();
+              DROP SEQUENCE public.test_nested_function_admissions`);
+          });
           const nested = await request(
             `/api/v1/functions/${resources.get('parent')}/invoke`,
             'POST',
-            { input: { mode: 'nested', value: 7, uid: resources.get('child') }, wait: true },
+            { input: { mode: 'nested', value: 7, uid: childResource }, wait: true },
             'nested-parent',
           );
           assert.equal(nested.response.status, 200, JSON.stringify(nested.value));
@@ -1058,13 +1080,18 @@ const response=await context.platform.fetch('/api/v1/objects/records/'+input.uid
             }),
           );
           assert.equal(nested.value.result.value, 8);
-          const nestedChild = (
+          const admissions = (
             await db.pool.query(
-              'SELECT execution FROM moria.runtime_function_invocations WHERE parent_id=$1',
-              [nested.value.id],
+              'SELECT last_value::int AS attempts FROM public.test_nested_function_admissions',
             )
-          ).rows[0];
-          assert.ok(nestedChild);
+          ).rows[0].attempts;
+          assert.ok(admissions >= 2);
+          const { rows: nestedChildren } = await db.pool.query(
+            'SELECT execution FROM moria.runtime_function_invocations WHERE parent_id=$1',
+            [nested.value.id],
+          );
+          assert.equal(nestedChildren.length, 1);
+          const [nestedChild] = nestedChildren;
           ids.add(nestedChild.execution);
           assert.equal((await get(nestedChild.execution)).status, 'succeeded');
           const input = { mode: 'normal', value: 60, uid };

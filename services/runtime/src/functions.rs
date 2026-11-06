@@ -658,6 +658,41 @@ impl NativeFunctions {
         parent: Option<&SandboxContext>,
         prepare_only: bool,
     ) -> Result<Value> {
+        for retry in 0..4 {
+            let result = self
+                .invoke_once(
+                    session,
+                    resource,
+                    request_key,
+                    &payload,
+                    parent,
+                    prepare_only,
+                )
+                .await;
+            // A rolled-back child admission has no durable child or released observation.
+            if parent.is_some()
+                && result
+                    .as_ref()
+                    .is_err_and(crate::execution::transaction_conflict)
+                && retry < 3
+            {
+                tokio::time::sleep(Duration::from_millis(10 << retry)).await;
+            } else {
+                return result;
+            }
+        }
+        unreachable!()
+    }
+
+    async fn invoke_once(
+        &self,
+        session: &VerifiedSession,
+        resource: Uuid,
+        request_key: &str,
+        payload: &Value,
+        parent: Option<&SandboxContext>,
+        prepare_only: bool,
+    ) -> Result<Value> {
         key(request_key)?;
         let lock = format!(
             "moria/function/request/{}",
@@ -694,7 +729,7 @@ impl NativeFunctions {
         let source_marks = Self::authorize(tx.client(), session, resource, &[]).await?;
         if let Some(existing)=tx.query_opt("SELECT e.id,f.definition,f.prepare_only FROM moria.runtime_executions e JOIN moria.runtime_function_invocations f ON f.execution=e.id WHERE e.environment=$1 AND e.resource=$2 AND e.principal=$3 AND e.application=$4 AND e.request_key=$5", &[&session.environment(),&resource,&session.principal(),&session.application(),&request_key]).await? {
             ensure!(existing.get::<_,bool>("prepare_only")==prepare_only,"IDEMPOTENCY_CONFLICT");
-            let (normalized,hash)=input(&payload,&spec(&existing.get::<_,Value>("definition"))?).map_err(|_|anyhow::anyhow!("IDEMPOTENCY_CONFLICT"))?;
+            let (normalized,hash)=input(payload,&spec(&existing.get::<_,Value>("definition"))?).map_err(|_|anyhow::anyhow!("IDEMPOTENCY_CONFLICT"))?;
             let old=Self::row(tx.client(),session,existing.get("id")).await?;
             ensure!(old.get::<_,Value>("input")==normalized && old.get::<_,String>("input_hash")==hash,"IDEMPOTENCY_CONFLICT");
             let marks=self.retained(&tx,session,&old).await?;let value=Self::public(&old,marks,false)?;
@@ -717,7 +752,7 @@ impl NativeFunctions {
             .cloned()
             .ok_or_else(|| anyhow::anyhow!("FUNCTION_INVALID"))?;
         let resolved = spec(&definition)?;
-        let (normalized, hash) = input(&payload, &resolved)?;
+        let (normalized, hash) = input(payload, &resolved)?;
         ensure!(
             !prepare_only || resolved.effect == "editProposal",
             "FUNCTION_EFFECT"
