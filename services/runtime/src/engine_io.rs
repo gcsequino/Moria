@@ -221,55 +221,61 @@ impl NativeEngineIo {
             .get_mut(name)
             .ok_or_else(|| anyhow::anyhow!("ENGINE_SCAN_INVALID"))?;
         ensure!(state.scan == scan, "ENGINE_SCAN_INVALID");
-        if state.pending.is_empty() && !state.ended {
-            let mut batches = Vec::new();
-            let mut memory = 0usize;
+        const COMPACTION_BYTES: usize = 512 * 1024;
+        const ROWS_PER_READ: usize = 1000;
+        if state.pending.len() < engine_ipc::CHUNK_BYTES && !state.ended {
+            let mut encoded = std::mem::take(&mut state.pending).to_vec();
             let mut rows = 0usize;
-            loop {
-                self.cancel.check()?;
-                let compact = if let Some(batch) = state.held.take() {
-                    batch
-                } else {
-                    let Some(batch) = state.stream.try_next().await? else {
-                        state.ended = true;
-                        break;
+            while encoded.len() < engine_ipc::CHUNK_BYTES && rows < ROWS_PER_READ && !state.ended {
+                let mut batches = Vec::new();
+                let mut memory = 0usize;
+                loop {
+                    self.cancel.check()?;
+                    let compact = if let Some(batch) = state.held.take() {
+                        batch
+                    } else {
+                        let Some(batch) = state.stream.try_next().await? else {
+                            state.ended = true;
+                            break;
+                        };
+                        ensure!(
+                            batch.num_rows() <= 1
+                                && batch.get_array_memory_size() <= 64 * 1024 * 1024,
+                            "DECODED_BATCH_LIMIT"
+                        );
+                        if batch.num_rows() == 0 {
+                            continue;
+                        }
+                        let batch =
+                            crate::dataset_writer::rebind_batch(batch, state.schema.clone())?;
+                        engine_ipc::compact_batch(&state.schema_prefix, &state.fields, &batch)?
                     };
-                    ensure!(
-                        batch.num_rows() <= 1 && batch.get_array_memory_size() <= 64 * 1024 * 1024,
-                        "DECODED_BATCH_LIMIT"
-                    );
-                    if batch.num_rows() == 0 {
-                        continue;
+                    let size = compact.retained_bytes;
+                    if (!batches.is_empty() && memory + size > COMPACTION_BYTES)
+                        || (!encoded.is_empty() && size > COMPACTION_BYTES)
+                    {
+                        state.held = Some(compact);
+                        break;
                     }
-                    let batch = crate::dataset_writer::rebind_batch(batch, state.schema.clone())?;
-                    engine_ipc::compact_batch(&state.schema_prefix, &state.fields, &batch)?
-                };
-                let size = compact.retained_bytes;
-                if !batches.is_empty()
-                    && (memory + size > 512 * 1024 || rows + compact.batch.num_rows() > 1000)
-                {
-                    state.held = Some(compact);
+                    memory += size;
+                    rows += compact.batch.num_rows();
+                    batches.push(compact.batch);
+                    if memory >= COMPACTION_BYTES || rows == ROWS_PER_READ {
+                        break;
+                    }
+                }
+                if batches.is_empty() {
                     break;
                 }
-                memory += size;
-                rows += compact.batch.num_rows();
-                batches.push(compact.batch);
-                if memory >= 512 * 1024 || rows == 1000 {
-                    break;
-                }
-            }
-            let mut encoded = if batches.is_empty() {
-                Vec::new()
-            } else {
                 let batch = if batches.len() == 1 {
                     batches.pop().unwrap()
                 } else {
                     arrow_select::concat::concat_batches(&state.schema, batches.iter())?
                 };
-                let encoded = engine_ipc::encode_batch(&batch)?;
+                // Pack complete Arrow frames into one bounded guest read.
+                encoded.extend(engine_ipc::encode_batch(&batch)?);
                 self.input_rows_encoded += batch.num_rows() as u64;
-                encoded
-            };
+            }
             if state.ended {
                 encoded.extend(engine_ipc::EOS);
             }
