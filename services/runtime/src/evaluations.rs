@@ -1086,7 +1086,8 @@ impl NativeEvaluations {
         let header = Self::header(tx.client(), &session, lease.execution).await?;
         let marks = Self::current(tx.client(), &session, &header).await?;
         if !header.get::<_, bool>("loaded") {
-            let source_spec: Value = header.get("spec");
+            let mut spec: Value = header.get("spec");
+            spec["pinnedInputs"] = json!([]);
             let deadline: String = tx
                 .query_one(
                     "SELECT deadline::text FROM moria.runtime_executions WHERE id=$1",
@@ -1094,21 +1095,21 @@ impl NativeEvaluations {
                 )
                 .await?
                 .get(0);
+            let context = json!({"environment":session.environment(),"principal":session.principal(),"application":session.application(),"sessionHash":session.session_hash(),"parentExecution":lease.execution,"parentDeadline":deadline});
+            // Case controls share the root's immutable authority; each request has its own lease.
+            let binding = Self::binding(
+                tx.client(),
+                &session,
+                header.get("resource"),
+                &spec,
+                &context,
+                &marks,
+                &agent_model_operations(&header.get::<_, Value>("agent_pin"))?,
+            )
+            .await?;
+            let empty_input_hash = empty_hash(&spec)?;
             for (name, input, input_hash, expected) in &cases {
                 for repeat in 0..repeats {
-                    let mut spec = source_spec.clone();
-                    spec["pinnedInputs"] = json!([]);
-                    let context = json!({"environment":session.environment(),"principal":session.principal(),"application":session.application(),"sessionHash":session.session_hash(),"parentExecution":lease.execution,"parentDeadline":deadline});
-                    let binding = Self::binding(
-                        tx.client(),
-                        &session,
-                        header.get("resource"),
-                        &spec,
-                        &context,
-                        &marks,
-                        &agent_model_operations(&header.get::<_, Value>("agent_pin"))?,
-                    )
-                    .await?;
                     let key = format!(
                         "evaluation/{}/{}",
                         lease.execution,
@@ -1120,7 +1121,7 @@ impl NativeEvaluations {
                             &[
                                 &binding,
                                 &key,
-                                &empty_hash(&spec)?,
+                                &empty_input_hash,
                                 &json!([{"key":"case","partition":null}]),
                             ],
                         )
@@ -1174,6 +1175,7 @@ impl NativeEvaluations {
             tx.execute("UPDATE moria.runtime_evaluation_cases SET agent_execution=$2,outcome='running' WHERE execution=$1 AND outcome IN ('pending','running')",&[&lease.execution,&agent_id]).await?;
             tx.commit().await?;
         }
+        let mut delay = Duration::from_millis(100);
         let agent = loop {
             if let Some(result) = self
                 .agents
@@ -1182,7 +1184,9 @@ impl NativeEvaluations {
             {
                 break result;
             }
-            tokio::time::sleep(Duration::from_millis(100)).await;
+            // Pending polls release no data and each poll rechecks live authority.
+            tokio::time::sleep(delay).await;
+            delay = (delay * 2).min(Duration::from_millis(500));
         };
         let client = self.db.get().await?;
         let row=client.query_one("SELECT c.*,r.definition,r.release,e.resource,e.deadline::text FROM moria.runtime_evaluation_cases c JOIN moria.runtime_evaluations r ON r.execution=c.evaluation JOIN moria.runtime_executions e ON e.id=c.execution WHERE c.execution=$1",&[&lease.execution]).await?;

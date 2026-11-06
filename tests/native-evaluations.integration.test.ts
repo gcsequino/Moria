@@ -1527,11 +1527,18 @@ test(
           await evaluationPurposeFixture(db.pool, firing.child);
           const cases = (
             await db.pool.query(
-              'SELECT execution,agent_execution,evaluator_execution FROM moria.runtime_evaluation_cases WHERE evaluation=$1',
+              `SELECT c.execution,c.agent_execution,c.evaluator_execution,e.binding,t.id AS task
+               FROM moria.runtime_evaluation_cases c JOIN moria.runtime_executions e ON e.id=c.execution
+               JOIN moria.runtime_execution_tasks t ON t.execution=e.id
+               JOIN moria.runtime_job_delegations d ON d.execution=e.id AND d.parent_execution=c.evaluation
+               WHERE c.evaluation=$1`,
               [firing.child],
             )
           ).rows;
           assert.equal(cases.length, 10);
+          assert.equal(new Set(cases.map((row) => row.binding)).size, 1);
+          assert.equal(new Set(cases.map((row) => row.execution)).size, 10);
+          assert.equal(new Set(cases.map((row) => row.task)).size, 10);
           const tools = (
             await db.pool.query(
               "SELECT f.execution,f.parent_id,d.origin_kind,d.parent_execution,e.status,b.resource,s.authority FROM moria.runtime_function_invocations f JOIN moria.runtime_executions e ON e.id=f.execution JOIN moria.runtime_job_delegations d ON d.execution=f.execution JOIN moria.runtime_execution_bindings b ON b.id=e.binding JOIN moria.runtime_execution_services s ON s.binding=e.binding JOIN moria.runtime_evaluation_cases c ON c.agent_execution=f.parent_id WHERE c.evaluation=$1 AND c.case_id='pass' ORDER BY c.repeat",
