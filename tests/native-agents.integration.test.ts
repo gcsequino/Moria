@@ -7,7 +7,7 @@ import { readlink, realpath } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { agentImage } from './fixtures/agents/image.js';
 import { database } from './fixtures/catalog-storage/database.js';
 import { createLocalFilesystem } from '../services/filesystem/src/local.js';
@@ -1535,7 +1535,6 @@ for (const group of [
               )
             ).rows[0];
             assert.ok(credential);
-            const checks = await db.pool.connect();
             const lease = [
               credential.task,
               job.id,
@@ -1546,33 +1545,45 @@ for (const group of [
             ];
             const authoritySql =
               'SELECT moria.runtime_agent_task_session_check($1,$2,$3,$4,$5,$6,$7) AS state';
-            const guardCalls = async () =>
+            const guardCalls = async (client: PoolClient): Promise<number> =>
               (
-                await checks.query(
+                await client.query(
                   "SELECT calls::int FROM pg_stat_xact_user_functions WHERE schemaname='moria' AND funcname='runtime_job_delegation_guard'",
                 )
-              ).rows[0]?.calls;
+              ).rows[0]?.calls ?? 0;
+            const checks = await db.pool.connect();
             try {
+              const priorChecks = await db.pool.connect();
+              let prior: unknown;
+              let priorCalls: number;
+              try {
+                await priorChecks.query('BEGIN');
+                await priorChecks.query("SET LOCAL track_functions='pl'");
+                const before = await guardCalls(priorChecks);
+                await priorChecks.query('SELECT moria.runtime_task_check($1,$2,$3)', [
+                  credential.task,
+                  credential.owner,
+                  credential.fence,
+                ]);
+                prior = (
+                  await priorChecks.query('SELECT moria.native_serving_session($1) AS state', [
+                    credential.token_hash,
+                  ])
+                ).rows[0].state;
+                priorCalls = (await guardCalls(priorChecks)) - before;
+                assert.equal(priorCalls, 2);
+              } finally {
+                await priorChecks.query('ROLLBACK');
+                priorChecks.release();
+              }
               await checks.query('BEGIN');
               await checks.query("SET LOCAL track_functions='pl'");
-              await checks.query('SELECT moria.runtime_task_check($1,$2,$3)', [
-                credential.task,
-                credential.owner,
-                credential.fence,
-              ]);
-              const prior = (
-                await checks.query('SELECT moria.native_serving_session($1) AS state', [
-                  credential.token_hash,
-                ])
-              ).rows[0].state;
-              assert.equal(await guardCalls(), 2);
-              await checks.query('ROLLBACK');
-              await checks.query('BEGIN');
-              await checks.query("SET LOCAL track_functions='pl'");
+              const before = await guardCalls(checks);
               const reused = (await checks.query(authoritySql, [...lease, credential.token_hash]))
                 .rows[0].state;
               assert.deepEqual(reused, prior);
-              assert.equal(await guardCalls(), 1);
+              const reusedCalls = (await guardCalls(checks)) - before;
+              assert.equal(reusedCalls, 1);
               await assert.rejects(
                 db.pool.query(
                   'SELECT 1 FROM moria.runtime_executions WHERE id=$1 FOR UPDATE NOWAIT',
@@ -1626,8 +1637,8 @@ for (const group of [
               console.log(
                 JSON.stringify({
                   event: 'agent_task_session_reuse',
-                  priorChecks: 2,
-                  reusedChecks: 1,
+                  priorChecks: priorCalls,
+                  reusedChecks: reusedCalls,
                   ordinaryParity: true,
                   locksRetained: true,
                   roleBoundary: true,
