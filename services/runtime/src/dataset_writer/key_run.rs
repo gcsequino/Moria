@@ -277,7 +277,14 @@ fn long(bytes: &[u8], offset: &mut usize) -> Result<u64> {
     ensure!(value <= 9_007_199_254_740_991, "DATASET_KEY_INDEX_INVALID");
     Ok(value)
 }
+#[cfg(test)]
+thread_local! {
+    static DESCRIPTOR_VALIDATIONS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
 fn validate_descriptor(descriptor: &RunDescriptor) -> Result<()> {
+    #[cfg(test)]
+    DESCRIPTOR_VALIDATIONS.with(|count| count.set(count.get() + 1));
     ensure!(
         matches!(descriptor.version, 2 | 3)
             && valid_hash(&descriptor.key_schema_hash)
@@ -395,21 +402,25 @@ pub fn decode_partition(
     bytes: &[u8],
 ) -> Result<Vec<RunEntry>> {
     validate_descriptor(descriptor)?;
+    ensure!(
+        descriptor
+            .partitions
+            .iter()
+            .any(|accepted| accepted == slice),
+        "DATASET_KEY_INDEX_INVALID"
+    );
+    decode_slice(descriptor.kind, descriptor.version, slice, bytes)
+}
+
+fn decode_slice(
+    kind: RunKind,
+    version: u32,
+    slice: &PartitionSlice,
+    bytes: &[u8],
+) -> Result<Vec<RunEntry>> {
     allocation_bound(slice)?;
     ensure!(
-        matches!(descriptor.version, 2 | 3)
-            && valid_hash(&descriptor.key_schema_hash)
-            && descriptor.sequence <= 9_007_199_254_740_991
-            && slice.start >= MAGIC.len() as u64
-            && slice.start < slice.end
-            && slice.end <= LIMIT as u64
-            && slice.end - slice.start == bytes.len() as u64
-            && slice.entries > 0
-            && slice.entries <= RECORD_LIMIT as u64
-            && descriptor
-                .partitions
-                .iter()
-                .any(|accepted| accepted == slice),
+        slice.end - slice.start == bytes.len() as u64,
         "DATASET_KEY_INDEX_INVALID"
     );
     // Encoded minimum record length bounds output allocation before decoding untrusted counts.
@@ -434,13 +445,11 @@ pub fn decode_partition(
             "DATASET_KEY_INDEX_INVALID"
         );
         let operation = take(bytes, &mut offset, 1)?[0];
-        let value = match (operation, descriptor.kind) {
+        let value = match (operation, kind) {
             (0, _) => RunValue::Deleted,
             (1, RunKind::Hashes) => RunValue::Hash(take(bytes, &mut offset, 32)?.try_into()?),
-            (3, RunKind::Hashes) if descriptor.version == 3 => RunValue::DeferredHash,
-            (operation @ (2 | 4), RunKind::Locations)
-                if operation == 2 || descriptor.version == 3 =>
-            {
+            (3, RunKind::Hashes) if version == 3 => RunValue::DeferredHash,
+            (operation @ (2 | 4), RunKind::Locations) if operation == 2 || version == 3 => {
                 let length = integer(bytes, &mut offset)? as usize;
                 ensure!(
                     (1..=NAME_LIMIT).contains(&length),
@@ -548,21 +557,30 @@ pub fn merge_partition(
 /// Matching hash collisions remain bounded and every candidate compares complete key bytes.
 pub fn point_blocks<'a>(descriptor: &'a RunDescriptor, key: &[u8]) -> Result<Vec<&'a BlockSlice>> {
     validate_descriptor(descriptor)?;
+    point_blocks_in_validated_run(descriptor, key)
+}
+
+pub(super) fn point_blocks_in_validated_run<'a>(
+    descriptor: &'a RunDescriptor,
+    key: &[u8],
+) -> Result<Vec<&'a BlockSlice>> {
     ensure!(
         !key.is_empty() && key.len() <= KEY_LIMIT,
         "DATASET_PRIMARY_KEY_LIMIT"
     );
     let digest = key_route(key);
-    let blocks = descriptor
+    let first = descriptor
         .blocks
+        .partition_point(|block| block.maximum < digest);
+    let blocks = descriptor.blocks[first..]
         .iter()
-        .filter(|block| {
-            block.partition == digest[0] && block.minimum <= digest && digest <= block.maximum
-        })
+        .take_while(|block| block.minimum <= digest)
+        .take(POINT_BLOCK_LIMIT + 1)
         .collect::<Vec<_>>();
     ensure!(blocks.len() <= POINT_BLOCK_LIMIT, "RESOURCE_LIMIT");
     Ok(blocks)
 }
+
 pub fn decode_block(
     descriptor: &RunDescriptor,
     block: &BlockSlice,
@@ -570,24 +588,26 @@ pub fn decode_block(
 ) -> Result<Vec<RunEntry>> {
     validate_descriptor(descriptor)?;
     ensure!(
-        descriptor.blocks.contains(block) && bytes.len() as u64 == block.end - block.start,
+        descriptor.blocks.contains(block),
         "DATASET_KEY_INDEX_INVALID"
     );
-    // Reuse the same strict codec with a bounded descriptor for this exact block.
-    let mut bounded = descriptor.clone();
-    bounded.entries = block.entries;
-    bounded.size = 8 + bytes.len() as u64;
-    let mut block = block.clone();
-    block.start = 8;
-    block.end = bounded.size;
-    bounded.partitions = vec![PartitionSlice {
+    decode_validated_block(descriptor.kind, descriptor.version, block, bytes)
+}
+
+/// The block must come from a descriptor checked by the reader or verifier.
+pub(super) fn decode_validated_block(
+    kind: RunKind,
+    version: u32,
+    block: &BlockSlice,
+    bytes: &[u8],
+) -> Result<Vec<RunEntry>> {
+    let slice = PartitionSlice {
         partition: block.partition,
         start: block.start,
         end: block.end,
         entries: block.entries,
-    }];
-    bounded.blocks = vec![block.clone()];
-    let rows = decode_partition(&bounded, &bounded.partitions[0], bytes)?;
+    };
+    let rows = decode_slice(kind, version, &slice, bytes)?;
     ensure!(
         rows.first()
             .is_some_and(|row| key_route(&row.key) == block.minimum)
@@ -610,8 +630,9 @@ pub fn verify_complete_run(descriptor: &RunDescriptor, bytes: &[u8]) -> Result<(
     )?;
     let mut previous: Option<Vec<u8>> = None;
     for block in &descriptor.blocks {
-        for entry in decode_block(
-            descriptor,
+        for entry in decode_validated_block(
+            descriptor.kind,
+            descriptor.version,
             block,
             &bytes[block.start as usize..block.end as usize],
         )? {
@@ -882,7 +903,10 @@ mod tests {
             writer.push(row).unwrap();
         }
         let (descriptor, bytes) = writer.finish().unwrap();
+        assert!(descriptor.blocks.len() > 500);
+        DESCRIPTOR_VALIDATIONS.with(|count| count.set(0));
         verify_complete_run(&descriptor, &bytes).unwrap();
+        assert_eq!(DESCRIPTOR_VALIDATIONS.with(|count| count.get()), 1);
         let wanted = &rows[24001];
         let blocks = point_blocks(&descriptor, &wanted.key).unwrap();
         assert_eq!(blocks.len(), 1);

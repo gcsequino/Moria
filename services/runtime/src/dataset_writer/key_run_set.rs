@@ -245,7 +245,7 @@ pub(crate) async fn lookup_batch(
     entry: &ReadEntry,
     kind: RunKind,
     key_schema_hash: &str,
-    keys: &[Vec<u8>],
+    keys: &[&[u8]],
 ) -> Result<Vec<Option<RunValue>>> {
     ensure!(keys.len() <= 1000, "RESOURCE_LIMIT");
     keys.iter().try_fold(0usize, |bytes, key| {
@@ -295,7 +295,7 @@ pub(crate) async fn lookup_batch(
             let reader = bucket
                 .reader(context, cache, entry, ordinal, segment)
                 .await?;
-            let selected: Vec<_> = indices.iter().map(|index| keys[*index].clone()).collect();
+            let selected: Vec<_> = indices.iter().map(|&index| keys[index]).collect();
             for (index, value) in indices
                 .into_iter()
                 .zip(reader.lookup_batch(&selected).await?)
