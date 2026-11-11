@@ -2734,19 +2734,29 @@ impl ClosureSpool {
         Ok(())
     }
 
-    pub(crate) async fn check_current(&self, read: &dyn ReadAuthority) -> Result<()> {
+    pub(crate) async fn check_read_authority(&self, read: &dyn ReadAuthority) -> Result<()> {
         self.authority.check(&self.object, &self.cancel).await?;
-        check_read(read, &self.object, &self.cancel).await?;
+        check_read(read, &self.object, &self.cancel).await
+    }
+
+    pub(crate) fn sealed_database(&self) -> Result<rusqlite::Connection> {
         let db = self.database()?;
         self.assert_scope(&db)?;
         ensure!(Self::info(&db, "state")? == "sealed", "SPOOL_UNSEALED");
+        Ok(db)
+    }
+
+    pub(crate) async fn check_current(&self, read: &dyn ReadAuthority) -> Result<()> {
+        self.check_read_authority(read).await?;
+        self.sealed_database()?;
         Ok(())
     }
 
     pub(crate) fn lookup(&self, name: &str) -> Result<ClosureEntry> {
-        let db = self.database()?;
-        self.assert_scope(&db)?;
-        ensure!(Self::info(&db, "state")? == "sealed", "SPOOL_UNSEALED");
+        Self::lookup_in(&self.sealed_database()?, name)
+    }
+
+    pub(crate) fn lookup_in(db: &rusqlite::Connection, name: &str) -> Result<ClosureEntry> {
         let value: String =
             db.query_row("SELECT value FROM entries WHERE name=?1", [name], |row| {
                 row.get(0)

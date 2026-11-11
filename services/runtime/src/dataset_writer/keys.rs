@@ -60,8 +60,8 @@ impl Drop for Keys {
             .execute_batch(&format!("DROP TABLE IF EXISTS {}", self.table));
     }
 }
-fn finish_key(values: Vec<Value>) -> Result<Vec<u8>> {
-    let bytes = canonical_json(&json!(values))?.into_bytes();
+pub(super) fn finish_key(values: Vec<Value>) -> Result<Vec<u8>> {
+    let bytes = canonical_json(&Value::Array(values))?.into_bytes();
     ensure!(bytes.len() <= KEY_MAX, "DATASET_PRIMARY_KEY_LIMIT");
     Ok(bytes)
 }

@@ -56,6 +56,15 @@ every test and remains the final independent CI requirement.
   errors, and cancellation.
 - For hot-path changes, explain what work scales per request, page, batch, or row.
   Bound buffer sizes and concurrent tasks, and justify new copies of bulk data.
+- Count SQL round trips, repeated conversions, and scans at the largest accepted
+  batch size. Use work-count regression tests when the count is deterministic.
+- Move blocking filesystem and SQLite work off async worker threads where the
+  interface permits it. Preserve live authority checks and cancellation across
+  the boundary.
+- Run release Clippy performance lints with `-D clippy::perf` for the runtime
+  and ontology benchmark. Linux quality runs these checks on the pinned Rust
+  toolchain. Use the [Rust audit ledger](docs/RUST-AUDIT.md) for repo-wide
+  audits and record reviewed invariants and remaining verification.
 
 ## Bounded delivery
 

@@ -93,13 +93,28 @@ impl NativeSearch {
                 let stored = async {
                     let authority = Authority::current(admission.client(), session).await?;
                     ensure!(markings.iter().all(|marking| authority.identity.markings.contains(marking)), "FORBIDDEN");
+                    let mut writes = BTreeMap::new();
                     for ((chunk, digest), embedding) in batch.iter().zip(digests).zip(vectors) {
                         let embedding = vector(embedding, generation.dimensions)?;
-                        let row = admission.client().query_one(
-                            "INSERT INTO moria.native_search_embeddings(model_fingerprint,text_digest,text,dimensions,embedding,markings) VALUES($1,$2,$3,$4,$5::text::public.vector,$6) ON CONFLICT(model_fingerprint,text_digest,dimensions,markings_hash) DO UPDATE SET markings=EXCLUDED.markings WHERE native_search_embeddings.text=EXCLUDED.text AND native_search_embeddings.markings=EXCLUDED.markings RETURNING id",
-                            &[&generation.model_fingerprint,&digest.as_slice(),&chunk.text,&(generation.dimensions as i32),&embedding,&markings],
-                        ).await?;
-                        found.insert(*digest, row.get(0));
+                        let (text, _) = writes.entry(digest.as_slice()).or_insert((&chunk.text, embedding));
+                        ensure!(*text == &chunk.text, "SEARCH_CACHE_CONFLICT");
+                    }
+                    let mut digests = Vec::with_capacity(writes.len());
+                    let mut texts = Vec::with_capacity(writes.len());
+                    let mut vectors = Vec::with_capacity(writes.len());
+                    for (digest, (text, vector)) in writes {
+                        digests.push(digest);
+                        texts.push(text.as_str());
+                        vectors.push(vector);
+                    }
+                    let rows = admission.client().query(
+                        "INSERT INTO moria.native_search_embeddings(model_fingerprint,text_digest,text,dimensions,embedding,markings) SELECT $1,digest,body,$2,embedding::public.vector,$3 FROM unnest($4::bytea[],$5::text[],$6::text[]) AS input(digest,body,embedding) ORDER BY digest ON CONFLICT(model_fingerprint,text_digest,dimensions,markings_hash) DO UPDATE SET markings=EXCLUDED.markings WHERE native_search_embeddings.text=EXCLUDED.text AND native_search_embeddings.markings=EXCLUDED.markings RETURNING text_digest,id",
+                        &[&generation.model_fingerprint,&(generation.dimensions as i32),&markings,&digests,&texts,&vectors],
+                    ).await?;
+                    ensure!(rows.len() == digests.len(), "SEARCH_CACHE_CONFLICT");
+                    for row in rows {
+                        let digest: [u8; 32] = row.get::<_, &[u8]>(0).try_into()?;
+                        found.insert(digest, row.get(1));
                     }
                     Authority::finish(admission.client(), session, &authority).await?;
                     Ok(())

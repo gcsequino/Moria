@@ -62,6 +62,23 @@ runtime source. The final image passed 50 focused integration cases covering
 qualified Dataset bootstrap and replacement, current CLI authority, Model
 HTTP streaming, Search projection and retrieval, and protected query plans.
 
+### Structured Rust review
+
+The [Rust audit ledger](RUST-AUDIT.md) pins the review baseline, accounts
+for both crates and all native Rust fixtures, and records which paths were
+screened or traced. The follow-up removes repeated Source resource scans,
+batches Search cache writes, moves Iceberg async spool checks to blocking
+threads, binds projected Dataset key columns once, and streams canonical
+bytes into SHA-256. Linux quality enforces release Clippy performance lints
+for both crates on the pinned toolchain. Local Linux passed static quality,
+131 release Rust unit tests with artifact provenance, nine value model tests,
+and 35 focused integration cases. The Search write-count regression failed
+on the baseline runtime and passed on the revised runtime.
+
+The legacy API fixture resolves its loader before launching the child from
+an empty directory. The ledger records outstanding independent Evaluation
+and Agent gate evidence.
+
 ## November 5 Linux Function and Pipeline fixes
 
 Local Linux reproduced two Function failures from hosted CI. Docker cleanup
