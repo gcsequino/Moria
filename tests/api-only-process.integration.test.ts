@@ -129,9 +129,11 @@ test(
     await mkdir(cwd);
     // Only real Iceberg worker sources are needed for imports; no UI source or dist.
     await symlink(resolve('workers'), join(cwd, 'workers'));
+    const tsx = import.meta.resolve('tsx');
     const startApi = async (mode: string) => {
       const child = fork(resolve('tests/fixtures/api-only-process/child.ts'), [mode], {
         cwd,
+        execArgv: ['--import', tsx],
         env: {
           PATH: process.env.PATH,
           MORIA_PYTHON: resolve('.venv/bin/python'),
