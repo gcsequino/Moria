@@ -5,7 +5,7 @@ use crate::{
         ObjectPolicies, ObjectReader, ObjectRow, PolicyError, SqlParameter, ValueMap, authorize,
         postgres_type,
     },
-    canonical::fingerprint,
+    canonical::{JsonSize, fingerprint},
     database::Database,
     values,
 };
@@ -819,23 +819,8 @@ impl NativeServing {
         reference: &str,
         input: &Value,
     ) -> Result<Value> {
-        let query = Query::parse(input)?;
-        tokio::time::timeout(
-            Duration::from_millis(query.budget.as_ref().map_or(30000, |budget| budget.time_ms)),
-            self.query_attempt(session, reference, &query),
-        )
-        .await
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("QUERY_TIMEOUT")))
-    }
-    async fn query_attempt(
-        &self,
-        session: &VerifiedSession,
-        reference: &str,
-        query: &Query,
-    ) -> Result<Value> {
-        let admission = Admission::begin(&self.db, session, false).await?;
-        let result = Self::query_transaction(admission.client(), session, reference, query).await;
-        admission.complete(result).await
+        self.query_with_body(session, reference, &Query::parse(input)?, None)
+            .await
     }
     pub async fn aggregate(
         &self,
@@ -843,10 +828,31 @@ impl NativeServing {
         reference: &str,
         input: &Value,
     ) -> Result<Value> {
-        let query = parse_aggregate(input)?;
+        self.query_with_body(session, reference, &parse_aggregate(input)?, None)
+            .await
+    }
+    async fn query_with_body(
+        &self,
+        session: &VerifiedSession,
+        reference: &str,
+        query: &Query,
+        response_body: Option<&mut Vec<u8>>,
+    ) -> Result<Value> {
         tokio::time::timeout(
-            Duration::from_millis(query.budget.as_ref().unwrap().time_ms),
-            self.query_attempt(session, reference, &query),
+            Duration::from_millis(query.budget.as_ref().map_or(30000, |budget| budget.time_ms)),
+            async {
+                let admission = Admission::begin(&self.db, session, false).await?;
+                let result = Self::query_recorded(
+                    admission.client(),
+                    session,
+                    reference,
+                    query,
+                    None,
+                    response_body,
+                )
+                .await;
+                admission.complete(result).await
+            },
         )
         .await
         .unwrap_or_else(|_| Err(anyhow::anyhow!("QUERY_TIMEOUT")))
@@ -1008,7 +1014,8 @@ impl NativeServing {
                 &json!({"filter":{"op":"eq","args":[{"field":definition.source_property},{"literal":request.uid.to_string()}]},"projection":request.projection.clone().unwrap_or_else(||source_projection.selected().to_vec()),"pageSize":request.fanout,"scope":request.scope,"budget":request.budget}),
             )?;
             let result =
-                Self::query_recorded(client, session, &source.resource, &query, evidence).await?;
+                Self::query_recorded(client, session, &source.resource, &query, evidence, None)
+                    .await?;
             ensure!(result.get("nextCursor").is_none(), "RESOURCE_LIMIT");
             serde_json::from_value(result["objects"].clone())?
         };
@@ -1026,7 +1033,7 @@ impl NativeServing {
         reference: &str,
         query: &Query,
     ) -> Result<Value> {
-        Self::query_recorded(client, session, reference, query, None).await
+        Self::query_recorded(client, session, reference, query, None, None).await
     }
     async fn query_recorded(
         client: &tokio_postgres::Client,
@@ -1034,7 +1041,12 @@ impl NativeServing {
         reference: &str,
         query: &Query,
         evidence: Option<&mut Vec<ReadEvidence>>,
+        response_body: Option<&mut Vec<u8>>,
     ) -> Result<Value> {
+        let response_limit = query
+            .budget
+            .as_ref()
+            .map_or(RESPONSE_BYTES, |budget| budget.response_bytes);
         let snapshot = Authority::current(client, session).await?;
         let binding = Self::binding(client, session, reference).await?;
         Self::required(&snapshot, &binding)?;
@@ -1243,10 +1255,7 @@ impl NativeServing {
                 )?);
                 observed.uids.clear();
             }
-            ensure!(
-                serde_json::to_vec(&result)?.len() <= query.budget.as_ref().unwrap().response_bytes,
-                "RESPONSE_TOO_LARGE"
-            );
+            check_query_response(&result, response_limit, response_body)?;
             Authority::finish(client, session, &snapshot).await?;
             if let Some(evidence) = evidence {
                 evidence.push(observed);
@@ -1255,7 +1264,7 @@ impl NativeServing {
         }
         let mut objects = Vec::new();
         let mut after = None;
-        let mut bytes = 0usize;
+        let mut bytes = JsonSize::default();
         for (index, row) in rows.iter().enumerate() {
             let pinned: ObjectRow = ObjectRow {
                 source: serde_json::from_value(row.get(1))?,
@@ -1270,26 +1279,14 @@ impl NativeServing {
                 .ok_or_else(|| anyhow::anyhow!("POLICY_MISMATCH"))?;
             if let Some(predicate) = &predicate {
                 ensure!(
-                    predicate.allows(&ExpressionValues {
-                        fields: pinned.effective.clone(),
-                        ..Default::default()
-                    })?,
+                    predicate.allows_fields(&pinned.effective)?,
                     "POLICY_MISMATCH"
                 );
             }
             if index < query.page_size {
                 observed.uids.push(row.get(0));
-                bytes = bytes
-                    .checked_add(serde_json::to_vec(&object)?.len())
-                    .ok_or_else(|| anyhow::anyhow!("RESPONSE_TOO_LARGE"))?;
-                ensure!(
-                    bytes
-                        <= query
-                            .budget
-                            .as_ref()
-                            .map_or(RESPONSE_BYTES, |budget| budget.response_bytes),
-                    "RESPONSE_TOO_LARGE"
-                );
+                serde_json::to_writer(&mut bytes, &object)?;
+                ensure!(bytes.0 <= response_limit, "RESPONSE_TOO_LARGE");
                 objects.push(object);
                 after = Some(if query.sort.is_empty() {
                     json!(row.get::<_, Uuid>(0).to_string())
@@ -1322,14 +1319,7 @@ impl NativeServing {
         if let Some(next) = next {
             result["nextCursor"] = next.into();
         }
-        ensure!(
-            serde_json::to_vec(&result)?.len()
-                <= query
-                    .budget
-                    .as_ref()
-                    .map_or(RESPONSE_BYTES, |budget| budget.response_bytes),
-            "RESPONSE_TOO_LARGE"
-        );
+        check_query_response(&result, response_limit, response_body)?;
         if let Some(evidence) = evidence {
             evidence.push(observed);
         }
@@ -1380,7 +1370,15 @@ impl NativeServing {
             } else {
                 Query::parse(input)?
             };
-            Self::query_recorded(client, session, reference, &query, Some(&mut evidence)).await?
+            Self::query_recorded(
+                client,
+                session,
+                reference,
+                &query,
+                Some(&mut evidence),
+                None,
+            )
+            .await?
         };
         let mut markings = BTreeSet::new();
         for read in &mut evidence {
@@ -4251,6 +4249,23 @@ fn private_plan(value: &mut Value) {
         _ => {}
     }
 }
+fn check_query_response(
+    result: &Value,
+    limit: usize,
+    response_body: Option<&mut Vec<u8>>,
+) -> Result<()> {
+    let size = if let Some(body) = response_body {
+        serde_json::to_writer(&mut *body, result)?;
+        body.len()
+    } else {
+        let mut size = JsonSize::default();
+        serde_json::to_writer(&mut size, result)?;
+        size.0
+    };
+    ensure!(size <= limit, "RESPONSE_TOO_LARGE");
+    Ok(())
+}
+
 async fn collect_query_rows(
     client: &tokio_postgres::Client,
     sql: &str,
@@ -4284,15 +4299,13 @@ async fn collect_query_rows(
     let references = parameters.iter().map(SqlParameter::pg).collect::<Vec<_>>();
     let mut stream = Box::pin(client.query_raw(sql, references).await?);
     let mut rows = Vec::new();
-    let mut size = 0usize;
+    let mut size = JsonSize::default();
     while let Some(row) = stream.try_next().await? {
         for column in if aggregate { 0..=0 } else { 1..=4 } {
             let value: Value = row.get(column);
-            size = size
-                .checked_add(serde_json::to_vec(&value)?.len())
-                .ok_or_else(|| anyhow::anyhow!("RESPONSE_TOO_LARGE"))?;
+            serde_json::to_writer(&mut size, &value)?;
         }
-        ensure!(size <= 64 * 1024 * 1024, "RESPONSE_TOO_LARGE");
+        ensure!(size.0 <= 64 * 1024 * 1024, "RESPONSE_TOO_LARGE");
         rows.push(row);
     }
     Ok(rows)
@@ -4736,15 +4749,27 @@ async fn handle_admitted(
     } else {
         None
     };
-    let result = tokio::time::timeout(Duration::from_secs(30), dispatch(&state, remote, request))
-        .await
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("QUERY_TIMEOUT")));
-    json_response(request_id, admission_location, result)
+    let mut response_body = Vec::new();
+    let result = tokio::time::timeout(
+        Duration::from_secs(30),
+        dispatch(&state, remote, request, &mut response_body),
+    )
+    .await
+    .unwrap_or_else(|_| Err(anyhow::anyhow!("QUERY_TIMEOUT")));
+    json_response_with_body(request_id, admission_location, result, response_body)
 }
 fn json_response(
     request_id: String,
     admission_location: Option<&str>,
     result: Result<Value>,
+) -> Response<Body> {
+    json_response_with_body(request_id, admission_location, result, Vec::new())
+}
+fn json_response_with_body(
+    request_id: String,
+    admission_location: Option<&str>,
+    result: Result<Value>,
+    response_body: Vec<u8>,
 ) -> Response<Body> {
     let (status, value) = match result {
         Ok(value) => (
@@ -4935,9 +4960,12 @@ fn json_response(
     {
         response = response.header(header::LOCATION, format!("{location}/{id}"));
     }
-    response
-        .body(Body::from(serde_json::to_vec(&value).unwrap()))
-        .unwrap()
+    let bytes = if status.is_success() && !response_body.is_empty() {
+        response_body
+    } else {
+        serde_json::to_vec(&value).unwrap()
+    };
+    response.body(Body::from(bytes)).unwrap()
 }
 async fn http_session(
     state: &HttpState,
@@ -4968,7 +4996,12 @@ async fn http_session(
         .authenticate(remote, headers, method)
         .await
 }
-async fn dispatch(state: &HttpState, remote: SocketAddr, request: Request<Body>) -> Result<Value> {
+async fn dispatch(
+    state: &HttpState,
+    remote: SocketAddr,
+    request: Request<Body>,
+    response_body: &mut Vec<u8>,
+) -> Result<Value> {
     let session = http_session(
         state,
         remote,
@@ -5487,11 +5520,16 @@ async fn dispatch(state: &HttpState, remote: SocketAddr, request: Request<Body>)
         .cancel(&session, canonical_uid(&parts[2])?)
         .await;
     }
-    if parts[1] == "objects" && parts[3] == "query" {
-        return state.serving.query(&session, &parts[2], &body).await;
-    }
-    if parts[1] == "objects" && parts[3] == "aggregate" {
-        return state.serving.aggregate(&session, &parts[2], &body).await;
+    if parts[1] == "objects" && matches!(parts[3].as_str(), "query" | "aggregate") {
+        let query = if parts[3] == "query" {
+            Query::parse(&body)?
+        } else {
+            parse_aggregate(&body)?
+        };
+        return state
+            .serving
+            .query_with_body(&session, &parts[2], &query, Some(response_body))
+            .await;
     }
     if parts[1] == "links" && parts[3] == "traverse" {
         return state.serving.traverse(&session, &parts[2], &body).await;
@@ -5869,6 +5907,36 @@ pub async fn serve(db: Database, listen: SocketAddr) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    async fn query_encoding_enforces_exact_bytes_and_errors_discard_the_body() {
+        let value = json!({"objects":[{"label":"λ\n🦀"}],"revision":"1"});
+        let expected = serde_json::to_vec(&value).unwrap();
+        let mut body = Vec::new();
+        check_query_response(&value, expected.len(), Some(&mut body)).unwrap();
+        check_query_response(&value, expected.len(), None).unwrap();
+        assert!(check_query_response(&value, expected.len() - 1, None).is_err());
+
+        let response = json_response_with_body("request".into(), None, Ok(value), body.clone());
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            to_bytes(response.into_body(), expected.len())
+                .await
+                .unwrap(),
+            expected
+        );
+
+        let response = json_response_with_body(
+            "request".into(),
+            None,
+            Err(anyhow::anyhow!("AUTHORIZATION_CHANGED")),
+            body,
+        );
+        let error = to_bytes(response.into_body(), 4096).await.unwrap();
+        let error: Value = serde_json::from_slice(&error).unwrap();
+        assert_eq!(error["error"]["code"], "AUTHORIZATION_CHANGED");
+        assert!(error.get("objects").is_none());
+    }
+
     #[test]
     fn effective_primary_uid_predicates_seek_the_permanent_row_key() {
         let descriptor = json!({"type":"uid","nullable":false});

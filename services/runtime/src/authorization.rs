@@ -407,12 +407,10 @@ impl CompiledExpression {
         ] {
             require(input.len() <= 10000, "VALUE_INVALID")?;
             for (name, value) in input {
-                if let Some(schema) = types.get(name) {
-                    let mut schema = schema.clone();
-                    if attributes {
-                        schema["nullable"] = true.into();
-                    }
-                    values::normalize(value, &schema).map_err(|_| error("VALUE_INVALID"))?;
+                if let Some(schema) = types.get(name)
+                    && !(attributes && value.is_null())
+                {
+                    values::normalize(value, schema).map_err(|_| error("VALUE_INVALID"))?;
                 }
             }
         }
@@ -440,6 +438,9 @@ impl CompiledExpression {
     }
     pub fn allows(&self, values: &ExpressionValues) -> Result<bool> {
         Ok(self.evaluate(values)? == Some(true))
+    }
+    pub(crate) fn allows_fields(&self, fields: &ValueMap) -> Result<bool> {
+        Ok(self.evaluate_maps(fields, &ValueMap::new(), &ValueMap::new())? == Some(true))
     }
     pub fn sql(
         &self,

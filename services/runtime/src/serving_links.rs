@@ -384,9 +384,15 @@ pub(super) async fn traverse_in(
             budget: Some(request.budget.clone()),
             aggregation: None,
         };
-        let result =
-            NativeServing::query_recorded(client, session, &result.resource, &query, evidence)
-                .await?;
+        let result = NativeServing::query_recorded(
+            client,
+            session,
+            &result.resource,
+            &query,
+            evidence,
+            None,
+        )
+        .await?;
         ensure!(result.get("nextCursor").is_none(), "RESOURCE_LIMIT");
         result["objects"].clone()
     };
