@@ -45,6 +45,46 @@ async fn origins(client: &Client, digest: &str) -> Result<BTreeMap<String, Uuid>
     }
     Ok(origins)
 }
+fn merge_resources(
+    mut resources: Vec<Value>,
+    incoming: &[Value],
+    owned: &BTreeSet<String>,
+    removed: &[String],
+) -> Result<(Vec<Value>, Vec<Value>)> {
+    let mut positions = BTreeMap::new();
+    for (index, resource) in resources.iter().enumerate() {
+        ensure!(
+            positions
+                .insert(validation::reference(resource)?, index)
+                .is_none(),
+            "SOURCE_INVALID"
+        );
+    }
+    let mut dependencies = Vec::new();
+    for resource in incoming {
+        let reference = validation::reference(resource)?;
+        if owned.contains(&reference) {
+            let index = *positions.entry(reference).or_insert(resources.len());
+            if index == resources.len() {
+                resources.push(resource.clone());
+            } else {
+                resources[index] = resource.clone();
+            }
+        } else {
+            dependencies.push(resource.clone());
+        }
+    }
+    for reference in removed {
+        ensure!(!reference.contains("/Namespace/"), "SOURCE_INVALID");
+        let index = positions
+            .remove(reference)
+            .ok_or_else(|| anyhow::anyhow!("SOURCE_INVALID"))?;
+        resources[index] = Value::Null;
+    }
+    resources.retain(|resource| !resource.is_null());
+    Ok((resources, dependencies))
+}
+
 async fn desired(
     client: &Client,
     session: &VerifiedSession,
@@ -54,51 +94,25 @@ async fn desired(
     origins(client, release["digest"].as_str().unwrap()).await?;
     let root = Uuid::parse_str(release["rootId"].as_str().unwrap())?;
     let active=client.query_opt("SELECT revision::text,resources FROM moria.fs_active_releases WHERE root_id=$1 AND environment=$2",&[&root,&session.environment()]).await?;
-    let mut resources = Vec::<Value>::new();
-    if let Some(active) = &active {
-        resources = serde_json::from_value(active.get(1))?;
-    }
+    let current = active
+        .as_ref()
+        .map(|row| serde_json::from_value(row.get(1)))
+        .transpose()?
+        .unwrap_or_default();
     let owned: BTreeSet<String> = serde_json::from_value(release["owned"].clone())?;
-    for resource in release["compiled"]["manifest"]["resources"]
-        .as_array()
-        .unwrap()
-    {
-        let reference = validation::reference(resource)?;
-        if owned.contains(&reference) {
-            if let Some(index) = resources
-                .iter()
-                .position(|old| validation::reference(old).ok().as_ref() == Some(&reference))
-            {
-                resources[index] = resource.clone();
-            } else {
-                resources.push(resource.clone());
-            }
-        }
-    }
-    for reference in removed {
-        ensure!(
-            !reference.contains("/Namespace/")
-                && resources.iter().any(
-                    |resource| validation::reference(resource).ok().as_ref() == Some(reference)
-                ),
-            "SOURCE_INVALID"
-        );
-        resources
-            .retain(|resource| validation::reference(resource).ok().as_ref() != Some(reference));
-    }
-    let mut combined = resources.clone();
-    combined.extend(
-        release["compiled"]["manifest"]["resources"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|resource| {
-                validation::reference(resource).is_ok_and(|reference| !owned.contains(&reference))
-            })
-            .cloned(),
-    );
     let mut manifest = release["compiled"]["manifest"].clone();
-    manifest["resources"] = json!(combined);
+    let incoming = manifest["resources"].take();
+    let (resources, dependencies) = merge_resources(
+        current,
+        incoming
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("SOURCE_INVALID"))?,
+        &owned,
+        removed,
+    )?;
+    let mut combined = resources.clone();
+    combined.extend(dependencies);
+    manifest["resources"] = Value::Array(combined);
     let context = NativeSources::compiler_context_in(client, session).await?;
     validation::validate(&manifest, &fields_context(&context["principalAttributes"])?)
         .map_err(|_| anyhow::anyhow!("SOURCE_INVALID"))?;
@@ -405,5 +419,42 @@ impl NativeSources {
             .await?;
         Authority::finish(client, session, &state).await?;
         Ok(receipt)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn release_merge_preserves_active_order_and_appends_new_owned_resources() -> Result<()> {
+        let resource = |name: &str, version| json!({"metadata":{"namespace":"project","name":name},"kind":"Action","version":version});
+        let active = vec![
+            resource("first", 1),
+            resource("remove", 1),
+            resource("last", 1),
+        ];
+        let incoming = [
+            resource("new", 2),
+            resource("first", 2),
+            resource("dependency", 2),
+        ];
+        let owned = incoming[..2]
+            .iter()
+            .map(validation::reference)
+            .collect::<Result<_>>()?;
+        let removed = ["project/Action/remove".to_owned()];
+        let (merged, dependencies) = merge_resources(active, &incoming, &owned, &removed)?;
+        assert_eq!(
+            merged,
+            [
+                resource("first", 2),
+                resource("last", 1),
+                resource("new", 2)
+            ]
+        );
+        assert_eq!(dependencies, [resource("dependency", 2)]);
+        assert!(merge_resources(vec![], &incoming, &owned, &removed).is_err());
+        Ok(())
     }
 }
