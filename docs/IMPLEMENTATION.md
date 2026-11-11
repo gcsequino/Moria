@@ -3,6 +3,28 @@
 See the [current development handoff](HANDOFF.md) for the latest hosted results,
 archived experiments, and the order of the remaining gates.
 
+## Rust ownership and bounded work
+
+Packed key runs validate the descriptor when opened or verified. The block
+decoder borrows one block, and batch lookup borrows encoded keys through the
+partition and segment layers. The 50,000-key regression checks one descriptor
+validation during full-run verification and still rejects missing, shifted,
+and incorrect block fences. The release regression took about 4.35 seconds
+with the audited codec and 0.11 seconds with the revised codec on the same
+local host. All 128 release unit tests and the native artifact checks passed.
+
+Pipeline input compacts Arrow arrays in memory before encoding outgoing
+batches. The original list complexity limit applies before copying. A local
+release-mode probe on 12,000 four-column rows with a 2 KiB text value per row
+measured median compaction times of 89.9 ms at `9178746` and 8.4 ms with the
+change over seven paired trials. These timings cover row compaction alone.
+
+Indexing counts encoded cell bytes without temporary JSON buffers. POSIX
+range reads fill the returned buffer directly. Directory updates compare
+only affected records for no-op detection. Serving shares immutable compiled
+policy readers and passes the pinned revision separately from the current
+revision when rechecking an aggregate.
+
 ## November 5 Linux Function and Pipeline fixes
 
 Local Linux reproduced two Function failures from hosted CI. Docker cleanup

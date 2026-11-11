@@ -45,6 +45,18 @@ PostgreSQL. `pnpm check:indexing` validates native artifact provenance and runs
 all native units. These gates shorten feedback; `pnpm check` still includes
 every test and remains the final independent CI requirement.
 
+## Rust ownership and data flow
+
+- Resolve borrow conflicts by narrowing what a helper borrows. Pass the fields,
+  slices, IDs, or revisions it actually uses. Keep mutable state with the component
+  that owns it, and pass disjoint borrows when an operation touches separate fields.
+- Justify deep clones, intermediate collections, and shared mutable state by the
+  needs of the operation. Use `mem::take` for an explicit handoff or reset where
+  the default value is valid. Check state and lock lifetimes across `.await`,
+  errors, and cancellation.
+- For hot-path changes, explain what work scales per request, page, batch, or row.
+  Bound buffer sizes and concurrent tasks, and justify new copies of bulk data.
+
 ## Bounded delivery
 
 Work on a branch against explicit acceptance criteria. Record scope, dependencies,
