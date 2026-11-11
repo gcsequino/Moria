@@ -18,25 +18,23 @@ impl NativeSearch {
         session: &VerifiedSession,
         generation: &Generation,
         chunks: &[TextChunk],
+        digests: &[[u8; 32]],
         markings: &[String],
-    ) -> Result<BTreeMap<Vec<u8>, Uuid>> {
-        let digests: Vec<Vec<u8>> = chunks
-            .iter()
-            .map(|chunk| Sha256::digest(chunk.text.as_bytes()).to_vec())
-            .collect();
+    ) -> Result<BTreeMap<[u8; 32], Uuid>> {
+        let parameters: Vec<&[u8]> = digests.iter().map(|digest| digest.as_slice()).collect();
         let admission = Admission::begin(&self.db, session, false).await?;
         let result = async {
             let authority = Authority::current(admission.client(), session).await?;
             ensure!(markings.iter().all(|marking| authority.identity.markings.contains(marking)), "FORBIDDEN");
             let rows = admission.client().query(
                 "SELECT id,text_digest,text FROM moria.native_search_embeddings WHERE model_fingerprint=$1 AND dimensions=$2 AND markings_hash=moria.native_search_marking_hash($3) AND markings=$3 AND text_digest=ANY($4::bytea[])",
-                &[&generation.model_fingerprint,&(generation.dimensions as i32),&markings,&digests],
+                &[&generation.model_fingerprint,&(generation.dimensions as i32),&markings,&parameters],
             ).await?;
             let mut found = BTreeMap::new();
             for row in rows {
-                let digest: Vec<u8> = row.get(1);
-                let text: String = row.get(2);
-                ensure!(chunks.iter().zip(&digests).filter(|(_, hash)| **hash == digest).all(|(chunk, _)| chunk.text == text), "SEARCH_CACHE_CONFLICT");
+                let digest: [u8; 32] = row.get::<_, &[u8]>(1).try_into()?;
+                let text: &str = row.get(2);
+                ensure!(chunks.iter().zip(digests).filter(|(_, hash)| **hash == digest).all(|(chunk, _)| chunk.text == text), "SEARCH_CACHE_CONFLICT");
                 found.insert(digest, row.get(0));
             }
             Authority::finish(admission.client(), session, &authority).await?;
@@ -51,18 +49,16 @@ impl NativeSearch {
         session: &VerifiedSession,
         generation: &Generation,
         chunks: &[TextChunk],
+        digests: &[[u8; 32]],
         markings: &[String],
     ) -> Result<Vec<Uuid>> {
+        debug_assert_eq!(chunks.len(), digests.len());
         let mut embeddings = Vec::with_capacity(chunks.len());
-        for batch in chunks.chunks(64) {
+        for (batch, digests) in chunks.chunks(64).zip(digests.chunks(64)) {
             grant.check().await?;
             let mut found = self
-                .cached_chunks(session, generation, batch, markings)
+                .cached_chunks(session, generation, batch, digests, markings)
                 .await?;
-            let digests: Vec<Vec<u8>> = batch
-                .iter()
-                .map(|chunk| Sha256::digest(chunk.text.as_bytes()).to_vec())
-                .collect();
             if digests.iter().any(|digest| !found.contains_key(digest)) {
                 // The full deterministic batch key survives a lost receipt or a partially warm cache.
                 let input =
@@ -97,13 +93,13 @@ impl NativeSearch {
                 let stored = async {
                     let authority = Authority::current(admission.client(), session).await?;
                     ensure!(markings.iter().all(|marking| authority.identity.markings.contains(marking)), "FORBIDDEN");
-                    for ((chunk, digest), embedding) in batch.iter().zip(&digests).zip(vectors) {
+                    for ((chunk, digest), embedding) in batch.iter().zip(digests).zip(vectors) {
                         let embedding = vector(embedding, generation.dimensions)?;
                         let row = admission.client().query_one(
                             "INSERT INTO moria.native_search_embeddings(model_fingerprint,text_digest,text,dimensions,embedding,markings) VALUES($1,$2,$3,$4,$5::text::public.vector,$6) ON CONFLICT(model_fingerprint,text_digest,dimensions,markings_hash) DO UPDATE SET markings=EXCLUDED.markings WHERE native_search_embeddings.text=EXCLUDED.text AND native_search_embeddings.markings=EXCLUDED.markings RETURNING id",
-                            &[&generation.model_fingerprint,digest,&chunk.text,&(generation.dimensions as i32),&embedding,&markings],
+                            &[&generation.model_fingerprint,&digest.as_slice(),&chunk.text,&(generation.dimensions as i32),&embedding,&markings],
                         ).await?;
-                        found.insert(digest.clone(), row.get(0));
+                        found.insert(*digest, row.get(0));
                     }
                     Authority::finish(admission.client(), session, &authority).await?;
                     Ok(())
@@ -113,7 +109,7 @@ impl NativeSearch {
             for digest in digests {
                 embeddings.push(
                     *found
-                        .get(&digest)
+                        .get(digest)
                         .ok_or_else(|| anyhow::anyhow!("SEARCH_CACHE_CONFLICT"))?,
                 );
             }
@@ -145,8 +141,12 @@ impl NativeSearch {
             all.extend(chunks);
             ranges.push(Some(start..all.len()));
         }
+        let digests: Vec<[u8; 32]> = all
+            .iter()
+            .map(|chunk| Sha256::digest(chunk.text.as_bytes()).into())
+            .collect();
         let embeddings = self
-            .embed_chunks(grant, session, generation, &all, grant.markings())
+            .embed_chunks(grant, session, generation, &all, &digests, grant.markings())
             .await?;
         let mut prepared = Vec::with_capacity(rows.len());
         for (row, range) in rows.iter().zip(ranges) {
@@ -160,6 +160,7 @@ impl NativeSearch {
                         revision,
                         row.text.as_deref().unwrap_or(""),
                         &all[range.clone()],
+                        &digests[range.clone()],
                         &embeddings[range],
                     )
                     .await?,
@@ -181,6 +182,7 @@ impl NativeSearch {
         revision: i64,
         text: &str,
         chunks: &[TextChunk],
+        digests: &[[u8; 32]],
         embeddings: &[Uuid],
     ) -> Result<Uuid> {
         let digest = Sha256::digest(text.as_bytes()).to_vec();
@@ -191,7 +193,23 @@ impl NativeSearch {
             .iter()
             .map(|byte| format!("{byte:02x}"))
             .collect::<String>();
-        let ids: Vec<String> = chunks.iter().map(|chunk| fingerprint(&json!({"uid":uid,"sourceRevision":revision.to_string(),"sourceDigest":source_digest,"ordinal":chunk.ordinal,"text":format!("{:x}",Sha256::digest(chunk.text.as_bytes())),"start":chunk.start,"end":chunk.end,"chunker":CHUNKER_REVISION}))).collect::<Result<_>>()?;
+        let ids = chunks
+            .iter()
+            .zip(digests)
+            .map(|(chunk, digest)| {
+                let digest = sha2::digest::Output::<Sha256>::from(*digest);
+                fingerprint(&json!({
+                    "uid": uid,
+                    "sourceRevision": revision.to_string(),
+                    "sourceDigest": source_digest,
+                    "ordinal": chunk.ordinal,
+                    "text": format!("{digest:x}"),
+                    "start": chunk.start,
+                    "end": chunk.end,
+                    "chunker": CHUNKER_REVISION,
+                }))
+            })
+            .collect::<Result<Vec<_>>>()?;
         let admission = Admission::begin(&self.db, session, false).await?;
         let result = async {
             let authority = Authority::current(admission.client(), session).await?;

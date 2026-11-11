@@ -1,5 +1,6 @@
 use anyhow::{Result, ensure};
 use serde::Serialize;
+use std::collections::VecDeque;
 
 pub const CHUNKER_REVISION: &str = "unicode1000-overlap100-paragraph-v1";
 
@@ -12,38 +13,50 @@ pub struct TextChunk {
     pub text: String,
 }
 
-/// The caller's document bound limits both this offset index and returned text.
+/// Keep only the offsets in the current chunk window, including its end boundary.
 pub fn chunks(text: &str) -> Result<Vec<TextChunk>> {
     ensure!(text.len() <= 8 * 1024 * 1024, "SEARCH_DOCUMENT_LIMIT");
-    let mut offsets: Vec<usize> = text.char_indices().map(|(offset, _)| offset).collect();
-    offsets.push(text.len());
-    let count = offsets.len() - 1;
+    const WINDOW: usize = 1000;
+    const OVERLAP: usize = 100;
+    let mut boundaries = text
+        .char_indices()
+        .map(|(offset, _)| offset)
+        .chain(std::iter::once(text.len()))
+        .peekable();
+    let mut offsets = VecDeque::with_capacity(WINDOW + 1);
     let mut start = 0;
     let mut chunks = Vec::new();
-    while start < count {
-        let hard_end = (start + 1000).min(count);
-        let end = if hard_end < count {
+    loop {
+        offsets.extend((&mut boundaries).take(WINDOW + 1 - offsets.len()));
+        let hard_end = offsets.len() - 1;
+        if hard_end == 0 {
+            break;
+        }
+        let last = boundaries.peek().is_none();
+        let end = if last {
+            hard_end
+        } else {
             // Include the separator; never let paragraph preference prevent progress.
-            (start + 101..hard_end)
+            (OVERLAP + 1..hard_end)
                 .rev()
                 .find(|&i| {
                     &text[offsets[i - 1]..offsets[i]] == "\n"
                         && &text[offsets[i]..offsets[i + 1]] == "\n"
                 })
                 .map_or(hard_end, |i| i + 1)
-        } else {
-            hard_end
         };
         chunks.push(TextChunk {
             ordinal: chunks.len(),
             start,
-            end,
-            text: text[offsets[start]..offsets[end]].into(),
+            end: start + end,
+            text: text[offsets[0]..offsets[end]].into(),
         });
-        if end == count {
+        if last {
             break;
         }
-        start = end - 100;
+        let advance = end - OVERLAP;
+        start += advance;
+        offsets.drain(..advance);
     }
     Ok(chunks)
 }
@@ -81,6 +94,24 @@ mod tests {
             }
             assert_eq!(restored, text);
         }
+    }
+
+    #[test]
+    fn paragraph_offsets_survive_window_refills_and_exact_end() {
+        let paragraph = format!("{}\n\n", "🦀".repeat(698));
+        let text = paragraph.repeat(3) + &"λ".repeat(400);
+        let result = chunks(&text).unwrap();
+        assert_eq!(
+            result
+                .iter()
+                .map(|chunk| (chunk.start, chunk.end))
+                .collect::<Vec<_>>(),
+            [(0, 700), (600, 1400), (1300, 2100), (2000, 2500)]
+        );
+
+        let exact = "λ".repeat(898) + "\n\n" + &"中".repeat(100);
+        assert_eq!(chunks(&exact).unwrap()[0].end, 1000);
+        assert_eq!(chunks(&(exact + "中")).unwrap()[0].end, 900);
     }
 
     #[test]
