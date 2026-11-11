@@ -1564,7 +1564,8 @@ impl NativeServing {
                                 session,
                                 &binding,
                                 &snapshot.attributes,
-                                read,
+                                query,
+                                &read.revision,
                                 &revision
                             )
                             .await?
@@ -1572,8 +1573,6 @@ impl NativeServing {
                     "FUNCTION_INPUT_CHANGED"
                 );
                 if read.revision != revision {
-                    let mut current = read.clone();
-                    current.revision = revision.clone();
                     ensure!(
                         query.aggregate_hash.as_ref()
                             == Some(
@@ -1582,7 +1581,8 @@ impl NativeServing {
                                     session,
                                     &binding,
                                     &snapshot.attributes,
-                                    &current,
+                                    query,
+                                    &revision,
                                     &revision
                                 )
                                 .await?
@@ -1769,22 +1769,23 @@ impl NativeServing {
         let snapshot = Authority::current(client, session).await?;
         let binding = Self::binding(client, session, &read.resource).await?;
         let current = Self::revision(client, session, &snapshot).await?;
-        if read
+        if let Some(query) = read
             .query
-            .as_ref()
-            .is_some_and(|query| query.aggregate_spec.is_some())
+            .as_mut()
+            .filter(|query| query.aggregate_spec.is_some())
         {
-            if read.query.as_ref().unwrap().aggregate_hash.is_none() {
+            if query.aggregate_hash.is_none() {
                 let hash = Self::aggregate_observation(
                     client,
                     session,
                     &binding,
                     &snapshot.attributes,
-                    read,
+                    query,
+                    &read.revision,
                     &current,
                 )
                 .await?;
-                read.query.as_mut().unwrap().aggregate_hash = Some(hash);
+                query.aggregate_hash = Some(hash);
             }
             read.uids.clear();
             read.fingerprints.clear();
@@ -1862,13 +1863,10 @@ impl NativeServing {
         session: &VerifiedSession,
         binding: &Binding,
         attributes: &ValueMap,
-        read: &ReadEvidence,
+        observation: &QueryObservation,
+        pinned_revision: &str,
         current: &str,
     ) -> Result<String> {
-        let observation = read
-            .query
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("FUNCTION_INPUT_CHANGED"))?;
         let aggregation = observation
             .aggregate_spec
             .as_ref()
@@ -1885,7 +1883,7 @@ impl NativeServing {
         };
         validate_aggregation(aggregation, binding)?;
         let pin = ReadPin {
-            revision: read.revision.clone(),
+            revision: pinned_revision.to_owned(),
             after: None,
             keys: vec![],
             expires: String::new(),

@@ -942,7 +942,10 @@ pub struct ObjectRow {
     pub effective: ValueMap,
 }
 #[derive(Clone, Debug)]
-pub struct ObjectReader {
+pub struct ObjectReader(std::sync::Arc<CompiledObjectReader>);
+
+#[derive(Debug)]
+struct CompiledObjectReader {
     policy: ObjectPolicies,
     row: Option<CompiledExpression>,
     object: Option<CompiledExpression>,
@@ -1002,12 +1005,12 @@ impl ObjectReader {
                 )?,
             );
         }
-        Ok(Self {
+        Ok(Self(std::sync::Arc::new(CompiledObjectReader {
             policy,
             row,
             object,
             properties,
-        })
+        })))
     }
     pub fn prepare(
         &self,
@@ -1017,11 +1020,12 @@ impl ObjectReader {
         predicate_properties: &[String],
         delegated_attributes: Vec<ValueMap>,
     ) -> Result<PreparedProjection> {
+        let reader = &self.0;
         authorize(
             identity,
-            &self.policy.resource,
+            &reader.policy.resource,
             "read",
-            &self.policy.markings,
+            &reader.policy.markings,
         )?;
         require(
             identities(identity)?.len() == delegated_attributes.len() + 1,
@@ -1030,7 +1034,7 @@ impl ObjectReader {
         let mut contexts = vec![attributes];
         contexts.extend(delegated_attributes);
         let permitted = |name: &str| -> Result<bool> {
-            if let Some(policy) = self.properties.get(name) {
+            if let Some(policy) = reader.properties.get(name) {
                 for attributes in &contexts {
                     if policy.evaluate_maps(&ValueMap::new(), &ValueMap::new(), attributes)?
                         != Some(true)
@@ -1043,7 +1047,7 @@ impl ObjectReader {
         };
         for name in projection.iter().flatten().chain(predicate_properties) {
             require(
-                self.policy.properties.contains_key(name),
+                reader.policy.properties.contains_key(name),
                 "PROPERTY_UNKNOWN",
             )?;
             require(permitted(name)?, "PROPERTY_FORBIDDEN")?;
@@ -1052,7 +1056,7 @@ impl ObjectReader {
             projection
         } else {
             let mut selected = Vec::new();
-            for name in self.policy.properties.keys() {
+            for name in reader.policy.properties.keys() {
                 if permitted(name)? {
                     selected.push(name.clone());
                 }
@@ -1086,13 +1090,13 @@ impl PreparedProjection {
         };
         for state in [pinned, current] {
             for attributes in &self.contexts {
-                if let Some(policy) = &self.reader.row
+                if let Some(policy) = &self.reader.0.row
                     && policy.evaluate_maps(&state.source, &ValueMap::new(), attributes)?
                         != Some(true)
                 {
                     return Ok(None);
                 }
-                if let Some(policy) = &self.reader.object
+                if let Some(policy) = &self.reader.0.object
                     && policy.evaluate_maps(&state.effective, &ValueMap::new(), attributes)?
                         != Some(true)
                 {
