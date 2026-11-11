@@ -109,7 +109,11 @@ test(
           ).rows[0].count,
         );
       const before = await count();
-      assert.equal((await authRequest(headers)).status, 404);
+      const concurrent = await Promise.all(Array.from({ length: 4 }, () => authRequest(headers)));
+      assert.deepEqual(
+        concurrent.map((response) => response.status),
+        [404, 404, 404, 404],
+      );
       assert.equal((await authRequest(headers)).status, 404);
       assert.equal(
         await count(),

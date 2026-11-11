@@ -324,24 +324,46 @@ impl HttpAuthentication {
         tx.commit().await?;
         Ok(())
     }
+    async fn reuse_cli_session(
+        client: &tokio_postgres::Client,
+        session: &VerifiedSession,
+    ) -> Result<bool> {
+        let row=client.query_opt("SELECT disabled,expires_at>clock_timestamp() FROM moria.workload_sessions WHERE token_hash=$1",&[&session.session_hash()]).await?.ok_or_else(||anyhow::anyhow!("UNAUTHENTICATED"))?;
+        ensure!(!row.get::<_, bool>(0), "UNAUTHENTICATED");
+        let active = row.get::<_, bool>(1);
+        if active {
+            Authority::current(client, session).await?;
+        }
+        Ok(active)
+    }
     async fn cli_session(&self, profile: &str) -> Result<VerifiedSession> {
         let actor = self
             .profiles
             .get(profile)
             .ok_or_else(|| anyhow::anyhow!("UNAUTHENTICATED"))?;
-        let mut cache = self.cached.lock().await;
-        let mut client = self.authority.db.get().await?;
+        let observed = self.cached.lock().await.get(profile).cloned();
+        let client = self.authority.db.get().await?;
         let (key_hash, profile_hash, _) = self
             .cli_approval()?
             .ok_or_else(|| anyhow::anyhow!("CLI_APPROVAL_REQUIRED"))?;
         ensure!(client.query_opt("SELECT 1 FROM moria.native_cli_profile_approvals a JOIN moria.indexing_instance i ON i.incarnation=a.incarnation WHERE key_hash=$1 AND profile_hash=$2 AND enabled",&[&key_hash,&profile_hash]).await?.is_some(),"CLI_APPROVAL_REQUIRED");
-        if let Some(session) = cache.get(profile) {
-            let row=client.query_opt("SELECT disabled,expires_at>clock_timestamp() FROM moria.workload_sessions WHERE token_hash=$1",&[&session.session_hash()]).await?.ok_or_else(||anyhow::anyhow!("UNAUTHENTICATED"))?;
-            ensure!(!row.get::<_, bool>(0), "UNAUTHENTICATED");
-            if row.get::<_, bool>(1) {
-                Authority::current(&**client, session).await?;
-                return Ok(session.clone());
-            }
+        if let Some(session) = &observed
+            && Self::reuse_cli_session(&client, session).await?
+        {
+            return Ok(session.clone());
+        }
+        drop(client);
+
+        // Only renewal serializes cache updates. Never wait for it while holding a pool slot.
+        let mut cache = self.cached.lock().await;
+        let mut client = self.authority.db.get().await?;
+        if let Some(session) = cache.get(profile)
+            && observed
+                .as_ref()
+                .is_none_or(|prior| prior.session_hash() != session.session_hash())
+            && Self::reuse_cli_session(&client, session).await?
+        {
+            return Ok(session.clone());
         }
         let tx = client.transaction().await?;
         tx.query_one(
