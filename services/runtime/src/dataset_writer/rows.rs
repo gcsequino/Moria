@@ -1,7 +1,7 @@
 //! Canonical full-row and ordered-key identity is computed from actual typed Arrow values.
 use crate::{
     canonical::{JsonSize, canonical_json},
-    snapshot::{batch_columns, check_batch_size, validate_batch},
+    snapshot::{batch_columns, check_batch_size},
     values,
 };
 use anyhow::{Result, ensure};
@@ -90,18 +90,35 @@ pub(crate) fn encode_projected_keys(
             .get(key)
             .ok_or_else(|| anyhow::anyhow!("DATASET_PRIMARY_KEY_MISSING"))?;
         ensure!(
-            descriptor["nullable"] == false
-                && descriptors
-                    .insert(key.clone(), descriptor.clone())
-                    .is_none(),
+            descriptor["nullable"] == false && descriptors.insert(key, descriptor).is_none(),
             "DATASET_PRIMARY_KEY_INVALID"
         );
     }
-    validate_batch(batch, &descriptors)?;
+    check_batch_size(batch)?;
+    if batch.num_rows() == 0 {
+        return Ok(Vec::new());
+    }
+    let bound = batch_columns(
+        batch,
+        keys.iter().map(|key| (key, descriptors[key])),
+        "MISSING_COLUMN",
+    )?;
     let mut bytes = 0usize;
     let mut output = Vec::with_capacity(batch.num_rows());
     for row in 0..batch.num_rows() {
-        let key = super::keys::encoded_key(batch, row, keys, columns)?;
+        let mut size = JsonSize::default();
+        let mut cells = Vec::with_capacity(bound.len());
+        for &(_, descriptor, array) in &bound {
+            let mut cell = values::arrow_value(array, row, descriptor)?;
+            serde_json::to_writer(&mut size, &cell)?;
+            ensure!(size.0 <= ROW_BYTES, "DECODED_ROW_LIMIT");
+            ensure!(!cell.is_null(), "DATASET_PRIMARY_KEY_NULL");
+            if descriptor["type"] == "float64" && cell.as_f64() == Some(0.0) {
+                cell = serde_json::json!(0.0);
+            }
+            cells.push(cell);
+        }
+        let key = super::keys::finish_key(cells)?;
         bytes = bytes
             .checked_add(key.len())
             .filter(|bytes| *bytes <= PAGE_BYTES)
