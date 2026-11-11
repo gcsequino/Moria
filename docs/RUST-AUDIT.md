@@ -1,7 +1,7 @@
 # Rust audit
 
-Baseline: `167a0948c1ff8f7c79d7ba793144d5d266ea4fb4` (the head of PR #88 at
-inventory time). The ledger covers 130 runtime Rust files, one ontology
+The audit baseline is `167a0948c1ff8f7c79d7ba793144d5d266ea4fb4`, the head
+of PR #88 at inventory time. The ledger covers 130 runtime Rust files, one ontology
 benchmark file, and ten native integration fixtures. An archived production
 evidence file is outside the build inventory.
 
@@ -21,6 +21,13 @@ failure mode or avoidable cost at an accepted input size.
 | R03 | Iceberg async reads open the sealed spool once for scope, owner and entry checks and perform the SQLite work on a blocking thread. | Catalog tests cover qualified snapshots and reads under live authority. |
 | R04 | Dataset primary-key extraction binds projected columns once and decodes each key cell once. | Native Dataset primary-key and graph tests cover typed identity, ordering and bounded reads. |
 | R05 | Canonical fingerprints feed SHA-256 directly with the shared canonical encoder. | Native canonical and cross-runtime fixtures cover UTF-16 key order, numeric formatting and typed identities. |
+
+The local Linux release image passed static quality, both pinned performance
+lint checks, native artifact provenance, all 131 Rust unit tests, nine value
+model tests and 35 focused integration cases. The focused files cover the
+legacy API process, Source activation, Search, Dataset graph and primary keys,
+and Catalog. The Search statement-count assertion failed at the baseline
+runtime with the new fixture and passed on the revised runtime.
 
 ## Future changes
 
@@ -46,7 +53,7 @@ The preceding hosted run ([42989779395](https://github.com/gcsequino/Moria/actio
 failed in the legacy API process fixture, native Evaluation tests and one
 native Agent case. The legacy fixture now resolves its loader before switching
 to the empty working directory. Its isolated Linux run passed. The Evaluation
-failures also appear in earlier hosted logs. In the paired local baseline runs,
+failures also appear in the [earlier Linux run](https://github.com/gcsequino/Moria/actions/runs/42130357789). In the paired local baseline runs,
 the Agent file passed all 24 cases on both images. The Evaluation file had the
 same one remaining failing leaf on both images. The Source automation case
 failed at its lifecycle barrier locally and at the child-progress lock probe
@@ -59,8 +66,9 @@ To verify the inventory from the repository root, compare the tracked Rust
 paths at the baseline to the paths below.
 
 ```bash
+baseline=167a0948c1ff8f7c79d7ba793144d5d266ea4fb4
 diff -u \
-  <(git ls-tree -r --name-only 167a094 -- \
+  <(git ls-tree -r --name-only "$baseline" -- \
     services/runtime benchmarks/ontology/rust tests/fixtures | rg '\.rs$' | sort) \
   <(rg '^(services/runtime|benchmarks/ontology/rust|tests/fixtures)/.*\.rs$' \
     docs/RUST-AUDIT.md | sort)
