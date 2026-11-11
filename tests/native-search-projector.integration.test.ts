@@ -661,6 +661,17 @@ test(
         await db.pool.query(`
           CREATE SEQUENCE moria.fixture_search_retry;
           GRANT USAGE ON SEQUENCE moria.fixture_search_retry TO PUBLIC;
+          CREATE TABLE moria.fixture_embedding_writes (rows bigint NOT NULL);
+          CREATE FUNCTION moria.fixture_count_embedding_write() RETURNS trigger
+          LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
+          BEGIN
+            INSERT INTO moria.fixture_embedding_writes SELECT count(*) FROM inserted;
+            RETURN NULL;
+          END $$;
+          CREATE TRIGGER fixture_count_embedding_write
+          AFTER INSERT ON moria.native_search_embeddings
+          REFERENCING NEW TABLE AS inserted
+          FOR EACH STATEMENT EXECUTE FUNCTION moria.fixture_count_embedding_write();
           ${conflict}
         `);
         hold = true;
@@ -742,6 +753,18 @@ test(
           'embedding requests batch multiple objects',
         );
         assert.ok(batches.every((batch) => batch.length <= 64));
+        assert.ok(
+          Number(
+            (await db.pool.query('SELECT max(rows) AS size FROM moria.fixture_embedding_writes'))
+              .rows[0].size,
+          ) > 1,
+          'one SQL statement must insert multiple cold embeddings',
+        );
+        await db.pool.query(`
+          DROP TRIGGER fixture_count_embedding_write ON moria.native_search_embeddings;
+          DROP FUNCTION moria.fixture_count_embedding_write();
+          DROP TABLE moria.fixture_embedding_writes;
+        `);
         for (const uid of selected) {
           const chunks = (
             await db.pool.query(
