@@ -19,7 +19,7 @@ pub(crate) type RunCache = tokio::sync::Mutex<Option<(SealedObject, Arc<RunReade
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Segment {
-    minimum: [u8; 32],
+    pub(super) minimum: [u8; 32],
     maximum: [u8; 32],
     run: SealedObject,
     sequence: u64,
@@ -109,12 +109,7 @@ impl Bucket {
                 && reader.descriptor().sequence == segment.sequence,
             "DATASET_KEY_INDEX_INVALID"
         );
-        let blocks = reader
-            .descriptor()
-            .blocks
-            .iter()
-            .filter(|block| block.partition == self.partition)
-            .collect::<Vec<_>>();
+        let blocks = reader.descriptor().partition_blocks(self.partition);
         ensure!(
             blocks
                 .first()
@@ -128,12 +123,7 @@ impl Bucket {
     }
 }
 pub(crate) fn segment(run: &QualifiedRun, partition: u8) -> Result<Segment> {
-    let blocks = run
-        .descriptor()
-        .blocks
-        .iter()
-        .filter(|block| block.partition == partition)
-        .collect::<Vec<_>>();
+    let blocks = run.descriptor().partition_blocks(partition);
     ensure!(!blocks.is_empty(), "DATASET_KEY_INDEX_INVALID");
     Ok(Segment {
         minimum: blocks.first().unwrap().minimum,

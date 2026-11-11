@@ -75,10 +75,7 @@ impl NativeSnapshot {
             selection.physical_rows(),
             selection.data_sequence(),
         )?;
-        ensure!(
-            selection.selected(locator.row, 1).await? == [true],
-            "DATASET_KEY_INDEX_INVALID"
-        );
+        selection.verify_selected(&[locator.row]).await?;
         let file = self.file(&locator.file).await?;
         ensure!(
             file.content() == selection.content(),

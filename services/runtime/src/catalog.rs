@@ -1198,7 +1198,7 @@ pub async fn read_pinned_dataset(
     grant.validate_schema(table.metadata().current_schema().as_ref())?;
     Ok(PinnedDatasetRead {
         pin,
-        snapshot: PinnedDatasetSnapshot::FlatV2(snapshot),
+        snapshot: PinnedDatasetSnapshot::FlatV2(Box::new(snapshot)),
         consumed_markings,
     })
 }

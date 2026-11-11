@@ -44,12 +44,9 @@ struct AdmittedSegment {
 }
 impl AdmittedSegment {
     fn validate(&self, descriptor: &RunDescriptor, partition: u8) -> Result<()> {
-        let mut blocks = descriptor
-            .blocks
-            .iter()
-            .filter(|block| block.partition == partition);
+        let blocks = descriptor.partition_blocks(partition);
         let first = blocks
-            .next()
+            .first()
             .ok_or_else(|| anyhow::anyhow!("DATASET_KEY_INDEX_INVALID"))?;
         let last = blocks.last().unwrap_or(first);
         ensure!(

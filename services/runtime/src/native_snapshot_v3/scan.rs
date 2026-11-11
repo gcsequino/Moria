@@ -1,6 +1,6 @@
 //! Whole-root and planned-file scans retain physical ordinals before qualified visibility selection.
 use super::*;
-use crate::dataset_writer::row_selection::ReadSelection;
+use crate::dataset_writer::row_selection::{ReadSelection, RowChunk};
 use futures::{TryStreamExt, stream};
 
 /// A task witness, never read authority. Tasks re-resolve it from their actual pinned root.
@@ -158,7 +158,7 @@ async fn batches(
         table: Arc<iceberg::table::StaticTable>,
         files: BoxStream<'static, Result<ReadSelection>>,
         batches: Option<BoxStream<'static, Result<arrow_array::RecordBatch>>>,
-        selection: Option<ReadSelection>,
+        selection: Option<(ReadSelection, Option<RowChunk>)>,
         physical: u64,
         file_visible: u64,
         total: u64,
@@ -193,8 +193,10 @@ async fn batches(
                 state.snapshot.check_current().await?;
                 if let Some(batches) = state.batches.as_mut() {
                     if let Some(batch) = batches.try_next().await? {
-                        let selection = state.selection.as_ref().unwrap();
-                        let selected = selection.selected(state.physical, batch.num_rows()).await?;
+                        let (selection, chunk) = state.selection.as_mut().unwrap();
+                        let selected = selection
+                            .selected(state.physical, batch.num_rows(), chunk)
+                            .await?;
                         state.physical = state
                             .physical
                             .checked_add(batch.num_rows() as u64)
@@ -225,7 +227,7 @@ async fn batches(
                         state.snapshot.check_current().await?;
                         return Ok(Some((batch, state)));
                     }
-                    let selection = state.selection.as_ref().unwrap();
+                    let (selection, _) = state.selection.as_ref().unwrap();
                     ensure!(
                         state.physical == selection.physical_rows()
                             && state.file_visible == selection.selected_rows(),
@@ -280,7 +282,7 @@ async fn batches(
                     .stream()
                     .map_err(anyhow::Error::from);
                 state.batches = Some(Box::pin(batches));
-                state.selection = Some(selection);
+                state.selection = Some((selection, None));
                 state.physical = 0;
                 state.file_visible = 0;
             }

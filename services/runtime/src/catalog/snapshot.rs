@@ -7,7 +7,7 @@ use futures::{TryStreamExt, stream::BoxStream};
 use std::sync::Arc;
 
 pub enum PinnedDatasetSnapshot {
-    FlatV2(LoadedSnapshot),
+    FlatV2(Box<LoadedSnapshot>),
     GraphV3(Arc<NativeSnapshot>),
 }
 impl PinnedDatasetSnapshot {

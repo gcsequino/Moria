@@ -1,7 +1,7 @@
 //! Shared bounded graph construction for qualified initial bootstrap and new replacement output.
 use super::{
     key_run::{Locator, RunEntry, RunKind, RunValue, RunWriter},
-    key_run_io::{QualifiedRun, write_run},
+    key_run_io::{QualifiedRun, seal_run},
     key_run_set,
     visibility::VisibilityBootstrap,
 };
@@ -90,13 +90,7 @@ impl GraphBuilder {
                         RunKind::Locations => "locations",
                     },
                     slice.partition,
-                    run.descriptor()
-                        .blocks
-                        .iter()
-                        .find(|block| block.partition == slice.partition)
-                        .unwrap()
-                        .minimum
-                        .as_slice(),
+                    segment.minimum.as_slice(),
                     serde_json::to_string(&segment)?,
                     serde_json::to_string(run.node().content())?
                 ],
@@ -105,43 +99,39 @@ impl GraphBuilder {
         Ok(())
     }
     pub(super) async fn index(&mut self, visible: &VisibilityBootstrap) -> Result<()> {
+        let writer = |kind| RunWriter::new(kind, &self.key_hash, self.sequence);
+        let mut hashes = writer(RunKind::Hashes)?;
+        let mut locations = writer(RunKind::Locations)?;
         let mut after = None;
-        let mut hash_rows = Vec::new();
-        let mut location_rows = Vec::new();
-        let mut sizing = RunWriter::new(RunKind::Locations, &self.key_hash, self.sequence)?;
         loop {
             let page = visible.route_page(after.as_deref()).await?;
             if page.is_empty() {
                 break;
             }
-            for row in &page {
-                let location = RunEntry {
-                    key: row.key.clone(),
+            after = page.last().map(|row| row.key.clone());
+            for row in page {
+                let mut entry = RunEntry {
+                    key: row.key,
                     value: RunValue::Location(Locator {
-                        file: row.file.clone(),
+                        file: row.file,
                         row: row.row,
                         data_sequence: row.data_sequence,
                         row_hash: row.row_hash,
                     }),
                 };
-                if !sizing.would_fit(&location) {
-                    ensure!(!location_rows.is_empty(), "RESOURCE_LIMIT");
-                    self.flush_runs(&hash_rows, &location_rows).await?;
-                    hash_rows.clear();
-                    location_rows.clear();
-                    sizing = RunWriter::new(RunKind::Locations, &self.key_hash, self.sequence)?;
+                if !locations.would_fit(&entry) {
+                    ensure!(!locations.is_empty(), "RESOURCE_LIMIT");
+                    self.flush_runs(hashes, locations).await?;
+                    hashes = writer(RunKind::Hashes)?;
+                    locations = writer(RunKind::Locations)?;
                 }
-                sizing.push(&location)?;
-                hash_rows.push(RunEntry {
-                    key: row.key.clone(),
-                    value: row.row_hash.map_or(RunValue::DeferredHash, RunValue::Hash),
-                });
-                location_rows.push(location);
+                locations.push(&entry)?;
+                entry.value = row.row_hash.map_or(RunValue::DeferredHash, RunValue::Hash);
+                hashes.push(&entry)?;
             }
-            after = page.last().map(|row| row.key.clone());
         }
-        if !location_rows.is_empty() {
-            self.flush_runs(&hash_rows, &location_rows).await?;
+        if !locations.is_empty() {
+            self.flush_runs(hashes, locations).await?;
         }
         // Each bucket contains only finite run descriptors; the full population remains spill-backed.
         for kind in [RunKind::Hashes, RunKind::Locations] {
@@ -221,30 +211,10 @@ impl GraphBuilder {
         }
         Ok(())
     }
-    async fn flush_runs(&self, hashes: &[RunEntry], locations: &[RunEntry]) -> Result<()> {
-        self.record_run(
-            RunKind::Hashes,
-            write_run(
-                &self.graph,
-                RunKind::Hashes,
-                &self.key_hash,
-                self.sequence,
-                hashes,
-            )
-            .await?,
-        )
-        .await?;
-        self.record_run(
-            RunKind::Locations,
-            write_run(
-                &self.graph,
-                RunKind::Locations,
-                &self.key_hash,
-                self.sequence,
-                locations,
-            )
-            .await?,
-        )
-        .await
+    async fn flush_runs(&self, hashes: RunWriter, locations: RunWriter) -> Result<()> {
+        self.record_run(RunKind::Hashes, seal_run(&self.graph, hashes).await?)
+            .await?;
+        self.record_run(RunKind::Locations, seal_run(&self.graph, locations).await?)
+            .await
     }
 }

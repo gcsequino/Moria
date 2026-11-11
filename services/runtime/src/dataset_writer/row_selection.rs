@@ -400,7 +400,12 @@ impl ReadSelection {
         }
         self.context.check_node(&self.node).await
     }
-    pub(crate) async fn selected(&self, start: u64, count: usize) -> Result<Vec<bool>> {
+    pub(crate) async fn selected(
+        &self,
+        start: u64,
+        count: usize,
+        cached: &mut Option<RowChunk>,
+    ) -> Result<Vec<bool>> {
         ensure!(
             count <= 1000
                 && start
@@ -409,18 +414,19 @@ impl ReadSelection {
             "RESOURCE_LIMIT"
         );
         self.context.check_node(&self.node).await?;
-        let mut output = Vec::with_capacity(count);
-        let mut cached: Option<(u64, RowChunk)> = None;
-        for row in start..start + count as u64 {
-            let ordinal = row / ROWS;
-            if cached
-                .as_ref()
-                .is_none_or(|(current, _)| *current != ordinal)
-            {
-                cached = Some((ordinal, self.chunk(ordinal).await?));
+        let output = if self.chunks.is_none() {
+            vec![self.descriptor.base_selected; count]
+        } else {
+            let mut selected = Vec::with_capacity(count);
+            for row in start..start + count as u64 {
+                let ordinal = row / ROWS;
+                if cached.as_ref().is_none_or(|chunk| chunk.ordinal != ordinal) {
+                    *cached = Some(self.chunk(ordinal).await?);
+                }
+                selected.push(cached.as_ref().unwrap().contains(row)?);
             }
-            output.push(cached.as_ref().unwrap().1.contains(row)?);
-        }
+            selected
+        };
         self.context.check_node(&self.node).await?;
         Ok(output)
     }

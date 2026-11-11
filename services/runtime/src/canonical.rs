@@ -2,6 +2,20 @@ use anyhow::{Result, ensure};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
+#[derive(Default)]
+pub(crate) struct JsonSize(pub(crate) usize);
+
+impl std::io::Write for JsonSize {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0 += bytes.len();
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 pub fn canonical_json(value: &Value) -> Result<String> {
     fn visit(value: &Value, depth: usize, nodes: &mut usize, out: &mut String) -> Result<()> {
         *nodes += 1;

@@ -1,5 +1,9 @@
 //! Canonical full-row and ordered-key identity is computed from actual typed Arrow values.
-use crate::{canonical::canonical_json, snapshot::validate_batch, values};
+use crate::{
+    canonical::{JsonSize, canonical_json},
+    snapshot::{batch_columns, check_batch_size, validate_batch},
+    values,
+};
 use anyhow::{Result, ensure};
 use arrow_array::RecordBatch;
 use serde_json::Value;
@@ -31,33 +35,33 @@ pub(crate) fn encode_rows(
         batch.num_rows() <= PAGE_ROWS && !keys.is_empty() && keys.len() <= 256,
         "RESOURCE_LIMIT"
     );
+    check_batch_size(batch)?;
     let descriptors = columns
         .as_object()
-        .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?
-        .iter()
-        .map(|(name, value)| (name.clone(), value.clone()))
-        .collect::<BTreeMap<_, _>>();
-    validate_batch(batch, &descriptors)?;
+        .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?;
     ensure!(
         keys.iter().all(|key| descriptors.contains_key(key)),
         "DATASET_PRIMARY_KEY_MISSING"
     );
+    if batch.num_rows() == 0 {
+        return Ok(Vec::new());
+    }
+    let bound_columns = batch_columns(batch, descriptors, "MISSING_COLUMN")?;
     let mut bytes = 0usize;
     let mut output = Vec::with_capacity(batch.num_rows());
     for row in 0..batch.num_rows() {
         let mut value = serde_json::Map::new();
-        for (name, descriptor) in &descriptors {
-            let array = batch
-                .column_by_name(name)
-                .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?;
-            value.insert(
-                name.clone(),
-                values::arrow_value(array.as_ref(), row, descriptor)?,
-            );
+        let mut size = JsonSize::default();
+        for &(name, descriptor, array) in &bound_columns {
+            let cell = values::arrow_value(array, row, descriptor)?;
+            serde_json::to_writer(&mut size, &cell)?;
+            ensure!(size.0 <= ROW_BYTES, "DECODED_ROW_LIMIT");
+            value.insert(name.to_owned(), cell);
         }
-        let canonical = canonical_json(&Value::Object(value))?.into_bytes();
+        let value = Value::Object(value);
+        let canonical = canonical_json(&value)?.into_bytes();
         ensure!(canonical.len() <= ROW_BYTES, "DECODED_ROW_LIMIT");
-        let key = super::keys::encoded_key(batch, row, keys, columns)?;
+        let key = super::keys::encoded_json_key(&value, keys, columns)?;
         bytes = bytes
             .checked_add(key.len() + 32)
             .filter(|bytes| *bytes <= PAGE_BYTES)

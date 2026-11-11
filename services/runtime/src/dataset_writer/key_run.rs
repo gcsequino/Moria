@@ -75,6 +75,18 @@ pub struct RunDescriptor {
     pub partitions: Vec<PartitionSlice>,
     pub blocks: Vec<BlockSlice>,
 }
+impl RunDescriptor {
+    /// Descriptors are validated before callers use their ordered partition boundaries.
+    pub(super) fn partition_blocks(&self, partition: u8) -> &[BlockSlice] {
+        let start = self
+            .blocks
+            .partition_point(|block| block.partition < partition);
+        let end = self
+            .blocks
+            .partition_point(|block| block.partition <= partition);
+        &self.blocks[start..end]
+    }
+}
 pub fn key_route(key: &[u8]) -> [u8; 32] {
     Sha256::digest(key).into()
 }
@@ -105,7 +117,7 @@ fn append(out: &mut Vec<u8>, data: &[u8]) -> Result<()> {
 pub struct RunWriter {
     descriptor: RunDescriptor,
     bytes: Vec<u8>,
-    previous: Option<Vec<u8>>,
+    previous: Option<([u8; 32], Vec<u8>)>,
     failed: bool,
 }
 impl RunWriter {
@@ -129,6 +141,9 @@ impl RunWriter {
             previous: None,
             failed: false,
         })
+    }
+    pub(crate) fn is_empty(&self) -> bool {
+        self.descriptor.entries == 0
     }
     pub fn would_fit(&self, entry: &RunEntry) -> bool {
         let extra = 4usize.checked_add(entry.key.len()).and_then(|n| {
@@ -163,11 +178,12 @@ impl RunWriter {
             !entry.key.is_empty() && entry.key.len() <= KEY_LIMIT,
             "DATASET_PRIMARY_KEY_LIMIT"
         );
-        let bucket = partition(&entry.key);
+        let digest = key_route(&entry.key);
+        let bucket = digest[0];
         ensure!(
             self.previous
                 .as_ref()
-                .is_none_or(|key| compare_keys(key, &entry.key).is_lt()),
+                .is_none_or(|(route, key)| (route, key) < (&digest, &entry.key)),
             "DATASET_PRIMARY_KEY_DUPLICATE"
         );
         let start = self.bytes.len() as u64;
@@ -221,7 +237,6 @@ impl RunWriter {
             slice.end = end;
             slice.entries += 1;
         }
-        let digest = key_route(&entry.key);
         let record_bytes = end - start;
         if self.descriptor.blocks.last().is_none_or(|block| {
             block.partition != bucket
@@ -247,7 +262,7 @@ impl RunWriter {
             "RESOURCE_LIMIT"
         );
         self.descriptor.entries += 1;
-        self.previous = Some(entry.key.clone());
+        self.previous = Some((digest, entry.key.clone()));
         Ok(())
     }
     pub fn finish(mut self) -> Result<(RunDescriptor, Vec<u8>)> {

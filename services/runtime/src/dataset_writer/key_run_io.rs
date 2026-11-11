@@ -31,23 +31,6 @@ impl QualifiedRun {
         &self.node
     }
 }
-pub(crate) async fn write_run(
-    graph: &NativeGraph,
-    kind: RunKind,
-    key_schema_hash: &str,
-    sequence: u64,
-    entries: &[RunEntry],
-) -> Result<QualifiedRun> {
-    ensure!(
-        !entries.is_empty() && entries.len() <= 65536,
-        "RESOURCE_LIMIT"
-    );
-    let mut writer = RunWriter::new(kind, key_schema_hash, sequence)?;
-    for entry in entries {
-        writer.push(entry)?;
-    }
-    seal_run(graph, writer).await
-}
 pub(crate) async fn seal_run(graph: &NativeGraph, writer: RunWriter) -> Result<QualifiedRun> {
     let (descriptor, bytes) = writer.finish()?;
     // Independently decode every emitted block/fence before receiver registration.

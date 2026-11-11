@@ -1,4 +1,5 @@
 use crate::{
+    canonical::JsonSize,
     database::{Database, safe_error},
     io::{Scope, ScopedFiles},
     values,
@@ -28,20 +29,6 @@ impl Drop for Heartbeat {
 
 const SCAN_PAYLOAD_BYTES: usize = 8 * 1024 * 1024;
 const SINGLE_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
-
-#[derive(Default)]
-struct JsonSize(usize);
-
-impl std::io::Write for JsonSize {
-    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-        self.0 += bytes.len();
-        Ok(bytes.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
 
 struct SourceLayout {
     columns: serde_json::Map<String, Value>,
@@ -90,17 +77,18 @@ impl SourceLayout {
             identity,
         })
     }
-    fn row(&self, batch: &arrow_array::RecordBatch, row: usize) -> Result<(Value, Option<Value>)> {
+    fn row(
+        &self,
+        columns: &[crate::snapshot::BatchColumn<'_>],
+        row: usize,
+    ) -> Result<(Value, Option<Value>)> {
         let mut canonical = serde_json::Map::new();
         let mut size = JsonSize::default();
-        for (name, column) in &self.columns {
-            let array = batch
-                .column_by_name(name)
-                .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?;
-            let value = values::arrow_value(array.as_ref(), row, column)?;
+        for &(name, column, array) in columns {
+            let value = values::arrow_value(array, row, column)?;
             serde_json::to_writer(&mut size, &value)?;
             ensure!(size.0 <= 4 * 1024 * 1024, "DECODED_ROW_LIMIT");
-            canonical.insert(name.clone(), value);
+            canonical.insert(name.to_owned(), value);
         }
         if self.identity {
             return Ok((Value::Object(canonical), None));
@@ -595,13 +583,18 @@ impl Worker {
                 batch.get_array_memory_size() <= 64 * 1024 * 1024,
                 "Arrow batch memory budget exceeded"
             );
+            if batch.num_rows() == 0 {
+                continue;
+            }
+            let columns =
+                crate::snapshot::batch_columns(&batch, &layout.columns, "SCHEMA_CHANGED")?;
             let mut ids = Vec::new();
             let mut values = Vec::new();
             let mut source_values = Vec::new();
             let mut shards = Vec::new();
             let mut payload_bytes = 0usize;
             for row in 0..batch.num_rows() {
-                let (value, canonical) = layout.row(&batch, row)?;
+                let (value, canonical) = layout.row(&columns, row)?;
                 let id = Uuid::parse_str(
                     value[key]
                         .as_str()
@@ -1047,7 +1040,9 @@ mod mapping_tests {
             ],
         )
         .unwrap();
-        let (mapped, source) = layout.row(&batch, 0).unwrap();
+        let columns =
+            crate::snapshot::batch_columns(&batch, &layout.columns, "SCHEMA_CHANGED").unwrap();
+        let (mapped, source) = layout.row(&columns, 0).unwrap();
         assert_eq!(mapped, json!({"uid":uid,"name":"mapped"}));
         assert_eq!(
             source.unwrap(),
