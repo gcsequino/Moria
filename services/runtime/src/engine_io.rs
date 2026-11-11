@@ -8,7 +8,7 @@ use crate::{
     storage::{Cancellation, IndexNamespace, SealedObject, configured_store_with_fingerprint},
 };
 use anyhow::{Result, ensure};
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut};
 use futures::TryStreamExt;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -34,9 +34,7 @@ struct Input {
     _retained: PinnedDatasetRead,
     stream: futures::stream::BoxStream<'static, Result<arrow_array::RecordBatch>>,
     schema: arrow_schema::SchemaRef,
-    schema_prefix: Vec<u8>,
-    fields: Vec<engine_ipc::Field>,
-    pending: Bytes,
+    pending: BytesMut,
     held: Option<engine_ipc::CompactedBatch>,
     ended: bool,
 }
@@ -199,10 +197,8 @@ impl NativeEngineIo {
                 scan: id,
                 _retained: loaded,
                 stream,
-                fields: engine_ipc::schema(&prefix, &schema)?,
                 schema,
-                schema_prefix: prefix.clone(),
-                pending: Bytes::copy_from_slice(&prefix),
+                pending: BytesMut::from(prefix.as_slice()),
                 held: None,
                 ended: false,
             },
@@ -214,7 +210,7 @@ impl NativeEngineIo {
             schema: complete,
         })
     }
-    pub(crate) async fn next_input(&mut self, name: &str, scan: Uuid) -> Result<Option<Vec<u8>>> {
+    pub(crate) async fn next_input(&mut self, name: &str, scan: Uuid) -> Result<Option<Bytes>> {
         self.check().await?;
         let state = self
             .opened
@@ -224,9 +220,11 @@ impl NativeEngineIo {
         const COMPACTION_BYTES: usize = 512 * 1024;
         const ROWS_PER_READ: usize = 1000;
         if state.pending.len() < engine_ipc::CHUNK_BYTES && !state.ended {
-            let mut encoded = std::mem::take(&mut state.pending).to_vec();
             let mut rows = 0usize;
-            while encoded.len() < engine_ipc::CHUNK_BYTES && rows < ROWS_PER_READ && !state.ended {
+            while state.pending.len() < engine_ipc::CHUNK_BYTES
+                && rows < ROWS_PER_READ
+                && !state.ended
+            {
                 let mut batches = Vec::new();
                 let mut memory = 0usize;
                 loop {
@@ -248,11 +246,11 @@ impl NativeEngineIo {
                         }
                         let batch =
                             crate::dataset_writer::rebind_batch(batch, state.schema.clone())?;
-                        engine_ipc::compact_batch(&state.schema_prefix, &state.fields, &batch)?
+                        engine_ipc::compact_batch(&batch)?
                     };
                     let size = compact.retained_bytes;
                     if (!batches.is_empty() && memory + size > COMPACTION_BYTES)
-                        || (!encoded.is_empty() && size > COMPACTION_BYTES)
+                        || (!state.pending.is_empty() && size > COMPACTION_BYTES)
                     {
                         state.held = Some(compact);
                         break;
@@ -273,13 +271,14 @@ impl NativeEngineIo {
                     arrow_select::concat::concat_batches(&state.schema, batches.iter())?
                 };
                 // Pack complete Arrow frames into one bounded guest read.
-                encoded.extend(engine_ipc::encode_batch(&batch)?);
+                state
+                    .pending
+                    .extend_from_slice(&engine_ipc::encode_batch(&batch)?);
                 self.input_rows_encoded += batch.num_rows() as u64;
             }
             if state.ended {
-                encoded.extend(engine_ipc::EOS);
+                state.pending.extend_from_slice(&engine_ipc::EOS);
             }
-            state.pending = Bytes::from(encoded);
         }
         if state.pending.is_empty() {
             return Ok(None);
@@ -290,7 +289,11 @@ impl NativeEngineIo {
             .checked_add(length as u64)
             .ok_or_else(|| anyhow::anyhow!("ENGINE_INPUT_LIMIT"))?;
         ensure!(total <= self.limits.input_bytes, "ENGINE_INPUT_LIMIT");
-        let chunk = state.pending.split_to(length).to_vec();
+        let chunk = if length == state.pending.len() {
+            std::mem::take(&mut state.pending).freeze()
+        } else {
+            state.pending.split_to(length).freeze()
+        };
         self.input_bytes = total;
         self.check().await?;
         Ok(Some(chunk))

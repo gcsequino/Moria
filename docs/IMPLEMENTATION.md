@@ -3,6 +3,65 @@
 See the [current development handoff](HANDOFF.md) for the latest hosted results,
 archived experiments, and the order of the remaining gates.
 
+## Rust ownership and bounded work
+
+Packed key runs validate the descriptor when opened or verified. The block
+decoder borrows one block, and batch lookup borrows encoded keys through the
+partition and segment layers. The 50,000-key regression checks one descriptor
+validation during full-run verification and still rejects missing, shifted,
+and incorrect block fences. The release regression took about 4.35 seconds
+with the audited codec and 0.11 seconds with the revised codec on the same
+local host. All 128 release unit tests and the native artifact checks passed.
+
+Pipeline input compacts Arrow arrays in memory before encoding outgoing
+batches. The original list complexity limit applies before copying. A local
+release-mode probe on 12,000 four-column rows with a 2 KiB text value per row
+measured median compaction times of 89.9 ms at `9178746` and 8.4 ms with the
+change over seven paired trials. These timings cover row compaction alone.
+
+Indexing counts encoded cell bytes without temporary JSON buffers. POSIX
+range reads fill the returned buffer directly. Directory updates compare
+only affected records for no-op detection. Serving shares immutable compiled
+policy readers and passes the pinned revision separately from the current
+revision when rechecking an aggregate.
+
+### Runtime audit follow-up
+
+V3 scans retain one verified selection bitmap for the current physical file
+across Arrow batches. Uniform selections avoid building a bitmap. Each batch
+checks current authority, and Pipeline input keeps the one-row Parquet decode
+profile for wide values. Bootstrap
+and replacement seal the location and hash runs already encoded by their
+writers. Ordered partition bounds select the relevant blocks without
+allocating a second list.
+
+Snapshot validation and indexing bind Arrow columns once per batch. Replacement
+decodes each cell once for typed validation and row identity. JSON byte limits
+use the same serializer with a counting writer, and the HTTP object query and
+aggregate routes reuse their final checked bytes. An unsuccessful admission
+cannot send a previously encoded query result.
+
+The search chunker keeps 1,001 offsets and reuses each chunk digest for cache
+lookup, storage, and ID construction. An isolated release probe matched the
+previous chunk bytes and offsets on 1,024 mixed Unicode and paragraph inputs.
+Peak process memory for an 8 MiB ASCII document fell from 85,424 KiB to 19,804
+KiB in that probe. The measurement covers chunking alone.
+
+Model streams close the provider connection on receiver cancellation and
+record uncertain attempts through the existing completion path. The regression
+failed on the prior runtime while the provider held the stream open and passed
+on the revised runtime. Cached CLI credentials recheck current authority
+outside the renewal lock. The Rust benchmark discards cancelled sessions that
+may hold an advisory lock. A local 10,000-row smoke run and a task-cancellation
+probe verified the benchmark against PostgreSQL.
+
+The runtime and benchmark passed release Clippy performance checks with
+`-D clippy::perf`. The static gate and all 130 release runtime unit tests
+passed, and the native artifact check matched the tested binaries to the
+runtime source. The final image passed 50 focused integration cases covering
+qualified Dataset bootstrap and replacement, current CLI authority, Model
+HTTP streaming, Search projection and retrieval, and protected query plans.
+
 ## November 5 Linux Function and Pipeline fixes
 
 Local Linux reproduced two Function failures from hosted CI. Docker cleanup

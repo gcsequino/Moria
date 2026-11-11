@@ -234,14 +234,14 @@ impl ReplacementGraph {
         let mut stream = builder.with_batch_size(1000).build()?;
         let mut physical = 0u64;
         let column_json = serde_json::to_value(&self.columns)?;
+        let batch_schema = arrow_schema(self.schema.as_ref())?;
         while let Some(batch) = stream.try_next().await? {
             self.graph.check_current().await?;
             ensure!(
                 batch.get_array_memory_size() <= 64 * 1024 * 1024,
                 "RESOURCE_LIMIT"
             );
-            let batch = rebind_batch(batch, arrow_schema(self.schema.as_ref())?)?;
-            validate_batch(&batch, &self.columns)?;
+            let batch = rebind_batch(batch, batch_schema.clone())?;
             if let Some(visible) = self.visible.as_mut() {
                 let rows = super::rows::encode_rows(&batch, &self.keys, &column_json)?;
                 let page = rows
@@ -256,6 +256,8 @@ impl ReplacementGraph {
                     })
                     .collect::<Vec<_>>();
                 visible.data_page(&page).await?;
+            } else {
+                validate_batch(&batch, &self.columns)?;
             }
             physical = physical
                 .checked_add(batch.num_rows() as u64)

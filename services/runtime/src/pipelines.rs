@@ -1876,7 +1876,8 @@ impl Drop for NativePipelineBroker {
         self.cancel.cancel();
     }
 }
-fn response(status: u16, body: Vec<u8>, media: &str) -> Result<HttpResponse> {
+fn response(status: u16, body: impl AsRef<[u8]>, media: &str) -> Result<HttpResponse> {
+    let body = body.as_ref();
     ensure!(body.len() <= 1024 * 1024, "PIPELINE_FRAME_LIMIT");
     Ok(HttpResponse {
         status,

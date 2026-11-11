@@ -31,23 +31,6 @@ impl QualifiedRun {
         &self.node
     }
 }
-pub(crate) async fn write_run(
-    graph: &NativeGraph,
-    kind: RunKind,
-    key_schema_hash: &str,
-    sequence: u64,
-    entries: &[RunEntry],
-) -> Result<QualifiedRun> {
-    ensure!(
-        !entries.is_empty() && entries.len() <= 65536,
-        "RESOURCE_LIMIT"
-    );
-    let mut writer = RunWriter::new(kind, key_schema_hash, sequence)?;
-    for entry in entries {
-        writer.push(entry)?;
-    }
-    seal_run(graph, writer).await
-}
 pub(crate) async fn seal_run(graph: &NativeGraph, writer: RunWriter) -> Result<QualifiedRun> {
     let (descriptor, bytes) = writer.finish()?;
     // Independently decode every emitted block/fence before receiver registration.
@@ -78,7 +61,7 @@ pub(crate) async fn producer_partition(
     kind: RunKind,
     partition: u8,
 ) -> Result<(
-    RunDescriptor,
+    Arc<RunDescriptor>,
     futures::stream::BoxStream<'static, Result<Vec<RunEntry>>>,
 )> {
     ensure!(node.kind() == "keyRun", "DATASET_GRAPH_ANCESTRY_REQUIRED");
@@ -114,12 +97,13 @@ pub(crate) async fn producer_partition(
                     return Ok(None);
                 };
                 let bytes: bytes::Bytes = window.read(block.start..block.end).await?;
-                let rows = decode_block(&descriptor, &block, &bytes)?;
+                let rows =
+                    decode_validated_block(descriptor.kind, descriptor.version, &block, &bytes)?;
                 Ok(Some((rows, (window, blocks))))
             }
         },
     );
-    Ok((proof.as_ref().clone(), Box::pin(stream)))
+    Ok((proof, Box::pin(stream)))
 }
 
 /// Root-path-bound run reader. Every independent operation freshly checks accepted authority.
@@ -165,9 +149,14 @@ impl RunReader {
     pub async fn lookup(&self, key: &[u8]) -> Result<Option<RunValue>> {
         self.file.check_current().await?;
         let mut result = None;
-        for block in point_blocks(&self.descriptor, key)? {
+        for block in point_blocks_in_validated_run(&self.descriptor, key)? {
             let bytes = self.file.range(block.start..block.end).await?;
-            for entry in decode_block(&self.descriptor, block, &bytes)? {
+            for entry in decode_validated_block(
+                self.descriptor.kind,
+                self.descriptor.version,
+                block,
+                &bytes,
+            )? {
                 if entry.key == key {
                     ensure!(result.is_none(), "DATASET_PRIMARY_KEY_DUPLICATE");
                     result = Some(entry.value);
@@ -179,20 +168,20 @@ impl RunReader {
     }
     /// Resolve one admitted key batch with one range read per distinct relevant block.
     /// Full keys, including hash-collision candidates, are compared after block decoding.
-    pub(crate) async fn lookup_batch(&self, keys: &[Vec<u8>]) -> Result<Vec<Option<RunValue>>> {
+    pub(crate) async fn lookup_batch(&self, keys: &[&[u8]]) -> Result<Vec<Option<RunValue>>> {
         use std::collections::BTreeMap;
         self.file.check_current().await?;
         ensure!(keys.len() <= 1000, "RESOURCE_LIMIT");
         let mut bytes = 0usize;
         let mut wanted = BTreeMap::<&[u8], Vec<usize>>::new();
         let mut blocks = BTreeMap::new();
-        for (index, key) in keys.iter().enumerate() {
+        for (index, &key) in keys.iter().enumerate() {
             bytes = bytes
                 .checked_add(key.len())
                 .filter(|bytes| *bytes <= 8 * 1024 * 1024)
                 .ok_or_else(|| anyhow::anyhow!("RESOURCE_LIMIT"))?;
-            wanted.entry(key.as_slice()).or_default().push(index);
-            for block in point_blocks(&self.descriptor, key)? {
+            wanted.entry(key).or_default().push(index);
+            for block in point_blocks_in_validated_run(&self.descriptor, key)? {
                 if let Some(previous) = blocks.insert((block.start, block.end), block) {
                     ensure!(previous == block, "DATASET_KEY_INDEX_INVALID");
                 }
@@ -201,7 +190,12 @@ impl RunReader {
         let mut result = vec![None; keys.len()];
         for block in blocks.values() {
             let encoded = self.file.range(block.start..block.end).await?;
-            for entry in decode_block(&self.descriptor, block, &encoded)? {
+            for entry in decode_validated_block(
+                self.descriptor.kind,
+                self.descriptor.version,
+                block,
+                &encoded,
+            )? {
                 if let Some(indices) = wanted.get(entry.key.as_slice()) {
                     for index in indices {
                         ensure!(result[*index].is_none(), "DATASET_PRIMARY_KEY_DUPLICATE");
@@ -236,7 +230,13 @@ impl RunReader {
                         return Ok(None);
                     };
                     let bytes = self.file.range(block.start..block.end).await?;
-                    page = decode_block(&self.descriptor, block, &bytes)?.into();
+                    page = decode_validated_block(
+                        self.descriptor.kind,
+                        self.descriptor.version,
+                        block,
+                        &bytes,
+                    )?
+                    .into();
                     ordinal += 1;
                 }
             },

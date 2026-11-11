@@ -1678,48 +1678,51 @@ impl NativeModels {
         let call = call.unwrap();
         let service = self.clone();
         tokio::spawn(async move {
-            let result = service
-                .guarded(&call, async {
-                    service.check_plan(&call, &plan, true).await?;
-                    plan.payload["model"] = json!(call.route.model);
-                    plan.payload["stream"] = json!(true);
-                    plan.payload["stream_options"] = json!({"include_usage":true});
-                    let response = service
-                        .response(&call, "chat/completions", &plan.payload)
-                        .await?;
-                    ensure!(
-                        response
-                            .headers()
-                            .get(reqwest::header::CONTENT_TYPE)
-                            .and_then(|v| v.to_str().ok())
-                            .is_some_and(|v| v.split(';').next() == Some("text/event-stream")),
-                        "MODEL_PROTOCOL"
-                    );
-                    let mut body = response.bytes_stream();
-                    let mut decoder = crate::model_protocol::ChatStream::default();
-                    while let Some(part) = body.next().await {
-                        let part = part.map_err(|_| anyhow::anyhow!("MODEL_INCOMPLETE"))?;
-                        let events = decoder.feed(&part)?;
-                        if decoder.terminal() {
-                            call.provider_finished.store(true, Ordering::Release);
-                        }
-                        for event in events {
-                            service.current(&call).await?;
-                            sender
-                                .send(Ok(event))
-                                .await
-                                .map_err(|_| anyhow::anyhow!("MODEL_CANCELLED"))?;
-                        }
+            let provider = service.guarded(&call, async {
+                service.check_plan(&call, &plan, true).await?;
+                plan.payload["model"] = json!(call.route.model);
+                plan.payload["stream"] = json!(true);
+                plan.payload["stream_options"] = json!({"include_usage":true});
+                let response = service
+                    .response(&call, "chat/completions", &plan.payload)
+                    .await?;
+                ensure!(
+                    response
+                        .headers()
+                        .get(reqwest::header::CONTENT_TYPE)
+                        .and_then(|v| v.to_str().ok())
+                        .is_some_and(|v| v.split(';').next() == Some("text/event-stream")),
+                    "MODEL_PROTOCOL"
+                );
+                let mut body = response.bytes_stream();
+                let mut decoder = crate::model_protocol::ChatStream::default();
+                while let Some(part) = body.next().await {
+                    let part = part.map_err(|_| anyhow::anyhow!("MODEL_INCOMPLETE"))?;
+                    let events = decoder.feed(&part)?;
+                    if decoder.terminal() {
+                        call.provider_finished.store(true, Ordering::Release);
                     }
-                    call.provider_finished.store(true, Ordering::Release);
-                    plan.normalize(
-                        decoder.finish()?,
-                        call.id,
-                        &call.route.model,
-                        &call.route.model_revision,
-                    )
-                })
-                .await;
+                    for event in events {
+                        service.current(&call).await?;
+                        sender
+                            .send(Ok(event))
+                            .await
+                            .map_err(|_| anyhow::anyhow!("MODEL_CANCELLED"))?;
+                    }
+                }
+                call.provider_finished.store(true, Ordering::Release);
+                plan.normalize(
+                    decoder.finish()?,
+                    call.id,
+                    &call.route.model,
+                    &call.route.model_revision,
+                )
+            });
+            let result = tokio::select! {
+                biased;
+                result = provider => result,
+                _ = sender.closed() => Err(anyhow::anyhow!("MODEL_CANCELLED")),
+            };
             let result = service
                 .complete(&call, result)
                 .await

@@ -336,6 +336,13 @@ fn array_info(
         kind,
     })
 }
+fn charge_nodes(nodes: &mut usize, count: usize) -> Result<()> {
+    *nodes = nodes
+        .checked_add(count)
+        .ok_or_else(|| anyhow::anyhow!("ENGINE_IPC_INVALID"))?;
+    ensure!(*nodes <= VALUE_NODES, "ENGINE_IPC_COMPLEXITY");
+    Ok(())
+}
 fn complexity(
     info: &ArrayInfo,
     start: usize,
@@ -344,10 +351,7 @@ fn complexity(
     nodes: &mut usize,
 ) -> Result<()> {
     ensure!(start <= end && end <= info.length, "ENGINE_IPC_INVALID");
-    *nodes = nodes
-        .checked_add(end - start)
-        .ok_or_else(|| anyhow::anyhow!("ENGINE_IPC_INVALID"))?;
-    ensure!(*nodes <= VALUE_NODES, "ENGINE_IPC_COMPLEXITY");
+    charge_nodes(nodes, end - start)?;
     if let InfoKind::List {
         offset: base,
         width,
@@ -539,51 +543,67 @@ pub(crate) struct CompactedBatch {
     pub batch: RecordBatch,
     pub retained_bytes: usize,
 }
-pub(crate) fn compact_batch(
-    prefix: &[u8],
-    fields: &[Field],
-    batch: &RecordBatch,
-) -> Result<CompactedBatch> {
-    let encoded = encode_batch(batch)?;
-    let decoded = decode_batch(prefix, &encoded, fields)?;
-    let arrays = decoded
+pub(crate) fn compact_batch(batch: &RecordBatch) -> Result<CompactedBatch> {
+    for column in batch.columns() {
+        for row in 0..batch.num_rows() {
+            arrow_complexity(column.as_ref(), row..row + 1, &mut 0)?;
+        }
+    }
+    let indices = arrow_array::UInt32Array::from_iter_values(0..u32::try_from(batch.num_rows())?);
+    let columns = batch
         .columns()
         .iter()
-        .zip(batch.schema().fields())
-        .map(|(array, field)| {
-            Ok(arrow_array::make_array(
-                array
-                    .to_data()
-                    .into_builder()
-                    .data_type(field.data_type().clone())
-                    .build()?,
-            ))
-        })
-        .collect::<Result<Vec<_>>>()?;
-    // IPC columns share one decoded body; Arrow's per-array capacity sums count it repeatedly.
-    let structures = arrays
-        .iter()
-        .map(|array| {
-            array
-                .get_array_memory_size()
-                .saturating_sub(array.get_buffer_memory_size())
-        })
-        .sum::<usize>();
-    let retained_bytes = encoded
-        .len()
-        .checked_add(structures)
-        .and_then(|size| {
-            size.checked_add(
-                std::mem::size_of::<RecordBatch>()
-                    + decoded.num_columns() * std::mem::size_of::<arrow_array::ArrayRef>(),
-            )
-        })
+        .map(|array| arrow_select::take::take(array.as_ref(), &indices, None))
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    let batch = RecordBatch::try_new(batch.schema(), columns)?;
+    let retained_bytes = batch
+        .get_array_memory_size()
+        .checked_add(
+            std::mem::size_of::<RecordBatch>()
+                + batch.num_columns() * std::mem::size_of::<arrow_array::ArrayRef>(),
+        )
         .ok_or_else(|| anyhow::anyhow!("DECODED_BATCH_LIMIT"))?;
-    let batch = RecordBatch::try_new(batch.schema(), arrays)?;
     Ok(CompactedBatch {
         batch,
         retained_bytes,
     })
+}
+fn arrow_complexity(
+    array: &dyn arrow_array::Array,
+    rows: std::ops::Range<usize>,
+    nodes: &mut usize,
+) -> Result<()> {
+    use arrow_array::cast::AsArray;
+    use arrow_schema::DataType;
+
+    charge_nodes(nodes, rows.len())?;
+    match array.data_type() {
+        DataType::List(_) => list_complexity(array.as_list::<i32>(), rows, nodes),
+        DataType::LargeList(_) => list_complexity(array.as_list::<i64>(), rows, nodes),
+        _ => Ok(()),
+    }
+}
+
+fn list_complexity<O>(
+    list: &arrow_array::GenericListArray<O>,
+    rows: std::ops::Range<usize>,
+    nodes: &mut usize,
+) -> Result<()>
+where
+    O: arrow_array::OffsetSizeTrait,
+    usize: TryFrom<O>,
+{
+    use arrow_array::Array;
+
+    let offsets = list.value_offsets();
+    for row in rows.filter(|&row| list.is_valid(row)) {
+        let start =
+            usize::try_from(offsets[row]).map_err(|_| anyhow::anyhow!("ENGINE_IPC_INVALID"))?;
+        let end =
+            usize::try_from(offsets[row + 1]).map_err(|_| anyhow::anyhow!("ENGINE_IPC_INVALID"))?;
+        arrow_complexity(list.values().as_ref(), start..end, nodes)?;
+    }
+    Ok(())
 }
 #[cfg(test)]
 mod compact_tests {
@@ -639,9 +659,7 @@ mod compact_tests {
         .unwrap()
         .slice(1, 1);
         assert!(batch.get_array_memory_size() > 1024 * 1024);
-        let prefix = encode_schema(&schema).unwrap();
-        let fields = super::schema(&prefix, &schema).unwrap();
-        let compact = compact_batch(&prefix, &fields, &batch).unwrap();
+        let compact = compact_batch(&batch).unwrap();
         assert!(compact.retained_bytes < 4096);
         assert_eq!(
             compact
@@ -655,7 +673,7 @@ mod compact_tests {
         );
     }
     #[test]
-    fn four_column_rows_charge_one_ipc_body_and_share_schema() {
+    fn four_column_rows_charge_compact_buffers_and_share_schema() {
         use arrow_array::Int64Array;
         let schema = Arc::new(Schema::new(vec![
             ArrowField::new("id", DataType::Int64, false),
@@ -677,12 +695,10 @@ mod compact_tests {
         )
         .unwrap()
         .slice(1, 1);
-        let prefix = encode_schema(&schema).unwrap();
-        let fields = super::schema(&prefix, &schema).unwrap();
-        let compact = compact_batch(&prefix, &fields, &source).unwrap();
+        let compact = compact_batch(&source).unwrap();
         assert!(Arc::ptr_eq(&compact.batch.schema(), &schema));
         assert!(compact.retained_bytes < 8192);
-        assert!(compact.batch.get_array_memory_size() > compact.retained_bytes);
+        assert!(compact.batch.get_array_memory_size() <= compact.retained_bytes);
         let count = (512 * 1024 / compact.retained_bytes).min(1000);
         assert!(
             count >= 100,
@@ -702,6 +718,24 @@ mod compact_tests {
         );
     }
     #[test]
+    fn compact_rejects_oversized_lists_before_copying() {
+        use arrow_array::builder::{BooleanBuilder, ListBuilder};
+
+        let mut values = ListBuilder::new(BooleanBuilder::new());
+        values.values().append_n(VALUE_NODES, false);
+        values.append(true);
+        let batch = RecordBatch::try_from_iter([(
+            "items",
+            Arc::new(values.finish()) as arrow_array::ArrayRef,
+        )])
+        .unwrap();
+        assert_eq!(
+            compact_batch(&batch).err().unwrap().to_string(),
+            "ENGINE_IPC_COMPLEXITY"
+        );
+    }
+
+    #[test]
     fn compact_list_reuses_the_accepted_item_field() {
         use arrow_array::builder::{Int64Builder, ListBuilder};
         let item = Arc::new(ArrowField::new("element", DataType::Int64, false));
@@ -714,9 +748,7 @@ mod compact_tests {
             false,
         )]));
         let batch = RecordBatch::try_new(schema.clone(), vec![Arc::new(values.finish())]).unwrap();
-        let prefix = encode_schema(&schema).unwrap();
-        let fields = super::schema(&prefix, &schema).unwrap();
-        let compact = compact_batch(&prefix, &fields, &batch).unwrap();
+        let compact = compact_batch(&batch).unwrap();
         let DataType::List(actual) = compact.batch.column(0).data_type() else {
             panic!("accepted list type changed");
         };

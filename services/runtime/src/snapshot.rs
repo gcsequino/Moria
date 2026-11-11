@@ -823,23 +823,47 @@ pub(crate) fn columns(schema: &Value) -> Result<BTreeMap<String, Value>> {
     Ok(columns)
 }
 
-pub(crate) fn validate_batch(
-    batch: &arrow_array::RecordBatch,
-    columns: &BTreeMap<String, Value>,
-) -> Result<()> {
+pub(crate) type BatchColumn<'a> = (&'a str, &'a Value, &'a dyn arrow_array::Array);
+
+pub(crate) fn batch_columns<'a>(
+    batch: &'a arrow_array::RecordBatch,
+    columns: impl IntoIterator<Item = (&'a String, &'a Value)>,
+    missing: &'static str,
+) -> Result<Vec<BatchColumn<'a>>> {
+    columns
+        .into_iter()
+        .map(|(name, descriptor)| {
+            let array = batch
+                .column_by_name(name)
+                .ok_or_else(|| anyhow::anyhow!(missing))?;
+            Ok((name.as_str(), descriptor, array.as_ref()))
+        })
+        .collect()
+}
+
+pub(crate) fn check_batch_size(batch: &arrow_array::RecordBatch) -> Result<()> {
     ensure!(
         batch.get_array_memory_size() <= DECODED_MAX && batch.num_rows() <= 1000,
         "DECODED_BATCH_LIMIT"
     );
+    Ok(())
+}
+
+pub(crate) fn validate_batch(
+    batch: &arrow_array::RecordBatch,
+    columns: &BTreeMap<String, Value>,
+) -> Result<()> {
+    check_batch_size(batch)?;
+    if batch.num_rows() == 0 {
+        return Ok(());
+    }
+    let columns = batch_columns(batch, columns, "MISSING_COLUMN")?;
     for row in 0..batch.num_rows() {
-        let mut size = 0;
-        for (name, descriptor) in columns {
-            let array = batch
-                .column_by_name(name)
-                .ok_or_else(|| anyhow::anyhow!("MISSING_COLUMN"))?;
-            let value = values::arrow_value(array.as_ref(), row, descriptor)?;
-            size += serde_json::to_vec(&value)?.len();
-            ensure!(size <= 4 * 1024 * 1024, "DECODED_ROW_LIMIT");
+        let mut size = crate::canonical::JsonSize::default();
+        for &(_, descriptor, array) in &columns {
+            let value = values::arrow_value(array, row, descriptor)?;
+            serde_json::to_writer(&mut size, &value)?;
+            ensure!(size.0 <= 4 * 1024 * 1024, "DECODED_ROW_LIMIT");
         }
     }
     Ok(())

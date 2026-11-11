@@ -78,7 +78,10 @@ impl NativeSnapshot {
             let Some(entry) = directory.lookup_entry(&format!("{partition:02x}")).await? else {
                 continue;
             };
-            let selected: Vec<_> = indices.iter().map(|index| keys[*index].clone()).collect();
+            let selected: Vec<_> = indices
+                .iter()
+                .map(|&index| keys[index].as_slice())
+                .collect();
             let resolved = key_run_set::lookup_batch(
                 &self.context,
                 &self.run_cache,
