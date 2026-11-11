@@ -35,7 +35,7 @@ test(
     let calls = 0,
       mode = 'text',
       embeddingWidth = 3;
-    let probeSocketClosed = false;
+    let providerSocketClosed = false;
     let signal = () => {},
       release = () => {};
     let barrier = new Promise<void>((resolve) => (signal = resolve)),
@@ -92,11 +92,13 @@ test(
           res.setHeader('content-type', 'text/event-stream');
           const chunk = (delta: unknown, finish_reason: unknown = null) =>
             `data: ${JSON.stringify({ id: 'provider-stream', choices: [{ index: 0, delta, finish_reason }] })}\n\n`;
-          if (mode === 'probeHold') {
-            probeSocketClosed = false;
+          if (mode === 'probeHold' || mode === 'streamHold') {
+            providerSocketClosed = false;
             res.once('close', () => {
-              if (!res.writableEnded) probeSocketClosed = true;
+              if (!res.writableEnded) providerSocketClosed = true;
             });
+          }
+          if (mode === 'probeHold') {
             res.write(chunk({ role: 'assistant', content: 'held probe' }));
             signal();
             await held;
@@ -703,6 +705,35 @@ test(
           await response.arrayBuffer();
         }
         mode = 'text';
+
+        reset('streamHold');
+        const disconnectedKey = randomUUID();
+        try {
+          const heldStream = await request('stream', input, { 'idempotency-key': disconnectedKey });
+          assert.equal(heldStream.status, 200);
+          await barrier;
+          const reader = heldStream.body!.getReader();
+          assert.equal((await reader.read()).done, false);
+          await reader.cancel();
+          for (let i = 0; i < 500; i++) {
+            const { rows } = await db.pool.query(
+              'SELECT state FROM moria.native_model_calls WHERE environment=$1 AND call_key=$2',
+              [environment, disconnectedKey],
+            );
+            if (providerSocketClosed && rows[0]?.state !== 'running') break;
+            await delay(10);
+          }
+          assert.ok(
+            providerSocketClosed,
+            'an idle provider connection closes on client disconnect',
+          );
+          const retained = (await start('status', {}, disconnectedKey).done)[0];
+          assert.equal(retained.error, 'MODEL_CANCELLED');
+          assert.equal(retained.uncertain, true);
+        } finally {
+          release();
+          mode = 'text';
+        }
       },
     );
     await t.test(
@@ -791,7 +822,6 @@ test(
         assert.ok(Buffer.byteLength(JSON.stringify(result)) < 1024 * 1024);
         assert.equal(result.metadata.provider.data[0].embedding, undefined);
         embeddingWidth = 3;
-        let probeSocketClosed = false;
         definition.dimensions = 3;
         await binding();
         assert.deepEqual((await start('probe', {}).done)[0].unsupported, {});
@@ -931,8 +961,8 @@ test(
       try {
         await assert.rejects(call.done);
         const deadline = Date.now() + 10000;
-        while (!probeSocketClosed && Date.now() < deadline) await delay(25);
-        assert.equal(probeSocketClosed, true, 'Revocation must close the held provider stream');
+        while (!providerSocketClosed && Date.now() < deadline) await delay(25);
+        assert.equal(providerSocketClosed, true, 'Revocation must close the held provider stream');
         assert.equal(calls, before, 'No further probe may dispatch after revocation');
       } finally {
         release();
