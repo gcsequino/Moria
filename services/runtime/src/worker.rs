@@ -28,6 +28,21 @@ impl Drop for Heartbeat {
 
 const SCAN_PAYLOAD_BYTES: usize = 8 * 1024 * 1024;
 const SINGLE_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
+
+#[derive(Default)]
+struct JsonSize(usize);
+
+impl std::io::Write for JsonSize {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0 += bytes.len();
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 struct SourceLayout {
     columns: serde_json::Map<String, Value>,
     mapping: std::collections::BTreeMap<String, String>,
@@ -77,14 +92,14 @@ impl SourceLayout {
     }
     fn row(&self, batch: &arrow_array::RecordBatch, row: usize) -> Result<(Value, Option<Value>)> {
         let mut canonical = serde_json::Map::new();
-        let mut bytes = 0usize;
+        let mut size = JsonSize::default();
         for (name, column) in &self.columns {
             let array = batch
                 .column_by_name(name)
                 .ok_or_else(|| anyhow::anyhow!("SCHEMA_CHANGED"))?;
             let value = values::arrow_value(array.as_ref(), row, column)?;
-            bytes += serde_json::to_vec(&value)?.len();
-            ensure!(bytes <= 4 * 1024 * 1024, "DECODED_ROW_LIMIT");
+            serde_json::to_writer(&mut size, &value)?;
+            ensure!(size.0 <= 4 * 1024 * 1024, "DECODED_ROW_LIMIT");
             canonical.insert(name.clone(), value);
         }
         if self.identity {
@@ -988,6 +1003,26 @@ impl Worker {
 mod mapping_tests {
     use super::*;
     use std::sync::Arc;
+    #[test]
+    fn json_size_matches_encoded_cells() {
+        let cells = [
+            json!("line\n\"é"),
+            json!([null, true, 42]),
+            json!({"key": "value"}),
+        ];
+        let mut size = JsonSize::default();
+        for cell in &cells {
+            serde_json::to_writer(&mut size, cell).unwrap();
+        }
+        assert_eq!(
+            size.0,
+            cells
+                .iter()
+                .map(|cell| serde_json::to_vec(cell).unwrap().len())
+                .sum::<usize>()
+        );
+    }
+
     #[test]
     fn canonical_hidden_fields_survive_mapping_with_exact_types() {
         let actual=serde_json::from_value(json!({"id":{"type":"uid","nullable":false},"original":{"type":"string","nullable":false},"region":{"type":"string","nullable":false}})).unwrap();

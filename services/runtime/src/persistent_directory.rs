@@ -386,7 +386,12 @@ fn apply<'a>(
                     .into_iter()
                     .map(|record| (record.key, record.value))
                     .collect::<BTreeMap<_, _>>();
-                let old = records.clone();
+                if mutations
+                    .iter()
+                    .all(|(key, value)| records.get(key) == value.as_ref())
+                {
+                    return Ok(Some(reference));
+                }
                 for (key, value) in mutations {
                     match value {
                         Some(value) => {
@@ -396,9 +401,6 @@ fn apply<'a>(
                             records.remove(&key);
                         }
                     }
-                }
-                if records == old {
-                    return Ok(Some(reference));
                 }
                 build(io, prefix, records).await
             }

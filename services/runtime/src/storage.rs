@@ -869,24 +869,23 @@ pub(crate) async fn read_posix_range(
         (1..=CHUNK_MAX).contains(&chunk_bytes) && range.end <= file.metadata()?.len(),
         "INVALID_INPUT"
     );
-    let mut result = Vec::with_capacity(length as usize);
-    let mut offset = range.start;
     check_read(authority, object, cancel).await?;
+    let mut result = vec![0; length as usize];
+    let mut offset = range.start;
     while offset < range.end {
         if offset != range.start {
             check_read(authority, object, cancel).await?;
         }
         let count = (range.end - offset).min(chunk_bytes as u64) as usize;
-        let fd = file.clone();
+        let start = (offset - range.start) as usize;
+        let fd = Arc::clone(&file);
         let read = tokio::task::spawn_blocking(move || -> std::io::Result<Vec<u8>> {
-            let mut bytes = vec![0; count];
-            fd.read_exact_at(&mut bytes, offset)?;
-            Ok(bytes)
+            fd.read_exact_at(&mut result[start..start + count], offset)?;
+            Ok(result)
         });
-        let bytes = tokio::select! { result = read => result??, _ = cancel.cancelled() => bail!("CANCELLED") };
+        result = tokio::select! { result = read => result??, _ = cancel.cancelled() => bail!("CANCELLED") };
         check_read(authority, object, cancel).await?;
-        offset += bytes.len() as u64;
-        result.extend(bytes);
+        offset += count as u64;
     }
     Ok(result.into())
 }
