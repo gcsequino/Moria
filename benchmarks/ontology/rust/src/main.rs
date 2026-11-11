@@ -18,6 +18,18 @@ struct App {
 }
 type Failure = Box<dyn std::error::Error + Send + Sync>;
 
+struct Checkout {
+    client: Option<deadpool_postgres::Object>,
+    discard: bool,
+}
+impl Drop for Checkout {
+    fn drop(&mut self) {
+        if self.discard {
+            drop(deadpool_postgres::Object::take(self.client.take().unwrap()));
+        }
+    }
+}
+
 async fn one(
     c: &tokio_postgres::Client,
     sql: &str,
@@ -39,21 +51,28 @@ async fn handle(
         Ok(c) => c,
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))),
     };
+    let action = uri.path() == "/action";
+    // A cancelled action may leave a session advisory lock on the connection.
+    let mut checkout = Checkout {
+        client: Some(c),
+        discard: action,
+    };
+    let c = checkout.client.as_ref().unwrap();
     let mut locked = false;
     let mut began = false;
     let outcome: Result<(StatusCode, Value), Failure> = async {
-        if uri.path() == "/action" {
+        if action {
             c.batch_execute("SELECT pg_advisory_lock(91011)").await?;
             locked = true;
+            began = true;
             c.batch_execute("BEGIN ISOLATION LEVEL SERIALIZABLE")
                 .await?;
-            began = true;
         }
         let token = headers
             .get("authorization")
             .and_then(|h| h.to_str().ok())
             .unwrap_or("");
-        let auth = one(&c, &app.sql["auth"], &[(&token, Type::TEXT)]).await?;
+        let auth = one(c, &app.sql["auth"], &[(&token, Type::TEXT)]).await?;
         let Some(auth) = auth else {
             return Ok((StatusCode::UNAUTHORIZED, json!({})));
         };
@@ -73,7 +92,7 @@ async fn handle(
                     "queue_typed"
                 };
                 one(
-                    &c,
+                    c,
                     &app.sql[name],
                     &[
                         (&region, Type::TEXT),
@@ -85,7 +104,7 @@ async fn handle(
             }
             "/detail" => {
                 one(
-                    &c,
+                    c,
                     &app.sql["detail"],
                     &[(&id, Type::INT8), (&region, Type::TEXT)],
                 )
@@ -93,12 +112,12 @@ async fn handle(
             }
             "/action" => {
                 let key = q.get("key").ok_or("missing key")?;
-                let receipt = one(&c, &app.sql["receipt"], &[(key, Type::TEXT)]).await?;
+                let receipt = one(c, &app.sql["receipt"], &[(key, Type::TEXT)]).await?;
                 let result = if receipt.is_some() {
                     receipt
                 } else {
                     one(
-                        &c,
+                        c,
                         &app.sql["action"],
                         &[(&id, Type::INT8), (&region, Type::TEXT), (key, Type::TEXT)],
                     )
@@ -127,8 +146,10 @@ async fn handle(
             .is_err();
     }
     if cleanup_failed {
-        drop(deadpool_postgres::Object::take(c));
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})));
+    }
+    if locked {
+        checkout.discard = false;
     }
     let (status, value) = outcome.unwrap_or((StatusCode::INTERNAL_SERVER_ERROR, json!({})));
     (status, Json(value))
