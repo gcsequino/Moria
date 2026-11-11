@@ -101,12 +101,38 @@ impl Debug for Context {
 
 impl Context {
     async fn current(&self) -> Result<()> {
-        self.spool.check_current(self.authority.as_ref()).await?;
-        self.owner()?;
-        Ok(())
+        self.spool
+            .check_read_authority(self.authority.as_ref())
+            .await?;
+        let context = self.clone();
+        tokio::task::spawn_blocking(move || context.owner_in(&context.spool.sealed_database()?))
+            .await?
     }
+
+    async fn current_entry(&self, name: &str) -> Result<ClosureEntry> {
+        self.spool
+            .check_read_authority(self.authority.as_ref())
+            .await?;
+        let context = self.clone();
+        let name = name.to_owned();
+        tokio::task::spawn_blocking(move || {
+            let db = context.spool.sealed_database()?;
+            context.owner_in(&db)?;
+            ClosureSpool::lookup_in(&db, &name)
+        })
+        .await?
+    }
+
     fn owner(&self) -> Result<()> {
-        let db = self.spool.database()?;
+        self.owner_in(&self.spool.database()?)
+    }
+
+    async fn check_owner(&self) -> Result<()> {
+        let context = self.clone();
+        tokio::task::spawn_blocking(move || context.owner()).await?
+    }
+
+    fn owner_in(&self, db: &rusqlite::Connection) -> Result<()> {
         let owner: String = db.query_row(
             "SELECT value FROM info WHERE key='snapshot_owner'",
             [],
@@ -124,12 +150,12 @@ impl Context {
         role: &str,
         expected_size: Option<u64>,
     ) -> Result<ClosureEntry> {
-        self.owner()?;
-        let entry = self.spool.lookup(name)?;
+        let db = self.spool.sealed_database()?;
+        self.owner_in(&db)?;
+        let entry = ClosureSpool::lookup_in(&db, name)?;
         if let Some(size) = expected_size {
             ensure!(entry.content.size == size, "REFERENCE_SIZE_MISMATCH");
         }
-        let db = self.spool.database()?;
         let previous: Option<String> = db
             .query_row(
                 "SELECT role FROM snapshot_used WHERE name=?1",
@@ -952,11 +978,11 @@ impl FileRead for ClosureRead {
         let mut window = self.window.lock().await;
         let filling = !window.contains(&range);
         if filling {
-            self.context.owner().map_err(|_| denied())?;
+            self.context.check_owner().await.map_err(|_| denied())?;
         }
         let bytes = window.read(range).await.map_err(|_| denied())?;
         if filling {
-            self.context.owner().map_err(|_| denied())?;
+            self.context.check_owner().await.map_err(|_| denied())?;
         }
         Ok(bytes)
     }
@@ -978,26 +1004,16 @@ impl Storage for ClosureStorage {
         self.metadata(path).await.map(|_| true)
     }
     async fn metadata(&self, path: &str) -> iceberg::Result<FileMetadata> {
-        self.0.current().await.map_err(|_| denied())?;
+        let entry = self.0.current_entry(path).await.map_err(|_| denied())?;
         Ok(FileMetadata {
-            size: self
-                .0
-                .spool
-                .lookup(path)
-                .map_err(|_| denied())?
-                .content
-                .size,
+            size: entry.content.size,
         })
     }
     async fn read(&self, path: &str) -> iceberg::Result<Bytes> {
-        self.0
-            .current()
-            .await
-            .map_err(|error| denied().with_source(error))?;
         let entry = self
             .0
-            .spool
-            .lookup(path)
+            .current_entry(path)
+            .await
             .map_err(|error| denied().with_source(error))?;
         self.0
             .bytes(&entry.content, METADATA_MAX)
@@ -1005,8 +1021,12 @@ impl Storage for ClosureStorage {
             .map_err(|error| denied().with_source(error))
     }
     async fn reader(&self, path: &str) -> iceberg::Result<Box<dyn FileRead>> {
-        self.0.current().await.map_err(|_| denied())?;
-        let content = self.0.spool.lookup(path).map_err(|_| denied())?.content;
+        let content = self
+            .0
+            .current_entry(path)
+            .await
+            .map_err(|_| denied())?
+            .content;
         Ok(Box::new(ClosureRead {
             context: self.0.clone(),
             window: tokio::sync::Mutex::new(ObjectReadWindow::new(
