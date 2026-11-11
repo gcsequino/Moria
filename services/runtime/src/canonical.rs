@@ -16,65 +16,74 @@ impl std::io::Write for JsonSize {
     }
 }
 
-pub fn canonical_json(value: &Value) -> Result<String> {
-    fn visit(value: &Value, depth: usize, nodes: &mut usize, out: &mut String) -> Result<()> {
+fn write_canonical(value: &Value, out: &mut impl std::io::Write) -> Result<()> {
+    fn visit(
+        value: &Value,
+        depth: usize,
+        nodes: &mut usize,
+        out: &mut impl std::io::Write,
+    ) -> Result<()> {
         *nodes += 1;
         ensure!(depth <= 64 && *nodes <= 1_000_000, "INVALID_JSON");
         match value {
-            Value::Null => out.push_str("null"),
-            Value::Bool(value) => out.push_str(if *value { "true" } else { "false" }),
+            Value::Null => out.write_all(b"null")?,
+            Value::Bool(value) => out.write_all(if *value { b"true" } else { b"false" })?,
             Value::Number(value) => {
                 let value = value
                     .as_f64()
                     .filter(|n| n.is_finite())
                     .ok_or_else(|| anyhow::anyhow!("INVALID_JSON"))?;
                 if value == 0.0 {
-                    out.push('0');
+                    out.write_all(b"0")?;
                 } else {
-                    out.push_str(ryu_js::Buffer::new().format_finite(value));
+                    out.write_all(ryu_js::Buffer::new().format_finite(value).as_bytes())?;
                 }
             }
-            Value::String(value) => out.push_str(&serde_json::to_string(value)?),
+            Value::String(value) => serde_json::to_writer(&mut *out, value)?,
             Value::Array(values) => {
-                out.push('[');
+                out.write_all(b"[")?;
                 for (index, value) in values.iter().enumerate() {
                     if index > 0 {
-                        out.push(',');
+                        out.write_all(b",")?;
                     }
                     visit(value, depth + 1, nodes, out)?;
                 }
-                out.push(']');
+                out.write_all(b"]")?;
             }
             Value::Object(values) => {
-                let mut keys: Vec<&String> = values.keys().collect();
-                keys.sort_by(|left, right| left.encode_utf16().cmp(right.encode_utf16()));
-                out.push('{');
-                for (index, key) in keys.iter().enumerate() {
+                let mut entries = values.iter().collect::<Vec<_>>();
+                entries
+                    .sort_by(|(left, _), (right, _)| left.encode_utf16().cmp(right.encode_utf16()));
+                out.write_all(b"{")?;
+                for (index, (key, value)) in entries.into_iter().enumerate() {
                     if index > 0 {
-                        out.push(',');
+                        out.write_all(b",")?;
                     }
-                    out.push_str(&serde_json::to_string(key)?);
-                    out.push(':');
-                    visit(&values[*key], depth + 1, nodes, out)?;
+                    serde_json::to_writer(&mut *out, key)?;
+                    out.write_all(b":")?;
+                    visit(value, depth + 1, nodes, out)?;
                 }
-                out.push('}');
+                out.write_all(b"}")?;
             }
         }
         Ok(())
     }
-    let mut text = String::new();
-    visit(value, 0, &mut 0, &mut text)?;
-    Ok(text)
+    visit(value, 0, &mut 0, out)
+}
+
+pub fn canonical_json(value: &Value) -> Result<String> {
+    let mut bytes = Vec::new();
+    write_canonical(value, &mut bytes)?;
+    Ok(String::from_utf8(bytes)?)
 }
 
 pub fn fingerprint(value: &Value) -> Result<String> {
-    Ok(format!(
-        "sha256:{:x}",
-        Sha256::digest(canonical_json(value)?.as_bytes())
-    ))
+    let mut hash = Sha256::new();
+    write_canonical(value, &mut hash)?;
+    Ok(format!("sha256:{:x}", hash.finalize()))
 }
 
-pub fn canonical_value(value: &Value, schema: &Value, definitions: &Value) -> Result<String> {
+fn typed_envelope(value: &Value, schema: &Value, definitions: &Value) -> Result<Value> {
     fn typed(value: Value, schema: &Value) -> Result<Value> {
         if value.is_null() {
             return Ok(value);
@@ -83,39 +92,46 @@ pub fn canonical_value(value: &Value, schema: &Value, definitions: &Value) -> Re
             "float64" => {
                 json!({"$float64":format!("{:016x}",value.as_f64().ok_or_else(|| anyhow::anyhow!("VALUE_INVALID"))?.to_bits())})
             }
-            "array" => Value::Array(
-                value
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .cloned()
-                    .map(|value| typed(value, &schema["items"]))
-                    .collect::<Result<_>>()?,
-            ),
+            "array" => {
+                let Value::Array(items) = value else {
+                    anyhow::bail!("VALUE_INVALID")
+                };
+                Value::Array(
+                    items
+                        .into_iter()
+                        .map(|value| typed(value, &schema["items"]))
+                        .collect::<Result<_>>()?,
+                )
+            }
             "object" => {
-                let properties = value.as_object().unwrap();
-                let mut result = serde_json::Map::new();
-                for (name, value) in properties {
-                    result.insert(
-                        name.clone(),
-                        typed(value.clone(), &schema["properties"][name])?,
-                    );
-                }
-                Value::Object(result)
+                let Value::Object(properties) = value else {
+                    anyhow::bail!("VALUE_INVALID")
+                };
+                Value::Object(
+                    properties
+                        .into_iter()
+                        .map(|(name, value)| {
+                            let value = typed(value, &schema["properties"][&name])?;
+                            Ok((name, value))
+                        })
+                        .collect::<Result<_>>()?,
+                )
             }
             _ => value,
         })
     }
     let schema = crate::values::descriptor(schema, definitions, 0)?;
     let value = crate::values::normalize(value, &schema)?;
-    canonical_json(&json!({"version":1,"schema":schema,"value":typed(value,&schema)?}))
+    let value = typed(value, &schema)?;
+    Ok(json!({"version":1,"schema":schema,"value":value}))
+}
+
+pub fn canonical_value(value: &Value, schema: &Value, definitions: &Value) -> Result<String> {
+    canonical_json(&typed_envelope(value, schema, definitions)?)
 }
 
 pub fn value_fingerprint(value: &Value, schema: &Value, definitions: &Value) -> Result<String> {
-    Ok(format!(
-        "sha256:{:x}",
-        Sha256::digest(canonical_value(value, schema, definitions)?.as_bytes())
-    ))
+    fingerprint(&typed_envelope(value, schema, definitions)?)
 }
 
 #[cfg(test)]
