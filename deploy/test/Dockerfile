@@ -1,6 +1,12 @@
 # Test harness only, not a production deployment image.
 FROM rust:bookworm@sha256:114c7a4425406451c2866b6aafe69fe29b1b298832db1277d411ac73c82d04d6 AS indexing-toolchain
 RUN rustup component add rustfmt clippy
+FROM indexing-toolchain AS benchmark-lint
+WORKDIR /bench/rust
+COPY benchmarks/ontology/rust/ ./
+RUN rustc --version > /bench/rust-version.txt \
+    && cargo fmt --check \
+    && cargo clippy --release --locked --all-targets -j 2 -- -D clippy::perf
 FROM indexing-toolchain AS indexing-build
 RUN useradd --create-home --uid 1000 builder && mkdir /build && chown builder:builder /build
 ENV CARGO_HOME=/home/builder/.cargo
@@ -13,6 +19,7 @@ USER builder
 RUN --mount=type=cache,target=/home/builder/.cargo/registry,uid=1000,gid=1000 \
     --mount=type=cache,target=/build/services/runtime/target,uid=1000,gid=1000 \
     cargo fmt --check \
+    && cargo clippy --release --locked --all-targets -j 2 -- -D clippy::perf \
     && cargo test --release --locked --lib --test native_policy --test native_storage \
          --test native_transport --test native_catalog --test native_sandbox --test native_retention \
          --no-run -j 2 --message-format=json > /tmp/indexing-artifacts.json \

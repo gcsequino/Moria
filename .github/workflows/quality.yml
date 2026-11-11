@@ -36,6 +36,8 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - name: Check Rust benchmark formatting and performance lints
+        run: docker build --target benchmark-lint -f deploy/test/Dockerfile .
       - name: Build test environment
         run: docker build -f deploy/test/Dockerfile -t moria-test:ci .
       - name: Verify repeatable bootstrap
